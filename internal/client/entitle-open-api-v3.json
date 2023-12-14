@@ -1,0 +1,5531 @@
+{
+  "openapi": "3.1.0",
+  "paths": {
+    "/public/v1/agentTokens": {
+      "get": {
+        "operationId": "AgentTokens_index",
+        "summary": "Get the list of agent tokens",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTokensListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AgentTokens_create",
+        "summary": "Create a new agent token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentTokenCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTokenCreateResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/agentTokens/{id}": {
+      "get": {
+        "operationId": "AgentTokens_show",
+        "summary": "Get agent token by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "$ref": "#/components/schemas/AgentTokenResponseSchema"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "AgentTokens_update",
+        "summary": "Update agent token by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentTokenCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTokenResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AgentTokens_destroy",
+        "summary": "Delete agent token by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTokenDeleteResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/auditLogs/search": {
+      "post": {
+        "operationId": "AuditLogs_search",
+        "summary": "Search audit logs (Experimental)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditLogsBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Experimental"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/permissions": {
+      "get": {
+        "operationId": "Permissions_index",
+        "summary": "Get permissions (Filter by time created, Experimental)",
+        "parameters": [
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC",
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "example": "2021-01-21",
+            "description": "Filter permissions up to a certain point in time",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Experimental"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/workflows": {
+      "get": {
+        "operationId": "Workflows_index",
+        "summary": "Get a list of workflows",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Workflows_create",
+        "summary": "Create a new workflow",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/workflows/{id}": {
+      "get": {
+        "operationId": "Workflows_show",
+        "summary": "Get workflow by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Workflows_update",
+        "summary": "Update a workflow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowUpdatedBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Workflows_destroy",
+        "summary": "Delete a workflow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/bundles": {
+      "get": {
+        "operationId": "Bundles_index",
+        "summary": "Get a list of bundles",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundlesIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Bundles_create",
+        "summary": "Create a new bundle",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicBundleCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullBundleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/bundles/{id}": {
+      "get": {
+        "operationId": "Bundles_show",
+        "summary": "Get bundle by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullBundleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Bundles_update",
+        "summary": "Update a bundle",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BundleUpdatedBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullBundleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Bundles_destroy",
+        "summary": "Delete a bundle by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/policies": {
+      "get": {
+        "operationId": "Policies_index",
+        "summary": "Get a list of policies",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Policies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Policies_create",
+        "summary": "Create a new policy",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyCreateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullPolicyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Policies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/policies/{id}": {
+      "get": {
+        "operationId": "Policies_show",
+        "summary": "Get policy by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullPolicyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Policies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Policies_update",
+        "summary": "Update a policy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyUpdateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullPolicyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Policies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Policies_destroy",
+        "summary": "Delete a policy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Policies"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/integrations": {
+      "get": {
+        "operationId": "Integrations_index",
+        "summary": "Get a list of integrations",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationsListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Integrations_create",
+        "summary": "Create a new integration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationCreateBodyFieldsSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/integrations/{id}": {
+      "get": {
+        "operationId": "Integrations_show",
+        "summary": "Get integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Integrations_update",
+        "summary": "Update integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationsUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Integrations_destroy",
+        "summary": "Delete integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/resources": {
+      "get": {
+        "operationId": "Resources_index",
+        "summary": "Get a list of resources",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "integrationId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourcesListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/resources/{id}": {
+      "get": {
+        "operationId": "Resources_show",
+        "summary": "Get a resource by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Resources_update",
+        "summary": "Update a resource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicIntegrationResourcesUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/roles": {
+      "get": {
+        "operationId": "Roles_index",
+        "summary": "Get a list of roles",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "query",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRolesListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/roles/{id}": {
+      "get": {
+        "operationId": "Roles_show",
+        "summary": "Get a role by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Roles_update",
+        "summary": "Update a role",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResourceRolesUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accessRequests/{id}": {
+      "get": {
+        "operationId": "AccessRequests_show",
+        "summary": "Get access request by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The access request's id or number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRequestResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Access Requests"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accessRequests": {
+      "post": {
+        "operationId": "AccessRequests_create",
+        "summary": "Create a new access request",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessRequestCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRequestResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Access Requests"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Entitle API",
+    "description": "Entitle API documentation",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://api.entitle.io"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "PaginationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Current page"
+          },
+          "perPage": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Number of results per page"
+          },
+          "totalResults": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total number of results"
+          },
+          "totalPages": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total number of pages"
+          }
+        },
+        "required": [
+          "page",
+          "perPage",
+          "totalResults",
+          "totalPages"
+        ]
+      },
+      "AgentTokenResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AgentTokensListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentTokenResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "AgentTokenCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "format": "string",
+            "example": "Agent token name"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "AgentTokenCreateResponseSchemaBody": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "token": {
+            "type": "string",
+            "format": "string:base64",
+            "example": "dXNlcm5hbWU6cGFzc3dvcmQ="
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "token",
+          "name"
+        ]
+      },
+      "AgentTokenCreateResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/AgentTokenCreateResponseSchemaBody"
+          }
+        },
+        "required": [
+          "result",
+        ]
+      },
+      "AgentTokenDeleteResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "EnumAuditLogEventType": {
+        "type": "string",
+        "enum": [
+          "accessReview.created",
+          "accessReview.deleted",
+          "accessReview.updated",
+          "accessReview.activated",
+          "approvalAlgorithm.created",
+          "approvalAlgorithm.deleted",
+          "approvalAlgorithm.updated",
+          "bundle.created",
+          "bundle.deleted",
+          "bundle.updated",
+          "company.failed.sync.directories.groups",
+          "company.failed.sync.directories.users",
+          "company.failed.sync.hr.directManagers",
+          "company.policy.permissions.updated",
+          "company.policy.user.missingActors",
+          "company.sync.directories.groups",
+          "company.sync.directories.users",
+          "company.sync.hr.directManagers",
+          "integration.failed.access.give",
+          "integration.failed.access.revoke",
+          "integration.failed.sync.actors",
+          "integration.failed.sync.assets",
+          "integration.failed.sync.permissions",
+          "integration.sync.actors",
+          "integration.sync.assets",
+          "integration.sync.permissions",
+          "integration.updated.allowAsGrantMethod",
+          "integration.updated.allowedDurations",
+          "integration.updated.allowsRequests",
+          "integration.updated.approvalAlgorithm",
+          "integration.updated.autoAssignRecommendedResourceMaintainers",
+          "integration.updated.autoAssignRecommendedResourceOwner",
+          "integration.updated.canCreateActors",
+          "integration.updated.canEditPermissions",
+          "integration.updated.configuration",
+          "integration.updated.defaultAllowAsGrantMethod",
+          "integration.updated.defaultAllowsRequests",
+          "integration.updated.image",
+          "integration.updated.maintainers",
+          "integration.updated.name",
+          "integration.updated.notifyAboutExternalPermissions",
+          "integration.updated.owner",
+          "integration.updated.readonly",
+          "integration.created",
+          "integration.deleted",
+          "integrationResource.created.manually",
+          "integrationResource.deleted.manually",
+          "integrationResource.updated.allowAsGrantMethod",
+          "integrationResource.updated.allowedDurations",
+          "integrationResource.updated.allowsRequests",
+          "integrationResource.updated.approvalAlgorithm",
+          "integrationResource.updated.displayName",
+          "integrationResource.updated.maintainers",
+          "integrationResource.updated.owner",
+          "integrationResource.updated.userDefinedDescription",
+          "integrationResource.updated.userDefinedTags",
+          "integrationResourceRole.created.manually",
+          "integrationResourceRole.deleted.manually",
+          "integrationResourceRole.updated.allowAsGrantMethod",
+          "integrationResourceRole.updated.allowedDurations",
+          "integrationResourceRole.updated.allowsRequests",
+          "integrationResourceRole.updated.approvalAlgorithm",
+          "integrationResourceRole.updated.name",
+          "policy.updated.data",
+          "policy.updated.sortOrder",
+          "policy.created",
+          "policy.deleted",
+          "ticket.failed.grant",
+          "ticket.failed.revoke",
+          "ticket.redirect.emptyGroup",
+          "ticket.redirect.forward",
+          "ticket.redirect.noManagers",
+          "ticket.redirect.noTeamMembers",
+          "ticket.redirect.toUser",
+          "ticket.retry.grant",
+          "ticket.retry.revoke",
+          "ticket.sent.grant",
+          "ticket.sent.revert",
+          "ticket.sent.revoke",
+          "ticket.automaticApproval",
+          "ticket.created",
+          "ticket.deleted",
+          "ticket.finalApproved",
+          "ticket.granted",
+          "ticket.passedStage",
+          "ticket.permissionAlreadyExist",
+          "ticket.permissionReverted",
+          "ticket.permissionWontRevoke",
+          "ticket.revoked",
+          "ticket.statusChanged",
+          "ticket.taskCreated",
+          "ticket.userApproved",
+          "ticket.userDeclined"
+        ]
+      },
+      "AuditLogsBodySchema": {
+        "type": "object",
+        "properties": {
+          "minDate": {
+            "type": "string",
+            "example": "2021-01-21",
+            "format": "date"
+          },
+          "maxDate": {
+            "type": "string",
+            "example": "2021-01-21",
+            "format": "date"
+          },
+          "type": {
+            "type": "array",
+            "description": "Audit log types to search",
+            "items": {
+              "$ref": "#/components/schemas/EnumAuditLogEventType"
+            }
+          }
+        },
+        "required": [
+          "minDate"
+        ]
+      },
+      "AuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AccessReviewAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalAlgorithmAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/AuditLogBaseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/BundleAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/IntegrationAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/IntegrationResourceAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/PolicyAuditLogResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/TicketAuditLogResponseSchema"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "UserSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Entity name"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User's email"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "ActorSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Actor's display name"
+          },
+          "users": {
+            "description": "Users associated with the actor",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "users"
+        ]
+      },
+      "EntitySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Entity name"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "PermissionSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the permission creation"
+          },
+          "deprecatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the permission deprecation"
+          },
+          "actor": {
+            "description": "Permission's actor",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorSchema"
+              }
+            ]
+          },
+          "integration": {
+            "description": "Permission's integration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntitySchema"
+              }
+            ]
+          },
+          "resource": {
+            "description": "Permission's resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntitySchema"
+              }
+            ]
+          },
+          "role": {
+            "description": "Permission's role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "createdAt",
+          "actor",
+          "integration",
+          "resource",
+          "role"
+        ]
+      },
+      "PermissionResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "WorkflowIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "id"
+        ]
+      },
+      "WorkflowIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "WorkflowGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "id"
+        ]
+      },
+      "EnumAllowedDurations": {
+        "type": "number",
+        "enum": [
+          3600,
+          10800,
+          21600,
+          43200,
+          57600,
+          86400,
+          259200,
+          604800,
+          2628000,
+          7884000,
+          15768000,
+          31536000,
+          63072000,
+          -1
+        ]
+      },
+      "EnumApprovalFlowStepOperator": {
+        "type": "string",
+        "enum": [
+          "and",
+          "or"
+        ]
+      },
+      "ApprovalFlowStepResponseSchema": {
+        "type": "object",
+        "properties": {
+          "operator": {
+            "$ref": "#/components/schemas/EnumApprovalFlowStepOperator"
+          },
+          "approvalEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityNullResponseSchema"
+                }
+              ]
+            }
+          },
+          "notifiedEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/NotifiedEntityNullResponseSchema"
+                }
+              ]
+            }
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "operator",
+          "approvalEntities",
+          "notifiedEntities",
+          "sortOrder"
+        ]
+      },
+      "WorkflowApprovalFlowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalFlowStepResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "WorkflowRuleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
+            }
+          },
+          "inSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
+            }
+          },
+          "underDuration": {
+            "nullable": true,
+            "$ref": "#/components/schemas/EnumAllowedDurations"
+          },
+          "approvalFlow": {
+            "$ref": "#/components/schemas/WorkflowApprovalFlowResponseSchema"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "anySchedule": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inGroups",
+          "inSchedules",
+          "underDuration",
+          "approvalFlow",
+          "sortOrder",
+          "anySchedule"
+        ]
+      },
+      "FullWorkflowResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "rules"
+        ]
+      },
+      "FullWorkflowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FullWorkflowResultResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GroupEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "user@org.domain",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier/email of the group"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ScheduleEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier of the schedule"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "EnumApprovalFlowOperator": {
+        "type": "string",
+        "enum": [
+          "and",
+          "or"
+        ]
+      },
+      "ApprovalFlowSchema": {
+        "type": "object",
+        "properties": {
+          "operator": {
+            "$ref": "#/components/schemas/EnumApprovalFlowOperator"
+          },
+          "approvalEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityNullSchema"
+                }
+              ]
+            }
+          },
+          "notifiedEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/NotifiedApprovalEntityWithoutEntitySchema"
+                }
+              ]
+            }
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "operator",
+          "approvalEntities",
+          "notifiedEntities",
+          "sortOrder"
+        ]
+      },
+      "WorkflowApprovalFlowSchema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalFlowSchema"
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "WorkflowRuleSchema": {
+        "type": "object",
+        "properties": {
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupEntitySchema"
+            }
+          },
+          "inSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntitySchema"
+            }
+          },
+          "underDuration": {
+            "nullable": true,
+            "$ref": "#/components/schemas/EnumAllowedDurations"
+          },
+          "approvalFlow": {
+            "$ref": "#/components/schemas/WorkflowApprovalFlowSchema"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "anySchedule": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inGroups",
+          "inSchedules",
+          "underDuration",
+          "approvalFlow",
+          "sortOrder",
+          "anySchedule"
+        ]
+      },
+      "WorkflowCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "rules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "rules"
+        ]
+      },
+      "WorkflowUpdatedBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "rules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleSchema"
+            }
+          }
+        }
+      },
+      "WorkflowDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "BundleIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "BundlesIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BundleIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "ApplicationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IntegrationBaseResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application",
+          "name"
+        ]
+      },
+      "ResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "name"
+        ]
+      },
+      "BundleItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ResourceResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "resource"
+        ]
+      },
+      "WorkflowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "FullBundleResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allowedDurations": {
+            "nullable": true,
+            "$ref": "#/components/schemas/EnumAllowedDurations"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BundleItemResponseSchema"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "allowedDurations",
+          "category",
+          "description",
+          "tags",
+          "roles",
+          "name",
+          "workflow"
+        ]
+      },
+      "FullBundleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FullBundleResultResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IdParamsSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "PublicBundleCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "description": "If null, the company's default allowed durations will be used",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 2
+            }
+          },
+          "roles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          }
+        },
+        "required": [
+          "name",
+          "roles",
+          "workflow"
+        ]
+      },
+      "BundleUpdatedBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "description": "If null, the company's default allowed durations will be used",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 2
+            }
+          },
+          "roles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          }
+        }
+      },
+      "BundleDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "PolicyIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "number"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "sortOrder"
+        ]
+      },
+      "PolicyIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "EnumPolicyGroupType": {
+        "type": "string",
+        "enum": [
+          "group",
+          "schedule"
+        ]
+      },
+      "PolicyGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumPolicyGroupType"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ]
+      },
+      "PolicyBundleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "PolicyApplicationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "PolicyIntegrationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "application": {
+            "$ref": "#/components/schemas/PolicyApplicationResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "application"
+        ]
+      },
+      "PolicyResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/PolicyIntegrationResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "integration"
+        ]
+      },
+      "PolicyRoleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/PolicyResourceResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "resource"
+        ]
+      },
+      "FullPolicyResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyGroupResponseSchema"
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyBundleResponseSchema"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyRoleResponseSchema"
+            }
+          },
+          "number": {
+            "type": "number"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "inGroups",
+          "bundles",
+          "roles",
+          "number",
+          "sortOrder"
+        ]
+      },
+      "FullPolicyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "InGroupSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumPolicyGroupType"
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique identifier/email of the group"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ]
+      },
+      "PolicyCreateSchema": {
+        "type": "object",
+        "properties": {
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InGroupSchema"
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "inGroups",
+          "bundles",
+          "roles"
+        ]
+      },
+      "PolicyUpdateSchema": {
+        "type": "object",
+        "properties": {
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InGroupSchema"
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          }
+        }
+      },
+      "PolicyDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "IntegrationsListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "EntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@org.domain"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ]
+      },
+      "IntegrationResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowResponseSchema"
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
+                }
+              ]
+            }
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "allowChangingAccountPermissions": {
+            "type": "boolean"
+          },
+          "allowCreatingAccounts": {
+            "type": "boolean"
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowRequestsByDefault": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethodByDefault": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/EntityResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application",
+          "allowedDurations",
+          "workflow",
+          "maintainers",
+          "readonly",
+          "allowChangingAccountPermissions",
+          "allowCreatingAccounts",
+          "allowRequests",
+          "allowRequestsByDefault",
+          "allowAsGrantMethod",
+          "allowAsGrantMethodByDefault",
+          "autoAssignRecommendedOwners",
+          "autoAssignRecommendedMaintainers",
+          "notifyAboutExternalPermissionChanges",
+          "owner",
+          "name"
+        ]
+      },
+      "IntegrationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/IntegrationResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "UserEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "user@org.domain",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier/email of the user"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "IntegrationsUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "description": "If null, the company's default allowed durations will be used",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "connectionJson": {
+            "type": "object"
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowRequestsByDefault": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethodByDefault": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserEntitySchema"
+          }
+        }
+      },
+      "NameSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IntegrationCreateBodyFieldsSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "description": "If null, the company's default allowed durations will be used",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "application": {
+            "example": {
+              "name": "Google Groups"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameSchema"
+              }
+            ]
+          },
+          "agentToken": {
+            "example": {
+              "name": "On prem agent"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameSchema"
+              }
+            ]
+          },
+          "allowChangingAccountPermissions": {
+            "type": "boolean"
+          },
+          "allowCreatingAccounts": {
+            "type": "boolean"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "connectionJson": {
+            "type": "object",
+            "nullable": true
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowRequestsByDefault": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethodByDefault": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserEntitySchema"
+          }
+        },
+        "required": [
+          "name",
+          "maintainers",
+          "application",
+          "allowChangingAccountPermissions",
+          "allowCreatingAccounts",
+          "readonly",
+          "connectionJson",
+          "allowRequests",
+          "allowRequestsByDefault",
+          "allowAsGrantMethod",
+          "allowAsGrantMethodByDefault",
+          "autoAssignRecommendedMaintainers",
+          "autoAssignRecommendedOwners",
+          "notifyAboutExternalPermissionChanges",
+          "workflow",
+          "owner"
+        ]
+      },
+      "IntegrationDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "IntegrationResourceListItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "name"
+        ]
+      },
+      "IntegrationResourcesListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "WorkflowSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "IntegrationResourceResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "userDefinedTags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "userDefinedDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowSchema"
+              }
+            ]
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
+                }
+              ]
+            }
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "allowedDurations",
+          "tags",
+          "userDefinedTags",
+          "description",
+          "userDefinedDescription",
+          "workflow",
+          "maintainers",
+          "allowRequests",
+          "allowAsGrantMethod",
+          "owner",
+          "name"
+        ]
+      },
+      "IntegrationResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/IntegrationResourceResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "PublicIntegrationResourcesUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "userDefinedDescription": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "userDefinedTags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "tag"
+            },
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationResourceRoleListItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource",
+          "name"
+        ]
+      },
+      "IntegrationResourceRolesListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "IntegrationResourceRoleResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowSchema"
+              }
+            ]
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource",
+          "allowedDurations",
+          "workflow",
+          "allowRequests",
+          "allowAsGrantMethod",
+          "name"
+        ]
+      },
+      "IntegrationResourceRoleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IntegrationResourceRolesUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "allowRequests": {
+            "type": "boolean"
+          },
+          "allowAsGrantMethod": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          }
+        }
+      },
+      "AccessRequestApplicationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The application's name"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "AccessRequestIntegrationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The integration's id"
+          },
+          "name": {
+            "type": "string",
+            "description": "The integration's name"
+          },
+          "application": {
+            "description": "The integration's application",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestApplicationResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "application"
+        ]
+      },
+      "AccessRequestResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The resource's id"
+          },
+          "name": {
+            "type": "string",
+            "description": "The resource's name"
+          },
+          "integration": {
+            "description": "The resource's integration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestIntegrationResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "integration"
+        ]
+      },
+      "AccessRequestRoleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The role's id"
+          },
+          "name": {
+            "type": "string",
+            "description": "The role's name"
+          },
+          "isPrerequisite": {
+            "type": "boolean",
+            "description": "Was the role added because it is a prerequisite"
+          },
+          "resource": {
+            "description": "The role's resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestResourceResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isPrerequisite",
+          "resource"
+        ]
+      },
+      "EnumPublicTicketStatus": {
+        "type": "string",
+        "enum": [
+          "approved",
+          "cancelled",
+          "failed",
+          "granted",
+          "permissionInProgress",
+          "rejected",
+          "revoked",
+          "waitingForIT",
+          "waitingForApproval"
+        ]
+      },
+      "EnumPublicTicketType": {
+        "type": "string",
+        "enum": [
+          "bundle",
+          "role"
+        ]
+      },
+      "AccessRequestBaseTargetResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "AccessRequestPublicResultSchema": {
+        "type": "object",
+        "properties": {
+          "behalfOf": {
+            "description": "The user the access was requested for",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          },
+          "duration": {
+            "type": "number",
+            "description": "The requested duration in seconds (-1 means forever)"
+          },
+          "id": {
+            "type": "string",
+            "description": "The access request's id"
+          },
+          "justification": {
+            "type": "string",
+            "description": "The justification for the access request"
+          },
+          "number": {
+            "type": "number",
+            "description": "The access request's number"
+          },
+          "roles": {
+            "description": "The access request's roles to receive",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessRequestRoleResponseSchema"
+            }
+          },
+          "status": {
+            "description": "The access request's status",
+            "$ref": "#/components/schemas/EnumPublicTicketStatus"
+          },
+          "target": {
+            "description": "The access request's target",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestBundleTargetResponseSchema"
+              },
+              {
+                "$ref": "#/components/schemas/AccessRequestRoleTargetResponseSchema"
+              }
+            ],
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestBaseTargetResponseSchema"
+              }
+            ]
+          },
+          "user": {
+            "description": "The access request's creator",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "behalfOf",
+          "duration",
+          "id",
+          "justification",
+          "number",
+          "roles",
+          "status",
+          "target",
+          "user"
+        ]
+      },
+      "AccessRequestResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessRequestPublicResultSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "AccessRequestCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "duration": {
+            "type": "number",
+            "description": "The duration of the access requested"
+          },
+          "justification": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048,
+            "description": "The justification for the access request"
+          },
+          "target": {
+            "description": "The target of the access request",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestBundleTargetCreateSchema"
+              },
+              {
+                "$ref": "#/components/schemas/AccessRequestRoleTargetCreateSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "duration",
+          "justification",
+          "target"
+        ]
+      },
+      "AccessReviewAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "accessReview": {
+            "type": "string",
+            "example": "Access review 123",
+            "description": "Name of the access review"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "ApprovalAlgorithmAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "approvalAlgorithm": {
+            "type": "string",
+            "example": "Approval algorithm 123",
+            "description": "Name of the approval algorithm"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "AuditLogBaseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "BundleAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "bundle": {
+            "type": "string",
+            "example": "Bundle 123",
+            "description": "Name of the bundle"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "IntegrationAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "integration": {
+            "type": "string",
+            "example": "Integration 123",
+            "description": "Name of the integration"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "IntegrationResourceAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "integrationResource": {
+            "type": "string",
+            "example": "Resource 123",
+            "description": "Name of the resource"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "IntegrationResourceRoleAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "integrationResourceRole": {
+            "type": "string",
+            "example": "Role 123",
+            "description": "Name of the role"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "PolicyAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "policy": {
+            "type": "number",
+            "example": "1",
+            "description": "Number of the policy"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "TicketAuditLogResponseSchema": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the audit log"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "accessReview.created",
+              "accessReview.deleted",
+              "accessReview.updated",
+              "accessReview.activated",
+              "approvalAlgorithm.created",
+              "approvalAlgorithm.deleted",
+              "approvalAlgorithm.updated",
+              "bundle.created",
+              "bundle.deleted",
+              "bundle.updated",
+              "company.failed.sync.directories.groups",
+              "company.failed.sync.directories.users",
+              "company.failed.sync.hr.directManagers",
+              "company.policy.permissions.updated",
+              "company.policy.user.missingActors",
+              "company.sync.directories.groups",
+              "company.sync.directories.users",
+              "company.sync.hr.directManagers",
+              "integration.failed.access.give",
+              "integration.failed.access.revoke",
+              "integration.failed.sync.actors",
+              "integration.failed.sync.assets",
+              "integration.failed.sync.permissions",
+              "integration.sync.actors",
+              "integration.sync.assets",
+              "integration.sync.permissions",
+              "integration.updated.allowAsGrantMethod",
+              "integration.updated.allowedDurations",
+              "integration.updated.allowsRequests",
+              "integration.updated.approvalAlgorithm",
+              "integration.updated.autoAssignRecommendedResourceMaintainers",
+              "integration.updated.autoAssignRecommendedResourceOwner",
+              "integration.updated.canCreateActors",
+              "integration.updated.canEditPermissions",
+              "integration.updated.configuration",
+              "integration.updated.defaultAllowAsGrantMethod",
+              "integration.updated.defaultAllowsRequests",
+              "integration.updated.image",
+              "integration.updated.maintainers",
+              "integration.updated.name",
+              "integration.updated.notifyAboutExternalPermissions",
+              "integration.updated.owner",
+              "integration.updated.readonly",
+              "integration.created",
+              "integration.deleted",
+              "integrationResource.created.manually",
+              "integrationResource.deleted.manually",
+              "integrationResource.updated.allowAsGrantMethod",
+              "integrationResource.updated.allowedDurations",
+              "integrationResource.updated.allowsRequests",
+              "integrationResource.updated.approvalAlgorithm",
+              "integrationResource.updated.displayName",
+              "integrationResource.updated.maintainers",
+              "integrationResource.updated.owner",
+              "integrationResource.updated.userDefinedDescription",
+              "integrationResource.updated.userDefinedTags",
+              "integrationResourceRole.created.manually",
+              "integrationResourceRole.deleted.manually",
+              "integrationResourceRole.updated.allowAsGrantMethod",
+              "integrationResourceRole.updated.allowedDurations",
+              "integrationResourceRole.updated.allowsRequests",
+              "integrationResourceRole.updated.approvalAlgorithm",
+              "integrationResourceRole.updated.name",
+              "policy.updated.data",
+              "policy.updated.sortOrder",
+              "policy.created",
+              "policy.deleted",
+              "ticket.failed.grant",
+              "ticket.failed.revoke",
+              "ticket.redirect.emptyGroup",
+              "ticket.redirect.forward",
+              "ticket.redirect.noManagers",
+              "ticket.redirect.noTeamMembers",
+              "ticket.redirect.toUser",
+              "ticket.retry.grant",
+              "ticket.retry.revoke",
+              "ticket.sent.grant",
+              "ticket.sent.revert",
+              "ticket.sent.revoke",
+              "ticket.automaticApproval",
+              "ticket.created",
+              "ticket.deleted",
+              "ticket.finalApproved",
+              "ticket.granted",
+              "ticket.passedStage",
+              "ticket.permissionAlreadyExist",
+              "ticket.permissionReverted",
+              "ticket.permissionWontRevoke",
+              "ticket.revoked",
+              "ticket.statusChanged",
+              "ticket.taskCreated",
+              "ticket.userApproved",
+              "ticket.userDeclined"
+            ],
+            "example": "approvalAlgorithm.deleted",
+            "description": "Type of the audit log"
+          },
+          "user": {
+            "type": "string",
+            "example": "user@org.domain",
+            "description": "User who performed the action"
+          },
+          "ticket": {
+            "type": "number",
+            "example": "Ticket 123",
+            "description": "Number of the ticket"
+          }
+        },
+        "required": [
+          "createdAt",
+          "type"
+        ]
+      },
+      "EnumMaintainerType_Group": {
+        "type": "string",
+        "enum": [
+          "group"
+        ]
+      },
+      "GroupMaintainerSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumMaintainerType_Group"
+          },
+          "group": {
+            "description": "If type is group, this field is required with a unique id/email",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GroupEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "group"
+        ]
+      },
+      "EnumMaintainerType_User": {
+        "type": "string",
+        "enum": [
+          "user"
+        ]
+      },
+      "UserMaintainerSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumMaintainerType_User"
+          },
+          "user": {
+            "description": "If type is user, this field is required with a unique id/email",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "user"
+        ]
+      },
+      "MaintainerGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumMaintainerType_Group"
+          },
+          "group": {
+            "$ref": "#/components/schemas/EntityResponseSchema"
+          }
+        },
+        "required": [
+          "type",
+          "group"
+        ]
+      },
+      "MaintainerUserResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumMaintainerType_User"
+          },
+          "user": {
+            "$ref": "#/components/schemas/EntityResponseSchema"
+          }
+        },
+        "required": [
+          "type",
+          "user"
+        ]
+      },
+      "EnumApprovalEntityGroup_DirectoryGroup": {
+        "type": "string",
+        "enum": [
+          "DirectoryGroup"
+        ]
+      },
+      "GroupEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "id"
+        ]
+      },
+      "ApprovalEntityGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityGroup_DirectoryGroup"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/GroupEntityResponseSchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntitySchedule_OnCallIntegrationSchedule": {
+        "type": "string",
+        "enum": [
+          "OnCallIntegrationSchedule"
+        ]
+      },
+      "ApprovalEntityScheduleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntitySchedule_OnCallIntegrationSchedule"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/GroupEntityResponseSchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntityUser_User": {
+        "type": "string",
+        "enum": [
+          "User"
+        ]
+      },
+      "UserEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ]
+      },
+      "ApprovalEntityUserResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityUser_User"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/UserEntityResponseSchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntityWithoutEntity": {
+        "type": "string",
+        "enum": [
+          "Automatic",
+          "DirectManager",
+          "IntegrationMaintainer",
+          "IntegrationOwner",
+          "ResourceMaintainer",
+          "ResourceOwner",
+          "TeamMember"
+        ]
+      },
+      "ApprovalEntityNullResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityWithoutEntity"
+          },
+          "entity": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumNotifiedEntityWithoutEntity": {
+        "type": "string",
+        "enum": [
+          "DirectManager",
+          "IntegrationMaintainer",
+          "IntegrationOwner",
+          "ResourceMaintainer",
+          "ResourceOwner",
+          "TeamMember"
+        ]
+      },
+      "NotifiedEntityNullResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumNotifiedEntityWithoutEntity"
+          },
+          "entity": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntityGroupSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityGroup_DirectoryGroup"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/GroupEntitySchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntityScheduleSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntitySchedule_OnCallIntegrationSchedule"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/ScheduleEntitySchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntityUserSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityUser_User"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/UserEntitySchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntityNullSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumApprovalEntityWithoutEntity"
+          },
+          "entity": {
+            "type": "string",
+            "example": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "NotifiedApprovalEntityWithoutEntitySchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/EnumNotifiedEntityWithoutEntity"
+          },
+          "entity": {
+            "type": "string",
+            "example": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "AccessRequestRoleTargetSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The role's id"
+          },
+          "name": {
+            "type": "string",
+            "description": "The role's name"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AccessRequestRoleTargetResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          },
+          "role": {
+            "description": "The target role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestRoleTargetSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "role"
+        ]
+      },
+      "AccessRequestBundleTargetSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The bundle's id"
+          },
+          "name": {
+            "type": "string",
+            "description": "The bundle's name"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "AccessRequestBundleTargetResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          },
+          "bundle": {
+            "description": "The target bundle",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestBundleTargetSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "bundle"
+        ]
+      },
+      "AccessRequestBaseTargetCreateSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "AccessRequestBundleCreateSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The target bundle's id"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "AccessRequestBundleTargetCreateSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          },
+          "bundle": {
+            "description": "The target's bundle",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestBundleCreateSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "bundle"
+        ]
+      },
+      "AccessRequestRoleCreateSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The target role's id"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "AccessRequestRoleTargetCreateSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The target's type",
+            "$ref": "#/components/schemas/EnumPublicTicketType"
+          },
+          "role": {
+            "description": "The target's role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessRequestRoleCreateSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "role"
+        ]
+      }
+    }
+  }
+}
