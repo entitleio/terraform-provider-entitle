@@ -8,7 +8,6 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func getBundlesAsPlanned(
