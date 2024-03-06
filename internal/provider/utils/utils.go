@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"strings"
 )
@@ -27,4 +28,10 @@ func TrimPrefixSuffix(s string) string {
 	result = strings.TrimPrefix(result, "\\\"")
 	result = strings.TrimSuffix(result, "\\\"")
 	return result
+}
+
+// TrimmedStringValue is a function that trims double quotes and escape characters
+// from the beginning and end of a string. It returns the trimmed hashicorp wrapped string.
+func TrimmedStringValue(s string) types.String {
+	return types.StringValue(TrimPrefixSuffix(s))
 }

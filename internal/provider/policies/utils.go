@@ -26,8 +26,8 @@ func getBundlesAsPlanned(
 				}
 
 				result[index] = &utils.IdNameModel{
-					ID:   types.StringValue(bundle.Id.String()),
-					Name: types.StringValue(bundle.Name),
+					ID:   utils.TrimmedStringValue(bundle.Id.String()),
+					Name: utils.TrimmedStringValue(bundle.Name),
 				}
 			}
 		}
@@ -83,9 +83,9 @@ func getInGroupsAsPlanned(
 				}
 
 				result[index] = &PolicyInGroupModel{
-					ID:   types.StringValue(group.Id.String()),
-					Name: types.StringValue(group.Name),
-					Type: types.StringValue(string(group.Type)),
+					ID:   utils.TrimmedStringValue(group.Id.String()),
+					Name: utils.TrimmedStringValue(group.Name),
+					Type: utils.TrimmedStringValue(string(group.Type)),
 				}
 			}
 
@@ -105,9 +105,9 @@ func getInGroups(
 
 		for index, inGroup := range inGroups {
 			result[index] = &PolicyInGroupModel{
-				ID:   types.StringValue(inGroup.Id.String()),
-				Name: types.StringValue(inGroup.Name),
-				Type: types.StringValue(string(inGroup.Type)),
+				ID:   utils.TrimmedStringValue(inGroup.Id.String()),
+				Name: utils.TrimmedStringValue(inGroup.Name),
+				Type: utils.TrimmedStringValue(string(inGroup.Type)),
 			}
 		}
 	}
@@ -125,8 +125,8 @@ func getBundles(
 
 		for _, bundle := range bundles {
 			result = append(result, &utils.IdNameModel{
-				ID:   types.StringValue(bundle.Id.String()),
-				Name: types.StringValue(bundle.Name),
+				ID:   utils.TrimmedStringValue(bundle.Id.String()),
+				Name: utils.TrimmedStringValue(bundle.Name),
 			})
 		}
 	}

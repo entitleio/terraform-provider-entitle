@@ -355,10 +355,10 @@ func convertFullBundleResultResponseSchemaToBundleDataSourceModel(
 
 	// Create the BundleDataSourceModel with the converted data
 	return BundleDataSourceModel{
-		ID:               types.StringValue(data.Id.String()),
-		Name:             types.StringValue(data.Name),
-		Description:      types.StringValue(utils.StringValue(data.Description)),
-		Category:         types.StringValue(utils.StringValue(data.Category)),
+		ID:               utils.TrimmedStringValue(data.Id.String()),
+		Name:             utils.TrimmedStringValue(data.Name),
+		Description:      utils.TrimmedStringValue(utils.StringValue(data.Description)),
+		Category:         utils.TrimmedStringValue(utils.StringValue(data.Category)),
 		AllowedDurations: allowedDurations,
 		Tags:             tags,
 		Workflow:         getWorkflow(data.Workflow),

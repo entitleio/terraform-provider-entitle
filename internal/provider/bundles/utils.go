@@ -17,8 +17,8 @@ func getWorkflow(data client.WorkflowResponseSchema) *utils.IdNameModel {
 	// Extract and convert the workflow information from the API response
 	if len(data.Id.String()) > 0 {
 		return &utils.IdNameModel{
-			ID:   types.StringValue(data.Id.String()),
-			Name: types.StringValue(data.Name),
+			ID:   utils.TrimmedStringValue(data.Id.String()),
+			Name: utils.TrimmedStringValue(data.Name),
 		}
 	}
 
