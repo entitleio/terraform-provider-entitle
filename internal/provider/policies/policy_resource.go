@@ -265,7 +265,7 @@ func (r *PolicyResource) Create(
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a entitle policy resource")
 
-	plan.ID = types.StringValue(policyResp.JSON200.Result.Id.String())
+	plan.ID = utils.TrimmedStringValue(policyResp.JSON200.Result.Id.String())
 	plan, diags = convertFullPolicyResultResponseSchemaToModel(
 		ctx,
 		bundles,
@@ -560,7 +560,7 @@ func convertFullPolicyResultResponseSchemaToModel(
 
 	// Create the Terraform resource model using the extracted data
 	return PolicyResourceModel{
-		ID:       types.StringValue(data.Id.String()),
+		ID:       utils.TrimmedStringValue(data.Id.String()),
 		Roles:    roles,
 		Bundles:  bundles,
 		InGroups: inGroups,

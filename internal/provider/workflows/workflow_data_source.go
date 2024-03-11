@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"math/big"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -434,15 +434,15 @@ func converterWorkflow(
 
 			for _, inGroup := range rule.InGroups {
 				ruleModel.InGroups = append(ruleModel.InGroups, &utils.IdNameModel{
-					ID:   types.StringValue(inGroup.Id.String()),
-					Name: types.StringValue(inGroup.Name),
+					ID:   utils.TrimmedStringValue(inGroup.Id.String()),
+					Name: utils.TrimmedStringValue(inGroup.Name),
 				})
 			}
 
 			for _, inSchedule := range rule.InSchedules {
 				ruleModel.InGroups = append(ruleModel.InGroups, &utils.IdNameModel{
-					ID:   types.StringValue(inSchedule.Id.String()),
-					Name: types.StringValue(inSchedule.Name),
+					ID:   utils.TrimmedStringValue(inSchedule.Id.String()),
+					Name: utils.TrimmedStringValue(inSchedule.Name),
 				})
 			}
 
@@ -451,7 +451,7 @@ func converterWorkflow(
 					flowStep := &workflowRulesApprovalFlowStepModel{
 						ApprovalEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0),
 						NotifiedEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0),
-						Operator:         types.StringValue(string(step.Operator)),
+						Operator:         utils.TrimmedStringValue(string(step.Operator)),
 						SortOrder:        types.NumberValue(big.NewFloat(float64(step.SortOrder))),
 					}
 
@@ -496,8 +496,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdNameModel{
-								ID:   types.StringValue(val.Entity.Id.String()),
-								Name: types.StringValue(val.Entity.Name),
+								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+								Name: utils.TrimmedStringValue(val.Entity.Name),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -507,7 +507,7 @@ func converterWorkflow(
 							}
 
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -535,8 +535,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdEmailModel{
-								Id:    types.StringValue(val.Entity.Id.String()),
-								Email: types.StringValue(emailString),
+								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
+								Email: utils.TrimmedStringValue(emailString),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -546,7 +546,7 @@ func converterWorkflow(
 							}
 
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     vObj,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -564,8 +564,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdNameModel{
-								ID:   types.StringValue(val.Entity.Id.String()),
-								Name: types.StringValue(val.Entity.Name),
+								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+								Name: utils.TrimmedStringValue(val.Entity.Name),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -575,7 +575,7 @@ func converterWorkflow(
 							}
 
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -609,7 +609,7 @@ func converterWorkflow(
 							}
 
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Value:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -658,8 +658,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdNameModel{
-								ID:   types.StringValue(val.Entity.Id.String()),
-								Name: types.StringValue(val.Entity.Name),
+								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+								Name: utils.TrimmedStringValue(val.Entity.Name),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -669,7 +669,7 @@ func converterWorkflow(
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
@@ -697,8 +697,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdEmailModel{
-								Id:    types.StringValue(val.Entity.Id.String()),
-								Email: types.StringValue(emailString),
+								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
+								Email: utils.TrimmedStringValue(emailString),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -708,7 +708,7 @@ func converterWorkflow(
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
@@ -726,8 +726,8 @@ func converterWorkflow(
 							}
 
 							v := utils.IdNameModel{
-								ID:   types.StringValue(val.Entity.Id.String()),
-								Name: types.StringValue(val.Entity.Name),
+								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+								Name: utils.TrimmedStringValue(val.Entity.Name),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -737,7 +737,7 @@ func converterWorkflow(
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -771,7 +771,7 @@ func converterWorkflow(
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     types.StringValue(string(val.Type)),
+								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -789,8 +789,8 @@ func converterWorkflow(
 	}
 
 	return WorkflowDataSourceModel{
-		Id:    types.StringValue(data.Id.String()),
-		Name:  types.StringValue(data.Name),
+		Id:    utils.TrimmedStringValue(data.Id.String()),
+		Name:  utils.TrimmedStringValue(data.Name),
 		Rules: rules,
 	}, diags
 }

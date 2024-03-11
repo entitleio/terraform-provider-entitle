@@ -1581,7 +1581,7 @@ type FullBundleResponseSchema struct {
 
 // FullBundleResultResponseSchema defines model for FullBundleResultResponseSchema.
 type FullBundleResultResponseSchema struct {
-	AllowedDurations []EnumAllowedDurations       `json:"allowedDurations"`
+	AllowedDurations []EnumAllowedDurations     `json:"allowedDurations"`
 	Category         *string                    `json:"category"`
 	Description      *string                    `json:"description"`
 	Id               openapi_types.UUID         `json:"id"`
@@ -3763,7 +3763,7 @@ func (c *Client) BundlesCreate(ctx context.Context, body BundlesCreateJSONReques
 	if err != nil {
 		return nil, err
 	}
-	
+
 	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err

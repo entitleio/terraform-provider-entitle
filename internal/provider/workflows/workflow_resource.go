@@ -425,7 +425,7 @@ func (r *WorkflowResource) Create(
 
 	tflog.Trace(ctx, "created a entitle workflow resource")
 
-	plan.ID = types.StringValue(workflowResp.JSON200.Result.Id.String())
+	plan.ID = utils.TrimmedStringValue(workflowResp.JSON200.Result.Id.String())
 
 	plan, diags = convertFullWorkflowResultResponseSchemaToModel(ctx, &workflowResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)

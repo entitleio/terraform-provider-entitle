@@ -139,35 +139,35 @@ func GetRole(
 
 	// Create a new RoleModel with ID and Name from the response data.
 	roleModel := &Role{
-		ID:   types.StringValue(id),
-		Name: types.StringValue(name),
+		ID:   TrimmedStringValue(id),
+		Name: TrimmedStringValue(name),
 	}
 
 	switch res := resource.(type) {
 	case client.ResourceResponseSchema:
 		// Create a RoleResourceModel to store information about the role's resource.
 		r = RoleResource{
-			Id:   types.StringValue(res.Id.String()),
-			Name: types.StringValue(res.Name),
+			Id:   TrimmedStringValue(res.Id.String()),
+			Name: TrimmedStringValue(res.Name),
 			Integration: RoleResourceIntegration{
 				Application: NameModel{
-					Name: types.StringValue(res.Integration.Application.Name),
+					Name: TrimmedStringValue(res.Integration.Application.Name),
 				},
-				Id:   types.StringValue(res.Integration.Id.String()),
-				Name: types.StringValue(res.Integration.Name),
+				Id:   TrimmedStringValue(res.Integration.Id.String()),
+				Name: TrimmedStringValue(res.Integration.Name),
 			},
 		}
 	case client.PolicyResourceResponseSchema:
 		// Create a RoleResourceModel to store information about the role's resource.
 		r = RoleResource{
-			Id:   types.StringValue(res.Id.String()),
-			Name: types.StringValue(res.Name),
+			Id:   TrimmedStringValue(res.Id.String()),
+			Name: TrimmedStringValue(res.Name),
 			Integration: RoleResourceIntegration{
 				Application: NameModel{
-					Name: types.StringValue(res.Integration.Application.Name),
+					Name: TrimmedStringValue(res.Integration.Application.Name),
 				},
-				Id:   types.StringValue(res.Integration.Id.String()),
-				Name: types.StringValue(res.Integration.Name),
+				Id:   TrimmedStringValue(res.Integration.Id.String()),
+				Name: TrimmedStringValue(res.Integration.Name),
 			},
 		}
 	default:

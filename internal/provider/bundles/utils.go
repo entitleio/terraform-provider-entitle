@@ -6,7 +6,6 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // getWorkflow extracts and converts workflow information from the API response into an IdNameModel.
@@ -17,8 +16,8 @@ func getWorkflow(data client.WorkflowResponseSchema) *utils.IdNameModel {
 	// Extract and convert the workflow information from the API response
 	if len(data.Id.String()) > 0 {
 		return &utils.IdNameModel{
-			ID:   types.StringValue(data.Id.String()),
-			Name: types.StringValue(data.Name),
+			ID:   utils.TrimmedStringValue(data.Id.String()),
+			Name: utils.TrimmedStringValue(data.Name),
 		}
 	}
 

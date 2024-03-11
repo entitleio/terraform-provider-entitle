@@ -1069,8 +1069,8 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			u := &utils.IdEmailModel{
-				Id:    types.StringValue(responseSchema.User.Id.String()),
-				Email: types.StringValue(string(bytes)),
+				Id:    utils.TrimmedStringValue(responseSchema.User.Id.String()),
+				Email: utils.TrimmedStringValue(string(bytes)),
 			}
 
 			uObject, diagsValues := u.AsObjectValue(ctx)
@@ -1080,7 +1080,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			maintainerUser := &utils.MaintainerModel{
-				Type:   types.StringValue(body.Type),
+				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: uObject,
 			}
 
@@ -1107,8 +1107,8 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			g := &utils.IdEmailModel{
-				Id:    types.StringValue(responseSchema.Group.Id.String()),
-				Email: types.StringValue(string(bytes)),
+				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
+				Email: utils.TrimmedStringValue(string(bytes)),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
@@ -1118,7 +1118,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			maintainerGroup := &utils.MaintainerModel{
-				Type:   types.StringValue(body.Type),
+				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: gObject,
 			}
 
@@ -1132,14 +1132,14 @@ func convertFullIntegrationResultResponseSchemaToModel(
 	var agentToken *utils.NameModel
 	if len(agentTokenName) != 0 {
 		agentToken = &utils.NameModel{
-			Name: types.StringValue(agentTokenName),
+			Name: utils.TrimmedStringValue(agentTokenName),
 		}
 	}
 
 	// Create the Terraform resource model using the extracted data
 	return IntegrationResourceModel{
-		ID:                                   types.StringValue(data.Id.String()),
-		Name:                                 types.StringValue(data.Name),
+		ID:                                   utils.TrimmedStringValue(data.Id.String()),
+		Name:                                 utils.TrimmedStringValue(data.Name),
 		AllowedDurations:                     allowedDurations,
 		AllowChangingAccountPermissions:      types.BoolValue(data.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(data.AllowCreatingAccounts),
@@ -1152,18 +1152,18 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		AutoAssignRecommendedOwners:          types.BoolValue(data.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
 		Owner: &utils.IdEmailModel{
-			Id:    types.StringValue(data.Owner.Id.String()),
-			Email: types.StringValue(string(marshalJSON)),
+			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
+			Email: utils.TrimmedStringValue(string(marshalJSON)),
 		},
 		Application: &utils.NameModel{
-			Name: types.StringValue(data.Application.Name),
+			Name: utils.TrimmedStringValue(data.Application.Name),
 		},
 		AgentToken: agentToken,
 		Workflow: &utils.IdNameModel{
-			ID:   types.StringValue(data.Workflow.Id.String()),
-			Name: types.StringValue(data.Workflow.Name),
+			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
+			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
 		Maintainers:    maintainers,
-		ConnectionJson: types.StringValue(connectionJson),
+		ConnectionJson: utils.TrimmedStringValue(connectionJson),
 	}, diags
 }

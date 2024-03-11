@@ -94,8 +94,8 @@ func GetMaintainers[T MaintainerInterface](
 			}
 
 			u := &IdEmailModel{
-				Id:    types.StringValue(responseSchema.User.Id.String()),
-				Email: types.StringValue(string(bytes)),
+				Id:    TrimmedStringValue(responseSchema.User.Id.String()),
+				Email: TrimmedStringValue(string(bytes)),
 			}
 
 			uObject, diags := u.AsObjectValue(ctx)
@@ -105,7 +105,7 @@ func GetMaintainers[T MaintainerInterface](
 			}
 
 			result = append(result, &MaintainerModel{
-				Type:   types.StringValue(body.Type),
+				Type:   TrimmedStringValue(body.Type),
 				Entity: uObject,
 			})
 		case "group":
@@ -130,8 +130,8 @@ func GetMaintainers[T MaintainerInterface](
 			}
 
 			g := &IdEmailModel{
-				Id:    types.StringValue(responseSchema.Group.Id.String()),
-				Email: types.StringValue(string(bytes)),
+				Id:    TrimmedStringValue(responseSchema.Group.Id.String()),
+				Email: TrimmedStringValue(string(bytes)),
 			}
 
 			gObject, diagsAsObject := g.AsObjectValue(ctx)
@@ -141,7 +141,7 @@ func GetMaintainers[T MaintainerInterface](
 			}
 
 			result = append(result, &MaintainerModel{
-				Type:   types.StringValue(body.Type),
+				Type:   TrimmedStringValue(body.Type),
 				Entity: gObject,
 			})
 		default:

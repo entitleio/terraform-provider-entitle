@@ -283,7 +283,7 @@ func converterPolicyToDataSource(
 
 	// Create the Terraform resource model using the extracted data
 	return PolicyDataSourceModel{
-		ID:       types.StringValue(data.Id.String()),
+		ID:       utils.TrimmedStringValue(data.Id.String()),
 		Roles:    roles,
 		Bundles:  getBundles(data.Bundles),
 		InGroups: getInGroups(data.InGroups),
