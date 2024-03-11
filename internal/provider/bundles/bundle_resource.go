@@ -403,7 +403,7 @@ func (r *BundleResource) Create(
 	tflog.Trace(ctx, "created an Entitle bundle resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = types.StringValue(bundleResp.JSON200.Result.Id.String())
+	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result.Id.String())
 
 	// Convert API response data to the model
 	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result)
@@ -763,10 +763,10 @@ func convertFullBundleResultResponseSchemaToModel(
 
 	// Create the Terraform resource model using the extracted data
 	return BundleResourceModel{
-		ID:               types.StringValue(data.Id.String()),
-		Name:             types.StringValue(data.Name),
-		Description:      types.StringValue(utils.StringValue(data.Description)),
-		Category:         types.StringValue(utils.StringValue(data.Category)),
+		ID:               utils.TrimmedStringValue(data.Id.String()),
+		Name:             utils.TrimmedStringValue(data.Name),
+		Description:      utils.TrimmedStringValue(utils.StringValue(data.Description)),
+		Category:         utils.TrimmedStringValue(utils.StringValue(data.Category)),
 		AllowedDurations: allowedDurations,
 		Tags:             tags,
 		Workflow:         getWorkflow(data.Workflow),

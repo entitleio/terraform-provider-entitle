@@ -159,7 +159,7 @@ func GetStringList(data *[]string) (types.List, diag.Diagnostics) {
 	result := make([]attr.Value, 0)
 	if data != nil {
 		for _, tag := range StringSliceValue(data) {
-			result = append(result, types.StringValue(TrimPrefixSuffix(tag)))
+			result = append(result, TrimmedStringValue(tag))
 		}
 	}
 

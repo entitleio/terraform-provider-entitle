@@ -317,17 +317,17 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	owner := &utils.IdEmailModel{
-		Id:    types.StringValue(integrationResp.JSON200.Result.Owner.Id.String()),
-		Email: types.StringValue(ownerEmailString),
+		Id:    utils.TrimmedStringValue(integrationResp.JSON200.Result.Owner.Id.String()),
+		Email: utils.TrimmedStringValue(ownerEmailString),
 	}
 
 	application := &utils.NameModel{
-		Name: types.StringValue(integrationResp.JSON200.Result.Application.Name),
+		Name: utils.TrimmedStringValue(integrationResp.JSON200.Result.Application.Name),
 	}
 
 	workflow := &utils.IdNameModel{
-		ID:   types.StringValue(integrationResp.JSON200.Result.Workflow.Id.String()),
-		Name: types.StringValue(integrationResp.JSON200.Result.Workflow.Name),
+		ID:   utils.TrimmedStringValue(integrationResp.JSON200.Result.Workflow.Id.String()),
+		Name: utils.TrimmedStringValue(integrationResp.JSON200.Result.Workflow.Name),
 	}
 
 	maintainers, diags := utils.GetMaintainers(ctx, integrationResp.JSON200.Result.Maintainers)
@@ -337,8 +337,8 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	data = IntegrationDataSourceModel{
-		Id:                                   types.StringValue(integrationResp.JSON200.Result.Id.String()),
-		Name:                                 types.StringValue(integrationResp.JSON200.Result.Name),
+		Id:                                   utils.TrimmedStringValue(integrationResp.JSON200.Result.Id.String()),
+		Name:                                 utils.TrimmedStringValue(integrationResp.JSON200.Result.Name),
 		AllowedDurations:                     allowedDurations,
 		AllowChangingAccountPermissions:      types.BoolValue(integrationResp.JSON200.Result.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(integrationResp.JSON200.Result.AllowCreatingAccounts),

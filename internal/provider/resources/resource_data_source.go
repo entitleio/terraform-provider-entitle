@@ -323,24 +323,24 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		owner = &utils.IdEmailModel{
-			Id:    types.StringValue(resourceResp.JSON200.Result.Owner.Id.String()),
-			Email: types.StringValue(ownerEmailString),
+			Id:    utils.TrimmedStringValue(resourceResp.JSON200.Result.Owner.Id.String()),
+			Email: utils.TrimmedStringValue(ownerEmailString),
 		}
 	}
 
 	var workflow *utils.IdNameModel
 	if resourceResp.JSON200.Result.Owner != nil {
 		workflow = &utils.IdNameModel{
-			ID:   types.StringValue(resourceResp.JSON200.Result.Workflow.Id.String()),
-			Name: types.StringValue(resourceResp.JSON200.Result.Workflow.Name),
+			ID:   utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Id.String()),
+			Name: utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Name),
 		}
 	}
 
 	integration := utils.RoleResourceIntegration{
-		Id:   types.StringValue(resourceResp.JSON200.Result.Integration.Id.String()),
-		Name: types.StringValue(resourceResp.JSON200.Result.Integration.Name),
+		Id:   utils.TrimmedStringValue(resourceResp.JSON200.Result.Integration.Id.String()),
+		Name: utils.TrimmedStringValue(resourceResp.JSON200.Result.Integration.Name),
 		Application: utils.NameModel{
-			Name: types.StringValue(resourceResp.JSON200.Result.Integration.Application.Name),
+			Name: utils.TrimmedStringValue(resourceResp.JSON200.Result.Integration.Application.Name),
 		},
 	}
 
@@ -357,15 +357,15 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	data = ResourceDataSourceModel{
-		Id:                     types.StringValue(resourceResp.JSON200.Result.Id.String()),
-		Name:                   types.StringValue(resourceResp.JSON200.Result.Name),
+		Id:                     utils.TrimmedStringValue(resourceResp.JSON200.Result.Id.String()),
+		Name:                   utils.TrimmedStringValue(resourceResp.JSON200.Result.Name),
 		AllowedDurations:       allowedDurations,
 		AllowRequests:          types.BoolValue(resourceResp.JSON200.Result.AllowRequests),
 		AllowAsGrantMethod:     types.BoolValue(resourceResp.JSON200.Result.AllowAsGrantMethod),
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
-		Description:            types.StringValue(utils.StringValue(resourceResp.JSON200.Result.Description)),
-		UserDefinedDescription: types.StringValue(utils.StringValue(resourceResp.JSON200.Result.UserDefinedDescription)),
+		Description:            utils.TrimmedStringValue(utils.StringValue(resourceResp.JSON200.Result.Description)),
+		UserDefinedDescription: utils.TrimmedStringValue(utils.StringValue(resourceResp.JSON200.Result.UserDefinedDescription)),
 		Owner:                  owner,
 		Workflow:               workflow,
 		Integration:            integrationObkect,

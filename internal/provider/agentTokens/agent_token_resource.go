@@ -159,9 +159,9 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Update the AgentTokenResourceModel with the created agent token data.
 	plan = AgentTokenResourceModel{
-		ID:    types.StringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  types.StringValue(name),
-		Token: types.StringValue(agentTokenResp.JSON200.Result.Token),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(name),
+		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Token),
 	}
 
 	// Save the data into Terraform state.
@@ -224,8 +224,8 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Update the AgentTokenResourceModel with the retrieved data.
 	data = AgentTokenResourceModel{
-		ID:    types.StringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  types.StringValue(agentTokenResp.JSON200.Result.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 		Token: data.Token,
 	}
 
@@ -303,8 +303,8 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Update the AgentTokenResourceModel with the updated agent token data.
 	data = AgentTokenResourceModel{
-		ID:    types.StringValue(agentTokenResp.JSON200.Id.String()),
-		Name:  types.StringValue(agentTokenResp.JSON200.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
 		Token: data.Token,
 	}
 

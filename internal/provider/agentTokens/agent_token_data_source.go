@@ -141,8 +141,8 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Populate the data model with details from the API response
 	data = AgentTokenDataSourceModel{
-		ID:   types.StringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name: types.StringValue(agentTokenResp.JSON200.Result.Name),
+		ID:   utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 	}
 
 	// Log a trace message indicating a successful read of the Entitle Agent Token data source

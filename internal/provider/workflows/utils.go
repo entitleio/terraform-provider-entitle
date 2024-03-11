@@ -48,7 +48,7 @@ func getWorkflowsRules(
 					inGroups = append(
 						inGroups,
 						client.GroupEntitySchema{
-							Id: group.ID.String(),
+							Id: utils.TrimPrefixSuffix(group.ID.String()),
 						},
 					)
 				}
@@ -62,7 +62,7 @@ func getWorkflowsRules(
 					inSchedules = append(
 						inSchedules,
 						client.ScheduleEntitySchema{
-							Id: s.ID.String(),
+							Id: utils.TrimPrefixSuffix(s.ID.String()),
 						},
 					)
 				}
