@@ -325,20 +325,9 @@ func (r *BundleResource) Create(
 					return
 				}
 
-				// Note: to ignore if customers want to use the roles multiple times
-				exist := false
-				for _, item := range roles {
-					if item.Id.String() == parsedUUID.String() {
-						exist = true
-						continue
-					}
-				}
-
-				if !exist {
-					roles = append(roles, client.IdParamsSchema{
-						Id: parsedUUID,
-					})
-				}
+				roles = append(roles, client.IdParamsSchema{
+					Id: parsedUUID,
+				})
 			}
 		}
 	}
@@ -417,7 +406,7 @@ func (r *BundleResource) Create(
 	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result.Id.String())
 
 	// Convert API response data to the model
-	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, plan.Roles, roles, &bundleResp.JSON200.Result)
+	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -486,7 +475,7 @@ func (r *BundleResource) Read(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, nil, &bundleResp.JSON200.Result)
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -631,7 +620,7 @@ func (r *BundleResource) Update(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, data.Roles, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result)
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -723,7 +712,6 @@ func (r *BundleResource) ImportState(
 // It returns the converted model and any diagnostic information if there are errors during the conversion.
 func convertFullBundleResultResponseSchemaToModel(
 	ctx context.Context,
-	defineRoles []*utils.Role,
 	plannedRoles []client.IdParamsSchema,
 	data *client.FullBundleResultResponseSchema,
 ) (BundleResourceModel, diag.Diagnostics) {
@@ -765,7 +753,7 @@ func convertFullBundleResultResponseSchemaToModel(
 	if plannedRoles == nil {
 		roles, diagsRoles = getRoles(ctx, data.Roles)
 	} else {
-		roles, diagsRoles = getRolesAsPlanned(ctx, defineRoles, plannedRoles, data.Roles)
+		roles, diagsRoles = getRolesAsPlanned(ctx, plannedRoles, data.Roles)
 	}
 
 	diags.Append(diagsRoles...)

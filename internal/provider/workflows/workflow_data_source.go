@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"math/big"
+	"sort"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -440,7 +441,7 @@ func converterWorkflow(
 			}
 
 			for _, inSchedule := range rule.InSchedules {
-				ruleModel.InGroups = append(ruleModel.InGroups, &utils.IdNameModel{
+				ruleModel.InSchedules = append(ruleModel.InSchedules, &utils.IdNameModel{
 					ID:   utils.TrimmedStringValue(inSchedule.Id.String()),
 					Name: utils.TrimmedStringValue(inSchedule.Name),
 				})
@@ -781,6 +782,15 @@ func converterWorkflow(
 					}
 
 					ruleModel.ApprovalFlow.Steps = append(ruleModel.ApprovalFlow.Steps, flowStep)
+					sort.Slice(ruleModel.ApprovalFlow.Steps, func(i, j int) bool {
+						sortOrderI := ruleModel.ApprovalFlow.Steps[i].SortOrder.ValueBigFloat()
+						sortOrderJ := ruleModel.ApprovalFlow.Steps[j].SortOrder.ValueBigFloat()
+
+						iValue, _ := sortOrderI.Float32()
+						jValue, _ := sortOrderJ.Float32()
+
+						return iValue < jValue
+					})
 				}
 			}
 

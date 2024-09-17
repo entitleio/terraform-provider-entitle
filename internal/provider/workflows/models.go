@@ -2,7 +2,6 @@ package workflows
 
 import (
 	"context"
-
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
