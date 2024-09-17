@@ -417,11 +417,6 @@ func (r *BundleResource) Create(
 	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result.Id.String())
 
 	// Convert API response data to the model
-	tflog.Debug(ctx, "--------------------------------------------------kakakakakkkkakakakakakacreated an Entitle bundle resource")
-	tflog.Debug(ctx, fmt.Sprintf("--------------- Len plan.Roles. %d", len(plan.Roles)))
-	tflog.Debug(ctx, fmt.Sprintf("--------------- Len roles. %d", len(roles)))
-	tflog.Debug(ctx, "--------------------------------------------------kakakakakkkkakakakakakacreated an Entitle bundle resource")
-
 	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, plan.Roles, roles, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
