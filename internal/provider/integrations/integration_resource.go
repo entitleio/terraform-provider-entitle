@@ -237,9 +237,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional: true,
 				Computed: true,
 				Description: "Grant Method relates to the possible ways to gain permissions for a resource. " +
-					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: true)",
+					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)",
 				MarkdownDescription: "Grant Method relates to the possible ways to gain permissions for a resource. " +
-					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: true)",
+					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)",
 				Default: booldefault.StaticBool(defaultIntegrationAllowAsGrantMethod),
 			},
 			"allow_as_grant_method_by_default": schema.BoolAttribute{
@@ -247,9 +247,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional: true,
 				Computed: true,
 				Description: "As described above, for new resources that are added to the integration. " +
-					"(default: true)",
+					"(default: false)",
 				MarkdownDescription: "As described above, for new resources that are added to the integration. " +
-					"(default: true)",
+					"(default: false)",
 				Default: booldefault.StaticBool(defaultIntegrationAllowAsGrantMethodByDefault),
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
@@ -584,6 +584,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	if agentToken != nil {
 		agentTokenName = agentToken.Name
 	}
+
 	plan, diags = convertFullIntegrationResultResponseSchemaToModel(
 		ctx,
 		&integrationResp.JSON200.Result,

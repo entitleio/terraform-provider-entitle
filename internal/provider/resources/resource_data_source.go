@@ -329,7 +329,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	var workflow *utils.IdNameModel
-	if resourceResp.JSON200.Result.Owner != nil {
+	if resourceResp.JSON200.Result.Workflow != nil {
 		workflow = &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Name),

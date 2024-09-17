@@ -7,8 +7,8 @@ const (
 	defaultIntegrationReadonly                             = false
 	defaultIntegrationAllowRequests                        = true
 	defaultIntegrationAllowRequestsByDefault               = true
-	defaultIntegrationAllowAsGrantMethod                   = true
-	defaultIntegrationAllowAsGrantMethodByDefault          = true
+	defaultIntegrationAllowAsGrantMethod                   = false
+	defaultIntegrationAllowAsGrantMethodByDefault          = false
 	defaultIntegrationAutoAssignRecommendedMaintainers     = true
 	defaultIntegrationAutoAssignRecommendedOwners          = true
 	defaultIntegrationNotifyAboutExternalPermissionChanges = true

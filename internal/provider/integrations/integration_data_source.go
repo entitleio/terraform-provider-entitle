@@ -45,7 +45,6 @@ type IntegrationDataSourceModel struct {
 	AutoAssignRecommendedMaintainers     types.Bool               `tfsdk:"auto_assign_recommended_maintainers"`
 	AutoAssignRecommendedOwners          types.Bool               `tfsdk:"auto_assign_recommended_owners"`
 	NotifyAboutExternalPermissionChanges types.Bool               `tfsdk:"notify_about_external_permission_changes"`
-	Owner                                *utils.IdEmailModel      `tfsdk:"owner"`
 	Application                          *utils.NameModel         `tfsdk:"application"`
 	Workflow                             *utils.IdNameModel       `tfsdk:"workflow"`
 	Maintainers                          []*utils.MaintainerModel `tfsdk:"maintainers"`
@@ -168,13 +167,13 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 			},
 			"allow_as_grant_method": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowAsGrantMethod (default: true)",
-				MarkdownDescription: "allowAsGrantMethod (default: true)",
+				Description:         "allowAsGrantMethod (default: false)",
+				MarkdownDescription: "allowAsGrantMethod (default: false)",
 			},
 			"allow_as_grant_method_by_default": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowAsGrantMethodByDefault (default: true)",
-				MarkdownDescription: "allowAsGrantMethodByDefault (default: true)",
+				Description:         "allowAsGrantMethodByDefault (default: false)",
+				MarkdownDescription: "allowAsGrantMethodByDefault (default: false)",
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
 				Computed:            true,
@@ -190,23 +189,6 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:            true,
 				Description:         "notifyAboutExternalPermissionChanges (default: true)",
 				MarkdownDescription: "notifyAboutExternalPermissionChanges (default: true)",
-			},
-			"owner": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed:            true,
-						Description:         "id",
-						MarkdownDescription: "id",
-					},
-					"email": schema.StringAttribute{
-						Computed:            true,
-						Description:         "email",
-						MarkdownDescription: "email",
-					},
-				},
-				Computed:            true,
-				Description:         "owner",
-				MarkdownDescription: "owner",
 			},
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -307,20 +289,6 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	ownerEmailString, err := utils.GetEmailString(integrationResp.JSON200.Result.Owner.Email)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Failed to convert the owner email to string",
-			err.Error(),
-		)
-		return
-	}
-
-	owner := &utils.IdEmailModel{
-		Id:    utils.TrimmedStringValue(integrationResp.JSON200.Result.Owner.Id.String()),
-		Email: utils.TrimmedStringValue(ownerEmailString),
-	}
-
 	application := &utils.NameModel{
 		Name: utils.TrimmedStringValue(integrationResp.JSON200.Result.Application.Name),
 	}
@@ -350,7 +318,6 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		AutoAssignRecommendedMaintainers:     types.BoolValue(integrationResp.JSON200.Result.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(integrationResp.JSON200.Result.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(integrationResp.JSON200.Result.NotifyAboutExternalPermissionChanges),
-		Owner:                                owner,
 		Application:                          application,
 		Workflow:                             workflow,
 		Maintainers:                          maintainers,
