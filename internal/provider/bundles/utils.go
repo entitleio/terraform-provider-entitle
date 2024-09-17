@@ -2,7 +2,6 @@ package bundles
 
 import (
 	"context"
-
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,6 +25,7 @@ func getWorkflow(data client.WorkflowResponseSchema) *utils.IdNameModel {
 
 func getRolesAsPlanned(
 	ctx context.Context,
+	defineRoles []*utils.Role,
 	planRoles []client.IdParamsSchema,
 	data []client.BundleItemResponseSchema,
 ) ([]*utils.Role, diag.Diagnostics) {
@@ -33,6 +33,7 @@ func getRolesAsPlanned(
 
 	var roles []*utils.Role
 	if len(planRoles) > 0 {
+		addRoles := make([]*utils.Role, 0)
 		roles = make([]*utils.Role, len(planRoles))
 
 		for index, plan := range planRoles {
@@ -48,7 +49,28 @@ func getRolesAsPlanned(
 				}
 
 				roles[index] = roleModel
+
+				// Note: to ignore if customers want to use the roles multiple times
+				if defineRoles != nil {
+					if len(defineRoles) > len(planRoles) {
+						exist := false
+						for _, defineRole := range defineRoles {
+							if utils.TrimPrefixSuffix(defineRole.ID.String()) == utils.TrimPrefixSuffix(plan.Id.String()) {
+								exist = true
+								continue
+							}
+						}
+
+						if exist {
+							addRoles = append(addRoles, roleModel)
+						}
+					}
+				}
 			}
+		}
+
+		if len(addRoles) > 0 {
+			roles = append(roles, addRoles...)
 		}
 	}
 
