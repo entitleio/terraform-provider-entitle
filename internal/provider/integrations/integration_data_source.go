@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
+	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -266,6 +268,15 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	if integrationResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(integrationResp.Body)
+		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(

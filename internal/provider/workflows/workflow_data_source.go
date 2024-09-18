@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"math/big"
+	"net/http"
 	"sort"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -374,6 +375,15 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	if workflowResp.HTTPResponse.StatusCode != 200 {
+		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		errBody, _ := utils.GetErrorBody(workflowResp.Body)
 		resp.Diagnostics.AddError(
 			"Client Error",

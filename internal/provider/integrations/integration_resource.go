@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -568,6 +569,15 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	if integrationResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(integrationResp.Body)
+		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -643,6 +653,15 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	if integrationResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(integrationResp.Body)
+		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -890,6 +909,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	if integrationResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(integrationResp.Body)
+		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -957,6 +985,15 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	if httpResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(httpResp.Body)
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		if errBody.ID == "resource.notFound" {
 			return
 		}
