@@ -619,6 +619,10 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
+							if val.Entity == nil {
+								vObj = types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes())
+							}
+
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Value:    vObj,
@@ -779,6 +783,10 @@ func converterWorkflow(
 							if diagsAs.HasError() {
 								diags.Append(diagsAs...)
 								return WorkflowDataSourceModel{}, diags
+							}
+
+							if val.Entity == nil {
+								vObj = types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes())
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
