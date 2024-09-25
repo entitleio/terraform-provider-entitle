@@ -613,14 +613,16 @@ func converterWorkflow(
 								Notified: types.StringPointerValue(val.Entity),
 							}
 
+							if val.Entity == nil {
+								v = workflowRulesApprovalFlowStepNotifiedEntityModel{
+									Notified: types.StringNull(),
+								}
+							}
+
 							vObj, diagsAs := v.AsObjectValue(ctx)
 							if diagsAs.HasError() {
 								diags.Append(diagsAs...)
 								return WorkflowDataSourceModel{}, diags
-							}
-
-							if val.Entity == nil {
-								vObj = types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes())
 							}
 
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
@@ -779,14 +781,16 @@ func converterWorkflow(
 								Approval: types.StringPointerValue(val.Entity),
 							}
 
+							if val.Entity == nil {
+								v = workflowRulesApprovalFlowStepApprovalEntityModel{
+									Approval: types.StringNull(),
+								}
+							}
+
 							vObj, diagsAs := v.AsObjectValue(ctx)
 							if diagsAs.HasError() {
 								diags.Append(diagsAs...)
 								return WorkflowDataSourceModel{}, diags
-							}
-
-							if val.Entity == nil {
-								vObj = types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes())
 							}
 
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{

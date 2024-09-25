@@ -310,7 +310,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 																	MarkdownDescription: "",
 																},
 															},
-															Optional:            true,
+															Required:            true,
 															Description:         "value",
 															MarkdownDescription: "value",
 														},
