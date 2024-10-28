@@ -42,8 +42,8 @@ resource "entitle_integration" "example" {
 ### Optional
 
 - `agent_token` (Attributes) agent token (see [below for nested schema](#nestedatt--agent_token))
-- `allow_as_grant_method` (Boolean) Grant Method relates to the possible ways to gain permissions for a resource. When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: true)
-- `allow_as_grant_method_by_default` (Boolean) As described above, for new resources that are added to the integration. (default: true)
+- `allow_as_grant_method` (Boolean) Grant Method relates to the possible ways to gain permissions for a resource. When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)
+- `allow_as_grant_method_by_default` (Boolean) As described above, for new resources that are added to the integration. (default: false)
 - `allow_changing_account_permissions` (Boolean) allowChangingAccountPermissions (default: true)
 - `allow_creating_accounts` (Boolean) allowCreatingAccounts (default: true)
 - `allow_requests` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)

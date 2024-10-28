@@ -21,7 +21,6 @@ Entitle Resource Description
 
 ### Read-Only
 
-- `allow_as_grant_method` (Boolean) allowAsGrantMethod (default: true)
 - `allow_requests` (Boolean) allowRequests (default: true)
 - `allowed_durations` (List of Number) allowedDurations
 - `description` (String) description
