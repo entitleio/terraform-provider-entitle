@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
+	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -273,6 +275,15 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// Check the HTTP response status code for errors
 	if bundleResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(bundleResp.Body)
+		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(

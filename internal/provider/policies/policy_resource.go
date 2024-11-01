@@ -3,6 +3,8 @@ package policies
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -250,6 +252,15 @@ func (r *PolicyResource) Create(
 
 	if policyResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(policyResp.Body)
+		if policyResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(policyResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -325,6 +336,15 @@ func (r *PolicyResource) Read(
 
 	if policyResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(policyResp.Body)
+		if policyResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(policyResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -407,6 +427,15 @@ func (r *PolicyResource) Update(
 
 	if policyResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(policyResp.Body)
+		if policyResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(policyResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -478,6 +507,15 @@ func (r *PolicyResource) Delete(
 
 	if httpResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(httpResp.Body)
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		if errBody.ID == "resource.notFound" {
 			return
 		}

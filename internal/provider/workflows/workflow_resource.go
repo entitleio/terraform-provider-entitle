@@ -3,7 +3,11 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"math/big"
+	"net/http"
+	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
@@ -75,6 +79,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				Required:            true,
 				MarkdownDescription: "name",
 				Description:         "name",
+				Validators: []validator.String{
+					validators.WorkflowName{},
+				},
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -303,7 +310,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 																	MarkdownDescription: "",
 																},
 															},
-															Optional:            true,
+															Required:            true,
 															Description:         "value",
 															MarkdownDescription: "value",
 														},
@@ -412,6 +419,15 @@ func (r *WorkflowResource) Create(
 
 	if workflowResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(workflowResp.Body)
+		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -480,6 +496,15 @@ func (r *WorkflowResource) Read(
 
 	if workflowResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(workflowResp.Body)
+		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -563,6 +588,15 @@ func (r *WorkflowResource) Update(
 
 	if workflowResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(workflowResp.Body)
+		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -628,6 +662,15 @@ func (r *WorkflowResource) Delete(
 
 	if httpResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(httpResp.Body)
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		if errBody.ID == "resource.notFound" {
 			return
 		}

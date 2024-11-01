@@ -67,8 +67,8 @@ func (p *EntitleProvider) Schema(
 			"api_key": schema.StringAttribute{
 				MarkdownDescription: "entitle API bearer authorizations (http, Bearer)",
 				Description:         "entitle API bearer authorizations (http, Bearer)",
-				Required:            true,
 				Sensitive:           true,
+				Optional:            true,
 			},
 		},
 	}

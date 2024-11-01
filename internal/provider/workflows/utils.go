@@ -3,13 +3,11 @@ package workflows
 import (
 	"context"
 	"fmt"
-
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 func getWorkflowsRules(
@@ -393,6 +391,15 @@ func getWorkflowsRules(
 			InSchedules:   inSchedules,
 			SortOrder:     sortOrder,
 			UnderDuration: client.EnumAllowedDurations(underDuration),
+		}
+
+		if len(inSchedules) > 0 && item.AnySchedule {
+			diags.AddError(
+				"Invalid Input",
+				"not allowed to put in_schedules values when the any_schedule parameter is true",
+			)
+
+			return rules, diags
 		}
 
 		rules = append(rules, item)

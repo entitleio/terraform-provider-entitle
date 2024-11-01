@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
+	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -386,6 +388,15 @@ func (r *BundleResource) Create(
 	// Handle API response status
 	if bundleResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(bundleResp.Body)
+		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -462,6 +473,15 @@ func (r *BundleResource) Read(
 	// Handle API response status
 	if bundleResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(bundleResp.Body)
+		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -607,6 +627,15 @@ func (r *BundleResource) Update(
 	// Handle API response status
 	if bundleResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(bundleResp.Body)
+		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -676,6 +705,16 @@ func (r *BundleResource) Delete(
 	// Handle API response status
 	if httpResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(httpResp.Body)
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest &&
+				strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		if errBody.ID == "resource.notFound" {
 			return
 		}
