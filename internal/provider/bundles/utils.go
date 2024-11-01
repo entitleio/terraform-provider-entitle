@@ -2,7 +2,6 @@ package bundles
 
 import (
 	"context"
-
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/diag"

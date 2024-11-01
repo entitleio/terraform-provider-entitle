@@ -21,8 +21,8 @@ Entitle Integration Description
 
 ### Read-Only
 
-- `allow_as_grant_method` (Boolean) allowAsGrantMethod (default: true)
-- `allow_as_grant_method_by_default` (Boolean) allowAsGrantMethodByDefault (default: true)
+- `allow_as_grant_method` (Boolean) allowAsGrantMethod (default: false)
+- `allow_as_grant_method_by_default` (Boolean) allowAsGrantMethodByDefault (default: false)
 - `allow_changing_account_permissions` (Boolean) allowChangingAccountPermissions (default: true)
 - `allow_creating_accounts` (Boolean) allowCreatingAccounts (default: true)
 - `allow_requests` (Boolean) allowRequests (default: true)
@@ -34,7 +34,6 @@ Entitle Integration Description
 - `maintainers` (Attributes List) maintainers (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) Entitle Integration name
 - `notify_about_external_permission_changes` (Boolean) notifyAboutExternalPermissionChanges (default: true)
-- `owner` (Attributes) owner (see [below for nested schema](#nestedatt--owner))
 - `readonly` (Boolean) readonly (default: true)
 - `workflow` (Attributes) workflow (see [below for nested schema](#nestedatt--workflow))
 
@@ -72,15 +71,6 @@ Read-Only:
 - `email` (String) email
 - `id` (String) id
 
-
-
-<a id="nestedatt--owner"></a>
-### Nested Schema for `owner`
-
-Read-Only:
-
-- `email` (String) email
-- `id` (String) id
 
 
 <a id="nestedatt--workflow"></a>

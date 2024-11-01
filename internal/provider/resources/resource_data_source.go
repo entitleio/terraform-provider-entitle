@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -13,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"net/http"
+	"strings"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -105,11 +106,6 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Computed:            true,
 				Description:         "allowRequests (default: true)",
 				MarkdownDescription: "allowRequests (default: true)",
-			},
-			"allow_as_grant_method": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "allowAsGrantMethod (default: true)",
-				MarkdownDescription: "allowAsGrantMethod (default: true)",
 			},
 			"owner": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -280,6 +276,16 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	if resourceResp.HTTPResponse.StatusCode != 200 {
+		errBody, _ := utils.GetErrorBody(resourceResp.Body)
+		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
@@ -329,7 +335,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	}
 
 	var workflow *utils.IdNameModel
-	if resourceResp.JSON200.Result.Owner != nil {
+	if resourceResp.JSON200.Result.Workflow != nil {
 		workflow = &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(resourceResp.JSON200.Result.Workflow.Name),
@@ -361,7 +367,6 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		Name:                   utils.TrimmedStringValue(resourceResp.JSON200.Result.Name),
 		AllowedDurations:       allowedDurations,
 		AllowRequests:          types.BoolValue(resourceResp.JSON200.Result.AllowRequests),
-		AllowAsGrantMethod:     types.BoolValue(resourceResp.JSON200.Result.AllowAsGrantMethod),
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
 		Description:            utils.TrimmedStringValue(utils.StringValue(resourceResp.JSON200.Result.Description)),

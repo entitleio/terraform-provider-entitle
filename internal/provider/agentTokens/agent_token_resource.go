@@ -5,6 +5,8 @@ package agentTokens
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -356,6 +358,24 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 	// Check if the API request was successful.
 	if httpResp.HTTPResponse.StatusCode != 200 {
 		errBody, _ := utils.GetErrorBody(httpResp.Body)
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
+		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			httpResp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"unauthorized token, update the entitle token and retry please",
+			)
+			return
+		}
+
 		if errBody.ID == "resource.notFound" {
 			return
 		}
