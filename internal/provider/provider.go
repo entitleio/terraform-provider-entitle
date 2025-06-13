@@ -91,46 +91,9 @@ func (p *EntitleProvider) Configure(
 	}
 
 	// Validate and set API key.
-	if config.APIKey.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("api_key"),
-			"Unknown Entitle API bearer token",
-			"The provider cannot create the Entitle API client as there is an unknown configuration value for "+
-				"the Entitle API bearer token. Either target apply the source of the value first, set the value "+
-				"statically in the configuration, or use the ENTITLE_API_KEY environment variable.",
-		)
-	}
-
-	// Check for errors before proceeding.
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Retrieve server and token values from environment variables or configuration.
-	server := os.Getenv("ENTITLE_API_ENDPOINT")
 	token := os.Getenv("ENTITLE_API_KEY")
-
-	if !config.Endpoint.IsNull() {
-		server = config.Endpoint.ValueString()
-	} else if len(server) == 0 {
-		config.Endpoint = types.StringValue(defaultAPIServer)
-		server = defaultAPIServer
-	}
-
-	if !config.APIKey.IsNull() {
-		token = config.APIKey.ValueString()
-	}
-
-	// Validate and set server and token.
-	if server == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("endpoint"),
-			"Missing Entitle API Host",
-			"The provider cannot create the Entitle API client as there is a missing or empty value for the "+
-				"Entitle API server. "+
-				"Set the server value in the configuration or use the ENTITLE_API_ENDPOINT environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
+	if !config.APIKey.IsUnknown() {
+		token = config.APIKey.String()
 	}
 
 	if token == "" {
@@ -147,6 +110,17 @@ func (p *EntitleProvider) Configure(
 	// Check for errors before proceeding.
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Retrieve server value from environment variables or configuration.
+	server := os.Getenv("ENTITLE_API_ENDPOINT")
+	if !config.Endpoint.IsNull() {
+		server = config.Endpoint.ValueString()
+	}
+
+	if server == "" {
+		config.Endpoint = types.StringValue(defaultAPIServer)
+		server = defaultAPIServer
 	}
 
 	// Set log fields and create Entitle client.
