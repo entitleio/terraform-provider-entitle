@@ -4,13 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflows"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -18,6 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflows"
 )
 
 const (

@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"math/big"
 	"net/http"
 	"sort"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/validators"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -18,6 +17,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure that the provider-defined types fully satisfy the framework interfaces.
@@ -430,15 +432,15 @@ func converterWorkflow(
 
 	var rules []*workflowRulesModel
 	if len(data.Rules) > 0 {
-		rules = make([]*workflowRulesModel, 0)
+		rules = make([]*workflowRulesModel, 0, len(data.Rules))
 		for _, rule := range data.Rules {
 			ruleModel := &workflowRulesModel{
 				AnySchedule: types.BoolValue(rule.AnySchedule),
 				ApprovalFlow: workflowRulesApprovalFlowModel{
 					Steps: make([]*workflowRulesApprovalFlowStepModel, 0),
 				},
-				InGroups:      make([]*utils.IdNameModel, 0),
-				InSchedules:   make([]*utils.IdNameModel, 0),
+				InGroups:      make([]*utils.IdNameModel, 0, len(rule.InGroups)),
+				InSchedules:   make([]*utils.IdNameModel, 0, len(rule.InSchedules)),
 				SortOrder:     types.NumberValue(big.NewFloat(float64(rule.SortOrder))),
 				UnderDuration: types.NumberValue(big.NewFloat(float64(rule.UnderDuration))),
 			}
@@ -460,14 +462,14 @@ func converterWorkflow(
 			if len(rule.ApprovalFlow.Steps) > 0 {
 				for _, step := range rule.ApprovalFlow.Steps {
 					flowStep := &workflowRulesApprovalFlowStepModel{
-						ApprovalEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0),
-						NotifiedEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0),
+						ApprovalEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.ApprovalEntities)),
+						NotifiedEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.NotifiedEntities)),
 						Operator:         utils.TrimmedStringValue(string(step.Operator)),
 						SortOrder:        types.NumberValue(big.NewFloat(float64(step.SortOrder))),
 					}
 
 					for _, entity := range step.NotifiedEntities {
-						var stepMap = make(map[string]interface{}, 0)
+						var stepMap = make(map[string]interface{})
 
 						jsonData, err := entity.MarshalJSON()
 						if err != nil {
@@ -636,7 +638,7 @@ func converterWorkflow(
 					}
 
 					for _, entity := range step.ApprovalEntities {
-						var stepMap = make(map[string]interface{}, 0)
+						var stepMap = make(map[string]interface{})
 						jsonData, err := entity.MarshalJSON()
 						if err != nil {
 							diags.AddError(

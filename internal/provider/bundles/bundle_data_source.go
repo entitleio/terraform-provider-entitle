@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -221,7 +222,7 @@ func (d *BundleDataSource) Configure(
 		return
 	}
 
-	client, ok := req.ProviderData.(*client.ClientWithResponses)
+	cli, ok := req.ProviderData.(*client.ClientWithResponses)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -232,7 +233,7 @@ func (d *BundleDataSource) Configure(
 		return
 	}
 
-	d.client = client
+	d.client = cli
 }
 
 // Read reads data from the external source and sets it in Terraform state.
@@ -337,10 +338,10 @@ func convertFullBundleResultResponseSchemaToBundleDataSourceModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, 0)
+	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
 	if data.AllowedDurations != nil {
-		for _, duration := range data.AllowedDurations {
-			allowedDurationsValues = append(allowedDurationsValues, types.NumberValue(big.NewFloat(float64(duration))))
+		for i, duration := range data.AllowedDurations {
+			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 		}
 	}
 

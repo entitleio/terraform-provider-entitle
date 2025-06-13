@@ -1,9 +1,10 @@
 package utils
 
 import (
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	openapi_types "github.com/oapi-codegen/runtime/types"
-	"strings"
 )
 
 // GetEmailString is a function that extracts a string value from an openapi_types.Email.
