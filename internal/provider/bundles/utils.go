@@ -2,9 +2,11 @@ package bundles
 
 import (
 	"context"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 // getWorkflow extracts and converts workflow information from the API response into an IdNameModel.
@@ -66,9 +68,9 @@ func getRoles(
 
 	var roles []*utils.Role
 	if len(data) > 0 {
-		roles = make([]*utils.Role, 0)
+		roles = make([]*utils.Role, len(data))
 
-		for _, role := range data {
+		for i, role := range data {
 			roleModel, diagsGetRoles := utils.GetRole(ctx, role.Id.String(), role.Name, role.Resource)
 			diags.Append(diagsGetRoles...)
 			if diags.HasError() {
@@ -76,7 +78,7 @@ func getRoles(
 			}
 
 			// Append the role model to the roles slice.
-			roles = append(roles, roleModel)
+			roles[i] = roleModel
 		}
 	}
 

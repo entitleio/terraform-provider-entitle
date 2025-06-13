@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
 // MaintainerCommonResponseSchema represents the common structure of a maintainer response in the integration and resource.
@@ -25,7 +26,7 @@ type MaintainerModel struct {
 	Entity types.Object `tfsdk:"entity"`
 }
 
-// attributeTypes returns the attribute types for MaintainerModel.
+// AttributeTypes returns the attribute types for MaintainerModel.
 func (m MaintainerModel) AttributeTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id": types.StringType,
@@ -49,7 +50,7 @@ func GetMaintainers[T MaintainerInterface](
 	maintainers []T,
 ) ([]*MaintainerModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	result := make([]*MaintainerModel, 0)
+	result := make([]*MaintainerModel, 0, len(maintainers))
 
 	for _, item := range maintainers {
 		data, err := item.MarshalJSON()

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 func getBundlesAsPlanned(
@@ -120,7 +121,7 @@ func getBundles(
 ) []*utils.IdNameModel {
 	var result []*utils.IdNameModel
 	if len(bundles) > 0 {
-		result = make([]*utils.IdNameModel, 0)
+		result = make([]*utils.IdNameModel, 0, len(bundles))
 
 		for _, bundle := range bundles {
 			result = append(result, &utils.IdNameModel{

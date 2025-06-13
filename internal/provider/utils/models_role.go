@@ -3,11 +3,12 @@ package utils
 import (
 	"context"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
 // Role represents the internal representation of Role Model.

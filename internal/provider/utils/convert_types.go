@@ -3,10 +3,11 @@ package utils
 import (
 	"math/big"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
 func WorkflowRuleSchemaPointer(v []client.WorkflowRuleSchema) *[]client.WorkflowRuleSchema {
@@ -167,12 +168,9 @@ func GetStringList(data *[]string) (types.List, diag.Diagnostics) {
 }
 
 func GetAllowedDurations(allowed []client.EnumAllowedDurations) []attr.Value {
-	allowedDurationsValues := make([]attr.Value, 0)
-	for _, durations := range allowed {
-		allowedDurationsValues = append(
-			allowedDurationsValues,
-			types.NumberValue(big.NewFloat(float64(durations))),
-		)
+	allowedDurationsValues := make([]attr.Value, len(allowed))
+	for i, durations := range allowed {
+		allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(durations)))
 	}
 
 	return allowedDurationsValues

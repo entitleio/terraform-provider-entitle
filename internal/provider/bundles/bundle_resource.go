@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,6 +17,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -767,10 +768,10 @@ func convertFullBundleResultResponseSchemaToModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, 0)
+	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
 	if data.AllowedDurations != nil {
-		for _, duration := range data.AllowedDurations {
-			allowedDurationsValues = append(allowedDurationsValues, types.NumberValue(big.NewFloat(float64(duration))))
+		for i, duration := range data.AllowedDurations {
+			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 		}
 	}
 
