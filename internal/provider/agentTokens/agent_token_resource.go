@@ -120,10 +120,8 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Extract the name from the plan, required for creating the agent token.
-	var name string
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() && plan.Name.ValueString() != "" {
-		name = plan.Name.ValueString()
-	} else {
+	name := plan.Name.ValueString()
+	if name == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"failed to create agent token resource; required name variable missing",
@@ -267,15 +265,15 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Extract the name from the resource data; it's required for updating the agent token.
 	var name string
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		name = data.Name.ValueString()
-	} else {
+	if data.Name.ValueString() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the name variable for Entitle agent token",
 		)
 		return
 	}
+
+	name = data.Name.ValueString()
 
 	// Send a request to the Entitle API to update the agent token.
 	agentTokenResp, err := r.client.AgentTokensUpdateWithResponse(ctx, uid, client.AgentTokenCreateBodySchema{

@@ -43,28 +43,30 @@ func getWorkflowsRules(
 
 		inGroups := make([]client.GroupEntitySchema, 0, len(rule.InGroups))
 		for _, group := range rule.InGroups {
-			if !group.ID.IsNull() && !group.ID.IsUnknown() {
-				inGroups = append(
-					inGroups,
-					client.GroupEntitySchema{
-						Id: utils.TrimPrefixSuffix(group.ID.String()),
-					},
-				)
+			if group.ID.IsNull() || group.ID.IsUnknown() {
+				continue
 			}
+
+			inGroups = append(
+				inGroups,
+				client.GroupEntitySchema{
+					Id: utils.TrimPrefixSuffix(group.ID.String()),
+				},
+			)
 		}
 
 		inSchedules := make([]client.ScheduleEntitySchema, 0, len(rule.InSchedules))
-		if len(rule.InSchedules) > 0 {
-			for _, s := range rule.InSchedules {
-				if !s.ID.IsNull() && !s.ID.IsUnknown() {
-					inSchedules = append(
-						inSchedules,
-						client.ScheduleEntitySchema{
-							Id: utils.TrimPrefixSuffix(s.ID.String()),
-						},
-					)
-				}
+		for _, s := range rule.InSchedules {
+			if s.ID.IsNull() || s.ID.IsUnknown() {
+				continue
 			}
+
+			inSchedules = append(
+				inSchedules,
+				client.ScheduleEntitySchema{
+					Id: utils.TrimPrefixSuffix(s.ID.String()),
+				},
+			)
 		}
 
 		steps := make([]client.ApprovalFlowSchema, 0, len(rule.ApprovalFlow.Steps))
@@ -83,6 +85,7 @@ func getWorkflowsRules(
 					if entity.Type.IsNull() || entity.Type.IsUnknown() {
 						continue
 					}
+
 					switch entity.Type.ValueString() {
 					case "schedule", string(client.OnCallIntegrationSchedule):
 						if entity.Schedule.IsNull() {

@@ -165,13 +165,14 @@ func getInGroupsFromPlan(inGroups []*PolicyInGroupModel) []client.InGroupSchema 
 	result := make([]client.InGroupSchema, len(inGroups))
 	if len(inGroups) > 0 {
 		for index, group := range inGroups {
-
 			groupType := client.EnumPolicyGroupType(group.Type.ValueString())
-			if !group.ID.IsNull() && !group.ID.IsUnknown() {
-				result[index] = client.InGroupSchema{
-					Id:   group.ID.ValueString(),
-					Type: groupType,
-				}
+			if group.ID.IsNull() || group.ID.IsUnknown() {
+				continue
+			}
+
+			result[index] = client.InGroupSchema{
+				Id:   group.ID.ValueString(),
+				Type: groupType,
 			}
 		}
 	}
@@ -185,24 +186,26 @@ func getRolesFromPlan(roles []*utils.Role) ([]client.IdParamsSchema, diag.Diagno
 	result := make([]client.IdParamsSchema, 0)
 
 	for _, role := range roles {
-		if !role.ID.IsNull() && !role.ID.IsUnknown() {
-			parsedUUID, err := uuid.Parse(role.ID.ValueString())
-			if err != nil {
-				diags.AddError(
-					"Client Error",
-					fmt.Sprintf(
-						"failed to parse the role id (%s) to UUID, got error: %s",
-						role.ID.String(),
-						err,
-					),
-				)
-				return nil, diags
-			}
-
-			result = append(result, client.IdParamsSchema{
-				Id: parsedUUID,
-			})
+		if role.ID.IsNull() || role.ID.IsUnknown() {
+			continue
 		}
+
+		parsedUUID, err := uuid.Parse(role.ID.ValueString())
+		if err != nil {
+			diags.AddError(
+				"Client Error",
+				fmt.Sprintf(
+					"failed to parse the role id (%s) to UUID, got error: %s",
+					role.ID.String(),
+					err,
+				),
+			)
+			return nil, diags
+		}
+
+		result = append(result, client.IdParamsSchema{
+			Id: parsedUUID,
+		})
 	}
 
 	return result, diags
@@ -214,24 +217,26 @@ func getBundlesFromPlan(bundles []*utils.IdNameModel) ([]client.IdParamsSchema, 
 	result := make([]client.IdParamsSchema, 0)
 
 	for _, bundle := range bundles {
-		if !bundle.ID.IsNull() && !bundle.ID.IsUnknown() {
-			parsedUUID, err := uuid.Parse(bundle.ID.ValueString())
-			if err != nil {
-				diags.AddError(
-					"Client Error",
-					fmt.Sprintf(
-						"failed to parse the bundle id (%s) to UUID, got error: %s",
-						bundle.ID.String(),
-						err,
-					),
-				)
-				return nil, diags
-			}
-
-			result = append(result, client.IdParamsSchema{
-				Id: parsedUUID,
-			})
+		if bundle.ID.IsNull() || bundle.ID.IsUnknown() {
+			continue
 		}
+
+		parsedUUID, err := uuid.Parse(bundle.ID.ValueString())
+		if err != nil {
+			diags.AddError(
+				"Client Error",
+				fmt.Sprintf(
+					"failed to parse the bundle id (%s) to UUID, got error: %s",
+					bundle.ID.String(),
+					err,
+				),
+			)
+			return nil, diags
+		}
+
+		result = append(result, client.IdParamsSchema{
+			Id: parsedUUID,
+		})
 	}
 
 	return result, diags

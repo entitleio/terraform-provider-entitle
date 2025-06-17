@@ -250,7 +250,7 @@ func (r *BundleResource) Configure(
 		return
 	}
 
-	client, ok := req.ProviderData.(*client.ClientWithResponses)
+	cli, ok := req.ProviderData.(*client.ClientWithResponses)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -261,7 +261,7 @@ func (r *BundleResource) Configure(
 		return
 	}
 
-	r.client = client
+	r.client = cli
 }
 
 // Create is responsible for creating a new resource of type Entitle Bundle.
@@ -308,9 +308,11 @@ func (r *BundleResource) Create(
 	tags := make([]string, 0)
 	if !plan.Tags.IsNull() && !plan.Tags.IsUnknown() {
 		for _, element := range plan.Tags.Elements() {
-			if !element.IsNull() && !element.IsUnknown() {
-				tags = append(tags, utils.TrimPrefixSuffix(element.String()))
+			if element.IsNull() || element.IsUnknown() {
+				continue
 			}
+
+			tags = append(tags, utils.TrimPrefixSuffix(element.String()))
 		}
 	}
 
@@ -318,20 +320,22 @@ func (r *BundleResource) Create(
 	roles := make([]client.IdParamsSchema, 0)
 	if plan.Roles != nil {
 		for _, role := range plan.Roles {
-			if !role.ID.IsNull() && !role.ID.IsUnknown() {
-				parsedUUID, err := uuid.Parse(role.ID.ValueString())
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("failed to parse the role id (%s) to UUID, got error: %s", role.ID.String(), err),
-					)
-					return
-				}
-
-				roles = append(roles, client.IdParamsSchema{
-					Id: parsedUUID,
-				})
+			if role.ID.IsNull() || role.ID.IsUnknown() {
+				continue
 			}
+
+			parsedUUID, err := uuid.Parse(role.ID.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("failed to parse the role id (%s) to UUID, got error: %s", role.ID.String(), err),
+				)
+				return
+			}
+
+			roles = append(roles, client.IdParamsSchema{
+				Id: parsedUUID,
+			})
 		}
 	}
 
@@ -355,12 +359,8 @@ func (r *BundleResource) Create(
 	}
 
 	// Process Name
-	var name string
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
-		if plan.Name.ValueString() != "" {
-			name = plan.Name.ValueString()
-		}
-	} else {
+	name := plan.Name.ValueString()
+	if name == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"failed to create bundle resource required name variable",
@@ -563,9 +563,11 @@ func (r *BundleResource) Update(
 	tags := make([]string, 0)
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		for _, element := range data.Tags.Elements() {
-			if !element.IsNull() && !element.IsUnknown() {
-				tags = append(tags, utils.TrimPrefixSuffix(element.String()))
+			if element.IsNull() && element.IsUnknown() {
+				continue
 			}
+
+			tags = append(tags, utils.TrimPrefixSuffix(element.String()))
 		}
 	}
 
@@ -574,20 +576,22 @@ func (r *BundleResource) Update(
 	if data.Roles != nil {
 		rolesTemp := make([]client.IdParamsSchema, 0)
 		for _, role := range data.Roles {
-			if !role.ID.IsNull() && !role.ID.IsUnknown() {
-				parsedUUID, err := uuid.Parse(role.ID.ValueString())
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("failed to parse the role id (%s) to UUID, got error: %s", role.ID.String(), err),
-					)
-					return
-				}
-
-				rolesTemp = append(rolesTemp, client.IdParamsSchema{
-					Id: parsedUUID,
-				})
+			if role.ID.IsNull() || role.ID.IsUnknown() {
+				continue
 			}
+
+			parsedUUID, err := uuid.Parse(role.ID.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("failed to parse the role id (%s) to UUID, got error: %s", role.ID.String(), err),
+				)
+				return
+			}
+
+			rolesTemp = append(rolesTemp, client.IdParamsSchema{
+				Id: parsedUUID,
+			})
 		}
 
 		roles = &rolesTemp
@@ -769,10 +773,8 @@ func convertFullBundleResultResponseSchemaToModel(
 
 	// Extract and convert allowed durations from the API response
 	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
-	if data.AllowedDurations != nil {
-		for i, duration := range data.AllowedDurations {
-			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
-		}
+	for i, duration := range data.AllowedDurations {
+		allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 	}
 
 	allowedDurations, errs := types.ListValue(types.NumberType, allowedDurationsValues)
