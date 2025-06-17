@@ -388,12 +388,8 @@ func (r *WorkflowResource) Create(
 		return
 	}
 
-	var name string
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
-		if plan.Name.ValueString() != "" {
-			name = plan.Name.ValueString()
-		}
-	} else {
+	name := plan.Name.ValueString()
+	if name == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"failed create workflow resource required name variable",
@@ -563,12 +559,7 @@ func (r *WorkflowResource) Update(
 		return
 	}
 
-	var name *string
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		if data.Name.ValueString() != "" {
-			name = data.Name.ValueStringPointer()
-		}
-	}
+	name := data.Name.ValueStringPointer()
 
 	rules, diags := getWorkflowsRules(ctx, data.Rules)
 	resp.Diagnostics.Append(diags...)

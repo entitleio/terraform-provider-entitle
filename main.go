@@ -9,8 +9,9 @@ import (
 	"flag"
 	"log"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/provider"
 )
 
 // If you do not have terraform installed, you can remove the formatting command, but its suggested to
