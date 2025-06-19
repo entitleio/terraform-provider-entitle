@@ -50,8 +50,10 @@ func (r *AgentTokenResource) Metadata(ctx context.Context, req resource.Metadata
 // Schema sets the schema for the resource.
 func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
-		Description:         "",
+		MarkdownDescription: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
+		Description: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -160,9 +162,9 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Update the AgentTokenResourceModel with the created agent token data.
 	plan = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
 		Name:  utils.TrimmedStringValue(name),
-		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Token),
+		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Token),
 	}
 
 	// Save the data into Terraform state.
@@ -225,8 +227,8 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Update the AgentTokenResourceModel with the retrieved data.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
 		Token: data.Token,
 	}
 

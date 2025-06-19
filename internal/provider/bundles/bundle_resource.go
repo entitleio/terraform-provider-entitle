@@ -15,11 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -74,12 +76,12 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
 			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
 			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role.",
+			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Description: "Entitle bundle is a set of entitlements that can be requested, approved, " +
 			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
 			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
 			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role.",
+			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Attributes: map[string]schema.Attribute{
 			// Attribute: id
 			"id": schema.StringAttribute{
@@ -94,8 +96,11 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"name": schema.StringAttribute{
 				Required:            true,
 				Optional:            false,
-				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access.",
-				Description:         "The bundle’s name. Users will ask for this name when requesting access.",
+				MarkdownDescription: "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
+				Description:         "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
+				Validators: []validator.String{
+					validators.NewName(2, 50),
+				},
 			},
 			// Attribute: description
 			"description": schema.StringAttribute{
@@ -142,14 +147,14 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					"id": schema.StringAttribute{
 						Required:            false,
 						Optional:            true,
-						Description:         "The workflow's id",
-						MarkdownDescription: "The workflow's id",
+						Description:         "The unique ID of the workflow assigned to the bundle.",
+						MarkdownDescription: "The unique ID of the workflow assigned to the bundle.",
 					},
 					// Attribute: workflow name
 					"name": schema.StringAttribute{
 						Computed:            true,
-						Description:         "The workflow's name",
-						MarkdownDescription: "The workflow's name",
+						Description:         "The name of the assigned workflow.",
+						MarkdownDescription: "The name of the assigned workflow.",
 					},
 				},
 				Required:            true,
@@ -165,14 +170,14 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"id": schema.StringAttribute{
 							Required:            false,
 							Optional:            true,
-							Description:         "role's id",
-							MarkdownDescription: "role's id",
+							Description:         "The unique ID of the role.",
+							MarkdownDescription: "The unique ID of the role.",
 						},
 						// Attribute: role name
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "role's name",
-							MarkdownDescription: "role's name",
+							Description:         "The name of the role.",
+							MarkdownDescription: "The name of the role.",
 						},
 						// Attribute: resource
 						"resource": schema.SingleNestedAttribute{
@@ -180,14 +185,14 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 								// Attribute: resource id
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "id",
-									MarkdownDescription: "id",
+									Description:         "The unique identifier of the resource.",
+									MarkdownDescription: "The unique identifier of the resource.",
 								},
 								// Attribute: resource name
 								"name": schema.StringAttribute{
 									Computed:            true,
-									Description:         "name",
-									MarkdownDescription: "name",
+									Description:         "The name of the resource.",
+									MarkdownDescription: "The name of the resource.",
 								},
 								// Attribute: integration
 								"integration": schema.SingleNestedAttribute{
@@ -195,14 +200,14 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 										// Attribute: integration id
 										"id": schema.StringAttribute{
 											Computed:            true,
-											Description:         "integration's id",
-											MarkdownDescription: "integration's id",
+											Description:         "The integration's ID.",
+											MarkdownDescription: "The integration's ID.",
 										},
 										// Attribute: integration name
 										"name": schema.StringAttribute{
 											Computed:            true,
-											Description:         "integration's name",
-											MarkdownDescription: "integration's name",
+											Description:         "The integration's name.",
+											MarkdownDescription: "The integration's name.",
 										},
 										// Attribute: application
 										"application": schema.SingleNestedAttribute{
@@ -210,30 +215,30 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 												// Attribute: application name
 												"name": schema.StringAttribute{
 													Computed:            true,
-													Description:         "application's name",
-													MarkdownDescription: "application's name",
+													Description:         "The name of the application.",
+													MarkdownDescription: "The name of the application.",
 												},
 											},
 											Computed:            true,
-											Description:         "integration's application",
-											MarkdownDescription: "integration's application",
+											Description:         "The application linked to the integration.",
+											MarkdownDescription: "The application linked to the integration.",
 										},
 									},
 									Computed:            true,
-									Description:         "resource's integration",
-									MarkdownDescription: "resource's integration",
+									Description:         "The integration used to access the resource.",
+									MarkdownDescription: "The integration used to access the resource.",
 								},
 							},
 							Computed:            true,
-							Description:         "resource",
-							MarkdownDescription: "resource",
+							Description:         "The resource associated with the role.",
+							MarkdownDescription: "The resource associated with the role.",
 						},
 					},
 				},
 				Required:            true,
 				Optional:            false,
-				Description:         "roles",
-				MarkdownDescription: "roles",
+				Description:         "List of roles included in the bundle.",
+				MarkdownDescription: "List of roles included in the bundle.",
 			},
 		},
 	}
@@ -415,10 +420,10 @@ func (r *BundleResource) Create(
 	tflog.Trace(ctx, "created an Entitle bundle resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result.Id.String())
+	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result[0].Id.String())
 
 	// Convert API response data to the model
-	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result)
+	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result[0])
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -496,7 +501,7 @@ func (r *BundleResource) Read(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, &bundleResp.JSON200.Result)
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, &bundleResp.JSON200.Result[0])
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -654,7 +659,7 @@ func (r *BundleResource) Update(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result)
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result[0])
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

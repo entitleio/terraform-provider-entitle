@@ -3,12 +3,12 @@
 page_title: "entitle_agent_token Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  
+  Defines the schema for an Entitle Agent Token resource. Read more about agents https://docs.beyondtrust.com/entitle/docs/entitle-agent.
 ---
 
 # entitle_agent_token (Resource)
 
-
+Defines the schema for an Entitle Agent Token resource. [Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).
 
 ## Example Usage
 

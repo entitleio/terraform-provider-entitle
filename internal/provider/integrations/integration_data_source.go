@@ -41,10 +41,8 @@ type IntegrationDataSourceModel struct {
 	AllowChangingAccountPermissions      types.Bool               `tfsdk:"allow_changing_account_permissions"`
 	AllowCreatingAccounts                types.Bool               `tfsdk:"allow_creating_accounts"`
 	Readonly                             types.Bool               `tfsdk:"readonly"`
-	AllowRequests                        types.Bool               `tfsdk:"allow_requests"`
-	AllowRequestsByDefault               types.Bool               `tfsdk:"allow_requests_by_default"`
-	AllowAsGrantMethod                   types.Bool               `tfsdk:"allow_as_grant_method"`
-	AllowAsGrantMethodByDefault          types.Bool               `tfsdk:"allow_as_grant_method_by_default"`
+	Requestable                          types.Bool               `tfsdk:"requestable"`
+	RequestableByDefault                 types.Bool               `tfsdk:"requestable_by_default"`
 	AutoAssignRecommendedMaintainers     types.Bool               `tfsdk:"auto_assign_recommended_maintainers"`
 	AutoAssignRecommendedOwners          types.Bool               `tfsdk:"auto_assign_recommended_owners"`
 	NotifyAboutExternalPermissionChanges types.Bool               `tfsdk:"notify_about_external_permission_changes"`
@@ -61,8 +59,8 @@ func (d *IntegrationDataSource) Metadata(ctx context.Context, req datasource.Met
 // Schema defines the data source schema.
 func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Integration Description",
-		Description:         "Entitle Integration Description",
+		MarkdownDescription: "Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		Description:         "Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -80,135 +78,125 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 			"allowed_durations": schema.ListAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
-				Description:         "allowedDurations",
-				MarkdownDescription: "allowedDurations",
+				Description:         "List of allowed durations (in seconds) for this integration",
+				MarkdownDescription: "List of allowed durations (in seconds) for this integration",
 			},
 			"maintainers": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "type",
-							MarkdownDescription: "",
+							Description:         "The maintainer type (e.g., user or group)",
+							MarkdownDescription: "The maintainer type (e.g., user or group)",
 						},
 						"user": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
 									Description:         "id",
-									MarkdownDescription: "",
+									MarkdownDescription: "User's unique identifier",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "email",
-									MarkdownDescription: "email",
+									Description:         "User's email address",
+									MarkdownDescription: "User's email address",
 								},
 							},
 							Computed:            true,
-							Description:         "user",
-							MarkdownDescription: "user",
+							Description:         "The user maintainer details",
+							MarkdownDescription: "The user maintainer details",
 						},
 						"group": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         "Group's unique identifier",
+									MarkdownDescription: "Group's unique identifier",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "email",
-									MarkdownDescription: "email",
+									Description:         "Group's email address",
+									MarkdownDescription: "Group's email address",
 								},
 							},
 							Computed:            true,
-							Description:         "group",
-							MarkdownDescription: "group",
+							Description:         "The group maintainer details",
+							MarkdownDescription: "The group maintainer details",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "maintainers",
-				MarkdownDescription: "maintainers",
+				Description:         "List of maintainers responsible for this integration",
+				MarkdownDescription: "List of maintainers responsible for this integration",
 			},
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
 						Computed:            true,
-						Description:         "name",
-						MarkdownDescription: "name",
+						Description:         "Application's name",
+						MarkdownDescription: "Application's name",
 					},
 				},
 				Computed:            true,
-				Description:         "application",
-				MarkdownDescription: "application",
+				Description:         "Application associated with this integration",
+				MarkdownDescription: "Application associated with this integration",
 			},
 			"allow_changing_account_permissions": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowChangingAccountPermissions (default: true)",
-				MarkdownDescription: "allowChangingAccountPermissions (default: true)",
+				Description:         "Whether changing account permissions is allowed (default: true)",
+				MarkdownDescription: "Whether changing account permissions is allowed (default: true)",
 			},
 			"allow_creating_accounts": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowCreatingAccounts (default: true)",
-				MarkdownDescription: "allowCreatingAccounts (default: true)",
+				Description:         "Whether creating new accounts is allowed (default: true)",
+				MarkdownDescription: "Whether creating new accounts is allowed (default: true)",
 			},
 			"readonly": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "readonly (default: true)",
-				MarkdownDescription: "readonly (default: true)",
+				Description:         "Whether the integration is read-only (default: true)",
+				MarkdownDescription: "Whether the integration is read-only (default: true)",
 			},
-			"allow_requests": schema.BoolAttribute{
+			"requestable": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowRequests (default: true)",
-				MarkdownDescription: "allowRequests (default: true)",
+				Description:         "Whether the integration is requestable (default: true)",
+				MarkdownDescription: "Whether the integration is requestable (default: true)",
 			},
-			"allow_requests_by_default": schema.BoolAttribute{
+			"requestable_by_default": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowRequestsByDefault (default: true)",
-				MarkdownDescription: "allowRequestsByDefault (default: true)",
-			},
-			"allow_as_grant_method": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "allowAsGrantMethod (default: false)",
-				MarkdownDescription: "allowAsGrantMethod (default: false)",
-			},
-			"allow_as_grant_method_by_default": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "allowAsGrantMethodByDefault (default: false)",
-				MarkdownDescription: "allowAsGrantMethodByDefault (default: false)",
+				Description:         "Whether the integration is requestable by default (default: true)",
+				MarkdownDescription: "Whether the integration is requestable by default (default: true)",
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "autoAssignRecommendedMaintainers (default: true)",
-				MarkdownDescription: "autoAssignRecommendedMaintainers (default: true)",
+				Description:         "Whether recommended maintainers are auto-assigned (default: true)",
+				MarkdownDescription: "Whether recommended maintainers are auto-assigned (default: true)",
 			},
 			"auto_assign_recommended_owners": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "autoAssignRecommendedOwners (default: true)",
-				MarkdownDescription: "autoAssignRecommendedOwners (default: true)",
+				Description:         "Whether recommended owners are auto-assigned (default: true)",
+				MarkdownDescription: "Whether recommended owners are auto-assigned (default: true)",
 			},
 			"notify_about_external_permission_changes": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "notifyAboutExternalPermissionChanges (default: true)",
-				MarkdownDescription: "notifyAboutExternalPermissionChanges (default: true)",
+				Description:         "Whether to notify about external permission changes (default: true)",
+				MarkdownDescription: "Whether to notify about external permission changes (default: true)",
 			},
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "id",
-						MarkdownDescription: "id",
+						Description:         "Workflow's unique identifier",
+						MarkdownDescription: "Workflow's unique identifier",
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
-						Description:         "name",
-						MarkdownDescription: "name",
+						Description:         "Workflow's name",
+						MarkdownDescription: "Workflow's name",
 					},
 				},
 				Computed:            true,
-				Description:         "workflow",
-				MarkdownDescription: "workflow",
+				Description:         "Workflow associated with this integration",
+				MarkdownDescription: "Workflow associated with this integration",
 			},
 		},
 	}
@@ -323,10 +311,8 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		AllowChangingAccountPermissions:      types.BoolValue(integrationResp.JSON200.Result.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(integrationResp.JSON200.Result.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(integrationResp.JSON200.Result.Readonly),
-		AllowRequests:                        types.BoolValue(integrationResp.JSON200.Result.AllowRequests),
-		AllowRequestsByDefault:               types.BoolValue(integrationResp.JSON200.Result.AllowRequestsByDefault),
-		AllowAsGrantMethod:                   types.BoolValue(integrationResp.JSON200.Result.AllowAsGrantMethod),
-		AllowAsGrantMethodByDefault:          types.BoolValue(integrationResp.JSON200.Result.AllowAsGrantMethodByDefault),
+		Requestable:                          types.BoolValue(integrationResp.JSON200.Result.Requestable),
+		RequestableByDefault:                 types.BoolValue(integrationResp.JSON200.Result.RequestableByDefault),
 		AutoAssignRecommendedMaintainers:     types.BoolValue(integrationResp.JSON200.Result.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(integrationResp.JSON200.Result.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(integrationResp.JSON200.Result.NotifyAboutExternalPermissionChanges),

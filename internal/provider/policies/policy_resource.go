@@ -50,11 +50,13 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 		MarkdownDescription: "Entitle policy is a rule which manages users birthright permissions automatically, " +
 			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
 			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.",
+			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. " +
+			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
 		Description: "Entitle policy is a rule which manages users birthright permissions automatically, " +
 			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
 			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.",
+			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. " +
+			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -70,65 +72,65 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"id": schema.StringAttribute{
 							Optional:            true,
 							Required:            false,
-							Description:         "id",
-							MarkdownDescription: "id",
+							Description:         "The identifier of the role to be granted by the policy.",
+							MarkdownDescription: "The identifier of the role to be granted by the policy.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "name",
-							MarkdownDescription: "name",
+							Description:         "The name of the role.",
+							MarkdownDescription: "The name of the role.",
 						},
 						"resource": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "id",
-									MarkdownDescription: "id",
+									Description:         "The unique identifier of the resource.",
+									MarkdownDescription: "The unique identifier of the resource.",
 								},
 								"name": schema.StringAttribute{
 									Computed:            true,
-									Description:         "name",
-									MarkdownDescription: "name",
+									Description:         "The display name of the resource.",
+									MarkdownDescription: "The display name of the resource.",
 								},
 								"integration": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Computed:            true,
-											Description:         "id",
-											MarkdownDescription: "id",
+											Description:         "The identifier of the integration.",
+											MarkdownDescription: "The identifier of the integration.",
 										},
 										"name": schema.StringAttribute{
 											Computed:            true,
-											Description:         "name",
-											MarkdownDescription: "name",
+											Description:         "The display name of the integration.",
+											MarkdownDescription: "The display name of the integration.",
 										},
 										"application": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"name": schema.StringAttribute{
 													Computed:            true,
-													Description:         "name",
-													MarkdownDescription: "name",
+													Description:         "The name of the connected application.",
+													MarkdownDescription: "The name of the connected application.",
 												},
 											},
 											Computed:            true,
-											Description:         "application",
-											MarkdownDescription: "application",
+											Description:         "The application that the integration is connected to.",
+											MarkdownDescription: "The application that the integration is connected to.",
 										},
 									},
 									Computed:            true,
-									Description:         "integration",
-									MarkdownDescription: "integration",
+									Description:         "The integration that the resource belongs to.",
+									MarkdownDescription: "The integration that the resource belongs to.",
 								},
 							},
 							Computed:            true,
-							Description:         "resource",
-							MarkdownDescription: "resource",
+							Description:         "The specific resource associated with the role.",
+							MarkdownDescription: "The specific resource associated with the role.",
 						},
 					},
 				},
 				Optional:            true,
-				Description:         "roles",
-				MarkdownDescription: "roles",
+				Description:         "A list of roles that the policy assigns to users. Each role grants access to a specific resource.",
+				MarkdownDescription: "A list of roles that the policy assigns to users. Each role grants access to a specific resource.",
 			},
 			"bundles": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -136,19 +138,19 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"id": schema.StringAttribute{
 							Optional:            true,
 							Required:            false,
-							Description:         "id",
-							MarkdownDescription: "id",
+							Description:         "The identifier of the bundle to be assigned.",
+							MarkdownDescription: "The identifier of the bundle to be assigned.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "name",
-							MarkdownDescription: "name",
+							Description:         "The name of the bundle.",
+							MarkdownDescription: "The name of the bundle.",
 						},
 					},
 				},
 				Optional:            true,
-				Description:         "bundles",
-				MarkdownDescription: "bundles",
+				Description:         "A list of bundles (collections of entitlements) to be assigned by the policy.",
+				MarkdownDescription: "A list of bundles (collections of entitlements) to be assigned by the policy.",
 			},
 			"in_groups": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -156,26 +158,26 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"id": schema.StringAttribute{
 							Optional:            true,
 							Required:            false,
-							Description:         "id",
-							MarkdownDescription: "id",
+							Description:         "The unique identifier or email address of the IdP group.",
+							MarkdownDescription: "The unique identifier or email address of the IdP group.",
 						},
 						"type": schema.StringAttribute{
 							Optional:            false,
 							Required:            true,
-							Description:         "type",
-							MarkdownDescription: "type",
+							Description:         "The type of group source (e.g. \"google\", \"okta\", etc.).",
+							MarkdownDescription: "The type of group source (e.g. \"google\", \"okta\", etc.).",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "name",
-							MarkdownDescription: "name",
+							Description:         "The name of the group.",
+							MarkdownDescription: "The name of the group.",
 						},
 					},
 				},
 				Optional:            false,
 				Required:            true,
-				Description:         "in_groups",
-				MarkdownDescription: "in_groups",
+				Description:         "The list of identity provider (IdP) groups that the policy applies to. Users in these groups receive the defined roles or bundles.",
+				MarkdownDescription: "The list of identity provider (IdP) groups that the policy applies to. Users in these groups receive the defined roles or bundles.",
 			},
 		},
 	}
@@ -276,13 +278,13 @@ func (r *PolicyResource) Create(
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a entitle policy resource")
 
-	plan.ID = utils.TrimmedStringValue(policyResp.JSON200.Result.Id.String())
+	plan.ID = utils.TrimmedStringValue(policyResp.JSON200.Result[0].Id.String())
 	plan, diags = convertFullPolicyResultResponseSchemaToModel(
 		ctx,
 		bundles,
 		inGroups,
 		roles,
-		&policyResp.JSON200.Result,
+		&policyResp.JSON200.Result[0],
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -357,7 +359,7 @@ func (r *PolicyResource) Read(
 		return
 	}
 
-	data, diags = convertFullPolicyResultResponseSchemaToModel(ctx, nil, nil, nil, &policyResp.JSON200.Result)
+	data, diags = convertFullPolicyResultResponseSchemaToModel(ctx, nil, nil, nil, &policyResp.JSON200.Result[0])
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -453,7 +455,7 @@ func (r *PolicyResource) Update(
 		bundles,
 		inGroups,
 		roles,
-		&policyResp.JSON200.Result,
+		&policyResp.JSON200.Result[0],
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

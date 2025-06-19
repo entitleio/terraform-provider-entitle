@@ -45,8 +45,12 @@ func (d *AgentTokenDataSource) Metadata(ctx context.Context, req datasource.Meta
 // Schema sets the schema for the data source.
 func (d *AgentTokenDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle AgentToken Description",
-		Description:         "Entitle AgentToken Description",
+		MarkdownDescription: "Entitle AgentToken represents a token used by an agent to authenticate " +
+			"or perform specific operations within the Entitle system." +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
+		Description: "Entitle AgentToken represents a token used by an agent to authenticate " +
+			"or perform specific operations within the Entitle system." +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -58,8 +62,8 @@ func (d *AgentTokenDataSource) Schema(ctx context.Context, req datasource.Schema
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Entitle AgentToken name",
-				Description:         "Entitle AgentToken name",
+				MarkdownDescription: "The name of the AgentToken, automatically generated or assigned by the system.",
+				Description:         "The name of the AgentToken, automatically generated or assigned by the system.",
 			},
 		},
 	}
@@ -142,8 +146,8 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	// Populate the data model with details from the API response
 	data = AgentTokenDataSourceModel{
-		ID:   utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
+		ID:   utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
+		Name: utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
 	}
 
 	// Log a trace message indicating a successful read of the Entitle Agent Token data source
