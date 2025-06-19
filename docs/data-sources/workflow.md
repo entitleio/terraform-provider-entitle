@@ -57,27 +57,18 @@ Read-Only:
 - `sort_order` (Number) sort_order
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order`
+### Nested Schema for `rules.approval_flow.steps.approval_entities`
 
 Read-Only:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--group))
-- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--schedule))
+- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
+- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String)
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--user))
-- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--value))
+- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
+- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--value))
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--group"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.group`
-
-Read-Only:
-
-- `id` (String)
-- `name` (String)
-
-
-<a id="nestedatt--rules--approval_flow--steps--sort_order--schedule"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.schedule`
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
 
 Read-Only:
 
@@ -85,8 +76,17 @@ Read-Only:
 - `name` (String)
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--user"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.user`
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--schedule"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.schedule`
+
+Read-Only:
+
+- `id` (String)
+- `name` (String)
+
+
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--user"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.user`
 
 Read-Only:
 
@@ -94,8 +94,8 @@ Read-Only:
 - `id` (String)
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--value"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.value`
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--value"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.value`
 
 Read-Only:
 
@@ -104,27 +104,18 @@ Read-Only:
 
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order`
+### Nested Schema for `rules.approval_flow.steps.notified_entities`
 
 Read-Only:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--group))
-- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--schedule))
+- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
+- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String)
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--user))
-- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--value))
+- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
+- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--value))
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--group"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.group`
-
-Read-Only:
-
-- `id` (String)
-- `name` (String)
-
-
-<a id="nestedatt--rules--approval_flow--steps--sort_order--schedule"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.schedule`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
 
 Read-Only:
 
@@ -132,8 +123,17 @@ Read-Only:
 - `name` (String)
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--user"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.user`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--schedule"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.schedule`
+
+Read-Only:
+
+- `id` (String)
+- `name` (String)
+
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--user"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.user`
 
 Read-Only:
 
@@ -141,8 +141,8 @@ Read-Only:
 - `id` (String)
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--value"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.value`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--value"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.value`
 
 Read-Only:
 

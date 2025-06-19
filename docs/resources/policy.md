@@ -99,7 +99,7 @@ Read-Only:
 - `name` (String) name
 
 <a id="nestedatt--roles--resource--integration--application"></a>
-### Nested Schema for `roles.resource.integration.name`
+### Nested Schema for `roles.resource.integration.application`
 
 Read-Only:
 
