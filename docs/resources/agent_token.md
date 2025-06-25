@@ -25,10 +25,7 @@ resource "entitle_agent_token" "example" {
 
 - `name` (String) The display name for the agent token.
 
-### Optional
-
-- `token` (String, Sensitive) The token for the agent token. (sensitive)
-
 ### Read-Only
 
 - `id` (String) Entitle AgentToken identifier in UUID format
+- `token` (String, Sensitive) The token for the agent token. (sensitive)

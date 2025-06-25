@@ -167,6 +167,19 @@ func GetStringList(data *[]string) (types.List, diag.Diagnostics) {
 	return types.ListValue(types.StringType, result)
 }
 
+func GetStringSet(data *[]string) (types.Set, diag.Diagnostics) {
+	if data == nil || len(*data) == 0 {
+		return types.SetNull(types.StringType), nil
+	}
+
+	result := make([]attr.Value, 0)
+	for _, tag := range StringSliceValue(data) {
+		result = append(result, TrimmedStringValue(tag))
+	}
+
+	return types.SetValue(types.StringType, result)
+}
+
 func GetAllowedDurations(allowed []client.EnumAllowedDurations) []attr.Value {
 	allowedDurationsValues := make([]attr.Value, len(allowed))
 	for i, durations := range allowed {

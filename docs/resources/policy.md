@@ -45,7 +45,7 @@ resource "entitle_policy" "example" {
 
 Required:
 
-- `type` (String) The type of group source (e.g. "google", "okta", etc.).
+- `type` (String) The type of group source ("group" or "schedule").
 
 Optional:
 

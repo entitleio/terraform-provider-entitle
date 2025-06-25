@@ -301,7 +301,7 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	tflog.Debug(ctx, "start convert bundle response to the data source model")
 
 	// Convert the API response to the data source model
-	data, diags := convertFullBundleResultResponseSchemaToBundleDataSourceModel(ctx, &bundleResp.JSON200.Result[0])
+	data, diags := convertFullBundleResultResponseSchemaToBundleDataSourceModel(ctx, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

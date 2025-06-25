@@ -57,8 +57,8 @@ type BundleResourceModel struct {
 	// Workflow the id and name of the workflows associated with the resource
 	Workflow *utils.IdNameModel `tfsdk:"workflow" json:"workflow"`
 
-	// Tags list of tags associated with the resource
-	Tags types.List `tfsdk:"tags" json:"tags"`
+	// Tags set of tags associated with the resource
+	Tags types.Set `tfsdk:"tags" json:"tags"`
 
 	// Roles list of roles associated with the resource
 	Roles []*utils.Role `tfsdk:"roles" json:"roles"`
@@ -113,8 +113,7 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			},
 			// Attribute: category
 			"category": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Optional: true,
 				MarkdownDescription: "You can select a category for the newly created bundle, or create a new one. " +
 					"The category will usually describe a department, working group, etc. within your organization " +
 					"like “Marketing”, “Operations” and so on.",
@@ -131,9 +130,8 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				MarkdownDescription: "You can override your organization’s default duration on each bundle",
 			},
 			// Attribute: tags
-			"tags": schema.ListAttribute{
+			"tags": schema.SetAttribute{
 				ElementType: types.StringType,
-				Required:    false,
 				Optional:    true,
 				Description: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
@@ -145,8 +143,7 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Attributes: map[string]schema.Attribute{
 					// Attribute: workflow id
 					"id": schema.StringAttribute{
-						Required:            false,
-						Optional:            true,
+						Required:            true,
 						Description:         "The unique ID of the workflow assigned to the bundle.",
 						MarkdownDescription: "The unique ID of the workflow assigned to the bundle.",
 					},
@@ -158,7 +155,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 				},
 				Required:            true,
-				Optional:            false,
 				Description:         "In this field, you can assign an existing workflow to the new bundle.",
 				MarkdownDescription: "In this field, you can assign an existing workflow to the new bundle.",
 			},
@@ -376,8 +372,8 @@ func (r *BundleResource) Create(
 	// Call Entitle API to create the bundle resource
 	bundleResp, err := r.client.BundlesCreateWithResponse(ctx, client.PublicBundleCreateBodySchema{
 		AllowedDurations: &allowedDurations,
-		Category:         valueStringPointer(plan.Category),
-		Description:      valueStringPointer(plan.Description),
+		Category:         plan.Category.ValueStringPointer(),
+		Description:      plan.Description.ValueStringPointer(),
 		Name:             name,
 		Roles:            roles,
 		Tags:             &tags,
@@ -420,10 +416,10 @@ func (r *BundleResource) Create(
 	tflog.Trace(ctx, "created an Entitle bundle resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result[0].Id.String())
+	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result.Id.String())
 
 	// Convert API response data to the model
-	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result[0])
+	plan, diags = convertFullBundleResultResponseSchemaToModel(ctx, roles, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -501,7 +497,7 @@ func (r *BundleResource) Read(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, &bundleResp.JSON200.Result[0])
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, nil, &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -619,9 +615,9 @@ func (r *BundleResource) Update(
 	// Call Entitle API to update the bundle resource
 	bundleResp, err := r.client.BundlesUpdateWithResponse(ctx, uid, client.BundleUpdatedBodySchema{
 		AllowedDurations: &allowedDurations,
-		Category:         valueStringPointer(data.Category),
-		Description:      valueStringPointer(data.Description),
-		Name:             valueStringPointer(data.Name),
+		Category:         data.Category.ValueStringPointer(),
+		Description:      data.Description.ValueStringPointer(),
+		Name:             data.Name.ValueStringPointer(),
 		Roles:            roles,
 		Tags:             utils.StringSlicePointer(tags),
 		Workflow:         workflow,
@@ -659,7 +655,7 @@ func (r *BundleResource) Update(
 	}
 
 	// Convert API response data to the model
-	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result[0])
+	data, diags = convertFullBundleResultResponseSchemaToModel(ctx, utils.IdParamsSchemaSliceValue(roles), &bundleResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -789,7 +785,7 @@ func convertFullBundleResultResponseSchemaToModel(
 	}
 
 	// Extract tags from the API response
-	tags, diagsTags := utils.GetStringList(data.Tags)
+	tags, diagsTags := utils.GetStringSet(data.Tags)
 	diags.Append(diagsTags...)
 	if diags.HasError() {
 		return BundleResourceModel{}, diags
@@ -808,12 +804,17 @@ func convertFullBundleResultResponseSchemaToModel(
 		return BundleResourceModel{}, diags
 	}
 
+	category := utils.TrimmedStringValue(utils.StringValue(data.Category))
+	if category.ValueString() == "" {
+		category = types.StringNull()
+	}
+
 	// Create the Terraform resource model using the extracted data
 	return BundleResourceModel{
 		ID:               utils.TrimmedStringValue(data.Id.String()),
 		Name:             utils.TrimmedStringValue(data.Name),
 		Description:      utils.TrimmedStringValue(utils.StringValue(data.Description)),
-		Category:         utils.TrimmedStringValue(utils.StringValue(data.Category)),
+		Category:         category,
 		AllowedDurations: allowedDurations,
 		Tags:             tags,
 		Workflow:         getWorkflow(data.Workflow),

@@ -70,9 +70,7 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         "The display name for the agent token.",
 			},
 			"token": schema.StringAttribute{
-				Required:            false,
 				Computed:            true,
-				Optional:            true,
 				Sensitive:           true,
 				MarkdownDescription: "The token for the agent token. (sensitive)",
 				Description:         "The token for the agent token. (sensitive)",
@@ -162,9 +160,9 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Update the AgentTokenResourceModel with the created agent token data.
 	plan = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
 		Name:  utils.TrimmedStringValue(name),
-		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Token),
+		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Token),
 	}
 
 	// Save the data into Terraform state.
@@ -227,8 +225,8 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Update the AgentTokenResourceModel with the retrieved data.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 		Token: data.Token,
 	}
 
@@ -306,8 +304,8 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Update the AgentTokenResourceModel with the updated agent token data.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 		Token: data.Token,
 	}
 

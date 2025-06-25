@@ -13,11 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -164,8 +166,8 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						"type": schema.StringAttribute{
 							Optional:            false,
 							Required:            true,
-							Description:         "The type of group source (e.g. \"google\", \"okta\", etc.).",
-							MarkdownDescription: "The type of group source (e.g. \"google\", \"okta\", etc.).",
+							Description:         "The type of group source (\"group\" or \"schedule\").",
+							MarkdownDescription: "The type of group source (\"group\" or \"schedule\").",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
@@ -178,6 +180,9 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Required:            true,
 				Description:         "The list of identity provider (IdP) groups that the policy applies to. Users in these groups receive the defined roles or bundles.",
 				MarkdownDescription: "The list of identity provider (IdP) groups that the policy applies to. Users in these groups receive the defined roles or bundles.",
+				Validators: []validator.List{
+					validators.MinLengthListValidator{Min: 1},
+				},
 			},
 		},
 	}
