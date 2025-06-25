@@ -13,6 +13,8 @@ type PolicyInGroupModel struct {
 }
 
 // attributeTypes returns the attribute types for PolicyInGroupModel.
+//
+//nolint:unused
 func (m PolicyInGroupModel) attributeTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":   types.StringType,
