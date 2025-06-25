@@ -110,7 +110,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(3600)),
 						},
-						"in_groups": schema.ListNestedAttribute{
+						"in_groups": schema.SetNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -130,7 +130,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Description:         "List of user groups for which this rule is applicable.",
 							MarkdownDescription: "List of user groups for which this rule is applicable.",
 						},
-						"in_schedules": schema.ListNestedAttribute{
+						"in_schedules": schema.SetNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -169,7 +169,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												MarkdownDescription: "Order of the step within the approval flow. Lower numbers indicate earlier steps.",
 												Default:             numberdefault.StaticBigFloat(big.NewFloat(0)),
 											},
-											"notified_entities": schema.ListNestedAttribute{
+											"notified_entities": schema.SetNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{

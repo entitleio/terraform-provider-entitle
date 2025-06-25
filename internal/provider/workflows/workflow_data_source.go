@@ -430,6 +430,14 @@ func converterWorkflow(
 		return WorkflowDataSourceModel{}, diags
 	}
 
+	nullApprovalEntity, diagsAs := workflowRulesApprovalFlowStepApprovalEntityModel{
+		Approval: types.StringNull(),
+	}.AsObjectValue(ctx)
+	if diagsAs.HasError() {
+		diags.Append(diagsAs...)
+		return WorkflowDataSourceModel{}, diags
+	}
+
 	var rules []*workflowRulesModel
 	if len(data.Rules) > 0 {
 		rules = make([]*workflowRulesModel, 0, len(data.Rules))
@@ -691,7 +699,7 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
@@ -730,7 +738,7 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
@@ -760,7 +768,7 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -806,14 +814,11 @@ func converterWorkflow(
 					}
 
 					ruleModel.ApprovalFlow.Steps = append(ruleModel.ApprovalFlow.Steps, flowStep)
-					sort.Slice(ruleModel.ApprovalFlow.Steps, func(i, j int) bool {
+					sort.SliceStable(ruleModel.ApprovalFlow.Steps, func(i, j int) bool {
 						sortOrderI := ruleModel.ApprovalFlow.Steps[i].SortOrder.ValueBigFloat()
 						sortOrderJ := ruleModel.ApprovalFlow.Steps[j].SortOrder.ValueBigFloat()
 
-						iValue, _ := sortOrderI.Float32()
-						jValue, _ := sortOrderJ.Float32()
-
-						return iValue < jValue
+						return sortOrderI.Cmp(sortOrderJ) == -1
 					})
 				}
 			}
@@ -821,6 +826,13 @@ func converterWorkflow(
 			rules = append(rules, ruleModel)
 		}
 	}
+
+	sort.SliceStable(rules, func(i, j int) bool {
+		sortOrderI := rules[i].SortOrder.ValueBigFloat()
+		sortOrderJ := rules[j].SortOrder.ValueBigFloat()
+
+		return sortOrderI.Cmp(sortOrderJ) == -1
+	})
 
 	return WorkflowDataSourceModel{
 		Id:    utils.TrimmedStringValue(data.Id.String()),
