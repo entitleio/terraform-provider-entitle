@@ -7,35 +7,35 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-// NewName creates new name validator
-func NewName(min, max int) Name {
+// NewName creates new name validator.
+func NewName(minLength, maxLength int) Name {
 	return Name{
-		min: min,
-		max: max,
+		minLength: minLength,
+		maxLength: maxLength,
 	}
 }
 
 type Name struct {
-	min, max int
+	minLength, maxLength int
 }
 
 // Description satisfies the validator.String interface.
 func (u Name) Description(ctx context.Context) string {
-	return fmt.Sprintf("validating the name length between %d-%d", u.min, u.max)
+	return fmt.Sprintf("validating the name length between %d-%d", u.minLength, u.maxLength)
 }
 
 // MarkdownDescription satisfies the validator.String interface.
 func (u Name) MarkdownDescription(ctx context.Context) string {
-	return fmt.Sprintf("validating the name length between %d-%d", u.min, u.max)
+	return fmt.Sprintf("validating the name length between %d-%d", u.minLength, u.maxLength)
 }
 
 // ValidateString Validate satisfies the validator.String interface.
 func (u Name) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	val := req.ConfigValue.ValueString()
-	if len(val) < u.min || len(val) > u.max {
+	if len(val) < u.minLength || len(val) > u.maxLength {
 		resp.Diagnostics.AddError(
 			"Name Validate Failed",
-			fmt.Sprintf("validating the name length between %d-%d, name: (%s)", u.min, u.max, val),
+			fmt.Sprintf("validating the name length between %d-%d, name: (%s)", u.minLength, u.maxLength, val),
 		)
 	}
 }

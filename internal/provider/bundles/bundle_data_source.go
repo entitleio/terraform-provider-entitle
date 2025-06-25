@@ -377,12 +377,3 @@ func convertFullBundleResultResponseSchemaToBundleDataSourceModel(
 		Roles:            roles,
 	}, diags
 }
-
-// valueStringPointer converts a types.String to a pointer to string, handling unknown values.
-func valueStringPointer(val types.String) *string {
-	if val.IsUnknown() {
-		return nil
-	}
-
-	return val.ValueStringPointer()
-}
