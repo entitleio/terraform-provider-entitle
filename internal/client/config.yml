@@ -1,0 +1,5 @@
+package: client
+output: ./internal/client/entitle.gen.go
+generate:
+  - types
+  - client

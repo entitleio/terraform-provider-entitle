@@ -2555,19 +2555,24 @@
       "AgentTokenResponseSchema": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "name": {
-            "type": "string"
+          "result": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
           }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
+        }
       },
       "AgentTokensListResponseSchema": {
         "type": "object",
@@ -2603,25 +2608,30 @@
       "AgentTokenCreateResponseSchema": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "token": {
-            "type": "string",
-            "format": "string:base64",
-            "example": "dXNlcm5hbWU6cGFzc3dvcmQ="
-          },
-          "name": {
-            "type": "string"
+          "result": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "token": {
+                "type": "string",
+                "format": "string:base64",
+                "example": "dXNlcm5hbWU6cGFzc3dvcmQ="
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "token",
+              "name"
+            ]
           }
-        },
-        "required": [
-          "id",
-          "token",
-          "name"
-        ]
+        }
       },
       "AgentTokenDeleteResponseSchema": {
         "type": "object",
@@ -2997,10 +3007,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FullBundleResultResponseSchema"
-            }
+            "$ref": "#/components/schemas/FullBundleResultResponseSchema"
           }
         },
         "required": [
