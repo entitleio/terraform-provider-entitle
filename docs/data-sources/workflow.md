@@ -4,14 +4,14 @@ page_title: "entitle_workflow Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
   A workflow in Entitle is a generic description of Just-In-Time permissions approval process, which is triggered after the permissions were requested by a user. Who should approve by approval order, to whom, and for how long. After the workflow is defined, it can be assigned to multiple entities which are part of the Just-In-Time permissions approval process: integrations, resources, roles and bundles.
-  Every workflow is comprised of multiple rules. Their order of is important, the first rule to be validated sets the actual approval process for the permissions request. Read more about workflows https://docs.beyondtrust.com/entitle/docs/approval-workflows.
+  Each workflow consists of multiple rules, and their order matters. The first rule that is successfully validated determines the approval process for the permission request. Read more about workflows https://docs.beyondtrust.com/entitle/docs/approval-workflows.
 ---
 
 # entitle_workflow (Data Source)
 
 A workflow in Entitle is a generic description of Just-In-Time permissions approval process, which is triggered after the permissions were requested by a user. Who should approve by approval order, to whom, and for how long. After the workflow is defined, it can be assigned to multiple entities which are part of the Just-In-Time permissions approval process: integrations, resources, roles and bundles.
 
-Every workflow is comprised of multiple rules. Their order of is important, the first rule to be validated sets the actual approval process for the permissions request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).
+Each workflow consists of multiple rules, and their order matters. The first rule that is successfully validated determines the approval process for the permission request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).
 
 
 
@@ -32,7 +32,7 @@ Every workflow is comprised of multiple rules. Their order of is important, the 
 
 Read-Only:
 
-- `any_schedule` (Boolean) Whether this rule applies regardless of schedule constraints
+- `any_schedule` (Boolean) Indicates whether this rule applies regardless of scheduling constraints.
 - `approval_flow` (Attributes) Defines the approval process if the rule matches (see [below for nested schema](#nestedatt--rules--approval_flow))
 - `in_groups` (Attributes List) Groups for which the rule applies (see [below for nested schema](#nestedatt--rules--in_groups))
 - `in_schedules` (Attributes List) Schedules for which the rule applies (see [below for nested schema](#nestedatt--rules--in_schedules))

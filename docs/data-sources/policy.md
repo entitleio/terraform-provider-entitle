@@ -3,12 +3,12 @@
 page_title: "entitle_policy Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. Read more about policies https://docs.beyondtrust.com/entitle/docs/birthright-policies.
+  An Entitle policy is a rule that automatically manages users' birthright permissions. It assigns a predefined set of permissions to a group of users. When a user joins the group—such as when they join the organization—they are automatically granted the group's permissions. Conversely, when they leave the group—such as when they leave the organization—those permissions are automatically revoked.Read more about policies https://docs.beyondtrust.com/entitle/docs/birthright-policies.
 ---
 
 # entitle_policy (Data Source)
 
-Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. [Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).
+An Entitle policy is a rule that automatically manages users' birthright permissions. It assigns a predefined set of permissions to a group of users. When a user joins the group—such as when they join the organization—they are automatically granted the group's permissions. Conversely, when they leave the group—such as when they leave the organization—those permissions are automatically revoked.[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).
 
 
 
