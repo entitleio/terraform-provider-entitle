@@ -3,12 +3,12 @@
 page_title: "entitle_integration Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information.
+  A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information. Read more about integrations https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
 ---
 
 # entitle_integration (Resource)
 
-A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information.
+A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 ## Example Usage
 
@@ -37,25 +37,25 @@ resource "entitle_integration" "example" {
 ### Required
 
 - `connection_json` (String) go to https://app.entitle.io/integrations and provide the latest schema.
-- `name` (String) The display name for the integration.
+- `name` (String) The display name for the integration. Length between 2 and 50.
 
 ### Optional
 
-- `agent_token` (Attributes) agent token (see [below for nested schema](#nestedatt--agent_token))
-- `allow_as_grant_method` (Boolean) Grant Method relates to the possible ways to gain permissions for a resource. When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)
-- `allow_as_grant_method_by_default` (Boolean) As described above, for new resources that are added to the integration. (default: false)
-- `allow_changing_account_permissions` (Boolean) allowChangingAccountPermissions (default: true)
-- `allow_creating_accounts` (Boolean) allowCreatingAccounts (default: true)
+- `agent_token` (Attributes) Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n (see [below for nested schema](#nestedatt--agent_token))
+- `allow_changing_account_permissions` (Boolean) Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)
+- `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `allow_requests` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `allow_requests_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
 - `allowed_durations` (List of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
 - `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
-- `auto_assign_recommended_maintainers` (Boolean) (default: true)
-- `auto_assign_recommended_owners` (Boolean) (default: true)
+- `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
+- `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
 - `maintainers` (Attributes List) Maintainer of the integration, second tier owner of that integration you can have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration. (see [below for nested schema](#nestedatt--maintainers))
-- `notify_about_external_permission_changes` (Boolean) (default: true)
+- `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
 - `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `readonly` (Boolean) If turned on, any request opened by a user will not be automatically granted, instead a ticket will be opened for manual resolution. (default: false)
+- `requestable` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
+- `requestable_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
 - `workflow` (Attributes) The default approval workflow for entitlements for the integration (can be overwritten on resource/role level). (see [below for nested schema](#nestedatt--workflow))
 
 ### Read-Only

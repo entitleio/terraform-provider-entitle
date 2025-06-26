@@ -1,6 +1,342 @@
 {
   "openapi": "3.1.0",
   "paths": {
+    "/public/v1/accessRequestForwards": {
+      "get": {
+        "operationId": "AccessRequestForwards_index",
+        "summary": "Get paginated access request forwards",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedForwardResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessRequestForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AccessRequestForwards_create",
+        "summary": "Create an access request forward",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardCreateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardPublicResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessRequestForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accessRequestForwards/{id}": {
+      "get": {
+        "operationId": "AccessRequestForwards_show",
+        "summary": "Get an access request forward by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardPublicResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessRequestForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AccessRequestForwards_destroy",
+        "summary": "Delete an access request forward",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessRequestForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accessReviewForwards": {
+      "get": {
+        "operationId": "AccessReviewForwards_index",
+        "summary": "Get paginated access review forwards",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedForwardResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessReviewForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AccessReviewForwards_create",
+        "summary": "Create an access review forward",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardCreateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardPublicResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessReviewForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accessReviewForwards/{id}": {
+      "get": {
+        "operationId": "AccessReviewForwards_show",
+        "summary": "Get an access review forward by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardPublicResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessReviewForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AccessReviewForwards_destroy",
+        "summary": "Delete an access review forward",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AccessReviewForwards"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/agentTokens": {
       "get": {
         "operationId": "AgentTokens_index",
@@ -104,9 +440,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -117,12 +453,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "result": {
-                      "$ref": "#/components/schemas/AgentTokenResponseSchema"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AgentTokenResponseSchema"
                 }
               }
             }
@@ -145,9 +476,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -191,9 +522,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -249,281 +580,6 @@
         },
         "tags": [
           "Experimental"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/permissions": {
-      "get": {
-        "operationId": "Permissions_index",
-        "summary": "Get permissions (Filter by time created, Experimental)",
-        "parameters": [
-          {
-            "name": "sortOrder",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "ASC",
-                "DESC",
-                "asc",
-                "desc"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "required": false,
-            "in": "query",
-            "example": "2021-01-21",
-            "description": "Filter permissions up to a certain point in time",
-            "schema": {
-              "format": "date",
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "perPage",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Experimental"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/workflows": {
-      "get": {
-        "operationId": "Workflows_index",
-        "summary": "Get a list of workflows",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "perPage",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 100,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkflowIndexResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "post": {
-        "operationId": "Workflows_create",
-        "summary": "Create a new workflow",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkflowCreateBodySchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/workflows/{id}": {
-      "get": {
-        "operationId": "Workflows_show",
-        "summary": "Get workflow by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "put": {
-        "operationId": "Workflows_update",
-        "summary": "Update a workflow",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkflowUpdatedBodySchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "Workflows_destroy",
-        "summary": "Delete a workflow",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkflowDestroyResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workflows"
         ],
         "security": [
           {
@@ -625,9 +681,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -661,9 +717,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -707,9 +763,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -728,6 +784,746 @@
         },
         "tags": [
           "Bundles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/roles": {
+      "get": {
+        "operationId": "Roles_index",
+        "summary": "Get a list of roles",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRolesListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Roles_create",
+        "summary": "Create a role",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResourceRoleCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/roles/{id}": {
+      "get": {
+        "operationId": "Roles_show",
+        "summary": "Get a role by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Roles_update",
+        "summary": "Update a role",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResourceRolesUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Role_delete",
+        "summary": "Delete a role",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceRoleDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/resources": {
+      "get": {
+        "operationId": "Resources_index",
+        "summary": "Get a list of resources",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "integrationId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourcesListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Resources_create",
+        "summary": "Create a resource - virtual or manual",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResourcesCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/resources/{id}": {
+      "get": {
+        "operationId": "Resources_show",
+        "summary": "Get a resource by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Resources_update",
+        "summary": "Update a resource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationResourcesUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Resources_delete",
+        "summary": "Delete a resource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResourceDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resources"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/integrations": {
+      "get": {
+        "operationId": "Integrations_index",
+        "summary": "Get a list of integrations",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationsListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Integrations_create",
+        "summary": "Create a new integration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/integrations/{id}": {
+      "get": {
+        "operationId": "Integrations_show",
+        "summary": "Get integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Integrations_update",
+        "summary": "Update integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationsUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Integrations_destroy",
+        "summary": "Delete integration by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Integrations"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/permissions": {
+      "get": {
+        "operationId": "Permissions_index",
+        "summary": "Get permissions (Filter by time created, Experimental)",
+        "parameters": [
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC",
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Filter permissions up to a certain point in time",
+            "schema": {
+              "format": "date",
+              "example": "2021-01-21",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Experimental"
         ],
         "security": [
           {
@@ -829,9 +1625,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -865,9 +1661,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -911,9 +1707,9 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
             "schema": {
               "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
               "type": "string"
             }
           }
@@ -932,520 +1728,6 @@
         },
         "tags": [
           "Policies"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/integrations": {
-      "get": {
-        "operationId": "Integrations_index",
-        "summary": "Get a list of integrations",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "perPage",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 100,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationsListResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Integrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "post": {
-        "operationId": "Integrations_create",
-        "summary": "Create a new integration",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntegrationCreateBodyFieldsSchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResponseSchema"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Integrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/integrations/{id}": {
-      "get": {
-        "operationId": "Integrations_show",
-        "summary": "Get integration by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Integrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "put": {
-        "operationId": "Integrations_update",
-        "summary": "Update integration by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntegrationsUpdateBodySchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Integrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "Integrations_destroy",
-        "summary": "Delete integration by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationDestroyResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Integrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/resources": {
-      "get": {
-        "operationId": "Resources_index",
-        "summary": "Get a list of resources",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "perPage",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 100,
-              "type": "number"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "integrationId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourcesListResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Resources"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/resources/{id}": {
-      "get": {
-        "operationId": "Resources_show",
-        "summary": "Get a resource by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Resources"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "put": {
-        "operationId": "Resources_update",
-        "summary": "Update a resource",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicIntegrationResourcesUpdateBodySchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourceResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Resources"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/roles": {
-      "get": {
-        "operationId": "Roles_index",
-        "summary": "Get a list of roles",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "perPage",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 100,
-              "type": "number"
-            }
-          },
-          {
-            "name": "resourceId",
-            "required": true,
-            "in": "query",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourceRolesListResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Roles"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/public/v1/roles/{id}": {
-      "get": {
-        "operationId": "Roles_show",
-        "summary": "Get a role by id",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Roles"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "put": {
-        "operationId": "Roles_update",
-        "summary": "Update a role",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "example": "00000000-0000-0000-0000-000000000000",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IntegrationResourceRolesUpdateBodySchema"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IntegrationResourceRoleResponseSchema"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Roles"
         ],
         "security": [
           {
@@ -1527,6 +1809,559 @@
           }
         ]
       }
+    },
+    "/public/v1/workflows": {
+      "get": {
+        "operationId": "Workflows_index",
+        "summary": "Get a list of workflows",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "Workflows_create",
+        "summary": "Create a new workflow",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/workflows/{id}": {
+      "get": {
+        "operationId": "Workflows_show",
+        "summary": "Get workflow by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "Workflows_update",
+        "summary": "Update a workflow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowUpdatedBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullWorkflowResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "Workflows_destroy",
+        "summary": "Delete a workflow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDestroyResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/directoryGroups": {
+      "get": {
+        "operationId": "DirectoryGroups_index",
+        "summary": "Get a list of directory groups",
+        "parameters": [
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC",
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortFields",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryGroupIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Directory Groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/users": {
+      "get": {
+        "operationId": "Users_index",
+        "summary": "Get a list of users",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUsersResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/accounts": {
+      "get": {
+        "operationId": "Accounts_index",
+        "summary": "Get a list of accounts",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "integrationId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAccountsResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Accounts"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/usersAccounts": {
+      "get": {
+        "operationId": "UsersAccounts_index",
+        "summary": "Get a list of user accounts",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUsersAccountsResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users Accounts"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "UsersAccounts_create",
+        "summary": "Create a new user account",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserAccountBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostUsersAccountsResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users Accounts"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/usersAccounts/{id}": {
+      "delete": {
+        "operationId": "UsersAccounts_delete",
+        "summary": "Delete a user account",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteUserAccountResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users Accounts"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -1582,7 +2417,7 @@
           "totalPages"
         ]
       },
-      "AgentTokenResponseSchema": {
+      "EntityResponseSchema": {
         "type": "object",
         "properties": {
           "id": {
@@ -1590,14 +2425,154 @@
             "format": "uuid",
             "example": "00000000-0000-0000-0000-000000000000"
           },
-          "name": {
-            "type": "string"
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@org.domain"
           }
         },
         "required": [
           "id",
-          "name"
+          "email"
         ]
+      },
+      "ForwardResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "forwarder": {
+            "description": "The origin user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          },
+          "target": {
+            "description": "The target user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "forwarder",
+          "target"
+        ]
+      },
+      "PaginatedForwardResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForwardResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "ForwardPublicResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForwardResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "UserEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "user@org.domain",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier/email of the user"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ForwardCreateSchema": {
+        "type": "object",
+        "properties": {
+          "forwarder": {
+            "description": "The origin user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          },
+          "target": {
+            "description": "The target user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "forwarder",
+          "target"
+        ]
+      },
+      "ForwardDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "AgentTokenResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          }
+        }
       },
       "AgentTokensListResponseSchema": {
         "type": "object",
@@ -1630,39 +2605,33 @@
           "name"
         ]
       },
-      "AgentTokenCreateResponseSchemaBody": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "token": {
-            "type": "string",
-            "format": "string:base64",
-            "example": "dXNlcm5hbWU6cGFzc3dvcmQ="
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "token",
-          "name"
-        ]
-      },
       "AgentTokenCreateResponseSchema": {
         "type": "object",
         "properties": {
           "result": {
-            "$ref": "#/components/schemas/AgentTokenCreateResponseSchemaBody"
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "token": {
+                "type": "string",
+                "format": "string:base64",
+                "example": "dXNlcm5hbWU6cGFzc3dvcmQ="
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "token",
+              "name"
+            ]
           }
-        },
-        "required": [
-          "result",
-        ]
+        }
       },
       "AgentTokenDeleteResponseSchema": {
         "type": "object",
@@ -1677,9 +2646,11 @@
       },
       "EnumAuditLogEventType": {
         "type": "string",
+        "description": "Audit log types to search",
         "enum": [
           "accessReview.created",
           "accessReview.deleted",
+          "accessReview.done",
           "accessReview.updated",
           "accessReview.activated",
           "approvalAlgorithm.created",
@@ -1704,7 +2675,6 @@
           "integration.sync.actors",
           "integration.sync.assets",
           "integration.sync.permissions",
-          "integration.updated.allowAsGrantMethod",
           "integration.updated.allowedDurations",
           "integration.updated.allowsRequests",
           "integration.updated.approvalAlgorithm",
@@ -1713,9 +2683,9 @@
           "integration.updated.canCreateActors",
           "integration.updated.canEditPermissions",
           "integration.updated.configuration",
-          "integration.updated.defaultAllowAsGrantMethod",
           "integration.updated.defaultAllowsRequests",
-          "integration.updated.image",
+          "integration.updated.restoreImage",
+          "integration.updated.isVirtual",
           "integration.updated.maintainers",
           "integration.updated.name",
           "integration.updated.notifyAboutExternalPermissions",
@@ -1725,18 +2695,16 @@
           "integration.deleted",
           "integrationResource.created.manually",
           "integrationResource.deleted.manually",
-          "integrationResource.updated.allowAsGrantMethod",
           "integrationResource.updated.allowedDurations",
           "integrationResource.updated.allowsRequests",
           "integrationResource.updated.approvalAlgorithm",
-          "integrationResource.updated.displayName",
+          "integrationResource.updated.name",
           "integrationResource.updated.maintainers",
           "integrationResource.updated.owner",
           "integrationResource.updated.userDefinedDescription",
           "integrationResource.updated.userDefinedTags",
           "integrationResourceRole.created.manually",
           "integrationResourceRole.deleted.manually",
-          "integrationResourceRole.updated.allowAsGrantMethod",
           "integrationResourceRole.updated.allowedDurations",
           "integrationResourceRole.updated.allowsRequests",
           "integrationResourceRole.updated.approvalAlgorithm",
@@ -1788,7 +2756,6 @@
           },
           "type": {
             "type": "array",
-            "description": "Audit log types to search",
             "items": {
               "$ref": "#/components/schemas/EnumAuditLogEventType"
             }
@@ -1839,6 +2806,1302 @@
         },
         "required": [
           "result"
+        ]
+      },
+      "BundleIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "BundlesIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BundleIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "EnumAllowedDurations": {
+        "type": "number",
+        "enum": [
+          1800,
+          3600,
+          10800,
+          21600,
+          43200,
+          57600,
+          86400,
+          259200,
+          604800,
+          2628000,
+          7884000,
+          15768000,
+          31536000,
+          63072000,
+          -1
+        ]
+      },
+      "ApplicationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IntegrationBaseResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application",
+          "name"
+        ]
+      },
+      "ResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "name"
+        ]
+      },
+      "BundleItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ResourceResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "resource"
+        ]
+      },
+      "WorkflowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "FullBundleResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BundleItemResponseSchema"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowResponseSchema"
+          }
+        },
+        "required": [
+          "id",
+          "allowedDurations",
+          "category",
+          "description",
+          "tags",
+          "roles",
+          "name",
+          "workflow"
+        ]
+      },
+      "FullBundleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FullBundleResultResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IdParamsSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "PublicBundleCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 2
+            }
+          },
+          "roles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          }
+        },
+        "required": [
+          "name",
+          "roles",
+          "workflow"
+        ]
+      },
+      "BundleUpdatedBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 2
+            }
+          },
+          "roles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdParamsSchema"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          }
+        }
+      },
+      "BundleDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "IntegrationResourceListItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "name"
+        ]
+      },
+      "IntegrationResourceRoleListItemResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource",
+          "name"
+        ]
+      },
+      "IntegrationResourceRolesListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "WorkflowSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "IntegrationResourceRoleResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowSchema"
+              }
+            ]
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisiteRolePermissionResponseSchema"
+                  }
+                ]
+              }
+            }
+          },
+          "virtualizedRole": {
+            "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource",
+          "allowedDurations",
+          "workflow",
+          "requestable",
+          "name"
+        ]
+      },
+      "IntegrationResourceRoleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IntegrationResourceRolesUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationResourceRoleCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "resource": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "virtualizedRole": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "resource",
+          "virtualizedRole",
+          "requestable"
+        ]
+      },
+      "IntegrationResourceRoleDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "IntegrationResourcesListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "IntegrationResourceResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "tags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "userDefinedTags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "userDefinedDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowSchema"
+              }
+            ]
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisiteRolePermissionResponseSchema"
+                  }
+                ]
+              }
+            }
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityResponseSchema"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "allowedDurations",
+          "tags",
+          "userDefinedTags",
+          "description",
+          "userDefinedDescription",
+          "workflow",
+          "maintainers",
+          "requestable",
+          "owner",
+          "name"
+        ]
+      },
+      "IntegrationResourceResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/IntegrationResourceResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IntegrationResourcesUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "userDefinedDescription": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "userDefinedTags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "tag"
+            },
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "maintainers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          }
+        }
+      },
+      "IntegrationResourceRoleCreateSchema": {
+        "type": "object",
+        "properties": {
+          "virtualizedRoleId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IntegrationResourcesCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "userDefinedDescription": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "userDefinedTags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "tag"
+            },
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "maintainers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "integration": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "type": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "multirole": {
+            "type": "boolean"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleCreateSchema"
+            }
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "owner": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "integration",
+          "name",
+          "multirole",
+          "requestable"
+        ]
+      },
+      "IntegrationResourceDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "IntegrationsListResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "IntegrationResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationResponseSchema"
+          },
+          "allowedDurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowResponseSchema"
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisiteRolePermissionResponseSchema"
+                  }
+                ]
+              }
+            }
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "allowChangingAccountPermissions": {
+            "type": "boolean"
+          },
+          "allowCreatingAccounts": {
+            "type": "boolean"
+          },
+          "requestable": {
+            "type": "boolean"
+          },
+          "requestableByDefault": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/EntityResponseSchema"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "application",
+          "allowedDurations",
+          "workflow",
+          "maintainers",
+          "readonly",
+          "allowChangingAccountPermissions",
+          "allowCreatingAccounts",
+          "requestable",
+          "requestableByDefault",
+          "autoAssignRecommendedOwners",
+          "autoAssignRecommendedMaintainers",
+          "notifyAboutExternalPermissionChanges",
+          "owner",
+          "name"
+        ]
+      },
+      "IntegrationResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/IntegrationResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "IntegrationsUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault.",
+            "example": true
+          },
+          "requestableByDefault": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault.",
+            "example": true
+          },
+          "allowRequests": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault."
+          },
+          "allowRequestsByDefault": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault."
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "connectionJson": {
+            "type": "object"
+          },
+          "allowActorsSelfMapping": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserEntitySchema"
+          },
+          "dummyRequestableOrAllowsRequests": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NameSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IntegrationCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault.",
+            "example": true
+          },
+          "requestableByDefault": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault.",
+            "example": true
+          },
+          "allowRequests": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault."
+          },
+          "allowRequestsByDefault": {
+            "type": "boolean",
+            "description": "You must provide either requestable & requestableByDefault OR allowRequests & allowRequestsByDefault."
+          },
+          "maintainers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            }
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            }
+          },
+          "application": {
+            "example": {
+              "name": "Google Groups"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameSchema"
+              }
+            ]
+          },
+          "agentToken": {
+            "example": {
+              "name": "On prem agent"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameSchema"
+              }
+            ]
+          },
+          "allowChangingAccountPermissions": {
+            "type": "boolean"
+          },
+          "allowCreatingAccounts": {
+            "type": "boolean"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "connectionJson": {
+            "type": "object",
+            "nullable": true
+          },
+          "allowActorsSelfMapping": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedMaintainers": {
+            "type": "boolean"
+          },
+          "autoAssignRecommendedOwners": {
+            "type": "boolean"
+          },
+          "notifyAboutExternalPermissionChanges": {
+            "type": "boolean"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/IdParamsSchema"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserEntitySchema"
+          },
+          "dummyRequestableOrAllowsRequests": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "application",
+          "allowChangingAccountPermissions",
+          "allowCreatingAccounts",
+          "readonly",
+          "connectionJson",
+          "autoAssignRecommendedMaintainers",
+          "autoAssignRecommendedOwners",
+          "notifyAboutExternalPermissionChanges",
+          "workflow",
+          "owner",
+          "dummyRequestableOrAllowsRequests"
+        ]
+      },
+      "IntegrationDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "UserSchema": {
@@ -1964,740 +4227,6 @@
         "required": [
           "pagination",
           "result"
-        ]
-      },
-      "WorkflowIndexResultResponseSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "name",
-          "id"
-        ]
-      },
-      "WorkflowIndexResponseSchema": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponseSchema"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowIndexResultResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "pagination",
-          "result"
-        ]
-      },
-      "WorkflowGroupResponseSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "name",
-          "id"
-        ]
-      },
-      "EnumAllowedDurations": {
-        "type": "number",
-        "enum": [
-          3600,
-          10800,
-          21600,
-          43200,
-          57600,
-          86400,
-          259200,
-          604800,
-          2628000,
-          7884000,
-          15768000,
-          31536000,
-          63072000,
-          -1
-        ]
-      },
-      "EnumApprovalFlowStepOperator": {
-        "type": "string",
-        "enum": [
-          "and",
-          "or"
-        ]
-      },
-      "ApprovalFlowStepResponseSchema": {
-        "type": "object",
-        "properties": {
-          "operator": {
-            "$ref": "#/components/schemas/EnumApprovalFlowStepOperator"
-          },
-          "approvalEntities": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityNullResponseSchema"
-                }
-              ]
-            }
-          },
-          "notifiedEntities": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/NotifiedEntityNullResponseSchema"
-                }
-              ]
-            }
-          },
-          "sortOrder": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "operator",
-          "approvalEntities",
-          "notifiedEntities",
-          "sortOrder"
-        ]
-      },
-      "WorkflowApprovalFlowResponseSchema": {
-        "type": "object",
-        "properties": {
-          "steps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApprovalFlowStepResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "steps"
-        ]
-      },
-      "WorkflowRuleResponseSchema": {
-        "type": "object",
-        "properties": {
-          "inGroups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
-            }
-          },
-          "inSchedules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
-            }
-          },
-          "underDuration": {
-            "nullable": true,
-            "$ref": "#/components/schemas/EnumAllowedDurations"
-          },
-          "approvalFlow": {
-            "$ref": "#/components/schemas/WorkflowApprovalFlowResponseSchema"
-          },
-          "sortOrder": {
-            "type": "number"
-          },
-          "anySchedule": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "inGroups",
-          "inSchedules",
-          "underDuration",
-          "approvalFlow",
-          "sortOrder",
-          "anySchedule"
-        ]
-      },
-      "FullWorkflowResultResponseSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowRuleResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "id",
-          "rules"
-        ]
-      },
-      "FullWorkflowResponseSchema": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/FullWorkflowResultResponseSchema"
-          }
-        },
-        "required": [
-          "result"
-        ]
-      },
-      "GroupEntitySchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": [
-              "00000000-0000-0000-0000-000000000000",
-              "user@org.domain",
-              "uniq-identifier"
-            ],
-            "description": "A unique identifier/email of the group"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "ScheduleEntitySchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": [
-              "00000000-0000-0000-0000-000000000000",
-              "uniq-identifier"
-            ],
-            "description": "A unique identifier of the schedule"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "EnumApprovalFlowOperator": {
-        "type": "string",
-        "enum": [
-          "and",
-          "or"
-        ]
-      },
-      "ApprovalFlowSchema": {
-        "type": "object",
-        "properties": {
-          "operator": {
-            "$ref": "#/components/schemas/EnumApprovalFlowOperator"
-          },
-          "approvalEntities": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityNullSchema"
-                }
-              ]
-            }
-          },
-          "notifiedEntities": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/NotifiedApprovalEntityWithoutEntitySchema"
-                }
-              ]
-            }
-          },
-          "sortOrder": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "operator",
-          "approvalEntities",
-          "notifiedEntities",
-          "sortOrder"
-        ]
-      },
-      "WorkflowApprovalFlowSchema": {
-        "type": "object",
-        "properties": {
-          "steps": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApprovalFlowSchema"
-            }
-          }
-        },
-        "required": [
-          "steps"
-        ]
-      },
-      "WorkflowRuleSchema": {
-        "type": "object",
-        "properties": {
-          "inGroups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GroupEntitySchema"
-            }
-          },
-          "inSchedules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScheduleEntitySchema"
-            }
-          },
-          "underDuration": {
-            "nullable": true,
-            "$ref": "#/components/schemas/EnumAllowedDurations"
-          },
-          "approvalFlow": {
-            "$ref": "#/components/schemas/WorkflowApprovalFlowSchema"
-          },
-          "sortOrder": {
-            "type": "number"
-          },
-          "anySchedule": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "inGroups",
-          "inSchedules",
-          "underDuration",
-          "approvalFlow",
-          "sortOrder",
-          "anySchedule"
-        ]
-      },
-      "WorkflowCreateBodySchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "rules": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowRuleSchema"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "rules"
-        ]
-      },
-      "WorkflowUpdatedBodySchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "rules": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowRuleSchema"
-            }
-          }
-        }
-      },
-      "WorkflowDestroyResponseSchema": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "ok"
-        ]
-      },
-      "BundleIndexResultResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "BundlesIndexResponseSchema": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponseSchema"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BundleIndexResultResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "pagination",
-          "result"
-        ]
-      },
-      "ApplicationResponseSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "IntegrationBaseResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "application": {
-            "$ref": "#/components/schemas/ApplicationResponseSchema"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "application",
-          "name"
-        ]
-      },
-      "ResourceResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "integration": {
-            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "integration",
-          "name"
-        ]
-      },
-      "BundleItemResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "resource": {
-            "$ref": "#/components/schemas/ResourceResponseSchema"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "resource"
-        ]
-      },
-      "WorkflowResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "FullBundleResultResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "allowedDurations": {
-            "nullable": true,
-            "$ref": "#/components/schemas/EnumAllowedDurations"
-          },
-          "category": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "tags": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BundleItemResponseSchema"
-            }
-          },
-          "name": {
-            "type": "string"
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/WorkflowResponseSchema"
-          }
-        },
-        "required": [
-          "id",
-          "allowedDurations",
-          "category",
-          "description",
-          "tags",
-          "roles",
-          "name",
-          "workflow"
-        ]
-      },
-      "FullBundleResponseSchema": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/FullBundleResultResponseSchema"
-          }
-        },
-        "required": [
-          "result"
-        ]
-      },
-      "IdParamsSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "PublicBundleCreateBodySchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "uniqueItems": true,
-            "description": "If null, the company's default allowed durations will be used",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "category": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 2048
-          },
-          "tags": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 50,
-              "minLength": 2
-            }
-          },
-          "roles": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IdParamsSchema"
-            }
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          }
-        },
-        "required": [
-          "name",
-          "roles",
-          "workflow"
-        ]
-      },
-      "BundleUpdatedBodySchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "uniqueItems": true,
-            "description": "If null, the company's default allowed durations will be used",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "category": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 2048
-          },
-          "tags": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 50,
-              "minLength": 2
-            }
-          },
-          "roles": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IdParamsSchema"
-            }
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          }
-        }
-      },
-      "BundleDestroyResponseSchema": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "ok"
         ]
       },
       "PolicyIndexResultResponseSchema": {
@@ -2897,7 +4426,10 @@
         "type": "object",
         "properties": {
           "result": {
-            "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
+            }
           }
         },
         "required": [
@@ -2989,704 +4521,6 @@
         "required": [
           "ok"
         ]
-      },
-      "IntegrationsListResponseSchema": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponseSchema"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "pagination",
-          "result"
-        ]
-      },
-      "EntityResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "example": "user@org.domain"
-          }
-        },
-        "required": [
-          "id",
-          "email"
-        ]
-      },
-      "IntegrationResultSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "application": {
-            "$ref": "#/components/schemas/ApplicationResponseSchema"
-          },
-          "allowedDurations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/WorkflowResponseSchema"
-          },
-          "maintainers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
-                }
-              ]
-            }
-          },
-          "readonly": {
-            "type": "boolean"
-          },
-          "allowChangingAccountPermissions": {
-            "type": "boolean"
-          },
-          "allowCreatingAccounts": {
-            "type": "boolean"
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowRequestsByDefault": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethodByDefault": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedOwners": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedMaintainers": {
-            "type": "boolean"
-          },
-          "notifyAboutExternalPermissionChanges": {
-            "type": "boolean"
-          },
-          "owner": {
-            "$ref": "#/components/schemas/EntityResponseSchema"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "application",
-          "allowedDurations",
-          "workflow",
-          "maintainers",
-          "readonly",
-          "allowChangingAccountPermissions",
-          "allowCreatingAccounts",
-          "allowRequests",
-          "allowRequestsByDefault",
-          "allowAsGrantMethod",
-          "allowAsGrantMethodByDefault",
-          "autoAssignRecommendedOwners",
-          "autoAssignRecommendedMaintainers",
-          "notifyAboutExternalPermissionChanges",
-          "owner",
-          "name"
-        ]
-      },
-      "IntegrationResponseSchema": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/IntegrationResultSchema"
-          }
-        },
-        "required": [
-          "result"
-        ]
-      },
-      "UserEntitySchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": [
-              "00000000-0000-0000-0000-000000000000",
-              "user@org.domain",
-              "uniq-identifier"
-            ],
-            "description": "A unique identifier/email of the user"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "IntegrationsUpdateBodySchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "uniqueItems": true,
-            "description": "If null, the company's default allowed durations will be used",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "maintainers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GroupMaintainerSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/UserMaintainerSchema"
-                }
-              ]
-            }
-          },
-          "connectionJson": {
-            "type": "object"
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowRequestsByDefault": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethodByDefault": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedMaintainers": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedOwners": {
-            "type": "boolean"
-          },
-          "notifyAboutExternalPermissionChanges": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "owner": {
-            "$ref": "#/components/schemas/UserEntitySchema"
-          }
-        }
-      },
-      "NameSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "IntegrationCreateBodyFieldsSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "uniqueItems": true,
-            "description": "If null, the company's default allowed durations will be used",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "maintainers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GroupMaintainerSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/UserMaintainerSchema"
-                }
-              ]
-            }
-          },
-          "application": {
-            "example": {
-              "name": "Google Groups"
-            },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NameSchema"
-              }
-            ]
-          },
-          "agentToken": {
-            "example": {
-              "name": "On prem agent"
-            },
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NameSchema"
-              }
-            ]
-          },
-          "allowChangingAccountPermissions": {
-            "type": "boolean"
-          },
-          "allowCreatingAccounts": {
-            "type": "boolean"
-          },
-          "readonly": {
-            "type": "boolean"
-          },
-          "connectionJson": {
-            "type": "object",
-            "nullable": true
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowRequestsByDefault": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethodByDefault": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedMaintainers": {
-            "type": "boolean"
-          },
-          "autoAssignRecommendedOwners": {
-            "type": "boolean"
-          },
-          "notifyAboutExternalPermissionChanges": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "owner": {
-            "$ref": "#/components/schemas/UserEntitySchema"
-          }
-        },
-        "required": [
-          "name",
-          "maintainers",
-          "application",
-          "allowChangingAccountPermissions",
-          "allowCreatingAccounts",
-          "readonly",
-          "connectionJson",
-          "allowRequests",
-          "allowRequestsByDefault",
-          "allowAsGrantMethod",
-          "allowAsGrantMethodByDefault",
-          "autoAssignRecommendedMaintainers",
-          "autoAssignRecommendedOwners",
-          "notifyAboutExternalPermissionChanges",
-          "workflow",
-          "owner"
-        ]
-      },
-      "IntegrationDestroyResponseSchema": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "ok"
-        ]
-      },
-      "IntegrationResourceListItemResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "integration": {
-            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "integration",
-          "name"
-        ]
-      },
-      "IntegrationResourcesListResponseSchema": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponseSchema"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "pagination",
-          "result"
-        ]
-      },
-      "WorkflowSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "IntegrationResourceResultSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "integration": {
-            "$ref": "#/components/schemas/IntegrationBaseResponseSchema"
-          },
-          "allowedDurations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "tags": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "userDefinedTags": {
-            "nullable": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "userDefinedDescription": {
-            "type": "string",
-            "nullable": true
-          },
-          "workflow": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/WorkflowSchema"
-              }
-            ]
-          },
-          "maintainers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/MaintainerGroupResponseSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/MaintainerUserResponseSchema"
-                }
-              ]
-            }
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "owner": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntityResponseSchema"
-              }
-            ]
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "integration",
-          "allowedDurations",
-          "tags",
-          "userDefinedTags",
-          "description",
-          "userDefinedDescription",
-          "workflow",
-          "maintainers",
-          "allowRequests",
-          "allowAsGrantMethod",
-          "owner",
-          "name"
-        ]
-      },
-      "IntegrationResourceResponseSchema": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/IntegrationResourceResultSchema"
-          }
-        },
-        "required": [
-          "result"
-        ]
-      },
-      "PublicIntegrationResourcesUpdateBodySchema": {
-        "type": "object",
-        "properties": {
-          "userDefinedDescription": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "userDefinedTags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "example": "tag"
-            },
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "maintainers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GroupMaintainerSchema"
-                },
-                {
-                  "$ref": "#/components/schemas/UserMaintainerSchema"
-                }
-              ]
-            }
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/IdParamsSchema"
-              }
-            ]
-          },
-          "owner": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserEntitySchema"
-              }
-            ]
-          }
-        }
-      },
-      "IntegrationResourceRoleListItemResponseSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "resource": {
-            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "resource",
-          "name"
-        ]
-      },
-      "IntegrationResourceRolesListResponseSchema": {
-        "type": "object",
-        "properties": {
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationResponseSchema"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
-            }
-          }
-        },
-        "required": [
-          "pagination",
-          "result"
-        ]
-      },
-      "IntegrationResourceRoleResultSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "resource": {
-            "$ref": "#/components/schemas/IntegrationResourceListItemResponseSchema"
-          },
-          "allowedDurations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "workflow": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/WorkflowSchema"
-              }
-            ]
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "resource",
-          "allowedDurations",
-          "workflow",
-          "allowRequests",
-          "allowAsGrantMethod",
-          "name"
-        ]
-      },
-      "IntegrationResourceRoleResponseSchema": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
-          }
-        },
-        "required": [
-          "result"
-        ]
-      },
-      "IntegrationResourceRolesUpdateBodySchema": {
-        "type": "object",
-        "properties": {
-          "allowedDurations": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/EnumAllowedDurations"
-            }
-          },
-          "allowRequests": {
-            "type": "boolean"
-          },
-          "allowAsGrantMethod": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/IdParamsSchema"
-              }
-            ]
-          }
-        }
       },
       "AccessRequestApplicationResponseSchema": {
         "type": "object",
@@ -3785,6 +4619,7 @@
       },
       "EnumPublicTicketStatus": {
         "type": "string",
+        "description": "The access request's status",
         "enum": [
           "approved",
           "cancelled",
@@ -3799,6 +4634,7 @@
       },
       "EnumPublicTicketType": {
         "type": "string",
+        "description": "The target's type",
         "enum": [
           "bundle",
           "role"
@@ -3808,7 +4644,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           }
         },
@@ -3851,7 +4686,6 @@
             }
           },
           "status": {
-            "description": "The access request's status",
             "$ref": "#/components/schemas/EnumPublicTicketStatus"
           },
           "target": {
@@ -3928,12 +4762,744 @@
                 "$ref": "#/components/schemas/AccessRequestRoleTargetCreateSchema"
               }
             ]
+          },
+          "behalfOf": {
+            "$ref": "#/components/schemas/UserEntitySchema"
           }
         },
         "required": [
           "duration",
           "justification",
           "target"
+        ]
+      },
+      "WorkflowIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "id"
+        ]
+      },
+      "WorkflowIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "WorkflowGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "id"
+        ]
+      },
+      "EnumApprovalFlowStepOperator": {
+        "type": "string",
+        "enum": [
+          "and",
+          "or"
+        ]
+      },
+      "ApprovalFlowStepResponseSchema": {
+        "type": "object",
+        "properties": {
+          "operator": {
+            "$ref": "#/components/schemas/EnumApprovalFlowStepOperator"
+          },
+          "approvalEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityNullResponseSchema"
+                }
+              ]
+            }
+          },
+          "notifiedEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/NotifiedEntityNullResponseSchema"
+                }
+              ]
+            }
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "operator",
+          "approvalEntities",
+          "notifiedEntities",
+          "sortOrder"
+        ]
+      },
+      "WorkflowApprovalFlowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalFlowStepResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "WorkflowRuleResponseSchema": {
+        "type": "object",
+        "properties": {
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
+            }
+          },
+          "inSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowGroupResponseSchema"
+            }
+          },
+          "underDuration": {
+            "nullable": true,
+            "$ref": "#/components/schemas/EnumAllowedDurations"
+          },
+          "approvalFlow": {
+            "$ref": "#/components/schemas/WorkflowApprovalFlowResponseSchema"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "anySchedule": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inGroups",
+          "inSchedules",
+          "underDuration",
+          "approvalFlow",
+          "sortOrder",
+          "anySchedule"
+        ]
+      },
+      "FullWorkflowResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "rules"
+        ]
+      },
+      "FullWorkflowResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FullWorkflowResultResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GroupEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "user@org.domain",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier/email of the group"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ScheduleEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": [
+              "00000000-0000-0000-0000-000000000000",
+              "uniq-identifier"
+            ],
+            "description": "A unique identifier of the schedule"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "EnumApprovalFlowOperator": {
+        "type": "string",
+        "enum": [
+          "and",
+          "or"
+        ]
+      },
+      "ApprovalFlowSchema": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          },
+          "operator": {
+            "$ref": "#/components/schemas/EnumApprovalFlowOperator"
+          },
+          "approvalEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityNullSchema"
+                }
+              ]
+            }
+          },
+          "notifiedEntities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityGroupSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityScheduleSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/NotifiedApprovalEntityWithoutEntitySchema"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "sortOrder",
+          "operator",
+          "approvalEntities",
+          "notifiedEntities"
+        ]
+      },
+      "WorkflowApprovalFlowSchema": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalFlowSchema"
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "WorkflowRuleSchema": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          },
+          "inGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupEntitySchema"
+            }
+          },
+          "inSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntitySchema"
+            }
+          },
+          "underDuration": {
+            "nullable": true,
+            "$ref": "#/components/schemas/EnumAllowedDurations"
+          },
+          "approvalFlow": {
+            "$ref": "#/components/schemas/WorkflowApprovalFlowSchema"
+          },
+          "anySchedule": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sortOrder",
+          "inGroups",
+          "inSchedules",
+          "underDuration",
+          "approvalFlow",
+          "anySchedule"
+        ]
+      },
+      "WorkflowCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "rules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "rules"
+        ]
+      },
+      "WorkflowUpdatedBodySchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "rules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowRuleSchema"
+            }
+          }
+        }
+      },
+      "WorkflowDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "DirectoryGroupResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "origin"
+        ]
+      },
+      "DirectoryGroupIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryGroupResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "UserResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "givenName",
+          "familyName",
+          "email",
+          "createdAt"
+        ]
+      },
+      "GetUsersResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResultSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "AccountsApplicationResultSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "AccountsIntegrationResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "application": {
+            "$ref": "#/components/schemas/AccountsApplicationResultSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "application"
+        ]
+      },
+      "AccountsResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "euid": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/AccountsIntegrationResultSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "euid",
+          "email",
+          "createdAt",
+          "integration"
+        ]
+      },
+      "GetAccountsResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsResultSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "UserAccountBaseEntityResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "createdAt"
+        ]
+      },
+      "UserAccountAccountEntityResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "euid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "createdAt",
+          "euid"
+        ]
+      },
+      "UserAccountResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserAccountBaseEntityResultSchema"
+          },
+          "account": {
+            "$ref": "#/components/schemas/UserAccountAccountEntityResultSchema"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "user",
+          "account"
+        ]
+      },
+      "GetUsersAccountsResponseSchema": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponseSchema"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAccountResultSchema"
+            }
+          }
+        },
+        "required": [
+          "pagination",
+          "result"
+        ]
+      },
+      "CreateUserAccountUserSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreateUserAccountAccountSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CreateUserAccountBodySchema": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/CreateUserAccountUserSchema"
+          },
+          "account": {
+            "$ref": "#/components/schemas/CreateUserAccountAccountSchema"
+          }
+        },
+        "required": [
+          "user",
+          "account"
+        ]
+      },
+      "PostUsersAccountsResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/UserAccountResultSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "DeleteUserAccountResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "AccessReviewAuditLogResponseSchema": {
@@ -3950,6 +5516,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -3974,7 +5541,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -3983,9 +5549,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -3995,18 +5561,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4075,6 +5639,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4099,7 +5664,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4108,9 +5672,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4120,18 +5684,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4200,6 +5762,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4224,7 +5787,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4233,9 +5795,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4245,18 +5807,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4320,6 +5880,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4344,7 +5905,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4353,9 +5913,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4365,18 +5925,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4445,6 +6003,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4469,7 +6028,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4478,9 +6036,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4490,18 +6048,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4570,6 +6126,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4594,7 +6151,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4603,9 +6159,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4615,18 +6171,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4695,6 +6249,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4719,7 +6274,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4728,9 +6282,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4740,18 +6294,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4820,6 +6372,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4844,7 +6397,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4853,9 +6405,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4865,18 +6417,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -4945,6 +6495,7 @@
             "enum": [
               "accessReview.created",
               "accessReview.deleted",
+              "accessReview.done",
               "accessReview.updated",
               "accessReview.activated",
               "approvalAlgorithm.created",
@@ -4969,7 +6520,6 @@
               "integration.sync.actors",
               "integration.sync.assets",
               "integration.sync.permissions",
-              "integration.updated.allowAsGrantMethod",
               "integration.updated.allowedDurations",
               "integration.updated.allowsRequests",
               "integration.updated.approvalAlgorithm",
@@ -4978,9 +6528,9 @@
               "integration.updated.canCreateActors",
               "integration.updated.canEditPermissions",
               "integration.updated.configuration",
-              "integration.updated.defaultAllowAsGrantMethod",
               "integration.updated.defaultAllowsRequests",
-              "integration.updated.image",
+              "integration.updated.restoreImage",
+              "integration.updated.isVirtual",
               "integration.updated.maintainers",
               "integration.updated.name",
               "integration.updated.notifyAboutExternalPermissions",
@@ -4990,18 +6540,16 @@
               "integration.deleted",
               "integrationResource.created.manually",
               "integrationResource.deleted.manually",
-              "integrationResource.updated.allowAsGrantMethod",
               "integrationResource.updated.allowedDurations",
               "integrationResource.updated.allowsRequests",
               "integrationResource.updated.approvalAlgorithm",
-              "integrationResource.updated.displayName",
+              "integrationResource.updated.name",
               "integrationResource.updated.maintainers",
               "integrationResource.updated.owner",
               "integrationResource.updated.userDefinedDescription",
               "integrationResource.updated.userDefinedTags",
               "integrationResourceRole.created.manually",
               "integrationResourceRole.deleted.manually",
-              "integrationResourceRole.updated.allowAsGrantMethod",
               "integrationResourceRole.updated.allowedDurations",
               "integrationResourceRole.updated.allowsRequests",
               "integrationResourceRole.updated.approvalAlgorithm",
@@ -5393,7 +6941,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           },
           "role": {
@@ -5431,7 +6978,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           },
           "bundle": {
@@ -5452,7 +6998,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           }
         },
@@ -5476,7 +7021,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           },
           "bundle": {
@@ -5509,7 +7053,6 @@
         "type": "object",
         "properties": {
           "type": {
-            "description": "The target's type",
             "$ref": "#/components/schemas/EnumPublicTicketType"
           },
           "role": {
@@ -5523,6 +7066,36 @@
         },
         "required": [
           "type",
+          "role"
+        ]
+      },
+      "PrerequisiteRolePermissionResponseSchema": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "boolean"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+          }
+        },
+        "required": [
+          "default",
+          "role"
+        ]
+      },
+      "PrerequisitePermissionCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "default",
           "role"
         ]
       }

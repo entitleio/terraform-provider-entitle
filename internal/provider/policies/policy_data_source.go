@@ -48,14 +48,18 @@ func (d *PolicyDataSource) Metadata(ctx context.Context, req datasource.Metadata
 // Schema sets the schema for the data source.
 func (d *PolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle policy is a rule which manages users birthright permissions automatically, " +
-			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
-			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.",
-		Description: "Entitle policy is a rule which manages users birthright permissions automatically, " +
-			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
-			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.",
+		MarkdownDescription: "An Entitle policy is a rule that automatically manages users' birthright " +
+			"permissions. It assigns a predefined set of permissions to a group of users. When a user " +
+			"joins the group—such as when they join the organization—they are automatically granted the " +
+			"group's permissions. Conversely, when they leave the group—such as when they leave the " +
+			"organization—those permissions are automatically revoked." +
+			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
+		Description: "An Entitle policy is a rule that automatically manages users' birthright " +
+			"permissions. It assigns a predefined set of permissions to a group of users. When a user " +
+			"joins the group—such as when they join the organization—they are automatically granted the " +
+			"group's permissions. Conversely, when they leave the group—such as when they leave the " +
+			"organization—those permissions are automatically revoked." +
+			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -70,108 +74,108 @@ func (d *PolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "id",
-							MarkdownDescription: "id",
+							Description:         "Role's unique identifier",
+							MarkdownDescription: "Role's unique identifier",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "name",
-							MarkdownDescription: "name",
+							Description:         "Name of the role",
+							MarkdownDescription: "Name of the role",
 						},
 						"resource": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "id",
-									MarkdownDescription: "id",
+									Description:         "Resource's unique identifier",
+									MarkdownDescription: "Resource's unique identifier",
 								},
 								"name": schema.StringAttribute{
 									Computed:            true,
-									Description:         "name",
-									MarkdownDescription: "name",
+									Description:         "Resource's name",
+									MarkdownDescription: "Resource's name",
 								},
 								"integration": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Computed:            true,
-											Description:         "id",
-											MarkdownDescription: "id",
+											Description:         "Integration's unique identifier",
+											MarkdownDescription: "Integration's unique identifier",
 										},
 										"name": schema.StringAttribute{
 											Computed:            true,
-											Description:         "name",
-											MarkdownDescription: "name",
+											Description:         "Integration's name",
+											MarkdownDescription: "Integration's name",
 										},
 										"application": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"name": schema.StringAttribute{
 													Computed:            true,
-													Description:         "name",
-													MarkdownDescription: "name",
+													Description:         "Application's name",
+													MarkdownDescription: "Application's name",
 												},
 											},
 											Computed:            true,
-											Description:         "integration",
-											MarkdownDescription: "integration",
+											Description:         "The application within the integration",
+											MarkdownDescription: "The application within the integration",
 										},
 									},
 									Computed:            true,
-									Description:         "integration",
-									MarkdownDescription: "integration",
+									Description:         "The integration associated with the resource",
+									MarkdownDescription: "The integration associated with the resource",
 								},
 							},
 							Computed:            true,
-							Description:         "resource",
-							MarkdownDescription: "resource",
+							Description:         "The resource to which this role grants access",
+							MarkdownDescription: "The resource to which this role grants access",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "roles",
-				MarkdownDescription: "roles",
+				Description:         "List of roles granted by the policy",
+				MarkdownDescription: "List of roles granted by the policy",
 			},
 			"bundles": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "bundle's id",
-							MarkdownDescription: "bundle's id",
+							Description:         "Bundle's unique identifier",
+							MarkdownDescription: "Bundle's unique identifier",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "bundle's name",
-							MarkdownDescription: "bundle's name",
+							Description:         "Bundle's name",
+							MarkdownDescription: "Bundle's name",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "bundles",
-				MarkdownDescription: "bundles",
+				Description:         "List of bundles granted by the policy",
+				MarkdownDescription: "List of bundles granted by the policy",
 			},
 			"in_groups": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "id",
-							MarkdownDescription: "id",
+							Description:         "Group's unique identifier",
+							MarkdownDescription: "Group's unique identifier",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "name",
-							MarkdownDescription: "name",
+							Description:         "Group's name",
+							MarkdownDescription: "Group's name",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "type",
-							MarkdownDescription: "type",
+							Description:         "Group type",
+							MarkdownDescription: "Group type",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "roles",
-				MarkdownDescription: "roles",
+				Description:         "List of groups that trigger the policy",
+				MarkdownDescription: "List of groups that trigger the policy",
 			},
 		},
 	}
@@ -253,20 +257,22 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Convert the policy response to the data source model
-	data, diags := converterPolicyToDataSource(ctx, &policyResp.JSON200.Result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	for _, policy := range policyResp.JSON200.Result {
+		// Convert the policy response to the data source model
+		data, diags := converterPolicyToDataSource(ctx, &policy)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	tflog.Trace(ctx, "read an entitle policy data source")
+		tflog.Trace(ctx, "read an entitle policy data source")
 
-	// Save data into Terraform state
-	diagsResult := resp.State.Set(ctx, &data)
-	resp.Diagnostics.Append(diagsResult...)
-	if resp.Diagnostics.HasError() {
-		return
+		// Save data into Terraform state
+		diagsResult := resp.State.Set(ctx, &data)
+		resp.Diagnostics.Append(diagsResult...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 }
 

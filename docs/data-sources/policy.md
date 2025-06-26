@@ -3,12 +3,12 @@
 page_title: "entitle_policy Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.
+  An Entitle policy is a rule that automatically manages users' birthright permissions. It assigns a predefined set of permissions to a group of users. When a user joins the group—such as when they join the organization—they are automatically granted the group's permissions. Conversely, when they leave the group—such as when they leave the organization—those permissions are automatically revoked.Read more about policies https://docs.beyondtrust.com/entitle/docs/birthright-policies.
 ---
 
 # entitle_policy (Data Source)
 
-Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.
+An Entitle policy is a rule that automatically manages users' birthright permissions. It assigns a predefined set of permissions to a group of users. When a user joins the group—such as when they join the organization—they are automatically granted the group's permissions. Conversely, when they leave the group—such as when they leave the organization—those permissions are automatically revoked.[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).
 
 
 
@@ -21,17 +21,17 @@ Entitle policy is a rule which manages users birthright permissions automaticall
 
 ### Read-Only
 
-- `bundles` (Attributes List) bundles (see [below for nested schema](#nestedatt--bundles))
-- `in_groups` (Attributes List) roles (see [below for nested schema](#nestedatt--in_groups))
-- `roles` (Attributes List) roles (see [below for nested schema](#nestedatt--roles))
+- `bundles` (Attributes List) List of bundles granted by the policy (see [below for nested schema](#nestedatt--bundles))
+- `in_groups` (Attributes List) List of groups that trigger the policy (see [below for nested schema](#nestedatt--in_groups))
+- `roles` (Attributes List) List of roles granted by the policy (see [below for nested schema](#nestedatt--roles))
 
 <a id="nestedatt--bundles"></a>
 ### Nested Schema for `bundles`
 
 Read-Only:
 
-- `id` (String) bundle's id
-- `name` (String) bundle's name
+- `id` (String) Bundle's unique identifier
+- `name` (String) Bundle's name
 
 
 <a id="nestedatt--in_groups"></a>
@@ -39,9 +39,9 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) id
-- `name` (String) name
-- `type` (String) type
+- `id` (String) Group's unique identifier
+- `name` (String) Group's name
+- `type` (String) Group type
 
 
 <a id="nestedatt--roles"></a>
@@ -49,31 +49,31 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) id
-- `name` (String) name
-- `resource` (Attributes) resource (see [below for nested schema](#nestedatt--roles--resource))
+- `id` (String) Role's unique identifier
+- `name` (String) Name of the role
+- `resource` (Attributes) The resource to which this role grants access (see [below for nested schema](#nestedatt--roles--resource))
 
 <a id="nestedatt--roles--resource"></a>
 ### Nested Schema for `roles.resource`
 
 Read-Only:
 
-- `id` (String) id
-- `integration` (Attributes) integration (see [below for nested schema](#nestedatt--roles--resource--integration))
-- `name` (String) name
+- `id` (String) Resource's unique identifier
+- `integration` (Attributes) The integration associated with the resource (see [below for nested schema](#nestedatt--roles--resource--integration))
+- `name` (String) Resource's name
 
 <a id="nestedatt--roles--resource--integration"></a>
 ### Nested Schema for `roles.resource.integration`
 
 Read-Only:
 
-- `application` (Attributes) integration (see [below for nested schema](#nestedatt--roles--resource--integration--application))
-- `id` (String) id
-- `name` (String) name
+- `application` (Attributes) The application within the integration (see [below for nested schema](#nestedatt--roles--resource--integration--application))
+- `id` (String) Integration's unique identifier
+- `name` (String) Integration's name
 
 <a id="nestedatt--roles--resource--integration--application"></a>
 ### Nested Schema for `roles.resource.integration.application`
 
 Read-Only:
 
-- `name` (String) name
+- `name` (String) Application's name

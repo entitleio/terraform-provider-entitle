@@ -50,8 +50,10 @@ func (r *AgentTokenResource) Metadata(ctx context.Context, req resource.Metadata
 // Schema sets the schema for the resource.
 func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
-		Description:         "",
+		MarkdownDescription: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
+		Description: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -68,9 +70,7 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         "The display name for the agent token.",
 			},
 			"token": schema.StringAttribute{
-				Required:            false,
 				Computed:            true,
-				Optional:            true,
 				Sensitive:           true,
 				MarkdownDescription: "The token for the agent token. (sensitive)",
 				Description:         "The token for the agent token. (sensitive)",
@@ -304,8 +304,8 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Update the AgentTokenResourceModel with the updated agent token data.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 		Token: data.Token,
 	}
 

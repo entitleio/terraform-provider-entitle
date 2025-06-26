@@ -3,12 +3,12 @@
 page_title: "entitle_bundle Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle bundle is a set of entitlements that can be requested, approved, or revoked by users in a single action, and set in a policy by the admin. Each entitlement can provide the user with access to a resource, which can be as fine-grained as a MongoDB table for example, usually by the use of a “Role”. Thus, one can think of a bundle as a cross-application super role.
+  Entitle bundle is a set of entitlements that can be requested, approved, or revoked by users in a single action, and set in a policy by the admin. Each entitlement can provide the user with access to a resource, which can be as fine-grained as a MongoDB table for example, usually by the use of a “Role”. Thus, one can think of a bundle as a cross-application super role. Read more about bundles https://docs.beyondtrust.com/entitle/docs/bundles.
 ---
 
 # entitle_bundle (Resource)
 
-Entitle bundle is a set of entitlements that can be requested, approved, or revoked by users in a single action, and set in a policy by the admin. Each entitlement can provide the user with access to a resource, which can be as fine-grained as a MongoDB table for example, usually by the use of a “Role”. Thus, one can think of a bundle as a cross-application super role.
+Entitle bundle is a set of entitlements that can be requested, approved, or revoked by users in a single action, and set in a policy by the admin. Each entitlement can provide the user with access to a resource, which can be as fine-grained as a MongoDB table for example, usually by the use of a “Role”. Thus, one can think of a bundle as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).
 
 ## Example Usage
 
@@ -33,16 +33,16 @@ resource "entitle_bundle" "example" {
 
 ### Required
 
-- `category` (String) You can select a category for the newly created bundle, or create a new one. The category will usually describe a department, working group, etc. within your organization like “Marketing”, “Operations” and so on.
 - `description` (String) The bundle’s extended description, for example, “Permissions bundle for junior accountants” or “factory floor worker permissions bundle”.
-- `name` (String) The bundle’s name. Users will ask for this name when requesting access.
-- `roles` (Attributes List) roles (see [below for nested schema](#nestedatt--roles))
+- `name` (String) The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.
+- `roles` (Attributes List) List of roles included in the bundle. (see [below for nested schema](#nestedatt--roles))
 - `workflow` (Attributes) In this field, you can assign an existing workflow to the new bundle. (see [below for nested schema](#nestedatt--workflow))
 
 ### Optional
 
 - `allowed_durations` (List of Number) You can override your organization’s default duration on each bundle
-- `tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
+- `category` (String) You can select a category for the newly created bundle, or create a new one. The category will usually describe a department, working group, etc. within your organization like “Marketing”, “Operations” and so on.
+- `tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 
 ### Read-Only
 
@@ -53,37 +53,37 @@ resource "entitle_bundle" "example" {
 
 Optional:
 
-- `id` (String) role's id
+- `id` (String) The unique ID of the role.
 
 Read-Only:
 
-- `name` (String) role's name
-- `resource` (Attributes) resource (see [below for nested schema](#nestedatt--roles--resource))
+- `name` (String) The name of the role.
+- `resource` (Attributes) The resource associated with the role. (see [below for nested schema](#nestedatt--roles--resource))
 
 <a id="nestedatt--roles--resource"></a>
 ### Nested Schema for `roles.resource`
 
 Read-Only:
 
-- `id` (String) id
-- `integration` (Attributes) resource's integration (see [below for nested schema](#nestedatt--roles--resource--integration))
-- `name` (String) name
+- `id` (String) The unique identifier of the resource.
+- `integration` (Attributes) The integration used to access the resource. (see [below for nested schema](#nestedatt--roles--resource--integration))
+- `name` (String) The name of the resource.
 
 <a id="nestedatt--roles--resource--integration"></a>
 ### Nested Schema for `roles.resource.integration`
 
 Read-Only:
 
-- `application` (Attributes) integration's application (see [below for nested schema](#nestedatt--roles--resource--integration--application))
-- `id` (String) integration's id
-- `name` (String) integration's name
+- `application` (Attributes) The application linked to the integration. (see [below for nested schema](#nestedatt--roles--resource--integration--application))
+- `id` (String) The integration's ID.
+- `name` (String) The integration's name.
 
 <a id="nestedatt--roles--resource--integration--application"></a>
 ### Nested Schema for `roles.resource.integration.application`
 
 Read-Only:
 
-- `name` (String) application's name
+- `name` (String) The name of the application.
 
 
 
@@ -92,10 +92,10 @@ Read-Only:
 <a id="nestedatt--workflow"></a>
 ### Nested Schema for `workflow`
 
-Optional:
+Required:
 
-- `id` (String) The workflow's id
+- `id` (String) The unique ID of the workflow assigned to the bundle.
 
 Read-Only:
 
-- `name` (String) The workflow's name
+- `name` (String) The name of the assigned workflow.

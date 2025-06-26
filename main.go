@@ -18,9 +18,13 @@ import (
 // ensure the documentation is formatted properly.
 //go:generate terraform fmt -recursive ./examples/
 
-// Run the docs generation tool, check its repository for more information on how it works and how docs
-// can be customized.
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+//Run the api client generation tool, check its repository for more information on how it works and how
+//client can be customized.
+//go:generate go tool oapi-codegen -config ./internal/client/config.yml ./internal/client/entitle-open-api-v3.json
+
+//Run the docs generation tool, check its repository for more information on how it works and how docs
+//can be customized.
+//go:generate go tool tfplugindocs
 
 var (
 	// these will be set by the goreleaser configuration

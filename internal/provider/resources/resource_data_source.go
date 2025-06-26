@@ -44,7 +44,7 @@ type ResourceDataSourceModel struct {
 	Description            types.String             `tfsdk:"description"`
 	UserDefinedDescription types.String             `tfsdk:"user_defined_description"`
 	AllowedDurations       types.List               `tfsdk:"allowed_durations"`
-	AllowRequests          types.Bool               `tfsdk:"allow_requests"`
+	Requestable            types.Bool               `tfsdk:"requestable"`
 	AllowAsGrantMethod     types.Bool               `tfsdk:"allow_as_grant_method"`
 }
 
@@ -56,8 +56,8 @@ func (d *ResourceDataSource) Metadata(ctx context.Context, req datasource.Metada
 // Schema defines the data source schema.
 func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Resource Description",
-		Description:         "Entitle Resource Description",
+		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		Description:         "Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -74,13 +74,13 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "description",
-				Description:         "description",
+				MarkdownDescription: "Resource description",
+				Description:         "Resource description",
 			},
 			"user_defined_description": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "user_defined_description",
-				Description:         "user_defined_description",
+				MarkdownDescription: "Custom description provided by the user",
+				Description:         "Custom description provided by the user",
 			},
 			"tags": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -101,124 +101,124 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"allowed_durations": schema.ListAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
-				Description:         "allowedDurations",
-				MarkdownDescription: "allowedDurations",
+				Description:         "List of allowed access durations",
+				MarkdownDescription: "List of allowed access durations",
 			},
-			"allow_requests": schema.BoolAttribute{
+			"requestable": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "allowRequests (default: true)",
-				MarkdownDescription: "allowRequests (default: true)",
+				Description:         "Indicates if the resource is requestable (default: true)",
+				MarkdownDescription: "Indicates if the resource is requestable (default: true)",
 			},
 			"owner": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "id",
-						MarkdownDescription: "id",
+						Description:         "Owner's unique identifier",
+						MarkdownDescription: "Owner's unique identifier",
 					},
 					"email": schema.StringAttribute{
 						Computed:            true,
-						Description:         "email",
-						MarkdownDescription: "email",
+						Description:         "Owner's email address",
+						MarkdownDescription: "Owner's email address",
 					},
 				},
 				Computed:            true,
-				Description:         "owner",
-				MarkdownDescription: "owner",
+				Description:         "Owner of the resource",
+				MarkdownDescription: "Owner of the resource",
 			},
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "id",
-						MarkdownDescription: "id",
+						Description:         "Workflow's unique identifier",
+						MarkdownDescription: "Workflow's unique identifier",
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
-						Description:         "name",
-						MarkdownDescription: "name",
+						Description:         "Workflow's name",
+						MarkdownDescription: "Workflow's name",
 					},
 				},
 				Computed:            true,
-				Description:         "workflow",
-				MarkdownDescription: "workflow",
+				Description:         "Workflow configuration for the resource",
+				MarkdownDescription: "Workflow configuration for the resource",
 			},
 			"integration": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "integration's id",
-						MarkdownDescription: "integration's id",
+						Description:         "Integration's unique identifier",
+						MarkdownDescription: "Integration's unique identifier",
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
-						Description:         "integration's name",
-						MarkdownDescription: "integration's name",
+						Description:         "Integration's name",
+						MarkdownDescription: "Integration's name",
 					},
 					"application": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"name": schema.StringAttribute{
 								Computed:            true,
-								Description:         "application's name",
-								MarkdownDescription: "application's name",
+								Description:         "Name of the application within the integration",
+								MarkdownDescription: "Name of the application within the integration",
 							},
 						},
 						Computed:            true,
-						Description:         "integration's application",
-						MarkdownDescription: "integration's application",
+						Description:         "Integration's application",
+						MarkdownDescription: "Integration's application",
 					},
 				},
 				Computed:            true,
-				Description:         "integration",
-				MarkdownDescription: "integration",
+				Description:         "Integration the resource belongs to",
+				MarkdownDescription: "Integration the resource belongs to",
 			},
 			"maintainers": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Computed:            true,
-							Description:         "type",
-							MarkdownDescription: "",
+							Description:         "Type of maintainer ",
+							MarkdownDescription: "Type of maintainer ",
 						},
 						"user": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "id",
-									MarkdownDescription: "",
+									Description:         "Maintainer user’s unique identifier",
+									MarkdownDescription: "Maintainer user’s unique identifier",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "email",
-									MarkdownDescription: "email",
+									Description:         "Maintainer user’s email address",
+									MarkdownDescription: "Maintainer user’s email address",
 								},
 							},
 							Computed:            true,
-							Description:         "user",
-							MarkdownDescription: "user",
+							Description:         "Maintainer details if the maintainer is a user",
+							MarkdownDescription: "Maintainer details if the maintainer is a user",
 						},
 						"group": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "",
-									MarkdownDescription: "",
+									Description:         "Maintainer group’s unique identifier",
+									MarkdownDescription: "Maintainer group’s unique identifier",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "email",
-									MarkdownDescription: "email",
+									Description:         "Maintainer group’s email address",
+									MarkdownDescription: "Maintainer group’s email address",
 								},
 							},
 							Computed:            true,
-							Description:         "group",
-							MarkdownDescription: "group",
+							Description:         "Maintainer details if the maintainer is a group",
+							MarkdownDescription: "Maintainer details if the maintainer is a group",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "maintainers",
-				MarkdownDescription: "maintainers",
+				Description:         "List of resource maintainers",
+				MarkdownDescription: "List of resource maintainers",
 			},
 		},
 	}
@@ -368,7 +368,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		Id:                     utils.TrimmedStringValue(resourceResp.JSON200.Result.Id.String()),
 		Name:                   utils.TrimmedStringValue(resourceResp.JSON200.Result.Name),
 		AllowedDurations:       allowedDurations,
-		AllowRequests:          types.BoolValue(resourceResp.JSON200.Result.AllowRequests),
+		Requestable:            types.BoolValue(resourceResp.JSON200.Result.Requestable),
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
 		Description:            utils.TrimmedStringValue(utils.StringValue(resourceResp.JSON200.Result.Description)),

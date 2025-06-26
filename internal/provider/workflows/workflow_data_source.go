@@ -54,15 +54,17 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
 			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
 			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request.",
+			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
+			"successfully validated determines the approval process for the permission request. " +
+			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Description: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
 			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
 			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
 			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
 			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request.",
+			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
+			"successfully validated determines the approval process for the permission request. " +
+			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -74,64 +76,64 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "name",
-				Description:         "name",
+				MarkdownDescription: "Workflow name",
+				Description:         "Workflow name",
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"any_schedule": schema.BoolAttribute{
 							Computed:            true,
-							Description:         "any_schedule",
-							MarkdownDescription: "any_schedule",
+							Description:         "Indicates whether this rule applies regardless of scheduling constraints.",
+							MarkdownDescription: "Indicates whether this rule applies regardless of scheduling constraints.",
 						},
 						"sort_order": schema.NumberAttribute{
 							Computed:            true,
-							Description:         "sort_order",
-							MarkdownDescription: "sort_order",
+							Description:         "The order in which the rule is evaluated",
+							MarkdownDescription: "The order in which the rule is evaluated",
 						},
 						"under_duration": schema.NumberAttribute{
 							Computed:            true,
-							Description:         "under_duration",
-							MarkdownDescription: "under_duration",
+							Description:         "Maximum duration this rule is valid for",
+							MarkdownDescription: "Maximum duration this rule is valid for",
 						},
 						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
 										Computed:            true,
-										Description:         "id",
-										MarkdownDescription: "id",
+										Description:         "Group's unique identifier",
+										MarkdownDescription: "Group's unique identifier",
 									},
 									"name": schema.StringAttribute{
 										Computed:            true,
-										Description:         "name",
-										MarkdownDescription: "name",
+										Description:         "Group's name",
+										MarkdownDescription: "Group's name",
 									},
 								},
 							},
 							Computed:            true,
-							Description:         "in_groups",
-							MarkdownDescription: "in_groups",
+							Description:         "Groups for which the rule applies",
+							MarkdownDescription: "Groups for which the rule applies",
 						},
 						"in_schedules": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
 										Computed:            true,
-										Description:         "id",
-										MarkdownDescription: "id",
+										Description:         "Schedule's unique identifier",
+										MarkdownDescription: "Schedule's unique identifier",
 									},
 									"name": schema.StringAttribute{
 										Computed:            true,
-										Description:         "name",
-										MarkdownDescription: "name",
+										Description:         "Schedule's name",
+										MarkdownDescription: "Schedule's name",
 									},
 								},
 							},
 							Computed:            true,
-							Description:         "in_schedules",
-							MarkdownDescription: "in_schedules",
+							Description:         "Schedules for which the rule applies",
+							MarkdownDescription: "Schedules for which the rule applies",
 						},
 						"approval_flow": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -140,184 +142,184 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 										Attributes: map[string]schema.Attribute{
 											"operator": schema.StringAttribute{
 												Computed:            true,
-												Description:         "operator",
-												MarkdownDescription: "operator",
+												Description:         "Approval step operator",
+												MarkdownDescription: "Approval step operator",
 											},
 											"sort_order": schema.NumberAttribute{
 												Computed:            true,
-												Description:         "sort_order",
-												MarkdownDescription: "sort_order",
+												Description:         "Step execution order",
+												MarkdownDescription: "Step execution order",
 											},
 											"notified_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
 															Computed:            true,
-															Description:         "",
-															MarkdownDescription: "",
+															Description:         "Entity type",
+															MarkdownDescription: "Entity type",
 														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Notified user's unique identifier",
+																	MarkdownDescription: "Notified user's unique identifier",
 																},
 																"email": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "email",
-																	MarkdownDescription: "email",
+																	Description:         "Notified user's email",
+																	MarkdownDescription: "Notified user's email",
 																},
 															},
 															Computed:            true,
-															Description:         "user",
-															MarkdownDescription: "user",
+															Description:         "Notified user details",
+															MarkdownDescription: "Notified user details",
 														},
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Notified group's unique identifier",
+																	MarkdownDescription: "Notified group's unique identifier",
 																},
 																"name": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Notified group's name",
+																	MarkdownDescription: "Notified group's name",
 																},
 															},
 															Computed:            true,
-															Description:         "group",
-															MarkdownDescription: "group",
+															Description:         "Notified group details",
+															MarkdownDescription: "Notified group details",
 														},
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Schedule unique identifier",
+																	MarkdownDescription: "Schedule unique identifier",
 																},
 																"name": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Schedule name",
+																	MarkdownDescription: "Schedule name",
 																},
 															},
 															Computed:            true,
-															Description:         "group",
-															MarkdownDescription: "group",
+															Description:         "Notified schedule details",
+															MarkdownDescription: "Notified schedule details",
 														},
 														"value": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"notified": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Notified value",
+																	MarkdownDescription: "Notified value",
 																},
 															},
 															Computed:            true,
-															Description:         "value",
-															MarkdownDescription: "value",
+															Description:         "Arbitrary value for notification logic",
+															MarkdownDescription: "Arbitrary value for notification logic",
 														},
 													},
 												},
 												Computed:            true,
-												Description:         "in_groups",
-												MarkdownDescription: "in_groups",
+												Description:         "Entities to notify when the step is triggered",
+												MarkdownDescription: "Entities to notify when the step is triggered",
 											},
-											"approval_entities": schema.ListNestedAttribute{
+											"approval_entities": schema.SetNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
 															Computed:            true,
-															Description:         "",
-															MarkdownDescription: "",
+															Description:         "Approver type",
+															MarkdownDescription: "Approver type",
 														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Approver user's unique identifier",
+																	MarkdownDescription: "Approver user's unique identifier",
 																},
 																"email": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "email",
-																	MarkdownDescription: "email",
+																	Description:         "Approver user's email address",
+																	MarkdownDescription: "Approver user's email address",
 																},
 															},
 															Computed:            true,
-															Description:         "user",
-															MarkdownDescription: "user",
+															Description:         "Approver user details",
+															MarkdownDescription: "Approver user details",
 														},
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Approver group's unique identifier",
+																	MarkdownDescription: "Approver group's unique identifier",
 																},
 																"name": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Approver group's name",
+																	MarkdownDescription: "Approver group's name",
 																},
 															},
 															Computed:            true,
-															Description:         "group",
-															MarkdownDescription: "group",
+															Description:         "Approver group details",
+															MarkdownDescription: "Approver group details",
 														},
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Schedule ID",
+																	MarkdownDescription: "Schedule ID",
 																},
 																"name": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Schedule name",
+																	MarkdownDescription: "Schedule name",
 																},
 															},
 															Computed:            true,
-															Description:         "group",
-															MarkdownDescription: "group",
+															Description:         "Approver schedule details",
+															MarkdownDescription: "Approver schedule details",
 														},
 														"value": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"approval": schema.StringAttribute{
 																	Computed:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
+																	Description:         "Approval value",
+																	MarkdownDescription: "Approval value",
 																},
 															},
 															Computed:            true,
-															Description:         "value",
-															MarkdownDescription: "value",
+															Description:         "Arbitrary value for approval logic",
+															MarkdownDescription: "Arbitrary value for approval logic",
 														},
 													},
 												},
 												Computed:            true,
-												Description:         "in_groups",
-												MarkdownDescription: "in_groups",
+												Description:         "Entities that must approve the step",
+												MarkdownDescription: "Entities that must approve the step",
 											},
 										},
 									},
 									Computed:            true,
-									Description:         "in_groups",
-									MarkdownDescription: "in_groups",
+									Description:         "Ordered steps in the approval process",
+									MarkdownDescription: "Ordered steps in the approval process",
 								},
 							},
 							Computed:            true,
-							Description:         "approval_flow",
-							MarkdownDescription: "approval_flow",
+							Description:         "Defines the approval process if the rule matches",
+							MarkdownDescription: "Defines the approval process if the rule matches",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "rules",
-				MarkdownDescription: "rules",
+				Description:         "List of workflow rules that determine how approval is handled",
+				MarkdownDescription: "List of workflow rules that determine how approval is handled",
 			},
 		},
 	}
@@ -427,6 +429,14 @@ func converterWorkflow(
 			"failed the given schema data is nil",
 		)
 
+		return WorkflowDataSourceModel{}, diags
+	}
+
+	nullApprovalEntity, diagsAs := workflowRulesApprovalFlowStepApprovalEntityModel{
+		Approval: types.StringNull(),
+	}.AsObjectValue(ctx)
+	if diagsAs.HasError() {
+		diags.Append(diagsAs...)
 		return WorkflowDataSourceModel{}, diags
 	}
 
@@ -691,7 +701,7 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
@@ -730,7 +740,7 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
@@ -760,7 +770,7 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepApprovalEntityModel{}).attributeTypes()),
+								Value:    nullApprovalEntity,
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -806,14 +816,11 @@ func converterWorkflow(
 					}
 
 					ruleModel.ApprovalFlow.Steps = append(ruleModel.ApprovalFlow.Steps, flowStep)
-					sort.Slice(ruleModel.ApprovalFlow.Steps, func(i, j int) bool {
+					sort.SliceStable(ruleModel.ApprovalFlow.Steps, func(i, j int) bool {
 						sortOrderI := ruleModel.ApprovalFlow.Steps[i].SortOrder.ValueBigFloat()
 						sortOrderJ := ruleModel.ApprovalFlow.Steps[j].SortOrder.ValueBigFloat()
 
-						iValue, _ := sortOrderI.Float32()
-						jValue, _ := sortOrderJ.Float32()
-
-						return iValue < jValue
+						return sortOrderI.Cmp(sortOrderJ) == -1
 					})
 				}
 			}
@@ -821,6 +828,13 @@ func converterWorkflow(
 			rules = append(rules, ruleModel)
 		}
 	}
+
+	sort.SliceStable(rules, func(i, j int) bool {
+		sortOrderI := rules[i].SortOrder.ValueBigFloat()
+		sortOrderJ := rules[j].SortOrder.ValueBigFloat()
+
+		return sortOrderI.Cmp(sortOrderJ) == -1
+	})
 
 	return WorkflowDataSourceModel{
 		Id:    utils.TrimmedStringValue(data.Id.String()),

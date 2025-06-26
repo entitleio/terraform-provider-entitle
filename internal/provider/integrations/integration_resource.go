@@ -18,12 +18,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -49,8 +51,8 @@ type IntegrationResourceModel struct {
 	Readonly                             types.Bool               `tfsdk:"readonly"`
 	AllowRequests                        types.Bool               `tfsdk:"allow_requests"`
 	AllowRequestsByDefault               types.Bool               `tfsdk:"allow_requests_by_default"`
-	AllowAsGrantMethod                   types.Bool               `tfsdk:"allow_as_grant_method"`
-	AllowAsGrantMethodByDefault          types.Bool               `tfsdk:"allow_as_grant_method_by_default"`
+	Requestable                          types.Bool               `tfsdk:"requestable"`
+	RequestableByDefault                 types.Bool               `tfsdk:"requestable_by_default"`
 	AutoAssignRecommendedMaintainers     types.Bool               `tfsdk:"auto_assign_recommended_maintainers"`
 	AutoAssignRecommendedOwners          types.Bool               `tfsdk:"auto_assign_recommended_owners"`
 	NotifyAboutExternalPermissionChanges types.Bool               `tfsdk:"notify_about_external_permission_changes"`
@@ -69,9 +71,9 @@ func (r *IntegrationResource) Metadata(ctx context.Context, req resource.Metadat
 func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "A specific instance or integration with an \"Application\". Integration includes the " +
-			"configuration needed to connect Entitle including credentials, as well as all the users permissions information.",
+			"configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
 		Description: "A specific instance or integration with an \"Application\". Integration includes the " +
-			"configuration needed to connect Entitle including credentials, as well as all the users permissions information.",
+			"configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -84,8 +86,11 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"name": schema.StringAttribute{
 				Required:            true,
 				Optional:            false,
-				MarkdownDescription: "The display name for the integration.",
-				Description:         "The display name for the integration.",
+				MarkdownDescription: "The display name for the integration. Length between 2 and 50.",
+				Description:         "The display name for the integration. Length between 2 and 50.",
+				Validators: []validator.String{
+					validators.NewName(2, 50),
+				},
 			},
 			"allowed_durations": schema.ListAttribute{
 				ElementType: types.NumberType,
@@ -185,23 +190,23 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 				Required:            false,
 				Optional:            true,
-				Description:         "agent token",
-				MarkdownDescription: "agent token",
+				Description:         "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
+				MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n",
 			},
 			"allow_changing_account_permissions": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
-				Description:         "allowChangingAccountPermissions (default: true)",
-				MarkdownDescription: "allowChangingAccountPermissions (default: true)",
+				Description:         "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
+				MarkdownDescription: "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
 			},
 			"allow_creating_accounts": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
-				Description:         "allowCreatingAccounts (default: true)",
-				MarkdownDescription: "allowCreatingAccounts (default: true)",
+				Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
+				MarkdownDescription: "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
 			},
 			"readonly": schema.BoolAttribute{
@@ -234,48 +239,48 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"to the user. (default: true)",
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
 			},
-			"allow_as_grant_method": schema.BoolAttribute{
+			"requestable": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 				Computed: true,
-				Description: "Grant Method relates to the possible ways to gain permissions for a resource. " +
-					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)",
-				MarkdownDescription: "Grant Method relates to the possible ways to gain permissions for a resource. " +
-					"When this field is checked, permissions for the resources within the integration will be grantable with all possible ways to achieve them. (default: false)",
-				Default: booldefault.StaticBool(defaultIntegrationAllowAsGrantMethod),
+				Description: "Controls whether a user can create requests for entitlements for resources " +
+					"under the integration. (default: true)",
+				MarkdownDescription: "Controls whether a user can create requests for entitlements for resources " +
+					"under the integration. (default: true)",
+				Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
 			},
-			"allow_as_grant_method_by_default": schema.BoolAttribute{
+			"requestable_by_default": schema.BoolAttribute{
 				Required: false,
 				Optional: true,
 				Computed: true,
-				Description: "As described above, for new resources that are added to the integration. " +
-					"(default: false)",
-				MarkdownDescription: "As described above, for new resources that are added to the integration. " +
-					"(default: false)",
-				Default: booldefault.StaticBool(defaultIntegrationAllowAsGrantMethodByDefault),
+				Description: "Controls whether resources that are added to the integration could be shown " +
+					"to the user. (default: true)",
+				MarkdownDescription: "Controls whether resources that are added to the integration could be shown " +
+					"to the user. (default: true)",
+				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
-				Description:         "(default: true)",
-				MarkdownDescription: "(default: true)",
+				Description:         "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
+				MarkdownDescription: "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedMaintainers),
 			},
 			"auto_assign_recommended_owners": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
-				Description:         "(default: true)",
-				MarkdownDescription: "(default: true)",
+				Description:         "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
+				MarkdownDescription: "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedOwners),
 			},
 			"notify_about_external_permission_changes": schema.BoolAttribute{
 				Required:            false,
 				Optional:            true,
 				Computed:            true,
-				Description:         "(default: true)",
-				MarkdownDescription: "(default: true)",
+				Description:         "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
+				MarkdownDescription: "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationNotifyAboutExternalPermissionChanges),
 			},
 			"connection_json": schema.StringAttribute{
@@ -367,15 +372,14 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	var name string
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
-		name = plan.Name.ValueString()
-	} else {
+	if plan.Name.String() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the name variable for entitle integration",
 		)
 		return
 	}
+	name = plan.Name.ValueString()
 
 	allowedDurations := make([]client.EnumAllowedDurations, 0)
 	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
@@ -438,28 +442,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	var connectionJson *map[string]interface{}
-	if !plan.ConnectionJson.IsNull() && !plan.ConnectionJson.IsUnknown() && plan.ConnectionJson.ValueString() != "" {
-		var data map[string]interface{}
-
-		// Use json.Unmarshal to convert the JSON string into the map
-		if err := json.Unmarshal(
-			[]byte(plan.ConnectionJson.ValueString()),
-			&data,
-		); err != nil {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				fmt.Sprintf(
-					"failed to parse given connection json to json, %s, error: %v",
-					plan.ConnectionJson.ValueString(),
-					err,
-				),
-			)
-			return
-		}
-
-		connectionJson = &data
-
-	} else {
+	if plan.ConnectionJson.IsNull() || plan.ConnectionJson.IsUnknown() || plan.ConnectionJson.ValueString() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the connection_json variable for entitle integration",
@@ -467,91 +450,109 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	maintainers := make([]client.IntegrationCreateBodyFieldsSchema_Maintainers_Item, 0)
-	if len(plan.Maintainers) > 0 {
-		for _, maintainer := range plan.Maintainers {
-			if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
-				continue
+	var data map[string]interface{}
+
+	// Use json.Unmarshal to convert the JSON string into the map
+	if err := json.Unmarshal(
+		[]byte(plan.ConnectionJson.ValueString()),
+		&data,
+	); err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf(
+				"failed to parse given connection json to json, %s, error: %v",
+				plan.ConnectionJson.ValueString(),
+				err,
+			),
+		)
+		return
+	}
+
+	connectionJson = &data
+
+	maintainers := make([]client.IntegrationCreateBodySchema_Maintainers_Item, 0)
+	for _, maintainer := range plan.Maintainers {
+		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
+			continue
+		}
+
+		if maintainer.Entity.IsNull() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"failed missing data for entity maintainer",
+			)
+			return
+		}
+
+		var target client.EntityResponseSchema
+		diagsAs := maintainer.Entity.As(ctx, &target, basetypes.ObjectAsOptions{
+			UnhandledUnknownAsEmpty: true,
+		})
+		if diagsAs.HasError() {
+			diags.Append(diagsAs...)
+		}
+
+		switch maintainer.Type.String() {
+		case "user":
+			maintainerUser := client.UserMaintainerSchema{
+				Type: client.EnumMaintainerTypeUserUser,
+				User: client.UserEntitySchema{
+					Id: target.Id.String(),
+				},
 			}
 
-			if maintainer.Entity.IsNull() {
+			item := client.IntegrationCreateBodySchema_Maintainers_Item{}
+			err := item.MergeUserMaintainerSchema(maintainerUser)
+			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed missing data for entity maintainer",
+					fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
+				)
+			}
+
+			maintainers = append(maintainers, item)
+		case "group":
+			maintainerGroup := client.GroupMaintainerSchema{
+				Type: client.EnumMaintainerTypeGroupGroup,
+				Group: client.GroupEntitySchema{
+					Id: target.Id.String(),
+				},
+			}
+
+			item := client.IntegrationCreateBodySchema_Maintainers_Item{}
+			err := item.MergeGroupMaintainerSchema(maintainerGroup)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					"failed to merge group maintainer",
 				)
 				return
 			}
 
-			var target client.EntityResponseSchema
-			diagsAs := maintainer.Entity.As(ctx, &target, basetypes.ObjectAsOptions{
-				UnhandledUnknownAsEmpty: true,
-			})
-			if diagsAs.HasError() {
-				diags.Append(diagsAs...)
-			}
-
-			switch maintainer.Type.String() {
-			case "user":
-				maintainerUser := client.UserMaintainerSchema{
-					Type: client.EnumMaintainerTypeUserUser,
-					User: client.UserEntitySchema{
-						Id: target.Id.String(),
-					},
-				}
-
-				item := client.IntegrationCreateBodyFieldsSchema_Maintainers_Item{}
-				err := item.MergeUserMaintainerSchema(maintainerUser)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			case "group":
-				maintainerGroup := client.GroupMaintainerSchema{
-					Type: client.EnumMaintainerTypeGroupGroup,
-					Group: client.GroupEntitySchema{
-						Id: target.Id.String(),
-					},
-				}
-
-				item := client.IntegrationCreateBodyFieldsSchema_Maintainers_Item{}
-				err := item.MergeGroupMaintainerSchema(maintainerGroup)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						"failed to merge group maintainer",
-					)
-					return
-				}
-
-				maintainers = append(maintainers, item)
-			default:
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"failed invalid maintainer type only support user and group",
-				)
-				return
-			}
+			maintainers = append(maintainers, item)
+		default:
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"failed invalid maintainer type only support user and group",
+			)
+			return
 		}
 	}
 
-	body := client.IntegrationCreateBodyFieldsSchema{
+	body := client.IntegrationCreateBodySchema{
 		AgentToken:                           agentToken,
-		AllowAsGrantMethod:                   plan.AllowAsGrantMethod.ValueBool(),
-		AllowAsGrantMethodByDefault:          plan.AllowAsGrantMethodByDefault.ValueBool(),
 		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
 		AllowCreatingAccounts:                plan.AllowCreatingAccounts.ValueBool(),
-		AllowRequests:                        plan.AllowRequests.ValueBool(),
-		AllowRequestsByDefault:               plan.AllowRequestsByDefault.ValueBool(),
+		AllowRequests:                        plan.AllowRequests.ValueBoolPointer(),
+		AllowRequestsByDefault:               plan.AllowRequestsByDefault.ValueBoolPointer(),
+		Requestable:                          plan.Requestable.ValueBoolPointer(),
+		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
 		AllowedDurations:                     &allowedDurations,
 		Application:                          application,
 		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
 		ConnectionJson:                       connectionJson,
-		Maintainers:                          maintainers,
+		Maintainers:                          &maintainers,
 		Name:                                 name,
 		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
 		Owner:                                owner,
@@ -723,16 +724,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	var name string
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		name = data.Name.ValueString()
-	} else {
+	if data.Name.IsNull() || data.Name.IsUnknown() {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the name variable for entitle integration",
 		)
 		return
 	}
+
+	name := data.Name.ValueString()
 
 	allowedDurations := make([]client.EnumAllowedDurations, 0)
 	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
@@ -783,34 +783,34 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	var connectionJson *map[string]interface{}
-	if !data.ConnectionJson.IsNull() && !data.ConnectionJson.IsUnknown() {
-		if data.ConnectionJson.ValueString() != "" {
-			var result map[string]interface{}
-
-			// Use json.Unmarshal to convert the JSON string into the map
-			if err := json.Unmarshal(
-				[]byte(data.ConnectionJson.ValueString()),
-				&result,
-			); err != nil {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					fmt.Sprintf(
-						"failed to parse given connection json to json, %s, error: %v",
-						utils.TrimPrefixSuffix(data.ConnectionJson.String()),
-						err,
-					),
-				)
-				return
-			}
-
-			connectionJson = &result
-		}
-	} else {
+	if data.ConnectionJson.IsNull() || data.ConnectionJson.IsUnknown() {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the connection_json variable for entitle integration",
 		)
 		return
+	}
+
+	if data.ConnectionJson.ValueString() != "" {
+		var result map[string]interface{}
+
+		// Use json.Unmarshal to convert the JSON string into the map
+		if err := json.Unmarshal(
+			[]byte(data.ConnectionJson.ValueString()),
+			&result,
+		); err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf(
+					"failed to parse given connection json to json, %s, error: %v",
+					utils.TrimPrefixSuffix(data.ConnectionJson.String()),
+					err,
+				),
+			)
+			return
+		}
+
+		connectionJson = &result
 	}
 
 	var maintainers []client.IntegrationsUpdateBodySchema_Maintainers_Item
@@ -886,8 +886,6 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	integrationResp, err := r.client.IntegrationsUpdateWithResponse(ctx, uid, client.IntegrationsUpdateBodySchema{
-		AllowAsGrantMethod:                   utils.BoolPointer(data.AllowAsGrantMethod.ValueBool()),
-		AllowAsGrantMethodByDefault:          utils.BoolPointer(data.AllowAsGrantMethodByDefault.ValueBool()),
 		AllowRequests:                        utils.BoolPointer(data.AllowRequests.ValueBool()),
 		AllowRequestsByDefault:               utils.BoolPointer(data.AllowRequestsByDefault.ValueBool()),
 		AllowedDurations:                     &allowedDurations,
@@ -1183,10 +1181,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		AllowChangingAccountPermissions:      types.BoolValue(data.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(data.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(data.Readonly),
-		AllowRequests:                        types.BoolValue(data.AllowRequests),
-		AllowRequestsByDefault:               types.BoolValue(data.AllowRequestsByDefault),
-		AllowAsGrantMethod:                   types.BoolValue(data.AllowAsGrantMethod),
-		AllowAsGrantMethodByDefault:          types.BoolValue(data.AllowAsGrantMethodByDefault),
+		AllowRequests:                        types.BoolValue(data.Requestable),
+		AllowRequestsByDefault:               types.BoolValue(data.RequestableByDefault),
+		Requestable:                          types.BoolValue(data.Requestable),
+		RequestableByDefault:                 types.BoolValue(data.RequestableByDefault),
 		AutoAssignRecommendedMaintainers:     types.BoolValue(data.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(data.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),

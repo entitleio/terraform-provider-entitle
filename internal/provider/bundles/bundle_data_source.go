@@ -75,12 +75,12 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
 			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
 			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role.",
+			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Description: "Entitle bundle is a set of entitlements that can be requested, approved, " +
 			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
 			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
 			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role.",
+			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -129,8 +129,8 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Computed:            true,
-						Description:         "workflow's id",
-						MarkdownDescription: "workflow's id",
+						Description:         "Workflow's unique identifier.",
+						MarkdownDescription: "Workflow's unique identifier.",
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -147,65 +147,65 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "role's id",
-							MarkdownDescription: "role's id",
+							Description:         "Role's unique identifier.",
+							MarkdownDescription: "Role's unique identifier.",
 						},
 						"name": schema.StringAttribute{
 							Computed:            true,
-							Description:         "role's name",
-							MarkdownDescription: "role's name",
+							Description:         "Role's name.",
+							MarkdownDescription: "Role's name.",
 						},
 						"resource": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "resource's id",
-									MarkdownDescription: "resource's id",
+									Description:         "Resource's unique identifier.",
+									MarkdownDescription: "Resource's unique identifier.",
 								},
 								"name": schema.StringAttribute{
 									Computed:            true,
-									Description:         "resource's name",
-									MarkdownDescription: "resource's name",
+									Description:         "Resource's name.",
+									MarkdownDescription: "Resource's name.",
 								},
 								"integration": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Computed:            true,
-											Description:         "integration's id",
-											MarkdownDescription: "integration's id",
+											Description:         "Integration's unique identifier.",
+											MarkdownDescription: "Integration's unique identifier.",
 										},
 										"name": schema.StringAttribute{
 											Computed:            true,
-											Description:         "integration's name",
-											MarkdownDescription: "integration's name",
+											Description:         "Integration's name.",
+											MarkdownDescription: "Integration's name.",
 										},
 										"application": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
 												"name": schema.StringAttribute{
 													Computed:            true,
-													Description:         "application's name",
-													MarkdownDescription: "application's name",
+													Description:         "Name of the application.",
+													MarkdownDescription: "Name of the application.",
 												},
 											},
 											Computed:            true,
-											Description:         "integration's application",
-											MarkdownDescription: "integration's application",
+											Description:         "Application of the integration.",
+											MarkdownDescription: "Application of the integration.",
 										},
 									},
 									Computed:            true,
-									Description:         "resource's integration",
-									MarkdownDescription: "resource's integration",
+									Description:         "Integration related to the resource.",
+									MarkdownDescription: "Integration related to the resource.",
 								},
 							},
 							Computed:            true,
-							Description:         "resource",
-							MarkdownDescription: "resource",
+							Description:         "The resource associated with the role.",
+							MarkdownDescription: "The resource associated with the role.",
 						},
 					},
 				},
 				Computed:            true,
-				Description:         "roles",
-				MarkdownDescription: "roles",
+				Description:         "List of roles included in this bundle.",
+				MarkdownDescription: "List of roles included in this bundle.",
 			},
 		},
 	}
@@ -376,13 +376,4 @@ func convertFullBundleResultResponseSchemaToBundleDataSourceModel(
 		Workflow:         getWorkflow(data.Workflow),
 		Roles:            roles,
 	}, diags
-}
-
-// valueStringPointer converts a types.String to a pointer to string, handling unknown values.
-func valueStringPointer(val types.String) *string {
-	if val.IsUnknown() {
-		return nil
-	}
-
-	return val.ValueStringPointer()
 }
