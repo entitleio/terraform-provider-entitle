@@ -54,15 +54,17 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
 			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
 			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
+			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
+			"successfully validated determines the approval process for the permission request. " +
+			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Description: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
 			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
 			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
 			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
 			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
+			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
+			"successfully validated determines the approval process for the permission request. " +
+			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -82,8 +84,8 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 					Attributes: map[string]schema.Attribute{
 						"any_schedule": schema.BoolAttribute{
 							Computed:            true,
-							Description:         "Whether this rule applies regardless of schedule constraints",
-							MarkdownDescription: "Whether this rule applies regardless of schedule constraints",
+							Description:         "Indicates whether this rule applies regardless of scheduling constraints.",
+							MarkdownDescription: "Indicates whether this rule applies regardless of scheduling constraints.",
 						},
 						"sort_order": schema.NumberAttribute{
 							Computed:            true,
