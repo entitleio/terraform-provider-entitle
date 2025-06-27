@@ -3,12 +3,12 @@
 page_title: "entitle_integration Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle Integration Description
+  Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. Read more about integrations https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
 ---
 
 # entitle_integration (Data Source)
 
-Entitle Integration Description
+Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 
 
@@ -21,28 +21,26 @@ Entitle Integration Description
 
 ### Read-Only
 
-- `allow_as_grant_method` (Boolean) allowAsGrantMethod (default: false)
-- `allow_as_grant_method_by_default` (Boolean) allowAsGrantMethodByDefault (default: false)
-- `allow_changing_account_permissions` (Boolean) allowChangingAccountPermissions (default: true)
-- `allow_creating_accounts` (Boolean) allowCreatingAccounts (default: true)
-- `allow_requests` (Boolean) allowRequests (default: true)
-- `allow_requests_by_default` (Boolean) allowRequestsByDefault (default: true)
-- `allowed_durations` (List of Number) allowedDurations
-- `application` (Attributes) application (see [below for nested schema](#nestedatt--application))
-- `auto_assign_recommended_maintainers` (Boolean) autoAssignRecommendedMaintainers (default: true)
-- `auto_assign_recommended_owners` (Boolean) autoAssignRecommendedOwners (default: true)
-- `maintainers` (Attributes List) maintainers (see [below for nested schema](#nestedatt--maintainers))
+- `allow_changing_account_permissions` (Boolean) Whether changing account permissions is allowed (default: true)
+- `allow_creating_accounts` (Boolean) Whether creating new accounts is allowed (default: true)
+- `allowed_durations` (List of Number) List of allowed durations (in seconds) for this integration
+- `application` (Attributes) Application associated with this integration (see [below for nested schema](#nestedatt--application))
+- `auto_assign_recommended_maintainers` (Boolean) Whether recommended maintainers are auto-assigned (default: true)
+- `auto_assign_recommended_owners` (Boolean) Whether recommended owners are auto-assigned (default: true)
+- `maintainers` (Attributes List) List of maintainers responsible for this integration (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) Entitle Integration name
-- `notify_about_external_permission_changes` (Boolean) notifyAboutExternalPermissionChanges (default: true)
-- `readonly` (Boolean) readonly (default: true)
-- `workflow` (Attributes) workflow (see [below for nested schema](#nestedatt--workflow))
+- `notify_about_external_permission_changes` (Boolean) Whether to notify about external permission changes (default: true)
+- `readonly` (Boolean) Whether the integration is read-only (default: true)
+- `requestable` (Boolean) Whether the integration is requestable (default: true)
+- `requestable_by_default` (Boolean) Whether the integration is requestable by default (default: true)
+- `workflow` (Attributes) Workflow associated with this integration (see [below for nested schema](#nestedatt--workflow))
 
 <a id="nestedatt--application"></a>
 ### Nested Schema for `application`
 
 Read-Only:
 
-- `name` (String) name
+- `name` (String) Application's name
 
 
 <a id="nestedatt--maintainers"></a>
@@ -50,17 +48,17 @@ Read-Only:
 
 Read-Only:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--maintainers--group))
-- `type` (String) type
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--maintainers--user))
+- `group` (Attributes) The group maintainer details (see [below for nested schema](#nestedatt--maintainers--group))
+- `type` (String) The maintainer type (e.g., user or group)
+- `user` (Attributes) The user maintainer details (see [below for nested schema](#nestedatt--maintainers--user))
 
 <a id="nestedatt--maintainers--group"></a>
 ### Nested Schema for `maintainers.group`
 
 Read-Only:
 
-- `email` (String) email
-- `id` (String)
+- `email` (String) Group's email address
+- `id` (String) Group's unique identifier
 
 
 <a id="nestedatt--maintainers--user"></a>
@@ -68,8 +66,8 @@ Read-Only:
 
 Read-Only:
 
-- `email` (String) email
-- `id` (String) id
+- `email` (String) User's email address
+- `id` (String) User's unique identifier
 
 
 
@@ -78,5 +76,5 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) id
-- `name` (String) name
+- `id` (String) Workflow's unique identifier
+- `name` (String) Workflow's name

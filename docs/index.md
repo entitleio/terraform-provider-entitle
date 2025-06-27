@@ -16,7 +16,7 @@ description: |-
 terraform {
   required_providers {
     entitle = {
-      source = "entitle-io/entitle"
+      source = "entitleio/entitle"
     }
   }
 }

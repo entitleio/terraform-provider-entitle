@@ -3,11 +3,13 @@ package workflows
 import (
 	"context"
 	"fmt"
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 func getWorkflowsRules(
@@ -39,35 +41,35 @@ func getWorkflowsRules(
 			underDuration, _ = val.ValueBigFloat().Float32()
 		}
 
-		inGroups := make([]client.GroupEntitySchema, 0)
-		if len(rule.InGroups) > 0 {
-			for _, group := range rule.InGroups {
-				if !group.ID.IsNull() && !group.ID.IsUnknown() {
-					inGroups = append(
-						inGroups,
-						client.GroupEntitySchema{
-							Id: utils.TrimPrefixSuffix(group.ID.String()),
-						},
-					)
-				}
+		inGroups := make([]client.GroupEntitySchema, 0, len(rule.InGroups))
+		for _, group := range rule.InGroups {
+			if group.ID.IsNull() || group.ID.IsUnknown() {
+				continue
 			}
+
+			inGroups = append(
+				inGroups,
+				client.GroupEntitySchema{
+					Id: utils.TrimPrefixSuffix(group.ID.String()),
+				},
+			)
 		}
 
-		inSchedules := make([]client.ScheduleEntitySchema, 0)
-		if len(rule.InSchedules) > 0 {
-			for _, s := range rule.InSchedules {
-				if !s.ID.IsNull() && !s.ID.IsUnknown() {
-					inSchedules = append(
-						inSchedules,
-						client.ScheduleEntitySchema{
-							Id: utils.TrimPrefixSuffix(s.ID.String()),
-						},
-					)
-				}
+		inSchedules := make([]client.ScheduleEntitySchema, 0, len(rule.InSchedules))
+		for _, s := range rule.InSchedules {
+			if s.ID.IsNull() || s.ID.IsUnknown() {
+				continue
 			}
+
+			inSchedules = append(
+				inSchedules,
+				client.ScheduleEntitySchema{
+					Id: utils.TrimPrefixSuffix(s.ID.String()),
+				},
+			)
 		}
 
-		steps := make([]client.ApprovalFlowSchema, 0)
+		steps := make([]client.ApprovalFlowSchema, 0, len(rule.ApprovalFlow.Steps))
 		for _, step := range rule.ApprovalFlow.Steps {
 			val, diagsTo := step.SortOrder.ToNumberValue(ctx)
 			if diagsTo.HasError() {
@@ -77,12 +79,13 @@ func getWorkflowsRules(
 
 			sort, _ := val.ValueBigFloat().Float32()
 
-			approvalEntities := make([]client.ApprovalFlowSchema_ApprovalEntities_Item, 0)
+			approvalEntities := make([]client.ApprovalFlowSchema_ApprovalEntities_Item, 0, len(step.ApprovalEntities))
 			if len(step.ApprovalEntities) > 0 {
 				for _, entity := range step.ApprovalEntities {
 					if entity.Type.IsNull() || entity.Type.IsUnknown() {
 						continue
 					}
+
 					switch entity.Type.ValueString() {
 					case "schedule", string(client.OnCallIntegrationSchedule):
 						if entity.Schedule.IsNull() {
@@ -217,7 +220,7 @@ func getWorkflowsRules(
 				}
 			}
 
-			notifiedEntities := make([]client.ApprovalFlowSchema_NotifiedEntities_Item, 0)
+			notifiedEntities := make([]client.ApprovalFlowSchema_NotifiedEntities_Item, 0, len(step.NotifiedEntities))
 			if len(step.NotifiedEntities) > 0 {
 				for _, entity := range step.NotifiedEntities {
 					if entity.Type.IsNull() || entity.Type.IsUnknown() {

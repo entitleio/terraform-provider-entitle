@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,6 +16,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -49,8 +50,10 @@ func (r *AgentTokenResource) Metadata(ctx context.Context, req resource.Metadata
 // Schema sets the schema for the resource.
 func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
-		Description:         "",
+		MarkdownDescription: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
+		Description: "Defines the schema for an Entitle Agent Token resource. " +
+			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -67,9 +70,7 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         "The display name for the agent token.",
 			},
 			"token": schema.StringAttribute{
-				Required:            false,
 				Computed:            true,
-				Optional:            true,
 				Sensitive:           true,
 				MarkdownDescription: "The token for the agent token. (sensitive)",
 				Description:         "The token for the agent token. (sensitive)",
@@ -119,10 +120,8 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Extract the name from the plan, required for creating the agent token.
-	var name string
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() && plan.Name.ValueString() != "" {
-		name = plan.Name.ValueString()
-	} else {
+	name := plan.Name.ValueString()
+	if name == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"failed to create agent token resource; required name variable missing",
@@ -266,15 +265,15 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Extract the name from the resource data; it's required for updating the agent token.
 	var name string
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		name = data.Name.ValueString()
-	} else {
+	if data.Name.ValueString() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the name variable for Entitle agent token",
 		)
 		return
 	}
+
+	name = data.Name.ValueString()
 
 	// Send a request to the Entitle API to update the agent token.
 	agentTokenResp, err := r.client.AgentTokensUpdateWithResponse(ctx, uid, client.AgentTokenCreateBodySchema{
@@ -305,8 +304,8 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Update the AgentTokenResourceModel with the updated agent token data.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Name),
+		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
 		Token: data.Token,
 	}
 

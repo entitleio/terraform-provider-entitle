@@ -3,12 +3,12 @@
 page_title: "entitle_resource Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle Resource Description
+  Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
 ---
 
 # entitle_resource (Data Source)
 
-Entitle Resource Description
+Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 
 
@@ -21,33 +21,33 @@ Entitle Resource Description
 
 ### Read-Only
 
-- `allow_requests` (Boolean) allowRequests (default: true)
-- `allowed_durations` (List of Number) allowedDurations
-- `description` (String) description
-- `integration` (Attributes) integration (see [below for nested schema](#nestedatt--integration))
-- `maintainers` (Attributes List) maintainers (see [below for nested schema](#nestedatt--maintainers))
+- `allowed_durations` (List of Number) List of allowed access durations
+- `description` (String) Resource description
+- `integration` (Attributes) Integration the resource belongs to (see [below for nested schema](#nestedatt--integration))
+- `maintainers` (Attributes List) List of resource maintainers (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) Entitle Resource name
-- `owner` (Attributes) owner (see [below for nested schema](#nestedatt--owner))
+- `owner` (Attributes) Owner of the resource (see [below for nested schema](#nestedatt--owner))
+- `requestable` (Boolean) Indicates if the resource is requestable (default: true)
 - `tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
-- `user_defined_description` (String) user_defined_description
+- `user_defined_description` (String) Custom description provided by the user
 - `user_defined_tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
-- `workflow` (Attributes) workflow (see [below for nested schema](#nestedatt--workflow))
+- `workflow` (Attributes) Workflow configuration for the resource (see [below for nested schema](#nestedatt--workflow))
 
 <a id="nestedatt--integration"></a>
 ### Nested Schema for `integration`
 
 Read-Only:
 
-- `application` (Attributes) integration's application (see [below for nested schema](#nestedatt--integration--application))
-- `id` (String) integration's id
-- `name` (String) integration's name
+- `application` (Attributes) Integration's application (see [below for nested schema](#nestedatt--integration--application))
+- `id` (String) Integration's unique identifier
+- `name` (String) Integration's name
 
 <a id="nestedatt--integration--application"></a>
 ### Nested Schema for `integration.application`
 
 Read-Only:
 
-- `name` (String) application's name
+- `name` (String) Name of the application within the integration
 
 
 
@@ -56,17 +56,17 @@ Read-Only:
 
 Read-Only:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--maintainers--group))
-- `type` (String) type
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--maintainers--user))
+- `group` (Attributes) Maintainer details if the maintainer is a group (see [below for nested schema](#nestedatt--maintainers--group))
+- `type` (String) Type of maintainer
+- `user` (Attributes) Maintainer details if the maintainer is a user (see [below for nested schema](#nestedatt--maintainers--user))
 
 <a id="nestedatt--maintainers--group"></a>
 ### Nested Schema for `maintainers.group`
 
 Read-Only:
 
-- `email` (String) email
-- `id` (String)
+- `email` (String) Maintainer group’s email address
+- `id` (String) Maintainer group’s unique identifier
 
 
 <a id="nestedatt--maintainers--user"></a>
@@ -74,8 +74,8 @@ Read-Only:
 
 Read-Only:
 
-- `email` (String) email
-- `id` (String) id
+- `email` (String) Maintainer user’s email address
+- `id` (String) Maintainer user’s unique identifier
 
 
 
@@ -84,8 +84,8 @@ Read-Only:
 
 Read-Only:
 
-- `email` (String) email
-- `id` (String) id
+- `email` (String) Owner's email address
+- `id` (String) Owner's unique identifier
 
 
 <a id="nestedatt--workflow"></a>
@@ -93,5 +93,5 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) id
-- `name` (String) name
+- `id` (String) Workflow's unique identifier
+- `name` (String) Workflow's name

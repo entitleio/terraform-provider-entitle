@@ -53,11 +53,11 @@ resource "entitle_workflow" "example" {
 
 ### Required
 
-- `name` (String) name
+- `name` (String) The human-readable name of the workflow. Must be between 2 and 50 characters.
 
 ### Optional
 
-- `rules` (Attributes List) rules (see [below for nested schema](#nestedatt--rules))
+- `rules` (Attributes List) A list of rules that determine how approvals should be handled based on specific conditions. (see [below for nested schema](#nestedatt--rules))
 
 ### Read-Only
 
@@ -68,138 +68,138 @@ resource "entitle_workflow" "example" {
 
 Optional:
 
-- `any_schedule` (Boolean) any_schedule
-- `approval_flow` (Attributes) approval_flow (see [below for nested schema](#nestedatt--rules--approval_flow))
-- `in_groups` (Attributes List) in_groups (see [below for nested schema](#nestedatt--rules--in_groups))
-- `in_schedules` (Attributes List) in_schedules (see [below for nested schema](#nestedatt--rules--in_schedules))
-- `sort_order` (Number) sort_order
-- `under_duration` (Number) under_duration
+- `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to true.
+- `approval_flow` (Attributes) The approval process defined by one or more ordered steps. Each step includes approvers and conditions. (see [below for nested schema](#nestedatt--rules--approval_flow))
+- `in_groups` (Attributes Set) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
+- `in_schedules` (Attributes Set) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
+- `sort_order` (Number) Determines the evaluation priority of the rule.
+- `under_duration` (Number) Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).
 
 <a id="nestedatt--rules--approval_flow"></a>
 ### Nested Schema for `rules.approval_flow`
 
 Optional:
 
-- `steps` (Attributes List) steps (see [below for nested schema](#nestedatt--rules--approval_flow--steps))
+- `steps` (Attributes List) List of approval steps defining the sequence and conditions of approval. (see [below for nested schema](#nestedatt--rules--approval_flow--steps))
 
 <a id="nestedatt--rules--approval_flow--steps"></a>
 ### Nested Schema for `rules.approval_flow.steps`
 
 Optional:
 
-- `approval_entities` (Attributes List) in_groups (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
-- `notified_entities` (Attributes List) in_groups (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
-- `operator` (String) operator
-- `sort_order` (Number) sort_order
+- `approval_entities` (Attributes Set) List of users or groups that must approve in this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
+- `notified_entities` (Attributes Set) List of users or groups to be notified during this approval step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
+- `operator` (String) Logical operator for combining approval entities.
+- `sort_order` (Number) Order of the step within the approval flow. Lower numbers indicate earlier steps.
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order`
+### Nested Schema for `rules.approval_flow.steps.approval_entities`
 
 Required:
 
-- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--value))
+- `value` (Attributes) Holds additional metadata or configuration related to the entity’s role in the approval step. This can include specific rules, conditions, or statuses that influence how the approval or notification behaves. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--value))
 
 Optional:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--group))
-- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--schedule))
-- `type` (String)
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--user))
+- `group` (Attributes) Represents a group whose members are responsible for approving the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
+- `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
+- `type` (String) Type of approval entity.
+- `user` (Attributes) Represents an individual user who is required to approve the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--value"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.value`
-
-Optional:
-
-- `approval` (String)
-
-
-<a id="nestedatt--rules--approval_flow--steps--sort_order--group"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.group`
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--value"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.value`
 
 Optional:
 
-- `id` (String)
+- `approval` (String) Specifies the approval condition or requirement for the entity in this step. For example, it could indicate whether the approval is mandatory, optional, or has a certain threshold. This field helps customize the approval logic at a granular level.
+
+
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
+
+Optional:
+
+- `id` (String) Unique identifier of the approver group.
 
 Read-Only:
 
-- `name` (String)
+- `name` (String) Name of the approver group.
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--schedule"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.schedule`
-
-Optional:
-
-- `name` (String)
-
-Read-Only:
-
-- `id` (String)
-
-
-<a id="nestedatt--rules--approval_flow--steps--sort_order--user"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.user`
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--schedule"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.schedule`
 
 Optional:
 
-- `id` (String)
+- `name` (String) Name of the approval schedule.
 
 Read-Only:
 
-- `email` (String) email
+- `id` (String) Unique identifier of the schedule for the approval entity.
+
+
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--user"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.user`
+
+Optional:
+
+- `id` (String) Unique identifier of the approver.
+
+Read-Only:
+
+- `email` (String) Email address of the approver.
 
 
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order`
+### Nested Schema for `rules.approval_flow.steps.notified_entities`
 
 Optional:
 
-- `group` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--group))
-- `schedule` (Attributes) group (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--schedule))
-- `type` (String)
-- `user` (Attributes) user (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--user))
-- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--sort_order--value))
+- `group` (Attributes) Represents a user group whose members will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
+- `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
+- `type` (String) Type of notified entity
+- `user` (Attributes) Represents an individual user who will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
+- `value` (Attributes) value (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--value))
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--group"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.group`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
 
 Optional:
 
-- `id` (String)
+- `id` (String) A unique identifier of the group
 
 Read-Only:
 
-- `name` (String)
+- `name` (String) Name of the notified group.
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--schedule"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.schedule`
-
-Optional:
-
-- `id` (String)
-
-Read-Only:
-
-- `name` (String)
-
-
-<a id="nestedatt--rules--approval_flow--steps--sort_order--user"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.user`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--schedule"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.schedule`
 
 Optional:
 
-- `id` (String)
+- `id` (String) A unique identifier of the schedule
 
 Read-Only:
 
-- `email` (String) email
+- `name` (String) A name of the schedule
 
 
-<a id="nestedatt--rules--approval_flow--steps--sort_order--value"></a>
-### Nested Schema for `rules.approval_flow.steps.sort_order.value`
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--user"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.user`
+
+Optional:
+
+- `id` (String) Unique identifier of the notified user.
+
+Read-Only:
+
+- `email` (String) Email address of the notified user.
+
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--value"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.value`
 
 Optional:
 
@@ -214,11 +214,11 @@ Optional:
 
 Optional:
 
-- `id` (String)
+- `id` (String) A unique identifier of the group
 
 Read-Only:
 
-- `name` (String) name
+- `name` (String) The name of the group.
 
 
 <a id="nestedatt--rules--in_schedules"></a>
@@ -226,8 +226,8 @@ Read-Only:
 
 Optional:
 
-- `id` (String)
+- `id` (String) A unique identifier of the schedule
 
 Read-Only:
 
-- `name` (String) name
+- `name` (String) The name of the schedule.

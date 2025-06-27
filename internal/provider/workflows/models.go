@@ -2,11 +2,13 @@ package workflows
 
 import (
 	"context"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
 type workflowRulesModel struct {
