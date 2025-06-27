@@ -47,7 +47,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.19
+- [Go](https://golang.org/doc/install) >= 1.24.3
 
 ## Building The Provider
 
@@ -66,7 +66,7 @@ before starting you need to overide the configuration for the terraform provider
 provider_installation {
 
   dev_overrides {
-      "entitle-io/entitle" = `$GOPATH/bin`
+      "entitleio/entitle" = `$GOPATH/bin`
   }
 
   # For all other providers, install them directly from their origin provider
