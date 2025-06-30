@@ -59,6 +59,8 @@ func (p *EntitleProvider) Schema(
 	resp *provider.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "The Entitle provider allows you to manage your [Entitle](https://www.entitle.io) resources and configurations through Terraform. It provides the ability to automate the management of integrations, workflows, and access policies within your Entitle environment.",
+		Description:         "The Entitle provider allows you to manage your Entitle resources and configurations through Terraform.",
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
 				MarkdownDescription: "entitle API server address, default: https://api.entitle.io",

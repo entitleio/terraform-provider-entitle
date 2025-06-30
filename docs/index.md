@@ -3,12 +3,12 @@
 page_title: "entitle Provider"
 subcategory: ""
 description: |-
-  
+  The Entitle provider allows you to manage your Entitle https://www.entitle.io resources and configurations through Terraform. It provides the ability to automate the management of integrations, workflows, and access policies within your Entitle environment.
 ---
 
 # entitle Provider
 
-
+The Entitle provider allows you to manage your [Entitle](https://www.entitle.io) resources and configurations through Terraform. It provides the ability to automate the management of integrations, workflows, and access policies within your Entitle environment.
 
 ## Example Usage
 
