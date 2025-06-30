@@ -1,6 +1,9 @@
 name: One-time GPG Public Key Export
 
 on:
+  push:
+    branches:
+      - chore/gpg-export
   workflow_dispatch:
 
 jobs:
