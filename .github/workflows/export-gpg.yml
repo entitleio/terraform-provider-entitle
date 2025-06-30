@@ -1,0 +1,27 @@
+name: One-time GPG Public Key Export
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export-public-key:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Import GPG Private Key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" > private.key
+          gpg --batch --import private.key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Export GPG Public Key
+        run: |
+          KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
+          gpg --armor --export "$KEY_ID" > public.key
+
+      - name: Upload GPG Public Key as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpg-public-key
+          path: public.key
