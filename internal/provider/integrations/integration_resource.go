@@ -43,25 +43,26 @@ type IntegrationResource struct {
 
 // IntegrationResourceModel describes the resource data model.
 type IntegrationResourceModel struct {
-	ID                                   types.String             `tfsdk:"id"`
-	Name                                 types.String             `tfsdk:"name"`
-	AllowedDurations                     types.List               `tfsdk:"allowed_durations"`
-	AllowChangingAccountPermissions      types.Bool               `tfsdk:"allow_changing_account_permissions"`
-	AllowCreatingAccounts                types.Bool               `tfsdk:"allow_creating_accounts"`
-	Readonly                             types.Bool               `tfsdk:"readonly"`
-	AllowRequests                        types.Bool               `tfsdk:"allow_requests"`
-	AllowRequestsByDefault               types.Bool               `tfsdk:"allow_requests_by_default"`
-	Requestable                          types.Bool               `tfsdk:"requestable"`
-	RequestableByDefault                 types.Bool               `tfsdk:"requestable_by_default"`
-	AutoAssignRecommendedMaintainers     types.Bool               `tfsdk:"auto_assign_recommended_maintainers"`
-	AutoAssignRecommendedOwners          types.Bool               `tfsdk:"auto_assign_recommended_owners"`
-	NotifyAboutExternalPermissionChanges types.Bool               `tfsdk:"notify_about_external_permission_changes"`
-	Owner                                *utils.IdEmailModel      `tfsdk:"owner"`
-	Application                          *utils.NameModel         `tfsdk:"application"`
-	AgentToken                           *utils.NameModel         `tfsdk:"agent_token"`
-	Workflow                             *utils.IdNameModel       `tfsdk:"workflow"`
-	Maintainers                          []*utils.MaintainerModel `tfsdk:"maintainers"`
-	ConnectionJson                       types.String             `tfsdk:"connection_json"`
+	ID                                   types.String                        `tfsdk:"id"`
+	Name                                 types.String                        `tfsdk:"name"`
+	AllowedDurations                     types.List                          `tfsdk:"allowed_durations"`
+	AllowChangingAccountPermissions      types.Bool                          `tfsdk:"allow_changing_account_permissions"`
+	AllowCreatingAccounts                types.Bool                          `tfsdk:"allow_creating_accounts"`
+	Readonly                             types.Bool                          `tfsdk:"readonly"`
+	AllowRequests                        types.Bool                          `tfsdk:"allow_requests"`
+	AllowRequestsByDefault               types.Bool                          `tfsdk:"allow_requests_by_default"`
+	Requestable                          types.Bool                          `tfsdk:"requestable"`
+	RequestableByDefault                 types.Bool                          `tfsdk:"requestable_by_default"`
+	AutoAssignRecommendedMaintainers     types.Bool                          `tfsdk:"auto_assign_recommended_maintainers"`
+	AutoAssignRecommendedOwners          types.Bool                          `tfsdk:"auto_assign_recommended_owners"`
+	NotifyAboutExternalPermissionChanges types.Bool                          `tfsdk:"notify_about_external_permission_changes"`
+	Owner                                *utils.IdEmailModel                 `tfsdk:"owner"`
+	Application                          *utils.NameModel                    `tfsdk:"application"`
+	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
+	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
+	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
+	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 }
 
 func (r *IntegrationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -288,6 +289,83 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:            false,
 				Description:         "go to https://app.entitle.io/integrations and provide the latest schema.",
 				MarkdownDescription: "go to https://app.entitle.io/integrations and provide the latest schema.",
+			},
+			"prerequisite_permissions": schema.ListNestedAttribute{
+				Optional:            true,
+				Description:         "Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below.",
+				MarkdownDescription: "Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"default": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+						},
+						"role": schema.SingleNestedAttribute{
+							Required: true,
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Required:            true,
+									Description:         "The identifier of the role to be granted.",
+									MarkdownDescription: "The identifier of the role to be granted.",
+								},
+								"name": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The name of the role.",
+									MarkdownDescription: "The name of the role.",
+								},
+								"resource": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The unique identifier of the resource.",
+											MarkdownDescription: "The unique identifier of the resource.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The display name of the resource.",
+											MarkdownDescription: "The display name of the resource.",
+										},
+										"integration": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The identifier of the integration.",
+													MarkdownDescription: "The identifier of the integration.",
+												},
+												"name": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The display name of the integration.",
+													MarkdownDescription: "The display name of the integration.",
+												},
+												"application": schema.SingleNestedAttribute{
+													Attributes: map[string]schema.Attribute{
+														"name": schema.StringAttribute{
+															Computed:            true,
+															Description:         "The name of the connected application.",
+															MarkdownDescription: "The name of the connected application.",
+														},
+													},
+													Computed:            true,
+													Description:         "The application that the integration is connected to.",
+													MarkdownDescription: "The application that the integration is connected to.",
+												},
+											},
+											Computed:            true,
+											Description:         "The integration that the resource belongs to.",
+											MarkdownDescription: "The integration that the resource belongs to.",
+										},
+									},
+									Computed:            true,
+									Description:         "The specific resource associated with the role.",
+									MarkdownDescription: "The specific resource associated with the role.",
+								},
+							},
+						},
+					},
+				},
 			},
 			"owner": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -539,6 +617,35 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
+	var prerequisitePermissions *[][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item
+	if len(plan.PrerequisitePermissions) > 0 {
+		ppData := make([][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item, 0, len(plan.PrerequisitePermissions))
+		for _, pp := range plan.PrerequisitePermissions {
+			if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+
+			item := client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{}
+			err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("failed to merge preqrequisite permission data, error: %v", err),
+				)
+			}
+
+			ppData = append(ppData, []client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{
+				item,
+			})
+		}
+		prerequisitePermissions = &ppData
+	}
+
 	body := client.IntegrationCreateBodySchema{
 		AgentToken:                           agentToken,
 		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
@@ -558,6 +665,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		Owner:                                owner,
 		Readonly:                             plan.Readonly.ValueBool(),
 		Workflow:                             workflow,
+		PrerequisitePermissions:              prerequisitePermissions,
 	}
 
 	integrationResp, err := r.client.IntegrationsCreateWithResponse(ctx, body)
@@ -885,6 +993,35 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	}
 
+	var prerequisitePermissions *[][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item
+	if len(data.PrerequisitePermissions) > 0 {
+		ppData := make([][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item, 0, len(data.PrerequisitePermissions))
+		for _, pp := range data.PrerequisitePermissions {
+			if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+
+			item := client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{}
+			err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("failed to merge preqrequisite permission data, error: %v", err),
+				)
+			}
+
+			ppData = append(ppData, []client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{
+				item,
+			})
+		}
+		prerequisitePermissions = &ppData
+	}
+
 	integrationResp, err := r.client.IntegrationsUpdateWithResponse(ctx, uid, client.IntegrationsUpdateBodySchema{
 		AllowRequests:                        utils.BoolPointer(data.AllowRequests.ValueBool()),
 		AllowRequestsByDefault:               utils.BoolPointer(data.AllowRequestsByDefault.ValueBool()),
@@ -897,6 +1034,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		NotifyAboutExternalPermissionChanges: utils.BoolPointer(data.NotifyAboutExternalPermissionChanges.ValueBool()),
 		Owner:                                &owner,
 		Workflow:                             &workflow,
+		PrerequisitePermissions:              prerequisitePermissions,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -1173,6 +1311,35 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 	}
 
+	var prerequisitePermissions []utils.PrerequisitePermissionModel
+	if data.PrerequisitePermissions != nil {
+		for _, pp := range *data.PrerequisitePermissions {
+			for _, item := range pp {
+				v, err := item.AsPrerequisiteRolePermissionResponseSchema()
+				if err != nil {
+					diags.AddError(
+						"No data",
+						"failed to unmarshal the prerequisite permissions data",
+					)
+					return IntegrationResourceModel{}, diags
+				}
+
+				roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
+				if diagsGetRoles.HasError() {
+					diags.Append(diagsGetRoles...)
+					return IntegrationResourceModel{}, diags
+				}
+
+				prerequisitePermissions = append(prerequisitePermissions,
+					utils.PrerequisitePermissionModel{
+						Default: types.BoolValue(v.Default),
+						Role:    roleModel,
+					},
+				)
+			}
+		}
+	}
+
 	// Create the Terraform resource model using the extracted data
 	return IntegrationResourceModel{
 		ID:                                   utils.TrimmedStringValue(data.Id.String()),
@@ -1200,7 +1367,8 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
-		Maintainers:    maintainers,
-		ConnectionJson: utils.TrimmedStringValue(connectionJson),
+		Maintainers:             maintainers,
+		ConnectionJson:          utils.TrimmedStringValue(connectionJson),
+		PrerequisitePermissions: prerequisitePermissions,
 	}, diags
 }
