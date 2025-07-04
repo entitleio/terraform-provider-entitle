@@ -163,6 +163,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		policies.NewPolicyResource,
 		workflows.NewWorkflowResource,
 		agentTokens.NewAgentTokenResource,
+		resources.NewResourceResource,
 	}
 }
 

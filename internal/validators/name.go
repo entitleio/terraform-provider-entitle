@@ -31,7 +31,13 @@ func (u Name) MarkdownDescription(ctx context.Context) string {
 
 // ValidateString Validate satisfies the validator.String interface.
 func (u Name) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	// Skip validation if value is empty (not provided)
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
 	val := req.ConfigValue.ValueString()
+
 	if len(val) < u.minLength || len(val) > u.maxLength {
 		resp.Diagnostics.AddError(
 			"Name Validate Failed",
