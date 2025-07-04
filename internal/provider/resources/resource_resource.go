@@ -211,9 +211,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the owner's email (lowercase) is used when id was not provided",
 						MarkdownDescription: "the owner's email (lowercase) is used when id was not provided",
-						Validators:          []validator.String{
-							//validators.LowerCaseNameValidator{},
-						},
+						//Validators:          []validator.String{
+						//validators.LowerCaseNameValidator{},
+						//},
 					},
 				},
 				Required: false,
@@ -348,7 +348,16 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 
-		entityID := maintainer.Entity.Attributes()["id"].(basetypes.StringValue).ValueString()
+		idAttr := maintainer.Entity.Attributes()["id"]
+		strVal, ok := idAttr.(basetypes.StringValue)
+		if !ok {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"failed missing data for entity maintainer id",
+			)
+			return
+		}
+		entityID := strVal.ValueString()
 
 		switch maintainer.Type.ValueString() {
 		case "user":
@@ -663,7 +672,16 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 				continue
 			}
 
-			entityID := maintainer.Entity.Attributes()["id"].(basetypes.StringValue).ValueString()
+			idAttr := maintainer.Entity.Attributes()["id"]
+			strVal, ok := idAttr.(basetypes.StringValue)
+			if !ok {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					"failed missing data for entity maintainer id",
+				)
+				return
+			}
+			entityID := strVal.ValueString()
 
 			if maintainer.Entity.IsNull() {
 				resp.Diagnostics.AddError(
@@ -753,7 +771,12 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	var userDefinedTags []string
 	if !data.UserDefinedTags.IsUnknown() {
 		for _, tag := range data.UserDefinedTags.Elements() {
-			userDefinedTags = append(userDefinedTags, tag.(basetypes.StringValue).ValueString())
+			tagValue, ok := tag.(basetypes.StringValue)
+			if !ok {
+				continue
+			}
+
+			userDefinedTags = append(userDefinedTags, tagValue.ValueString())
 		}
 	}
 
