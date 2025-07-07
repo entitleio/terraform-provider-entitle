@@ -635,8 +635,9 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to merge preqrequisite permission data, error: %v", err),
+					fmt.Sprintf("failed to merge prerequisite permission data, error: %v", err),
 				)
+				return
 			}
 
 			ppData = append(ppData, []client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{
@@ -1319,7 +1320,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				if err != nil {
 					diags.AddError(
 						"No data",
-						"failed to unmarshal the prerequisite permissions data",
+						fmt.Sprintf("failed to unmarshal the prerequisite permissions data, err: %s", err.Error()),
 					)
 					return IntegrationResourceModel{}, diags
 				}
