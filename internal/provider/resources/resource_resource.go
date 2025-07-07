@@ -42,10 +42,8 @@ type ResourceResource struct {
 
 // ResourceResourceModel describes the resource data model.
 type ResourceResourceModel struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	//Type ?
-	//Multirole ?
+	ID                     types.String             `tfsdk:"id"`
+	Name                   types.String             `tfsdk:"name"`
 	AllowedDurations       types.Set                `tfsdk:"allowed_durations"`
 	Maintainers            []*utils.MaintainerModel `tfsdk:"maintainers"`
 	Tags                   types.Set                `tfsdk:"tags"`
@@ -321,10 +319,10 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 
 	var owner client.UserEntitySchema
 	if plan.Owner != nil {
-		if plan.Owner.Id.ValueString() != "" {
-			owner.Id = utils.TrimPrefixSuffix(plan.Owner.Id.String())
-		} else if plan.Owner.Email.ValueString() != "" {
-			owner.Id = strings.ToLower(utils.TrimPrefixSuffix(plan.Owner.Email.String()))
+		if v := plan.Owner.Id.ValueString(); v != "" {
+			owner.Id = utils.TrimPrefixSuffix(v)
+		} else if v := plan.Owner.Email.ValueString(); v != "" {
+			owner.Id = strings.ToLower(utils.TrimPrefixSuffix(v))
 		} else {
 			resp.Diagnostics.AddError(
 				"Config Error",
@@ -461,7 +459,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to crete the resource, got error: %v", err),
+			fmt.Sprintf("Unable to create the resource, got error: %v", err),
 		)
 		return
 	}
@@ -939,11 +937,6 @@ func convertFullResourceResultResponseSchemaToModel(
 		return ResourceResourceModel{}, diags
 	}
 
-	marshalJSON, err := data.Owner.Email.MarshalJSON()
-	if err != nil {
-		return ResourceResourceModel{}, nil
-	}
-
 	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
@@ -1113,6 +1106,19 @@ func convertFullResourceResultResponseSchemaToModel(
 
 		tags = setVal
 	}
+
+	var owner *utils.IdEmailModel
+	if data.Owner != nil {
+		marshalJSON, err := data.Owner.Email.MarshalJSON()
+		if err != nil {
+			return ResourceResourceModel{}, nil
+		}
+		owner = &utils.IdEmailModel{
+			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
+			Email: utils.TrimmedStringValue(strings.ToLower(string(marshalJSON))),
+		}
+	}
+
 	// Create the Terraform resource model using the extracted data
 	return ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
@@ -1131,9 +1137,6 @@ func convertFullResourceResultResponseSchemaToModel(
 			Name: utils.TrimmedStringValue(data.Integration.Name),
 		},
 		Requestable: types.BoolValue(data.Requestable),
-		Owner: &utils.IdEmailModel{
-			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(strings.ToLower(string(marshalJSON))),
-		},
+		Owner:       owner,
 	}, diags
 }
