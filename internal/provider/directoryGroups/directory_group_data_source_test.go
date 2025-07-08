@@ -1,7 +1,7 @@
 //go:build acceptance
 // +build acceptance
 
-package users_test
+package directoryGroups_test
 
 import (
 	"fmt"
@@ -20,19 +20,18 @@ func TestAgentTokenResource(t *testing.T) {
 			// Read testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-data "entitle_user" "my_user" {
+data "entitle_directory_group" "my_dg" {
 	email = "%s"
 }
-`, os.Getenv("ENTITLE_OWNER_EMAIL")),
+`, os.Getenv("ENTITLE_DIRECTORY_GROUP_EMAIL")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
-					resource.TestCheckResourceAttr("data.entitle_user.my_user", "email", os.Getenv("ENTITLE_OWNER_EMAIL")),
+					resource.TestCheckResourceAttr("data.entitle_directory_group.my_dg", "email", os.Getenv("ENTITLE_OWNER_EMAIL")),
 
 					// Verify dynamic values have any value set in the state.
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "id"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "given_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "family_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "created_at"),
+					resource.TestCheckResourceAttrSet("data.entitle_directory_group.my_dg", "id"),
+					resource.TestCheckResourceAttrSet("data.entitle_directory_group.my_dg", "name"),
+					resource.TestCheckResourceAttrSet("data.entitle_directory_group.my_dg", "origin"),
 				),
 			},
 		},

@@ -15,6 +15,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/directoryGroups"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
@@ -177,6 +178,7 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		agentTokens.NewAgentTokenDataSource,
 		resources.NewResourceDataSource,
 		users.NewUserDataSource,
+		directoryGroups.NewDirectoryGroupDataSource,
 	}
 }
 
