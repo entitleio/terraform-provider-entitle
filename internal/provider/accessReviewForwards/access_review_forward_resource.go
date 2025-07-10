@@ -39,7 +39,7 @@ type AccessReviewForwardResourceModel struct {
 	Target    *utils.IdEmailModel `tfsdk:"target" json:"target"`
 }
 
-// Metadata is a function to set the TypeName for the Entitle bundle resource.
+// Metadata is a function to set the TypeName for the Entitle access review forward resource.
 func (r *AccessReviewForwardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_access_review_forward"
 }
@@ -132,7 +132,7 @@ func (r *AccessReviewForwardResource) Configure(
 	r.client = cli
 }
 
-// Create is responsible for creating a new resource of type Entitle Bundle.
+// Create is responsible for creating a new resource of type Entitle Access Review Forward.
 //
 // It reads the Terraform plan data provided in req.Plan and maps it to the AccessReviewForwardResourceModel.
 // Then, it sends a request to the Entitle API to create the resource using API requests.
@@ -152,8 +152,8 @@ func (r *AccessReviewForwardResource) Create(
 		return
 	}
 
-	// Call Entitle API to create the bundle resource
-	bundleResp, err := r.client.AccessReviewForwardsCreateWithResponse(ctx, client.AccessReviewForwardsCreateJSONRequestBody{
+	// Call Entitle API to create the resource
+	apiResp, err := r.client.AccessReviewForwardsCreateWithResponse(ctx, client.AccessReviewForwardsCreateJSONRequestBody{
 		Forwarder: client.UserEntitySchema{
 			Id: plan.Forwarder.Id.ValueString(),
 		},
@@ -170,10 +170,10 @@ func (r *AccessReviewForwardResource) Create(
 	}
 
 	// Handle API response status
-	if bundleResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(bundleResp.Body)
-		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
+	if apiResp.HTTPResponse.StatusCode != 200 {
+		errBody, _ := utils.GetErrorBody(apiResp.Body)
+		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
+			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				"unauthorized token, update the entitle token and retry please",
@@ -185,8 +185,8 @@ func (r *AccessReviewForwardResource) Create(
 			"Client Error",
 			fmt.Sprintf(
 				"failed to create the access review forward, %s, status code: %d%s",
-				string(bundleResp.Body),
-				bundleResp.HTTPResponse.StatusCode,
+				string(apiResp.Body),
+				apiResp.HTTPResponse.StatusCode,
 				errBody.GetMessage(),
 			),
 		)
@@ -196,7 +196,7 @@ func (r *AccessReviewForwardResource) Create(
 	tflog.Trace(ctx, "created an Entitle Access Review Forward resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = utils.TrimmedStringValue(bundleResp.JSON200.Result[0].Id.String())
+	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result[0].Id.String())
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
@@ -240,7 +240,7 @@ func (r *AccessReviewForwardResource) Read(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
+			fmt.Sprintf("Unable to get the access review forward by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
 	}

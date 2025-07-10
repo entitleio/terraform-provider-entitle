@@ -179,6 +179,7 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		agentTokens.NewAgentTokenDataSource,
 		resources.NewResourceDataSource,
 		users.NewUserDataSource,
+		accessReviewForwards.NewAccessReviewForwardDataSource,
 	}
 }
 
