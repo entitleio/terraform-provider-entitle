@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
@@ -164,6 +165,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		policies.NewPolicyResource,
 		workflows.NewWorkflowResource,
 		agentTokens.NewAgentTokenResource,
+		accessReviewForwards.NewAccessReviewForwardResource,
 	}
 }
 
