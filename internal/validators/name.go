@@ -31,6 +31,11 @@ func (u Name) MarkdownDescription(ctx context.Context) string {
 
 // ValidateString Validate satisfies the validator.String interface.
 func (u Name) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsUnknown() {
+		// skip validation when the value is not known yet
+		return
+	}
+
 	val := req.ConfigValue.ValueString()
 	if len(val) < u.minLength || len(val) > u.maxLength {
 		resp.Diagnostics.AddError(
