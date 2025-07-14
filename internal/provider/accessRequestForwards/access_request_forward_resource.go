@@ -249,7 +249,7 @@ func (r *AccessRequestForwardResource) Read(
 	if err != nil {
 		diags.AddError(
 			"No data",
-			fmt.Sprintf("failed to get forwarder user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
 		)
 
 		return
@@ -259,7 +259,7 @@ func (r *AccessRequestForwardResource) Read(
 	if err != nil {
 		diags.AddError(
 			"No data",
-			fmt.Sprintf("failed to get target user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
 		)
 
 		return
@@ -309,14 +309,14 @@ func (r *AccessRequestForwardResource) Update(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
 
 	resp.Diagnostics.AddError(
 		"Client Error",
-		fmt.Sprintf("update not available for the resource id (%s)", uid.String()),
+		fmt.Sprintf("Update not available for the resource id (%s)", uid.String()),
 	)
 	return
 }

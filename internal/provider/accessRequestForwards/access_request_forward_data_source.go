@@ -142,7 +142,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
@@ -181,7 +181,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",
-			fmt.Sprintf("failed to get forwarder user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
 		)
 
 		return
@@ -191,7 +191,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",
-			fmt.Sprintf("failed to get target user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
 		)
 
 		return
