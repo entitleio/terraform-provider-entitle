@@ -3,8 +3,6 @@ package accessReviewForwards
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
@@ -146,7 +144,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
@@ -166,27 +164,16 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	// Check the HTTP response status code for errors
-	if apiResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(apiResp.Body)
-		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the access review forward by the id (%s), status code: %d%s",
+				"Failed to get the Access Review Forward by the id (%s), status code: %d, %s",
 				uid.String(),
 				apiResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
-			),
-		)
+				err.Error(),
+			))
 		return
 	}
 
@@ -195,7 +182,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",
-			fmt.Sprintf("failed to get forwarder user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
 		)
 
 		return
@@ -205,7 +192,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",
-			fmt.Sprintf("failed to get target user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
 		)
 
 		return

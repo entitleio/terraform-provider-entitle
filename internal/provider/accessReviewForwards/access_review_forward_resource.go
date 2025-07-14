@@ -169,26 +169,11 @@ func (r *AccessReviewForwardResource) Create(
 		return
 	}
 
-	// Handle API response status
-	if apiResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(apiResp.Body)
-		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf(
-				"failed to create the access review forward, %s, status code: %d%s",
-				string(apiResp.Body),
-				apiResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
-			),
+			fmt.Sprintf("Unable to create the Access Review Forward, got error: %s", err),
 		)
 		return
 	}
@@ -230,7 +215,7 @@ func (r *AccessReviewForwardResource) Read(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
@@ -252,7 +237,7 @@ func (r *AccessReviewForwardResource) Read(
 			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
+				"Unauthorized token, update the entitle token and retry please",
 			)
 			return
 		}
@@ -260,7 +245,7 @@ func (r *AccessReviewForwardResource) Read(
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the access review forward by the id (%s), status code: %d%s",
+				"Failed to get the access review forward by the id (%s), status code: %d%s",
 				uid.String(),
 				apiResp.HTTPResponse.StatusCode,
 				errBody.GetMessage(),
@@ -274,7 +259,7 @@ func (r *AccessReviewForwardResource) Read(
 	if err != nil {
 		diags.AddError(
 			"No data",
-			fmt.Sprintf("failed to get forwarder user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
 		)
 
 		return
@@ -284,7 +269,7 @@ func (r *AccessReviewForwardResource) Read(
 	if err != nil {
 		diags.AddError(
 			"No data",
-			fmt.Sprintf("failed to get target user email bytes, error: %v", err),
+			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
 		)
 
 		return
@@ -334,14 +319,14 @@ func (r *AccessReviewForwardResource) Update(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
 
 	resp.Diagnostics.AddError(
 		"Client Error",
-		fmt.Sprintf("update not available for the resource id (%s)", uid.String()),
+		fmt.Sprintf("Update not available for the resource id (%s)", uid.String()),
 	)
 	return
 }
@@ -385,32 +370,16 @@ func (r *AccessReviewForwardResource) Delete(
 		return
 	}
 
-	// Handle API response status
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest &&
-				strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Unable to delete access review forward, id: (%s), status code: %v%s",
+				"Unable to delete Access Review Forward, id: (%s), status code: %v, %s",
 				data.ID.String(),
 				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
-			),
-		)
+				err.Error(),
+			))
 		return
 	}
 }
