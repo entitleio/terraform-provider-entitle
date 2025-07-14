@@ -25,10 +25,15 @@ func (u Email) MarkdownDescription(ctx context.Context) string {
 
 // ValidateString Validate satisfies the validator.String interface.
 func (u Email) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsUnknown() {
+		// skip validation when the value is not known yet
+		return
+	}
+
 	if !emailRegex.MatchString(req.ConfigValue.ValueString()) {
 		resp.Diagnostics.AddError(
 			"Email Validate failed",
-			"failed to parse Email for resource, invalid format",
+			"Failed to parse Email for resource, invalid format",
 		)
 	}
 }
