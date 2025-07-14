@@ -3,8 +3,6 @@ package accessRequestForwards
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -167,27 +165,16 @@ func (r *AccessRequestForwardResource) Create(
 		return
 	}
 
-	// Handle API response status
-	if apiResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(apiResp.Body)
-		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to create the access request forward, %s, status code: %d%s",
+				"Failed to create the Access Request Forward, %s, status code: %d, %s",
 				string(apiResp.Body),
 				apiResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
-			),
-		)
+				err.Error(),
+			))
 		return
 	}
 
@@ -243,25 +230,15 @@ func (r *AccessRequestForwardResource) Read(
 		return
 	}
 
-	// Handle API response status
-	if apiResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(apiResp.Body)
-		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the access request forward by the id (%s), status code: %d%s",
+				"Failed to get the Access Request Forward by the id (%s), status code: %d%s",
 				uid.String(),
 				apiResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -383,30 +360,15 @@ func (r *AccessRequestForwardResource) Delete(
 		return
 	}
 
-	// Handle API response status
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest &&
-				strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Unable to delete access request forward, id: (%s), status code: %v%s",
+				"Unable to delete Access Request Forward, id: (%s), status code: %v, %s",
 				data.ID.String(),
 				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
