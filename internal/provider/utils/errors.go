@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
+
 type ErrorBody struct {
 	ID      string `json:"errorId"`
 	Message string `json:"message"`
