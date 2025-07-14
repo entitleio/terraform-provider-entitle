@@ -271,24 +271,10 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 	name = plan.Name.ValueString()
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
-		for _, item := range plan.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
-
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	allowedDurations, diags := ConvertTerraformSetToAllowedDurations(ctx, plan.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	var workflow client.IdParamsSchema
@@ -613,24 +599,10 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
-		for _, item := range data.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
-
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	allowedDurations, diags := ConvertTerraformSetToAllowedDurations(ctx, data.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	var workflow client.IdParamsSchema
