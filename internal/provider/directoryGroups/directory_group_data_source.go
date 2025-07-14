@@ -3,8 +3,6 @@ package directoryGroups
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -138,24 +136,11 @@ func (d *DirectoryGroupDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	if resourceResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(resourceResp.Body)
-		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf(
-				"failed to get the Directory Group by the email (%s), status code: %d",
-				email,
-				resourceResp.HTTPResponse.StatusCode,
-			),
+			fmt.Sprintf("Unable to get the Directory Group by the email (%s), got error: %s", email, err),
 		)
 		return
 	}
@@ -165,7 +150,7 @@ func (d *DirectoryGroupDataSource) Read(ctx context.Context, req datasource.Read
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the Directory Group by the email (%s), no results found",
+				"Failed to get the Directory Group by the email (%s), no results found",
 				email,
 			),
 		)
