@@ -158,6 +158,19 @@ func GetRole(
 				Name: TrimmedStringValue(res.Integration.Name),
 			},
 		}
+	case client.IntegrationResourceListItemResponseSchema:
+		// Create a RoleResourceModel to store information about the role's resource.
+		r = RoleResource{
+			Id:   TrimmedStringValue(res.Id.String()),
+			Name: TrimmedStringValue(res.Name),
+			Integration: RoleResourceIntegration{
+				Application: NameModel{
+					Name: TrimmedStringValue(res.Integration.Application.Name),
+				},
+				Id:   TrimmedStringValue(res.Integration.Id.String()),
+				Name: TrimmedStringValue(res.Integration.Name),
+			},
+		}
 	case client.PolicyResourceResponseSchema:
 		// Create a RoleResourceModel to store information about the role's resource.
 		r = RoleResource{
