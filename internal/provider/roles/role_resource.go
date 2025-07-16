@@ -299,26 +299,14 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	var allowedDurations *[]client.EnumAllowedDurations
-	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
-		allowedDurationsSlice := make([]client.EnumAllowedDurations, 0)
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-		for _, item := range plan.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
-
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-
-			allowedDurationsSlice = append(allowedDurationsSlice, client.EnumAllowedDurations(valFloat32))
-		}
-		allowedDurations = &allowedDurationsSlice
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var prerequisitePermissions *[][]client.IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item
@@ -485,23 +473,15 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
-		for _, item := range data.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
+	var allowedDurations *[]client.EnumAllowedDurations
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var prerequisitePermissions *[][]client.IntegrationResourceRolesUpdateBodySchema_PrerequisitePermissions_Item
@@ -547,7 +527,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Send a request to the Entitle API to update the role.
 	apiResp, err := r.client.RolesUpdateWithResponse(ctx, uid, client.RolesUpdateJSONRequestBody{
-		AllowedDurations:        &allowedDurations,
+		AllowedDurations:        allowedDurations,
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
 		Workflow:                &workflow,
