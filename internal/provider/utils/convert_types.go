@@ -180,6 +180,28 @@ func GetStringSet(data *[]string) (types.Set, diag.Diagnostics) {
 	return types.SetValue(types.StringType, result)
 }
 
+func GetNumberSetFromAllowedDurations(data []client.EnumAllowedDurations) (types.Set, diag.Diagnostics) {
+	s := make([]float32, 0, len(data))
+	for _, v := range data {
+		s = append(s, float32(v))
+	}
+
+	return GetNumberSet(s)
+}
+
+func GetNumberSet(data []float32) (types.Set, diag.Diagnostics) {
+	if data == nil || len(data) == 0 {
+		return types.SetNull(types.NumberType), nil
+	}
+
+	result := make([]attr.Value, 0)
+	for _, v := range data {
+		result = append(result, types.NumberValue(big.NewFloat(float64(v))))
+	}
+
+	return types.SetValue(types.NumberType, result)
+}
+
 func GetAllowedDurations(allowed []client.EnumAllowedDurations) []attr.Value {
 	allowedDurationsValues := make([]attr.Value, len(allowed))
 	for i, durations := range allowed {
