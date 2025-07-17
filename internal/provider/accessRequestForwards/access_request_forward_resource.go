@@ -181,7 +181,31 @@ func (r *AccessRequestForwardResource) Create(
 	tflog.Trace(ctx, "created an Entitle Access Request Forward resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result[0].Id.String())
+	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String())
+
+	forwarderEmailBytes, err := apiResp.JSON200.Result.Forwarder.Email.MarshalJSON()
+	if err != nil {
+		diags.AddError(
+			"No data",
+			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
+		)
+
+		return
+	}
+
+	plan.Forwarder.Email = utils.TrimmedStringValue(string(forwarderEmailBytes))
+
+	targetEmailBytes, err := apiResp.JSON200.Result.Target.Email.MarshalJSON()
+	if err != nil {
+		diags.AddError(
+			"No data",
+			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
+		)
+
+		return
+	}
+
+	plan.Target.Email = utils.TrimmedStringValue(string(targetEmailBytes))
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
@@ -215,7 +239,7 @@ func (r *AccessRequestForwardResource) Read(
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
@@ -244,7 +268,7 @@ func (r *AccessRequestForwardResource) Read(
 		return
 	}
 
-	responseSchema := apiResp.JSON200.Result[0]
+	responseSchema := apiResp.JSON200.Result
 	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
 	if err != nil {
 		diags.AddError(

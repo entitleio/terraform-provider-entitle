@@ -176,7 +176,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
-	responseSchema := apiResp.JSON200.Result[0]
+	responseSchema := apiResp.JSON200.Result
 	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
 	if err != nil {
 		resp.Diagnostics.AddError(
