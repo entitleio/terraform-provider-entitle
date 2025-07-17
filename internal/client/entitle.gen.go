@@ -1940,14 +1940,14 @@ type IntegrationResourceRoleResponseSchema struct {
 
 // IntegrationResourceRoleResultSchema defines model for IntegrationResourceRoleResultSchema.
 type IntegrationResourceRoleResultSchema struct {
-	AllowedDurations        []EnumAllowedDurations                                                `json:"allowedDurations"`
-	Id                      openapi_types.UUID                                                    `json:"id"`
-	Name                    string                                                                `json:"name"`
-	PrerequisitePermissions *[][]IntegrationResourceRoleResultSchema_PrerequisitePermissions_Item `json:"prerequisitePermissions,omitempty"`
-	Requestable             bool                                                                  `json:"requestable"`
-	Resource                IntegrationResourceListItemResponseSchema                             `json:"resource"`
-	VirtualizedRole         *IntegrationResourceRoleListItemResponseSchema                        `json:"virtualizedRole,omitempty"`
-	Workflow                *WorkflowSchema                                                       `json:"workflow"`
+	AllowedDurations        []EnumAllowedDurations                                              `json:"allowedDurations"`
+	Id                      openapi_types.UUID                                                  `json:"id"`
+	Name                    string                                                              `json:"name"`
+	PrerequisitePermissions *[]IntegrationResourceRoleResultSchema_PrerequisitePermissions_Item `json:"prerequisitePermissions,omitempty"`
+	Requestable             bool                                                                `json:"requestable"`
+	Resource                IntegrationResourceListItemResponseSchema                           `json:"resource"`
+	VirtualizedRole         *IntegrationResourceRoleListItemResponseSchema                      `json:"virtualizedRole,omitempty"`
+	Workflow                *WorkflowSchema                                                     `json:"workflow"`
 }
 
 // IntegrationResourceRoleResultSchema_PrerequisitePermissions_Item defines model for IntegrationResourceRoleResultSchema.prerequisitePermissions.Item.
