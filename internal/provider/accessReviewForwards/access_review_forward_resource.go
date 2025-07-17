@@ -181,7 +181,7 @@ func (r *AccessReviewForwardResource) Create(
 	tflog.Trace(ctx, "created an Entitle Access Review Forward resource")
 
 	// Update the plan with the new resource ID
-	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result[0].Id.String())
+	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String())
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
@@ -254,7 +254,7 @@ func (r *AccessReviewForwardResource) Read(
 		return
 	}
 
-	responseSchema := apiResp.JSON200.Result[0]
+	responseSchema := apiResp.JSON200.Result
 	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
 	if err != nil {
 		diags.AddError(

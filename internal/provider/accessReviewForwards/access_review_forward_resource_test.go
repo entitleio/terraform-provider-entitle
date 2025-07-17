@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+
+	"github.com/entitleio/terraform-provider-entitle/internal/testhelpers"
 )
 
 func TestAccessReviewForwardResource(t *testing.T) {
@@ -27,7 +29,7 @@ resource "entitle_access_review_forward" "my_forward" {
 		id = "%s"
 	}
 }
-`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_OWNER_ID")),
+`, os.Getenv("ENTITLE_USER1_ID"), os.Getenv("ENTITLE_USER2_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_access_review_forward.my_forward", "forwarder.id", os.Getenv("ENTITLE_OWNER_ID")),

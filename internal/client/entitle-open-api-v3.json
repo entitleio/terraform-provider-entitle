@@ -2489,10 +2489,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForwardResponseSchema"
-            }
+            "$ref": "#/components/schemas/ForwardResponseSchema"
           }
         },
         "required": [
