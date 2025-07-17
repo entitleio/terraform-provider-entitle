@@ -3244,15 +3244,12 @@
           "prerequisitePermissions": {
             "type": "array",
             "items": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/PrerequisiteRolePermissionResponseSchema"
-                  }
-                ]
-              }
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/PrerequisiteRolePermissionResponseSchema"
+                }
+              ]
             }
           },
           "virtualizedRole": {
