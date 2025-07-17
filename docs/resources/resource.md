@@ -56,6 +56,7 @@ resource "entitle_resource" "my_resource" {
 - `allowed_durations` (Set of Number) As the admin, you can set different durations for the resource, compared to the workflow linked to it.
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `owner` (Attributes) Define the owner of the resource, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
+- `prerequisite_permissions` (Attributes List) Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `user_defined_description` (String)
 - `user_defined_tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 - `workflow` (Attributes) The default approval workflow for entitlements for the resource (see [below for nested schema](#nestedatt--workflow))
@@ -105,6 +106,59 @@ Optional:
 
 - `email` (String) the owner's email (lowercase) is used when id was not provided
 - `id` (String) the owner's id
+
+
+<a id="nestedatt--prerequisite_permissions"></a>
+### Nested Schema for `prerequisite_permissions`
+
+Required:
+
+- `role` (Attributes) (see [below for nested schema](#nestedatt--prerequisite_permissions--role))
+
+Optional:
+
+- `default` (Boolean) Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).
+
+<a id="nestedatt--prerequisite_permissions--role"></a>
+### Nested Schema for `prerequisite_permissions.role`
+
+Required:
+
+- `id` (String) The identifier of the role to be granted.
+
+Read-Only:
+
+- `name` (String) The name of the role.
+- `resource` (Attributes) The specific resource associated with the role. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource))
+
+<a id="nestedatt--prerequisite_permissions--role--resource"></a>
+### Nested Schema for `prerequisite_permissions.role.resource`
+
+Read-Only:
+
+- `id` (String) The unique identifier of the resource.
+- `integration` (Attributes) The integration that the resource belongs to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration))
+- `name` (String) The display name of the resource.
+
+<a id="nestedatt--prerequisite_permissions--role--resource--integration"></a>
+### Nested Schema for `prerequisite_permissions.role.resource.integration`
+
+Read-Only:
+
+- `application` (Attributes) The application that the integration is connected to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration--application))
+- `id` (String) The identifier of the integration.
+- `name` (String) The display name of the integration.
+
+<a id="nestedatt--prerequisite_permissions--role--resource--integration--application"></a>
+### Nested Schema for `prerequisite_permissions.role.resource.integration.application`
+
+Read-Only:
+
+- `name` (String) The name of the connected application.
+
+
+
+
 
 
 <a id="nestedatt--workflow"></a>

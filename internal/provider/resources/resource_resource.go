@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
@@ -14,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -42,18 +42,18 @@ type ResourceResource struct {
 
 // ResourceResourceModel describes the resource data model.
 type ResourceResourceModel struct {
-	ID                     types.String             `tfsdk:"id"`
-	Name                   types.String             `tfsdk:"name"`
-	AllowedDurations       types.Set                `tfsdk:"allowed_durations"`
-	Maintainers            []*utils.MaintainerModel `tfsdk:"maintainers"`
-	Tags                   types.Set                `tfsdk:"tags"`
-	UserDefinedTags        types.Set                `tfsdk:"user_defined_tags"`
-	UserDefinedDescription types.String             `tfsdk:"user_defined_description"`
-	Workflow               *utils.IdNameModel       `tfsdk:"workflow"`
-	Integration            utils.IdNameModel        `tfsdk:"integration"`
-	//PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
-	Requestable types.Bool          `tfsdk:"requestable"`
-	Owner       *utils.IdEmailModel `tfsdk:"owner"`
+	ID                      types.String                        `tfsdk:"id"`
+	Name                    types.String                        `tfsdk:"name"`
+	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
+	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Tags                    types.Set                           `tfsdk:"tags"`
+	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
+	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
+	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
+	Integration             utils.IdNameModel                   `tfsdk:"integration"`
+	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
+	Requestable             types.Bool                          `tfsdk:"requestable"`
+	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
 }
 
 func (r *ResourceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -221,6 +221,83 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				MarkdownDescription: "Define the owner of the resource, which will be used for administrative " +
 					"purposes and approval workflows.",
 			},
+			"prerequisite_permissions": schema.ListNestedAttribute{
+				Optional:            true,
+				Description:         "Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below.",
+				MarkdownDescription: "Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"default": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+						},
+						"role": schema.SingleNestedAttribute{
+							Required: true,
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Required:            true,
+									Description:         "The identifier of the role to be granted.",
+									MarkdownDescription: "The identifier of the role to be granted.",
+								},
+								"name": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The name of the role.",
+									MarkdownDescription: "The name of the role.",
+								},
+								"resource": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The unique identifier of the resource.",
+											MarkdownDescription: "The unique identifier of the resource.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The display name of the resource.",
+											MarkdownDescription: "The display name of the resource.",
+										},
+										"integration": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The identifier of the integration.",
+													MarkdownDescription: "The identifier of the integration.",
+												},
+												"name": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The display name of the integration.",
+													MarkdownDescription: "The display name of the integration.",
+												},
+												"application": schema.SingleNestedAttribute{
+													Attributes: map[string]schema.Attribute{
+														"name": schema.StringAttribute{
+															Computed:            true,
+															Description:         "The name of the connected application.",
+															MarkdownDescription: "The name of the connected application.",
+														},
+													},
+													Computed:            true,
+													Description:         "The application that the integration is connected to.",
+													MarkdownDescription: "The application that the integration is connected to.",
+												},
+											},
+											Computed:            true,
+											Description:         "The integration that the resource belongs to.",
+											MarkdownDescription: "The integration that the resource belongs to.",
+										},
+									},
+									Computed:            true,
+									Description:         "The specific resource associated with the role.",
+									MarkdownDescription: "The specific resource associated with the role.",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -265,7 +342,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	if plan.Name.String() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			"missing the name variable for entitle resource",
+			"Missing the name variable for entitle resource",
 		)
 		return
 	}
@@ -284,7 +361,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
+					fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err),
 				)
 				return
 			}
@@ -297,7 +374,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				fmt.Sprintf("failed to parse given integration id to UUID, got error: %v", err),
+				fmt.Sprintf("Failed to parse given integration id to UUID, got error: %v", err),
 			)
 			return
 		}
@@ -312,7 +389,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		} else {
 			resp.Diagnostics.AddError(
 				"Config Error",
-				"missing the owner's identifier for entitle resource",
+				"Missing the owner's identifier for entitle resource",
 			)
 			return
 		}
@@ -327,7 +404,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		if maintainer.Entity.IsNull() {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"failed missing data for entity maintainer",
+				"Missing data for entity maintainer",
 			)
 			return
 		}
@@ -337,7 +414,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		if !ok {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"failed missing data for entity maintainer id",
+				"Missing data for entity maintainer id",
 			)
 			return
 		}
@@ -357,7 +434,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
+					fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
 				)
 			}
 
@@ -375,7 +452,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed to merge group maintainer",
+					"Failed to merge group maintainer",
 				)
 				return
 			}
@@ -384,40 +461,40 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		default:
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"failed invalid maintainer type only support user and group",
+				"Invalid maintainer type only support user and group",
 			)
 			return
 		}
 	}
 
-	//var prerequisitePermissions *[][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item
-	//if len(plan.PrerequisitePermissions) > 0 {
-	//	ppData := make([][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item, 0, len(plan.PrerequisitePermissions))
-	//	for _, pp := range plan.PrerequisitePermissions {
-	//		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
-	//			continue
-	//		}
-	//
-	//		item := client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{}
-	//		err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
-	//			Default: pp.Default.ValueBool(),
-	//			Role: map[string]interface{}{
-	//				"id": pp.Role.ID.ValueString(),
-	//			},
-	//		})
-	//		if err != nil {
-	//			resp.Diagnostics.AddError(
-	//				"Client Error",
-	//				fmt.Sprintf("failed to merge preqrequisite permission data, error: %v", err),
-	//			)
-	//		}
-	//
-	//		ppData = append(ppData, []client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{
-	//			item,
-	//		})
-	//	}
-	//	prerequisitePermissions = &ppData
-	//}
+	var prerequisitePermissions *[][]client.IntegrationResourcesCreateBodySchema_PrerequisitePermissions_Item
+	if len(plan.PrerequisitePermissions) > 0 {
+		ppData := make([][]client.IntegrationResourcesCreateBodySchema_PrerequisitePermissions_Item, 0, len(plan.PrerequisitePermissions))
+		for _, pp := range plan.PrerequisitePermissions {
+			if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+
+			item := client.IntegrationResourcesCreateBodySchema_PrerequisitePermissions_Item{}
+			err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("Failed to merge preqrequisite permission data, error: %v", err),
+				)
+			}
+
+			ppData = append(ppData, []client.IntegrationResourcesCreateBodySchema_PrerequisitePermissions_Item{
+				item,
+			})
+		}
+		prerequisitePermissions = &ppData
+	}
 
 	var userDefinedTags []string
 	udtDiags := plan.UserDefinedTags.ElementsAs(ctx, &userDefinedTags, true)
@@ -427,19 +504,16 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	body := client.IntegrationResourcesCreateBodySchema{
-		AllowedDurations: &allowedDurations,
-		Integration:      integration,
-		Maintainers:      &maintainers,
-		//Multirole:               false,
-		Name:  name,
-		Owner: &owner,
-		//PrerequisitePermissions: nil,
-		Requestable: plan.Requestable.ValueBool(),
-		//Roles:       nil,
-		//Type:                    nil,
-		UserDefinedDescription: plan.UserDefinedDescription.ValueStringPointer(),
-		UserDefinedTags:        &userDefinedTags,
-		Workflow:               &workflow,
+		AllowedDurations:        &allowedDurations,
+		Integration:             integration,
+		Maintainers:             &maintainers,
+		Name:                    name,
+		Owner:                   &owner,
+		PrerequisitePermissions: prerequisitePermissions,
+		Requestable:             plan.Requestable.ValueBool(),
+		UserDefinedDescription:  plan.UserDefinedDescription.ValueStringPointer(),
+		UserDefinedTags:         &userDefinedTags,
+		Workflow:                &workflow,
 	}
 	resourceResp, err := r.client.ResourcesCreateWithResponse(ctx, body)
 	if err != nil {
@@ -450,26 +524,16 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	if resourceResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(resourceResp.Body)
-		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to create the resource, %s, status code: %d%s",
-				string(resourceResp.Body),
-				resourceResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				"Failed to create the resource, %s",
+				err.Error(),
 			),
 		)
+
 		return
 	}
 
@@ -527,26 +591,17 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	if resourceResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(resourceResp.Body)
-		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the resource by the id (%s), status code: %d%s",
+				"failed to get the resource by the id (%s), %s",
 				uid.String(),
-				resourceResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
+
 		return
 	}
 
@@ -594,7 +649,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	if data.Name.IsNull() || data.Name.IsUnknown() {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			"missing the name variable for entitle resource",
+			"Missing the name variable for entitle resource",
 		)
 		return
 	}
@@ -612,7 +667,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
+					fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err),
 				)
 				return
 			}
@@ -628,7 +683,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		} else {
 			resp.Diagnostics.AddError(
 				"Config Error",
-				"missing the owner's identifier for entitle resource",
+				"Missing the owner's identifier for entitle resource",
 			)
 			return
 		}
@@ -647,7 +702,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			if !ok {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed missing data for entity maintainer id",
+					"Failed missing data for entity maintainer id",
 				)
 				return
 			}
@@ -656,7 +711,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			if maintainer.Entity.IsNull() {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed missing data for entity maintainer",
+					"Failed missing data for entity maintainer",
 				)
 				return
 			}
@@ -676,7 +731,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 				if err != nil {
 					resp.Diagnostics.AddError(
 						"Client Error",
-						fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
+						fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
 					)
 				}
 
@@ -694,7 +749,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 				if err != nil {
 					resp.Diagnostics.AddError(
 						"Client Error",
-						fmt.Sprintf("failed to merge group maintainer data, error: %v", err),
+						fmt.Sprintf("Failed to merge group maintainer data, error: %v", err),
 					)
 				}
 
@@ -702,41 +757,41 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			default:
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed invalid maintainer type only support user and group",
+					"Failed invalid maintainer type only support user and group",
 				)
 				return
 			}
 		}
 	}
 
-	//var prerequisitePermissions *[][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item
-	//if len(data.PrerequisitePermissions) > 0 {
-	//	ppData := make([][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item, 0, len(data.PrerequisitePermissions))
-	//	for _, pp := range data.PrerequisitePermissions {
-	//		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
-	//			continue
-	//		}
-	//
-	//		item := client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{}
-	//		err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
-	//			Default: pp.Default.ValueBool(),
-	//			Role: map[string]interface{}{
-	//				"id": pp.Role.ID.ValueString(),
-	//			},
-	//		})
-	//		if err != nil {
-	//			resp.Diagnostics.AddError(
-	//				"Client Error",
-	//				fmt.Sprintf("failed to merge preqrequisite permission data, error: %v", err),
-	//			)
-	//		}
-	//
-	//		ppData = append(ppData, []client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{
-	//			item,
-	//		})
-	//	}
-	//	prerequisitePermissions = &ppData
-	//}
+	var prerequisitePermissions *[][]client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item
+	if len(data.PrerequisitePermissions) > 0 {
+		ppData := make([][]client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item, 0, len(data.PrerequisitePermissions))
+		for _, pp := range data.PrerequisitePermissions {
+			if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+
+			item := client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item{}
+			err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("Failed to merge preqrequisite permission data, error: %v", err),
+				)
+			}
+
+			ppData = append(ppData, []client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item{
+				item,
+			})
+		}
+		prerequisitePermissions = &ppData
+	}
 
 	var userDefinedTags []string
 	if !data.UserDefinedTags.IsUnknown() {
@@ -751,14 +806,14 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, client.ResourcesUpdateJSONRequestBody{
-		AllowedDurations: &allowedDurations,
-		Maintainers:      &maintainers,
-		Owner:            &owner,
-		//PrerequisitePermissions:              prerequisitePermissions,
-		Requestable:            data.Requestable.ValueBoolPointer(),
-		UserDefinedDescription: data.UserDefinedDescription.ValueStringPointer(),
-		UserDefinedTags:        &userDefinedTags,
-		Workflow:               &workflow,
+		AllowedDurations:        &allowedDurations,
+		Maintainers:             &maintainers,
+		Owner:                   &owner,
+		PrerequisitePermissions: prerequisitePermissions,
+		Requestable:             data.Requestable.ValueBoolPointer(),
+		UserDefinedDescription:  data.UserDefinedDescription.ValueStringPointer(),
+		UserDefinedTags:         &userDefinedTags,
+		Workflow:                &workflow,
 	})
 
 	if err != nil {
@@ -769,26 +824,17 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	if resourceResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(resourceResp.Body)
-		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to update the resource by the id (%s), status code: %d%s",
+				"Failed to update the resource by the id (%s), %s",
 				uid.String(),
-				resourceResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
+
 		return
 	}
 
@@ -838,30 +884,17 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Unable to delete resource, id: (%s), status code: %d%s",
+				"Failed to delete the resource by the id (%s), %s",
 				data.ID.String(),
-				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
+
 		return
 	}
 }
@@ -917,7 +950,8 @@ func convertFullResourceResultResponseSchemaToModel(
 		if err != nil {
 			diags.AddError(
 				"No data",
-				"failed to marshal the maintainer data",
+				fmt.Sprintf("Failed to marshal the maintainer data, %s",
+					err.Error()),
 			)
 
 			return ResourceResourceModel{}, diags
@@ -927,7 +961,8 @@ func convertFullResourceResultResponseSchemaToModel(
 		if err != nil {
 			diags.AddError(
 				"No data",
-				"failed to unmarshal the maintainer data",
+				fmt.Sprintf("Failed to unmarshal the maintainer data, %s",
+					err.Error()),
 			)
 
 			return ResourceResourceModel{}, diags
@@ -939,7 +974,10 @@ func convertFullResourceResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to convert response schema to user response schema, error: %v", err),
+					fmt.Sprintf(
+						"Failed to convert response schema to user response schema, error: %v",
+						err,
+					),
 				)
 
 				return ResourceResourceModel{}, diags
@@ -949,7 +987,7 @@ func convertFullResourceResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to get maintainer user email bytes, error: %v", err),
+					fmt.Sprintf("Failed to get maintainer user email bytes, error: %v", err),
 				)
 
 				return ResourceResourceModel{}, diags
@@ -977,7 +1015,10 @@ func convertFullResourceResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to convert response schema to group response schema, error: %v", err),
+					fmt.Sprintf(
+						"Failed to convert response schema to group response schema, error: %v",
+						err,
+					),
 				)
 
 				return ResourceResourceModel{}, diags
@@ -987,7 +1028,7 @@ func convertFullResourceResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to get maintainer group email bytes, error: %v", err),
+					fmt.Sprintf("Failed to get maintainer group email bytes, error: %v", err),
 				)
 
 				return ResourceResourceModel{}, diags
@@ -1011,39 +1052,42 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			maintainers = append(maintainers, maintainerGroup)
 		default:
-			diags.AddError("failed invalid type for maintainer", body.Type)
+			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return ResourceResourceModel{}, diags
 		}
 	}
 
-	//var prerequisitePermissions []utils.PrerequisitePermissionModel
-	//if data.PrerequisitePermissions != nil {
-	//	for _, pp := range *data.PrerequisitePermissions {
-	//		for _, item := range pp {
-	//			v, err := item.AsPrerequisiteRolePermissionResponseSchema()
-	//			if err != nil {
-	//				diags.AddError(
-	//					"No data",
-	//					"failed to unmarshal the prerequisite permissions data",
-	//				)
-	//				return ResourceResourceModel{}, diags
-	//			}
-	//
-	//			roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
-	//			if diagsGetRoles.HasError() {
-	//				diags.Append(diagsGetRoles...)
-	//				return ResourceResourceModel{}, diags
-	//			}
-	//
-	//			prerequisitePermissions = append(prerequisitePermissions,
-	//				utils.PrerequisitePermissionModel{
-	//					Default: types.BoolValue(v.Default),
-	//					Role:    roleModel,
-	//				},
-	//			)
-	//		}
-	//	}
-	//}
+	var prerequisitePermissions []utils.PrerequisitePermissionModel
+	if data.PrerequisitePermissions != nil {
+		for _, pp := range *data.PrerequisitePermissions {
+			for _, item := range pp {
+				v, err := item.AsPrerequisiteRolePermissionResponseSchema()
+				if err != nil {
+					diags.AddError(
+						"No data",
+						fmt.Sprintf(
+							"Failed to unmarshal the prerequisite permissions data, %s",
+							err.Error(),
+						),
+					)
+					return ResourceResourceModel{}, diags
+				}
+
+				roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
+				if diagsGetRoles.HasError() {
+					diags.Append(diagsGetRoles...)
+					return ResourceResourceModel{}, diags
+				}
+
+				prerequisitePermissions = append(prerequisitePermissions,
+					utils.PrerequisitePermissionModel{
+						Default: types.BoolValue(v.Default),
+						Role:    roleModel,
+					},
+				)
+			}
+		}
+	}
 
 	userDefinedTags := types.SetNull(types.StringType)
 	if data.UserDefinedTags != nil {
@@ -1108,7 +1152,8 @@ func convertFullResourceResultResponseSchemaToModel(
 			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
 			Name: utils.TrimmedStringValue(data.Integration.Name),
 		},
-		Requestable: types.BoolValue(data.Requestable),
-		Owner:       owner,
+		Requestable:             types.BoolValue(data.Requestable),
+		Owner:                   owner,
+		PrerequisitePermissions: prerequisitePermissions,
 	}, diags
 }
