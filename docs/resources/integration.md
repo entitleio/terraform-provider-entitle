@@ -53,6 +53,7 @@ resource "entitle_integration" "example" {
 - `maintainers` (Attributes List) Maintainer of the integration, second tier owner of that integration you can have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration. (see [below for nested schema](#nestedatt--maintainers))
 - `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
 - `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
+- `prerequisite_permissions` (Attributes List) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `readonly` (Boolean) If turned on, any request opened by a user will not be automatically granted, instead a ticket will be opened for manual resolution. (default: false)
 - `requestable` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `requestable_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
@@ -122,6 +123,59 @@ Optional:
 Read-Only:
 
 - `email` (String) the owner's email
+
+
+<a id="nestedatt--prerequisite_permissions"></a>
+### Nested Schema for `prerequisite_permissions`
+
+Required:
+
+- `role` (Attributes) (see [below for nested schema](#nestedatt--prerequisite_permissions--role))
+
+Optional:
+
+- `default` (Boolean) Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).
+
+<a id="nestedatt--prerequisite_permissions--role"></a>
+### Nested Schema for `prerequisite_permissions.role`
+
+Required:
+
+- `id` (String) The identifier of the role to be granted.
+
+Read-Only:
+
+- `name` (String) The name of the role.
+- `resource` (Attributes) The specific resource associated with the role. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource))
+
+<a id="nestedatt--prerequisite_permissions--role--resource"></a>
+### Nested Schema for `prerequisite_permissions.role.resource`
+
+Read-Only:
+
+- `id` (String) The unique identifier of the resource.
+- `integration` (Attributes) The integration that the resource belongs to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration))
+- `name` (String) The display name of the resource.
+
+<a id="nestedatt--prerequisite_permissions--role--resource--integration"></a>
+### Nested Schema for `prerequisite_permissions.role.resource.integration`
+
+Read-Only:
+
+- `application` (Attributes) The application that the integration is connected to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration--application))
+- `id` (String) The identifier of the integration.
+- `name` (String) The display name of the integration.
+
+<a id="nestedatt--prerequisite_permissions--role--resource--integration--application"></a>
+### Nested Schema for `prerequisite_permissions.role.resource.integration.application`
+
+Read-Only:
+
+- `name` (String) The name of the connected application.
+
+
+
+
 
 
 <a id="nestedatt--workflow"></a>
