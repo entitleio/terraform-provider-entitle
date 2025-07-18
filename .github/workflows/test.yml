@@ -91,5 +91,5 @@ jobs:
           TF_ACC: "1"
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
-        run: go test -v -cover ./internal/provider/
+        run: go test -v -cover -tags=acceptance ./internal/provider/
         timeout-minutes: 10
