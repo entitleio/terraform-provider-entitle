@@ -16,6 +16,11 @@ permissions:
 jobs:
   run-tests:
     uses: ./.github/workflows/test.yml
+    secrets:
+      ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
+      ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
+      ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
+      ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
   goreleaser:
     needs:
       - run-tests

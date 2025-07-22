@@ -4,7 +4,16 @@ name: Tests
 # This GitHub action runs your tests for each pull request and push.
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
-  workflow_call: {}
+  workflow_call:
+    secrets:
+      ENTITLE_API_KEY:
+        required: true
+      ENTITLE_OWNER_EMAIL:
+        required: true
+      ENTITLE_OWNER_ID:
+        required: true
+      ENTITLE_WORKFLOW_ID:
+        required: true
   push:
     branches:
       - main
@@ -43,7 +52,6 @@ jobs:
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.0.*' # Oldest supported
           - '1.4.*' # Intermediate
           - '1.12.*' # Latest
     steps:
@@ -70,13 +78,14 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.0.*' # Oldest supported
           - '1.6.*' # Intermediate
           - '1.12.*' # Latest
     steps:
+      - run: sleep 30
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-go@v5.5.0
         with:
