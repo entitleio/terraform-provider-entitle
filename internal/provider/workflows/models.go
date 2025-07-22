@@ -1,12 +1,7 @@
 package workflows
 
 import (
-	"context"
-
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
@@ -31,42 +26,9 @@ type workflowRulesApprovalFlowStepModel struct {
 	NotifiedEntities []*workflowRulesApprovalFlowStepApprovalNotifiedModel `tfsdk:"notified_entities"`
 }
 
-type workflowRulesApprovalFlowStepNotifiedEntityModel struct {
-	Notified types.String `tfsdk:"notified" json:"notified"`
-}
-
-func (m workflowRulesApprovalFlowStepNotifiedEntityModel) attributeTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"notified": types.StringType,
-	}
-}
-
-func (m workflowRulesApprovalFlowStepNotifiedEntityModel) AsObjectValue(
-	ctx context.Context,
-) (basetypes.ObjectValue, diag.Diagnostics) {
-	return types.ObjectValueFrom(ctx, m.attributeTypes(), m)
-}
-
-type workflowRulesApprovalFlowStepApprovalEntityModel struct {
-	Approval types.String `tfsdk:"approval" json:"approval"`
-}
-
-func (m workflowRulesApprovalFlowStepApprovalEntityModel) attributeTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"approval": types.StringType,
-	}
-}
-
-func (m workflowRulesApprovalFlowStepApprovalEntityModel) AsObjectValue(
-	ctx context.Context,
-) (basetypes.ObjectValue, diag.Diagnostics) {
-	return types.ObjectValueFrom(ctx, m.attributeTypes(), m)
-}
-
 type workflowRulesApprovalFlowStepApprovalNotifiedModel struct {
 	Type     types.String `tfsdk:"type" json:"type"`
 	User     types.Object `tfsdk:"user" json:"user"`
 	Group    types.Object `tfsdk:"group" json:"group"`
 	Schedule types.Object `tfsdk:"schedule" json:"schedule"`
-	Value    types.Object `tfsdk:"value" json:"value"`
 }

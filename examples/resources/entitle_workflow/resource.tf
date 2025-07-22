@@ -9,9 +9,6 @@ resource "entitle_workflow" "example" {
             approval_entities = [
               {
                 type = "Automatic"
-                value = {
-                  approval = null
-                }
               }
             ]
             notified_entities = []

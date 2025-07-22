@@ -228,18 +228,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
 														},
-														"value": schema.SingleNestedAttribute{
-															Attributes: map[string]schema.Attribute{
-																"notified": schema.StringAttribute{
-																	Optional:            true,
-																	Description:         "",
-																	MarkdownDescription: "",
-																},
-															},
-															Optional:            true,
-															Description:         "value",
-															MarkdownDescription: "value",
-														},
 													},
 												},
 												Optional:            true,
@@ -304,18 +292,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
-														},
-														"value": schema.SingleNestedAttribute{
-															Attributes: map[string]schema.Attribute{
-																"approval": schema.StringAttribute{
-																	Optional:            true,
-																	Description:         "Specifies the approval condition or requirement for the entity in this step. For example, it could indicate whether the approval is mandatory, optional, or has a certain threshold. This field helps customize the approval logic at a granular level.",
-																	MarkdownDescription: "Specifies the approval condition or requirement for the entity in this step. For example, it could indicate whether the approval is mandatory, optional, or has a certain threshold. This field helps customize the approval logic at a granular level.",
-																},
-															},
-															Required:            true,
-															Description:         "Holds additional metadata or configuration related to the entity’s role in the approval step. This can include specific rules, conditions, or statuses that influence how the approval or notification behaves.",
-															MarkdownDescription: "Holds additional metadata or configuration related to the entity’s role in the approval step. This can include specific rules, conditions, or statuses that influence how the approval or notification behaves.",
 														},
 													},
 												},
