@@ -10,11 +10,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -60,19 +62,25 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 			"forwarder": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            false,
 						Optional:            true,
+						Computed:            true,
 						Description:         "the forwarder user's identifier in uuid format",
 						MarkdownDescription: "the forwarder user's identifier in uuid format",
+						Validators: []validator.String{
+							validators.UUID{},
+						},
 					},
 					"email": schema.StringAttribute{
+						Optional:            true,
 						Computed:            true,
 						Description:         "the forwarder user's email address",
 						MarkdownDescription: "the forwarder user's email address",
+						Validators: []validator.String{
+							validators.Email{},
+						},
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "Specifies the user who is delegating or forwarding their access request responsibilities. " +
 					"This user must have request permissions for the items being forwarded.",
 				MarkdownDescription: "Specifies the user who is delegating or forwarding their access request responsibilities. " +
@@ -81,19 +89,25 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 			"target": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            false,
 						Optional:            true,
+						Computed:            true,
 						Description:         "the taget user's identifier in uuid format",
 						MarkdownDescription: "the taget user's identifier in uuid format",
+						Validators: []validator.String{
+							validators.UUID{},
+						},
 					},
 					"email": schema.StringAttribute{
+						Optional:            true,
 						Computed:            true,
 						Description:         "the taget user's email address",
 						MarkdownDescription: "the taget user's email address",
+						Validators: []validator.String{
+							validators.Email{},
+						},
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "Defines the user who will receive and be responsible for completing the forwarded access request tasks. " +
 					"This user will temporarily assume the request responsibilities for the specified items.",
 				MarkdownDescription: "Defines the user who will receive and be responsible for completing the forwarded access request tasks. " +
@@ -148,13 +162,39 @@ func (r *AccessRequestForwardResource) Create(
 		return
 	}
 
+	forwarderID := plan.Forwarder.Id.ValueString()
+	if forwarderID == "" {
+		forwarderID = plan.Forwarder.Email.ValueString()
+	}
+
+	if forwarderID == "" {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			"Forwarder id not provided",
+		)
+		return
+	}
+
+	targetID := plan.Target.Id.ValueString()
+	if targetID == "" {
+		targetID = plan.Target.Email.ValueString()
+	}
+
+	if targetID == "" {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			"Target id not provided",
+		)
+		return
+	}
+
 	// Call Entitle API to create the resource
 	apiResp, err := r.client.AccessRequestForwardsCreateWithResponse(ctx, client.AccessRequestForwardsCreateJSONRequestBody{
 		Forwarder: client.UserEntitySchema{
-			Id: plan.Forwarder.Id.ValueString(),
+			Id: forwarderID,
 		},
 		Target: client.UserEntitySchema{
-			Id: plan.Target.Id.ValueString(),
+			Id: targetID,
 		},
 	})
 	if err != nil {
@@ -183,29 +223,27 @@ func (r *AccessRequestForwardResource) Create(
 	// Update the plan with the new resource ID
 	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String())
 
-	forwarderEmailBytes, err := apiResp.JSON200.Result.Forwarder.Email.MarshalJSON()
+	plan.Forwarder.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Forwarder.Id.String())
+	forwarderEmail, err := utils.GetEmailString(apiResp.JSON200.Result.Forwarder.Email)
 	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
+		resp.Diagnostics.AddError(
+			"Failed to convert the forwarder email to string",
+			err.Error(),
 		)
-
 		return
 	}
+	plan.Forwarder.Email = utils.TrimmedStringValue(forwarderEmail)
 
-	plan.Forwarder.Email = utils.TrimmedStringValue(string(forwarderEmailBytes))
-
-	targetEmailBytes, err := apiResp.JSON200.Result.Target.Email.MarshalJSON()
+	plan.Target.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Target.Id.String())
+	targetEmail, err := utils.GetEmailString(apiResp.JSON200.Result.Target.Email)
 	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
+		resp.Diagnostics.AddError(
+			"Failed to convert the target email to string",
+			err.Error(),
 		)
-
 		return
 	}
-
-	plan.Target.Email = utils.TrimmedStringValue(string(targetEmailBytes))
+	plan.Target.Email = utils.TrimmedStringValue(targetEmail)
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
@@ -279,7 +317,7 @@ func (r *AccessRequestForwardResource) Read(
 		return
 	}
 
-	targetEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
+	targetEmailBytes, err := responseSchema.Target.Email.MarshalJSON()
 	if err != nil {
 		diags.AddError(
 			"No data",

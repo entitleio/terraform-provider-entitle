@@ -147,11 +147,6 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
-	// Log the start of the access request forward GET operation with the resource ID
-	tflog.Debug(ctx, "run access request forward GET by id", map[string]interface{}{
-		"uid": uid.String(),
-	})
-
 	// Send a request to the Entitle API to get the access request forward data by ID
 	apiResp, err := d.client.AccessRequestForwardsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -187,7 +182,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
-	targetEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
+	targetEmailBytes, err := responseSchema.Target.Email.MarshalJSON()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",

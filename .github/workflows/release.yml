@@ -21,6 +21,8 @@ jobs:
       ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
       ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
       ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+      ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
+      ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
   goreleaser:
     needs:
       - run-tests
