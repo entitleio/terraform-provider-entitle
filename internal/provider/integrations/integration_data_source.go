@@ -3,12 +3,10 @@ package integrations
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -37,7 +35,7 @@ func NewIntegrationDataSource() datasource.DataSource {
 type IntegrationDataSourceModel struct {
 	Id                                   types.String             `tfsdk:"id"`
 	Name                                 types.String             `tfsdk:"name"`
-	AllowedDurations                     types.List               `tfsdk:"allowed_durations"`
+	AllowedDurations                     types.Set                `tfsdk:"allowed_durations"`
 	AllowChangingAccountPermissions      types.Bool               `tfsdk:"allow_changing_account_permissions"`
 	AllowCreatingAccounts                types.Bool               `tfsdk:"allow_creating_accounts"`
 	Readonly                             types.Bool               `tfsdk:"readonly"`
@@ -75,7 +73,7 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 				MarkdownDescription: "Entitle Integration name",
 				Description:         "Entitle Integration name",
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
 				Description:         "List of allowed durations (in seconds) for this integration",
@@ -278,15 +276,10 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	allowedDurationsValues := make([]attr.Value, len(integrationResp.JSON200.Result.AllowedDurations))
-	for i, durations := range integrationResp.JSON200.Result.AllowedDurations {
-		allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(durations)))
-	}
-
-	allowedDurations, diags := types.ListValue(types.NumberType, allowedDurationsValues)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
+	// Extract and convert allowed durations from the API response
+	allowedDurationsValues, advDiags := utils.GetNumberSetFromAllowedDurations(integrationResp.JSON200.Result.AllowedDurations)
+	if advDiags.HasError() {
+		resp.Diagnostics.Append(advDiags...)
 	}
 
 	application := &utils.NameModel{
@@ -307,7 +300,7 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	data = IntegrationDataSourceModel{
 		Id:                                   utils.TrimmedStringValue(integrationResp.JSON200.Result.Id.String()),
 		Name:                                 utils.TrimmedStringValue(integrationResp.JSON200.Result.Name),
-		AllowedDurations:                     allowedDurations,
+		AllowedDurations:                     allowedDurationsValues,
 		AllowChangingAccountPermissions:      types.BoolValue(integrationResp.JSON200.Result.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(integrationResp.JSON200.Result.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(integrationResp.JSON200.Result.Readonly),

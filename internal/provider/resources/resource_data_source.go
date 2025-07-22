@@ -43,7 +43,7 @@ type ResourceDataSourceModel struct {
 	Name                   types.String             `tfsdk:"name"`
 	Description            types.String             `tfsdk:"description"`
 	UserDefinedDescription types.String             `tfsdk:"user_defined_description"`
-	AllowedDurations       types.List               `tfsdk:"allowed_durations"`
+	AllowedDurations       types.Set                `tfsdk:"allowed_durations"`
 	Requestable            types.Bool               `tfsdk:"requestable"`
 	AllowAsGrantMethod     types.Bool               `tfsdk:"allow_as_grant_method"`
 }
@@ -98,7 +98,7 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
 				Description:         "List of allowed access durations",
@@ -311,8 +311,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	allowedDurationsValues := utils.GetAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
-	allowedDurations, diags := types.ListValue(types.NumberType, allowedDurationsValues)
+	allowedDurations, diags := utils.GetNumberSetFromAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
