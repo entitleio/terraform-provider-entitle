@@ -571,7 +571,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 
 		switch maintainer.Type.String() {
-		case "user":
+		case utils.MaintainerTypeUser:
 			maintainerUser := client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
 				User: client.UserEntitySchema{
@@ -589,7 +589,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			}
 
 			maintainers = append(maintainers, item)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			maintainerGroup := client.GroupMaintainerSchema{
 				Type: client.EnumMaintainerTypeGroupGroup,
 				Group: client.GroupEntitySchema{
@@ -947,7 +947,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 			}
 
 			switch maintainer.Type.String() {
-			case "user":
+			case utils.MaintainerTypeUser:
 
 				maintainerUser := client.UserMaintainerSchema{
 					Type: client.EnumMaintainerTypeUserUser,
@@ -966,7 +966,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 				}
 
 				maintainers = append(maintainers, item)
-			case "group":
+			case utils.MaintainerTypeGroup:
 				maintainerGroup := client.GroupMaintainerSchema{
 					Type: client.EnumMaintainerTypeGroupGroup,
 					Group: client.GroupEntitySchema{
@@ -1223,7 +1223,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 
 		switch strings.ToLower(body.Type) {
-		case "user":
+		case utils.MaintainerTypeUser:
 			responseSchema, err := item.AsMaintainerUserResponseSchema()
 			if err != nil {
 				diags.AddError(
@@ -1261,7 +1261,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			maintainers = append(maintainers, maintainerUser)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
 				diags.AddError(
