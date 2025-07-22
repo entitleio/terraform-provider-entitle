@@ -188,6 +188,14 @@ func (r *AccessRequestForwardResource) Create(
 		return
 	}
 
+	if targetID == forwarderID {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			"Target id is the same as Forwarder id",
+		)
+		return
+	}
+
 	// Call Entitle API to create the resource
 	apiResp, err := r.client.AccessRequestForwardsCreateWithResponse(ctx, client.AccessRequestForwardsCreateJSONRequestBody{
 		Forwarder: client.UserEntitySchema{
