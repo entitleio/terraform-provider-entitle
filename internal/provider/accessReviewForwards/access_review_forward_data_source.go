@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -54,8 +53,8 @@ func (d *AccessReviewForwardDataSource) Schema(ctx context.Context, req datasour
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "Entitle Access Review Forwardidentifier in uuid format",
-				Description:         "Entitle Access Review Forwardidentifier in uuid format",
+				MarkdownDescription: "Entitle Access Review Forward identifier in uuid format",
+				Description:         "Entitle Access Review Forward identifier in uuid format",
 				Validators: []validator.String{
 					validators.UUID{},
 				},
@@ -149,11 +148,6 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	// Log the start of the access review forward GET operation with the resource ID
-	tflog.Debug(ctx, "run access review forward GET by id", map[string]interface{}{
-		"uid": uid.String(),
-	})
-
 	// Send a request to the Entitle API to get the access review forward data by ID
 	apiResp, err := d.client.AccessReviewForwardsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -188,7 +182,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	targetEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
+	targetEmailBytes, err := responseSchema.Target.Email.MarshalJSON()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"No data",
@@ -216,7 +210,4 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// Log a trace indicating the successful saving of the data source
-	tflog.Trace(ctx, "saved entitle access review forward data source successfully!")
 }

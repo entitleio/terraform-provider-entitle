@@ -32,8 +32,8 @@ resource "entitle_access_review_forward" "my_forward" {
 `, os.Getenv("ENTITLE_USER1_ID"), os.Getenv("ENTITLE_USER2_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
-					resource.TestCheckResourceAttr("entitle_access_review_forward.my_forward", "forwarder.id", os.Getenv("ENTITLE_OWNER_ID")),
-					resource.TestCheckResourceAttr("entitle_access_review_forward.my_forward", "target.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_access_review_forward.my_forward", "forwarder.id", os.Getenv("ENTITLE_USER1_ID")),
+					resource.TestCheckResourceAttr("entitle_access_review_forward.my_forward", "target.id", os.Getenv("ENTITLE_USER2_ID")),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_access_review_forward.my_forward", "target.email"),
