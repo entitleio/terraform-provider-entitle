@@ -217,7 +217,7 @@ func GetNumberSet(data []float32) (types.Set, diag.Diagnostics) {
 		return types.SetNull(types.NumberType), nil
 	}
 
-	result := make([]attr.Value, 0)
+	result := make([]attr.Value, 0, len(data))
 	for _, v := range data {
 		result = append(result, types.NumberValue(big.NewFloat(float64(v))))
 	}

@@ -306,7 +306,9 @@ func (d *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	var prerequisitePermissions []utils.PrerequisitePermissionModel
 	if apiResp.JSON200.Result.PrerequisitePermissions != nil {
-		for _, item := range *apiResp.JSON200.Result.PrerequisitePermissions {
+		items := *apiResp.JSON200.Result.PrerequisitePermissions
+		prerequisitePermissions = make([]utils.PrerequisitePermissionModel, len(items))
+		for i, item := range items {
 			v, err := item.AsPrerequisiteRolePermissionResponseSchema()
 			if err != nil {
 				resp.Diagnostics.AddError(
@@ -322,13 +324,18 @@ func (d *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				return
 			}
 
-			prerequisitePermissions = append(prerequisitePermissions,
+			prerequisitePermissions[i] =
 				utils.PrerequisitePermissionModel{
 					Default: types.BoolValue(v.Default),
 					Role:    roleModel,
-				},
-			)
+				}
 		}
+	}
+
+	allowedDurations, diags := utils.GetNumberSetFromAllowedDurations(apiResp.JSON200.Result.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	// Populate the data model with details from the API response
@@ -339,7 +346,7 @@ func (d *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			ID:   utils.TrimmedStringValue(apiResp.JSON200.Result.Resource.Id.String()),
 			Name: utils.TrimmedStringValue(apiResp.JSON200.Result.Resource.Name),
 		},
-		AllowedDurations:        types.SetNull(types.NumberType),
+		AllowedDurations:        allowedDurations,
 		Workflow:                workflow,
 		PrerequisitePermissions: prerequisitePermissions,
 		VirtualizedRole:         virtualizedRole,

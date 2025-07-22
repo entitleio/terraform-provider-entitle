@@ -32,7 +32,7 @@ resource "entitle_role" "my_role" {
 	requestable = true
 	allowed_durations = [-1]
 }
-`, os.Getenv("ENTITLE_RESOURCE_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+`, os.Getenv("ENTITLE_RESOURCE_ID"), os.Getenv("ENTITLE_WORKFLOW_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_role.my_role", "name", "My Role Example"),

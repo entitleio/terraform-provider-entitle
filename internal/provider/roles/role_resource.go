@@ -1,5 +1,5 @@
-// Package roles provides the implementation of the Entitle Agent Token resource for Terraform.
-// It defines the resource type, its schema, and the CRUD operations for managing Agent Tokens.
+// Package roles provides the implementation of the Entitle Role resource for Terraform.
+// It defines the resource type, its schema, and the CRUD operations for managing Roles.
 package roles
 
 import (
@@ -267,7 +267,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", plan.Workflow.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", plan.Resource.ID.String(), err),
 		)
 		return
 	}
@@ -292,7 +292,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				fmt.Sprintf("Failed to parse the virtualized role id (%s) to UUID, got error: %s", plan.Workflow.ID.String(), err),
+				fmt.Sprintf("Failed to parse the virtualized role id (%s) to UUID, got error: %s", plan.VirtualizedRole.ID.String(), err),
 			)
 			return
 		}
@@ -502,7 +502,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("Failed to merge preqrequisite permission data, error: %v", err),
+					fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err),
 				)
 			}
 
