@@ -604,18 +604,7 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to delete role, id: (%s), %s",
-				data.ID.String(), err.Error(),
-			),
-		)
-		return
-	}
-
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
