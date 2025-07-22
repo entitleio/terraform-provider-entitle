@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -181,22 +180,9 @@ func getWorkflowsRules(
 						string(client.EnumApprovalEntityWithoutEntityResourceOwner),
 						string(client.EnumApprovalEntityWithoutEntityTeamMember),
 						string(client.EnumApprovalEntityWithoutEntityAutomatic):
-						target := workflowRulesApprovalFlowStepApprovalEntityModel{
-							Approval: types.StringNull(),
-						}
-						if !entity.Value.IsNull() {
-							diagsAs := entity.Value.As(ctx, &target, basetypes.ObjectAsOptions{
-								UnhandledUnknownAsEmpty: true,
-							})
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return rules, diags
-							}
-						}
-
 						item, err := convertApprovalToApprovalFlowSchema(
 							entity.Type.ValueString(),
-							target.Approval.ValueStringPointer(),
+							nil,
 						)
 						if err != nil {
 							diags.AddError(
@@ -339,22 +325,9 @@ func getWorkflowsRules(
 						string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
 						string(client.EnumNotifiedEntityWithoutEntityResourceOwner),
 						string(client.EnumNotifiedEntityWithoutEntityTeamMember):
-						target := workflowRulesApprovalFlowStepNotifiedEntityModel{
-							Notified: types.StringNull(),
-						}
-						if !entity.Value.IsNull() {
-							diagsAs := entity.Value.As(ctx, &target, basetypes.ObjectAsOptions{
-								UnhandledUnknownAsEmpty: true,
-							})
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return rules, diags
-							}
-						}
-
 						item, err := convertApprovalToNotifiedFlowSchema(
 							entity.Type.ValueString(),
-							target.Notified.ValueStringPointer(),
+							nil,
 						)
 						if err != nil {
 							diags.AddError(
