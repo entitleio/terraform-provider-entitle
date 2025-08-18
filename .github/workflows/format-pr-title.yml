@@ -1,0 +1,86 @@
+name: Format PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  format-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract PR body fields
+        id: extract
+        run: |
+          BODY="${{ github.event.pull_request.body }}"
+
+          # Extract Jira Ticket
+          JIRA=$(echo "$BODY" | awk '/^### Jira Ticket/{flag=1;next}/^### /{flag=0}flag' \
+            | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
+
+          # Extract Type
+          TYPE=$(echo "$BODY" | awk '/^### Type/{flag=1;next}/^### /{flag=0}flag' \
+            | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
+
+          # Extract Title
+          TITLE=$(echo "$BODY" | awk '/^### Title/{flag=1;next}/^### /{flag=0}flag' \
+            | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
+
+          echo "JIRA=$JIRA" >> $GITHUB_ENV
+          echo "TYPE=$TYPE" >> $GITHUB_ENV
+          echo "TITLE=$TITLE" >> $GITHUB_ENV
+
+      - name: Validate Jira ticket format
+        run: |
+          if [[ ! "$JIRA" =~ ^[A-Z]+-[0-9]+$ ]]; then
+            echo "❌ Invalid Jira ticket format: $JIRA"
+            echo "Must look like ABC-1234"
+            exit 1
+          fi
+
+      - name: Update PR title
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { TYPE, JIRA, TITLE } = process.env;
+            const newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
+
+            console.log("✅ Updating PR title to:", newTitle);
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              title: newTitle
+            });
+
+      - name: Add label based on Type
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { TYPE } = process.env;
+            let label;
+
+            switch (TYPE.toLowerCase()) {
+              case "feature":
+                label = "enhancement";
+                break;
+              case "bug":
+                label = "bug";
+                break;
+              case "docs":
+                label = "documentation";
+                break;
+              default:
+                label = "enhancement";
+            }
+
+            console.log(`🏷️ Adding label: ${label}`);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [label],
+            });
