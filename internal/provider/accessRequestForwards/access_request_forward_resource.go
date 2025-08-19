@@ -369,7 +369,6 @@ func (r *AccessRequestForwardResource) Update(
 		"Client Error",
 		fmt.Sprintf("Update not available for the resource id (%s)", uid.String()),
 	)
-	return
 }
 
 // Delete is responsible for deleting an existing resource of type Entitle Access Request Forward.

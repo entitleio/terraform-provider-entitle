@@ -213,7 +213,7 @@ func GetNumberSetFromAllowedDurations(data []client.EnumAllowedDurations) (types
 }
 
 func GetNumberSet(data []float32) (types.Set, diag.Diagnostics) {
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return types.SetNull(types.NumberType), nil
 	}
 
