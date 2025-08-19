@@ -14,6 +14,10 @@ on:
         required: true
       ENTITLE_WORKFLOW_ID:
         required: true
+      ENTITLE_ROLE_ID:
+        required: true
+      ENTITLE_RESOURCE_ID:
+        required: true
   push:
     branches:
       - main
@@ -102,5 +106,7 @@ jobs:
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+          ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_ROLE_ID }}
+          ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_RESOURCE_ID }}
         run: go test -v -cover -tags=acceptance ./internal/provider/...
         timeout-minutes: 10

@@ -3275,10 +3275,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
-            }
+            "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
           }
         },
         "required": [
@@ -3375,7 +3372,6 @@
         "required": [
           "name",
           "resource",
-          "virtualizedRole",
           "requestable"
         ]
       },
