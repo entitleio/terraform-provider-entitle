@@ -13,7 +13,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/testhelpers"
 )
 
-func TestAgentTokenResource(t *testing.T) {
+func TestUserDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
