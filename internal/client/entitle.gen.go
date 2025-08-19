@@ -1640,7 +1640,7 @@ type ForwardDestroyResponseSchema struct {
 
 // ForwardPublicResponseSchema defines model for ForwardPublicResponseSchema.
 type ForwardPublicResponseSchema struct {
-	Result []ForwardResponseSchema `json:"result"`
+	Result ForwardResponseSchema `json:"result"`
 }
 
 // ForwardResponseSchema defines model for ForwardResponseSchema.
