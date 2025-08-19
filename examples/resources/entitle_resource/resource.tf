@@ -24,4 +24,12 @@ resource "entitle_resource" "my_resource" {
     "example1",
     "example2"
   ]
+  prerequisite_permissions = [
+    {
+      default = true
+      role = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120006"
+      }
+    }
+  ]
 }

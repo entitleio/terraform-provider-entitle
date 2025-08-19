@@ -641,7 +641,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("falied to parse the given id to UUID format, got error: %v", err),
+			fmt.Sprintf("failed to parse the given id to UUID format, got error: %v", err),
 		)
 		return
 	}
@@ -702,7 +702,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			if !ok {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"Failed missing data for entity maintainer id",
+					"Missing data for entity maintainer id",
 				)
 				return
 			}
@@ -711,7 +711,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 			if maintainer.Entity.IsNull() {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"Failed missing data for entity maintainer",
+					"Missing data for entity maintainer",
 				)
 				return
 			}
@@ -983,19 +983,9 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			bytes, err := responseSchema.User.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to get maintainer user email bytes, error: %v", err),
-				)
-
-				return ResourceResourceModel{}, diags
-			}
-
 			u := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.User.Id.String()),
-				Email: utils.TrimmedStringValue(string(bytes)),
+				Email: utils.TrimmedStringValue(string(responseSchema.User.Email)),
 			}
 
 			uObject, diagsValues := u.AsObjectValue(ctx)
