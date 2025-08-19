@@ -79,7 +79,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Optional:            false,
 				MarkdownDescription: "The display name for the resource. Length between 2 and 50.",
 				Description:         "The display name for the resource. Length between 2 and 50.",
 				Validators: []validator.String{
@@ -88,7 +87,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			},
 			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
-				Required:    false,
 				Optional:    true,
 				Description: "As the admin, you can set different durations for the resource, " +
 					"compared to the workflow linked to it.",
@@ -99,7 +97,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Required:            false,
 							Optional:            true,
 							Description:         "\"user\" or \"group\" (default: \"user\")",
 							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
@@ -119,14 +116,12 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 									MarkdownDescription: "Maintainer's email",
 								},
 							},
-							Required:            false,
 							Optional:            true,
 							Description:         "Maintainer's entity",
 							MarkdownDescription: "Maintainer's entity",
 						},
 					},
 				},
-				Required: false,
 				Optional: true,
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
@@ -158,7 +153,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            false,
 						Optional:            true,
 						Description:         "the workflow's id",
 						MarkdownDescription: "the workflow's id",
@@ -169,7 +163,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						MarkdownDescription: "the workflow's name",
 					},
 				},
-				Required:            false,
 				Optional:            true,
 				Description:         "The default approval workflow for entitlements for the resource",
 				MarkdownDescription: "The default approval workflow for entitlements for the resource",
@@ -214,7 +207,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						//},
 					},
 				},
-				Required: false,
 				Optional: true,
 				Description: "Define the owner of the resource, which will be used for administrative " +
 					"purposes and approval workflows.",
