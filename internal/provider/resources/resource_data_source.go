@@ -40,8 +40,8 @@ type ResourceDataSourceModel struct {
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
 	Name                    types.String                        `tfsdk:"name"`
 	Description             types.String                        `tfsdk:"description"`
-	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
-	AllowedDurations        types.List                          `tfsdk:"allowed_durations"`
+	UserDefinedDescription  types.String             `tfsdk:"user_defined_description"`
+	AllowedDurations       types.Set                          `tfsdk:"allowed_durations"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 	Requestable             types.Bool                          `tfsdk:"requestable"`
 }
@@ -96,11 +96,11 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
-				Description:         "List of allowed access durations",
-				MarkdownDescription: "List of allowed access durations",
+				Description:         "Set of allowed access durations",
+				MarkdownDescription: "Set of allowed access durations",
 			},
 			"requestable": schema.BoolAttribute{
 				Computed:            true,
@@ -360,8 +360,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	allowedDurationsValues := utils.GetAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
-	allowedDurations, diags := types.ListValue(types.NumberType, allowedDurationsValues)
+	allowedDurations, diags := utils.GetNumberSetFromAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
