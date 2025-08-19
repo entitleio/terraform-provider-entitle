@@ -91,8 +91,8 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 					"id": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "the taget user's identifier in uuid format",
-						MarkdownDescription: "the taget user's identifier in uuid format",
+						Description:         "the target user's identifier in uuid format",
+						MarkdownDescription: "the target user's identifier in uuid format",
 						Validators: []validator.String{
 							validators.UUID{},
 						},
@@ -100,8 +100,8 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 					"email": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "the taget user's email address",
-						MarkdownDescription: "the taget user's email address",
+						Description:         "the target user's email address",
+						MarkdownDescription: "the target user's email address",
 						Validators: []validator.String{
 							validators.Email{},
 						},
@@ -305,7 +305,7 @@ func (r *AccessRequestForwardResource) Read(
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Failed to get the Access Request Forward by the id (%s), status code: %d%s",
+				"Failed to get the Access Request Forward by the id (%s), status code: %d, %s",
 				uid.String(),
 				apiResp.HTTPResponse.StatusCode,
 				err.Error(),
@@ -315,35 +315,16 @@ func (r *AccessRequestForwardResource) Read(
 	}
 
 	responseSchema := apiResp.JSON200.Result
-	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
-	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
-		)
-
-		return
-	}
-
-	targetEmailBytes, err := responseSchema.Target.Email.MarshalJSON()
-	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
-		)
-
-		return
-	}
 
 	data = AccessRequestForwardResourceModel{
 		ID: utils.TrimmedStringValue(responseSchema.Id.String()),
 		Forwarder: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Forwarder.Id.String()),
-			Email: utils.TrimmedStringValue(string(forwarderEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Forwarder.Email)),
 		},
 		Target: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Target.Id.String()),
-			Email: utils.TrimmedStringValue(string(targetEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Target.Email)),
 		},
 	}
 
