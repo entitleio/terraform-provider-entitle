@@ -104,8 +104,8 @@ func (r *AccessReviewForwardResource) Schema(ctx context.Context, req resource.S
 					"email": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "the taget user's email address",
-						MarkdownDescription: "the taget user's email address",
+						Description:         "the target user's email address",
+						MarkdownDescription: "the target user's email address",
 						Validators: []validator.String{
 							validators.Email{},
 						},
@@ -327,35 +327,16 @@ func (r *AccessReviewForwardResource) Read(
 	}
 
 	responseSchema := apiResp.JSON200.Result
-	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
-	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
-		)
-
-		return
-	}
-
-	targetEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
-	if err != nil {
-		diags.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
-		)
-
-		return
-	}
 
 	data = AccessReviewForwardResourceModel{
 		ID: utils.TrimmedStringValue(responseSchema.Id.String()),
 		Forwarder: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Forwarder.Id.String()),
-			Email: utils.TrimmedStringValue(string(forwarderEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Forwarder.Email)),
 		},
 		Target: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Target.Id.String()),
-			Email: utils.TrimmedStringValue(string(targetEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Target.Email)),
 		},
 	}
 

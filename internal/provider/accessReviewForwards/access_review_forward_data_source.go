@@ -172,35 +172,16 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	}
 
 	responseSchema := apiResp.JSON200.Result
-	forwarderEmailBytes, err := responseSchema.Forwarder.Email.MarshalJSON()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get forwarder user email bytes, error: %v", err),
-		)
-
-		return
-	}
-
-	targetEmailBytes, err := responseSchema.Target.Email.MarshalJSON()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"No data",
-			fmt.Sprintf("Failed to get target user email bytes, error: %v", err),
-		)
-
-		return
-	}
 
 	data = AccessReviewForwardDataSourceModel{
 		ID: utils.TrimmedStringValue(responseSchema.Id.String()),
 		Forwarder: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Forwarder.Id.String()),
-			Email: utils.TrimmedStringValue(string(forwarderEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Forwarder.Email)),
 		},
 		Target: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Target.Id.String()),
-			Email: utils.TrimmedStringValue(string(targetEmailBytes)),
+			Email: utils.TrimmedStringValue(string(responseSchema.Target.Email)),
 		},
 	}
 
