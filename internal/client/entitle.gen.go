@@ -1906,7 +1906,7 @@ type IntegrationResourceRoleCreateBodySchema struct {
 	PrerequisitePermissions *[][]IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item `json:"prerequisitePermissions"`
 	Requestable             bool                                                                      `json:"requestable"`
 	Resource                IdParamsSchema                                                            `json:"resource"`
-	VirtualizedRole         IdParamsSchema                                                            `json:"virtualizedRole"`
+	VirtualizedRole         *IdParamsSchema                                                           `json:"virtualizedRole,omitempty"`
 	Workflow                *IdParamsSchema                                                           `json:"workflow"`
 }
 
@@ -1935,7 +1935,7 @@ type IntegrationResourceRoleListItemResponseSchema struct {
 
 // IntegrationResourceRoleResponseSchema defines model for IntegrationResourceRoleResponseSchema.
 type IntegrationResourceRoleResponseSchema struct {
-	Result []IntegrationResourceRoleResultSchema `json:"result"`
+	Result IntegrationResourceRoleResultSchema `json:"result"`
 }
 
 // IntegrationResourceRoleResultSchema defines model for IntegrationResourceRoleResultSchema.
