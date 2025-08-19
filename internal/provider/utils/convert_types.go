@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -180,11 +181,46 @@ func GetStringSet(data *[]string) (types.Set, diag.Diagnostics) {
 	return types.SetValue(types.StringType, result)
 }
 
-func GetAllowedDurations(allowed []client.EnumAllowedDurations) []attr.Value {
-	allowedDurationsValues := make([]attr.Value, len(allowed))
-	for i, durations := range allowed {
-		allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(durations)))
+func GetEnumAllowedDurationsSliceFromNumberSet(ctx context.Context, data types.Set) ([]client.EnumAllowedDurations, diag.Diagnostics) {
+	allowedDurations := make([]client.EnumAllowedDurations, 0)
+	if !data.IsNull() && !data.IsUnknown() {
+		for _, item := range data.Elements() {
+			val, ok := item.(types.Number)
+			if !ok {
+				continue
+			}
+
+			val, diags := val.ToNumberValue(ctx)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			valFloat32, _ := val.ValueBigFloat().Float32()
+			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
+		}
 	}
 
-	return allowedDurationsValues
+	return allowedDurations, nil
+}
+
+func GetNumberSetFromAllowedDurations(data []client.EnumAllowedDurations) (types.Set, diag.Diagnostics) {
+	s := make([]float32, 0, len(data))
+	for _, v := range data {
+		s = append(s, float32(v))
+	}
+
+	return GetNumberSet(s)
+}
+
+func GetNumberSet(data []float32) (types.Set, diag.Diagnostics) {
+	if data == nil || len(data) == 0 {
+		return types.SetNull(types.NumberType), nil
+	}
+
+	result := make([]attr.Value, 0, len(data))
+	for _, v := range data {
+		result = append(result, types.NumberValue(big.NewFloat(float64(v))))
+	}
+
+	return types.SetValue(types.NumberType, result)
 }

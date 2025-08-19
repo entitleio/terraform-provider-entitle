@@ -14,11 +14,13 @@ import (
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessRequestForwards"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/roles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/users"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflows"
 )
@@ -166,6 +168,8 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		workflows.NewWorkflowResource,
 		agentTokens.NewAgentTokenResource,
 		accessRequestForwards.NewAccessRequestForwardResource,
+		accessReviewForwards.NewAccessReviewForwardResource,
+		roles.NewRoleResource,
 	}
 }
 
@@ -180,6 +184,8 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		resources.NewResourceDataSource,
 		users.NewUserDataSource,
 		accessRequestForwards.NewAccessRequestForwardDataSource,
+		accessReviewForwards.NewAccessReviewForwardDataSource,
+		roles.NewRoleDataSource,
 	}
 }
 

@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,7 +43,7 @@ type IntegrationResource struct {
 type IntegrationResourceModel struct {
 	ID                                   types.String                        `tfsdk:"id"`
 	Name                                 types.String                        `tfsdk:"name"`
-	AllowedDurations                     types.List                          `tfsdk:"allowed_durations"`
+	AllowedDurations                     types.Set                           `tfsdk:"allowed_durations"`
 	AllowChangingAccountPermissions      types.Bool                          `tfsdk:"allow_changing_account_permissions"`
 	AllowCreatingAccounts                types.Bool                          `tfsdk:"allow_creating_accounts"`
 	Readonly                             types.Bool                          `tfsdk:"readonly"`
@@ -93,9 +91,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					validators.NewName(2, 50),
 				},
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
-				Required:    false,
 				Optional:    true,
 				Description: "As the admin, you can set different durations for the integration, " +
 					"compared to the workflow linked to it.",
@@ -459,24 +456,15 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	name = plan.Name.ValueString()
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
-		for _, item := range plan.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
+	var allowedDurations *[]client.EnumAllowedDurations
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var workflow client.IdParamsSchema
@@ -655,7 +643,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		AllowRequestsByDefault:               plan.AllowRequestsByDefault.ValueBoolPointer(),
 		Requestable:                          plan.Requestable.ValueBoolPointer(),
 		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
-		AllowedDurations:                     &allowedDurations,
+		AllowedDurations:                     allowedDurations,
 		Application:                          application,
 		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
@@ -843,24 +831,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	name := data.Name.ValueString()
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
-		for _, item := range data.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
+	var allowedDurations *[]client.EnumAllowedDurations
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var workflow client.IdParamsSchema
@@ -1026,7 +1005,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	integrationResp, err := r.client.IntegrationsUpdateWithResponse(ctx, uid, client.IntegrationsUpdateBodySchema{
 		AllowRequests:                        utils.BoolPointer(data.AllowRequests.ValueBool()),
 		AllowRequestsByDefault:               utils.BoolPointer(data.AllowRequestsByDefault.ValueBool()),
-		AllowedDurations:                     &allowedDurations,
+		AllowedDurations:                     allowedDurations,
 		AutoAssignRecommendedMaintainers:     utils.BoolPointer(data.AutoAssignRecommendedMaintainers.ValueBool()),
 		AutoAssignRecommendedOwners:          utils.BoolPointer(data.AutoAssignRecommendedOwners.ValueBool()),
 		ConnectionJson:                       connectionJson,
@@ -1180,16 +1159,9 @@ func convertFullIntegrationResultResponseSchemaToModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
-	if data.AllowedDurations != nil {
-		for i, duration := range data.AllowedDurations {
-			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
-		}
-	}
-
-	allowedDurations, errs := types.ListValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
-	if diags.HasError() {
+	allowedDurationsValues, advDiags := utils.GetNumberSetFromAllowedDurations(data.AllowedDurations)
+	if advDiags.HasError() {
+		diags.Append(advDiags...)
 		return IntegrationResourceModel{}, diags
 	}
 
@@ -1345,7 +1317,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 	return IntegrationResourceModel{
 		ID:                                   utils.TrimmedStringValue(data.Id.String()),
 		Name:                                 utils.TrimmedStringValue(data.Name),
-		AllowedDurations:                     allowedDurations,
+		AllowedDurations:                     allowedDurationsValues,
 		AllowChangingAccountPermissions:      types.BoolValue(data.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(data.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(data.Readonly),
