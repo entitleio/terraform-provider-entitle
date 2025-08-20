@@ -39,6 +39,14 @@ resource "entitle_resource" "my_resource" {
     "example1",
     "example2"
   ]
+  prerequisite_permissions = [
+    {
+      default = true
+      role = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120006"
+      }
+    }
+  ]
 }
 ```
 
@@ -83,7 +91,7 @@ Read-Only:
 
 Optional:
 
-- `entity` (Attributes) user (see [below for nested schema](#nestedatt--maintainers--entity))
+- `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
 - `type` (String) "user" or "group" (default: "user")
 
 <a id="nestedatt--maintainers--entity"></a>
@@ -91,11 +99,11 @@ Optional:
 
 Required:
 
-- `id` (String) user's id
+- `id` (String) Maintainer's unique identifier
 
 Read-Only:
 
-- `email` (String) user's email
+- `email` (String) Maintainer's email
 
 
 

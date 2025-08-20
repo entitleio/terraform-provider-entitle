@@ -40,8 +40,8 @@ type ResourceDataSourceModel struct {
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
 	Name                    types.String                        `tfsdk:"name"`
 	Description             types.String                        `tfsdk:"description"`
-	UserDefinedDescription  types.String             `tfsdk:"user_defined_description"`
-	AllowedDurations       types.Set                          `tfsdk:"allowed_durations"`
+	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
+	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 	Requestable             types.Bool                          `tfsdk:"requestable"`
 }
@@ -369,18 +369,9 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	var owner *utils.IdEmailModel
 
 	if resourceResp.JSON200.Result.Owner != nil {
-		ownerEmailString, err := utils.GetEmailString(resourceResp.JSON200.Result.Owner.Email)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Failed to convert the owner email to string",
-				err.Error(),
-			)
-			return
-		}
-
 		owner = &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(resourceResp.JSON200.Result.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(ownerEmailString),
+			Email: utils.GetEmailStringValue(resourceResp.JSON200.Result.Owner.Email),
 		}
 	}
 

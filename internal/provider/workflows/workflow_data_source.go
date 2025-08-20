@@ -514,19 +514,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -662,19 +652,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)

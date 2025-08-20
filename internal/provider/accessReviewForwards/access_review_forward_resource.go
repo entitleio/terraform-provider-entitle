@@ -234,26 +234,10 @@ func (r *AccessReviewForwardResource) Create(
 	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String())
 
 	plan.Forwarder.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Forwarder.Id.String())
-	forwarderEmail, err := utils.GetEmailString(apiResp.JSON200.Result.Forwarder.Email)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Failed to convert the forwarder email to string",
-			err.Error(),
-		)
-		return
-	}
-	plan.Forwarder.Email = utils.TrimmedStringValue(forwarderEmail)
+	plan.Forwarder.Email = utils.GetEmailStringValue(apiResp.JSON200.Result.Forwarder.Email)
 
 	plan.Target.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Target.Id.String())
-	targetEmail, err := utils.GetEmailString(apiResp.JSON200.Result.Target.Email)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Failed to convert the target email to string",
-			err.Error(),
-		)
-		return
-	}
-	plan.Target.Email = utils.TrimmedStringValue(targetEmail)
+	plan.Target.Email = utils.GetEmailStringValue(apiResp.JSON200.Result.Target.Email)
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
