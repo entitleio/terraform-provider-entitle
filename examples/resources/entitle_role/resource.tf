@@ -6,6 +6,6 @@ resource "entitle_role" "example" {
   workflow = {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120004"
   }
-  requestable = true
+  requestable       = true
   allowed_durations = [-1]
 }

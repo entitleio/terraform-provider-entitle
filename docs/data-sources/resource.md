@@ -21,7 +21,7 @@ Defines an Entitle Resource, which represents a target system or asset that can 
 
 ### Read-Only
 
-- `allowed_durations` (List of Number) List of allowed access durations
+- `allowed_durations` (Set of Number) List of allowed access durations
 - `description` (String) Resource description
 - `integration` (Attributes) Integration the resource belongs to (see [below for nested schema](#nestedatt--integration))
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))

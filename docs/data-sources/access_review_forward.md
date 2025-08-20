@@ -17,7 +17,7 @@ Entitle Access Review Forward allows delegating access review responsibilities t
 
 ### Required
 
-- `id` (String) Entitle Access Review Forwardidentifier in uuid format
+- `id` (String) Entitle Access Review Forward identifier in uuid format
 
 ### Read-Only
 

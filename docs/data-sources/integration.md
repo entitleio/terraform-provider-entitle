@@ -23,7 +23,7 @@ Entitle Integration represents a connection to an external system that can be ma
 
 - `allow_changing_account_permissions` (Boolean) Whether changing account permissions is allowed (default: true)
 - `allow_creating_accounts` (Boolean) Whether creating new accounts is allowed (default: true)
-- `allowed_durations` (List of Number) List of allowed durations (in seconds) for this integration
+- `allowed_durations` (Set of Number) List of allowed durations (in seconds) for this integration
 - `application` (Attributes) Application associated with this integration (see [below for nested schema](#nestedatt--application))
 - `auto_assign_recommended_maintainers` (Boolean) Whether recommended maintainers are auto-assigned (default: true)
 - `auto_assign_recommended_owners` (Boolean) Whether recommended owners are auto-assigned (default: true)
