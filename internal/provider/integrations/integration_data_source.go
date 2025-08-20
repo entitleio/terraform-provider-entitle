@@ -3,8 +3,6 @@ package integrations
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
