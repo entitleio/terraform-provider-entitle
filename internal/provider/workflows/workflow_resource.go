@@ -469,24 +469,15 @@ func (r *WorkflowResource) Read(
 		return
 	}
 
-	if workflowResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(workflowResp.Body)
-		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the workflow by the id (%s), status code: %d%s",
+				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
 				workflowResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -556,24 +547,15 @@ func (r *WorkflowResource) Update(
 		return
 	}
 
-	if workflowResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(workflowResp.Body)
-		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the update by the id (%s), status code: %d%s",
+				"Failed to update the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
 				workflowResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -630,28 +612,15 @@ func (r *WorkflowResource) Delete(
 		return
 	}
 
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to delete workflow by the id (%s), status code: %d%s",
+				"Failed to delete the Workflow by the id (%s), status code: %d, %s",
 				parsedUUID.String(),
 				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return

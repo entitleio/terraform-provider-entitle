@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -273,25 +271,15 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Check the HTTP response status code for errors
-	if bundleResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(bundleResp.Body)
-		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the bundle by the id (%s), status code: %d%s",
+				"Failed to get the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),
 				bundleResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return

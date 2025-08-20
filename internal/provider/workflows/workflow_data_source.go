@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"net/http"
 	"sort"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -354,24 +353,15 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	if workflowResp.HTTPResponse.StatusCode != 200 {
-		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		errBody, _ := utils.GetErrorBody(workflowResp.Body)
+	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the workflow by the id (%s), status code: %d%s",
+				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
 				workflowResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -514,19 +504,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -662,19 +642,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)

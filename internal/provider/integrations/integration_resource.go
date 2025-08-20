@@ -559,7 +559,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 
 		switch maintainer.Type.String() {
-		case "user":
+		case utils.MaintainerTypeUser:
 			maintainerUser := client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
 				User: client.UserEntitySchema{
@@ -577,7 +577,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			}
 
 			maintainers = append(maintainers, item)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			maintainerGroup := client.GroupMaintainerSchema{
 				Type: client.EnumMaintainerTypeGroupGroup,
 				Group: client.GroupEntitySchema{
@@ -750,24 +750,15 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the integration by the id (%s), status code: %d%s",
+				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -926,7 +917,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 			}
 
 			switch maintainer.Type.String() {
-			case "user":
+			case utils.MaintainerTypeUser:
 
 				maintainerUser := client.UserMaintainerSchema{
 					Type: client.EnumMaintainerTypeUserUser,
@@ -945,7 +936,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 				}
 
 				maintainers = append(maintainers, item)
-			case "group":
+			case utils.MaintainerTypeGroup:
 				maintainerGroup := client.GroupMaintainerSchema{
 					Type: client.EnumMaintainerTypeGroupGroup,
 					Group: client.GroupEntitySchema{
@@ -1024,24 +1015,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to update the integration by the id (%s), status code: %d%s",
+				"Failed to update the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -1100,28 +1082,15 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Unable to delete integrations, id: (%s), status code: %d%s",
+				"Failed to delete the Integration by the id (%s), status code: %d, %s",
 				data.ID.String(),
 				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -1195,7 +1164,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 
 		switch strings.ToLower(body.Type) {
-		case "user":
+		case utils.MaintainerTypeUser:
 			responseSchema, err := item.AsMaintainerUserResponseSchema()
 			if err != nil {
 				diags.AddError(
@@ -1233,7 +1202,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			maintainers = append(maintainers, maintainerUser)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
 				diags.AddError(

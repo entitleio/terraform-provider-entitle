@@ -3,8 +3,6 @@ package policies
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -234,24 +232,15 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	if policyResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(policyResp.Body)
-		if policyResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(policyResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the policy by the id (%s), status code: %d%s",
+				"Failed to get the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
 				policyResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
