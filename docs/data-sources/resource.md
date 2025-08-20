@@ -21,7 +21,7 @@ Defines an Entitle Resource, which represents a target system or asset that can 
 
 ### Read-Only
 
-- `allowed_durations` (List of Number) List of allowed access durations
+- `allowed_durations` (Set of Number) List of allowed access durations
 - `description` (String) Resource description
 - `integration` (Attributes) Integration the resource belongs to (see [below for nested schema](#nestedatt--integration))
 - `maintainers` (Attributes List) List of resource maintainers (see [below for nested schema](#nestedatt--maintainers))

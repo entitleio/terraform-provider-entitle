@@ -1,7 +1,7 @@
 //go:build acceptance
 // +build acceptance
 
-package users_test
+package roles_test
 
 import (
 	"fmt"
@@ -13,26 +13,25 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/testhelpers"
 )
 
-func TestUserDataSource(t *testing.T) {
+func TestRoleDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Read testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-data "entitle_user" "my_user" {
-	email = "%s"
+data "entitle_role" "my_role" {
+	id = "%s"
 }
-`, os.Getenv("ENTITLE_OWNER_EMAIL")),
+`, os.Getenv("ENTITLE_ROLE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
-					resource.TestCheckResourceAttr("data.entitle_user.my_user", "email", os.Getenv("ENTITLE_OWNER_EMAIL")),
+					resource.TestCheckResourceAttr("data.entitle_role.my_role", "id", os.Getenv("ENTITLE_ROLE_ID")),
 
 					// Verify dynamic values have any value set in the state.
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "id"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "given_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "family_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "created_at"),
+					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "name"),
+					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "resource.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "requestable"),
 				),
 			},
 		},
