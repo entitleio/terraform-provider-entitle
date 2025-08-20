@@ -876,7 +876,7 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",

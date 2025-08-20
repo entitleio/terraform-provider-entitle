@@ -3,8 +3,6 @@ package accessReviewForwards
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -286,25 +284,15 @@ func (r *AccessReviewForwardResource) Read(
 		return
 	}
 
-	// Handle API response status
-	if apiResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(apiResp.Body)
-		if apiResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(apiResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"Unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Failed to get the access review forward by the id (%s), status code: %d%s",
+				"Failed to get the Access Review Forward by the id (%s), status code: %d, %s",
 				uid.String(),
 				apiResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return

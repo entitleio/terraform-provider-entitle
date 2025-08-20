@@ -253,24 +253,15 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the integration by the id (%s), status code: %d%s",
+				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
