@@ -20,9 +20,6 @@ jobs:
           JIRA=$(echo "$BODY" | awk '/^### Jira Ticket/{flag=1;next}/^### /{flag=0}flag' \
             | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
 
-          # Normalize Jira (trim + uppercase)
-          JIRA=$(echo "$JIRA" | xargs | tr '[:lower:]' '[:upper:]')
-
           # Extract Type
           TYPE=$(echo "$BODY" | awk '/^### Type/{flag=1;next}/^### /{flag=0}flag' \
             | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
@@ -38,7 +35,7 @@ jobs:
       - name: Validate Jira ticket format
         run: |
           if [[ ! "$JIRA" =~ ^[A-Z]+-[0-9]+$ ]]; then
-            echo "❌ Invalid Jira ticket format: $JIRA"
+            echo "❌ Invalid Jira ticket format: '$JIRA'"
             echo "Must look like ABC-1234"
             exit 1
           fi
