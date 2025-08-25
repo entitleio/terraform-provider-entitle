@@ -884,6 +884,20 @@ const (
 	IntegrationResourceRoleAuditLogResponseSchemaTypeTicketUserDeclined                                         IntegrationResourceRoleAuditLogResponseSchemaType = "ticket.userDeclined"
 )
 
+// Defines values for PermissionSchemaPath.
+const (
+	Both     PermissionSchemaPath = "both"
+	Direct   PermissionSchemaPath = "direct"
+	Indirect PermissionSchemaPath = "indirect"
+)
+
+// Defines values for PermissionSchemaTypes.
+const (
+	External PermissionSchemaTypes = "external"
+	Jit      PermissionSchemaTypes = "jit"
+	Policy   PermissionSchemaTypes = "policy"
+)
+
 // Defines values for PolicyAuditLogResponseSchemaType.
 const (
 	PolicyAuditLogResponseSchemaTypeAccessReviewActivated                                      PolicyAuditLogResponseSchemaType = "accessReview.activated"
@@ -1279,6 +1293,16 @@ type AccessReviewAuditLogResponseSchema struct {
 // AccessReviewAuditLogResponseSchemaType Type of the audit log
 type AccessReviewAuditLogResponseSchemaType string
 
+// AccountResultSchema defines model for AccountResultSchema.
+type AccountResultSchema struct {
+	CreatedAt   time.Time                       `json:"createdAt"`
+	Email       string                          `json:"email"`
+	Euid        string                          `json:"euid"`
+	Id          openapi_types.UUID              `json:"id"`
+	Integration AccountsIntegrationResultSchema `json:"integration"`
+	Name        string                          `json:"name"`
+}
+
 // AccountsApplicationResultSchema defines model for AccountsApplicationResultSchema.
 type AccountsApplicationResultSchema struct {
 	Name string `json:"name"`
@@ -1299,15 +1323,6 @@ type AccountsResultSchema struct {
 	Id          openapi_types.UUID              `json:"id"`
 	Integration AccountsIntegrationResultSchema `json:"integration"`
 	Name        string                          `json:"name"`
-}
-
-// ActorSchema defines model for ActorSchema.
-type ActorSchema struct {
-	// Name Actor's display name
-	Name string `json:"name"`
-
-	// Users Users associated with the actor
-	Users []UserSchema `json:"users"`
 }
 
 // AgentTokenCreateBodySchema defines model for AgentTokenCreateBodySchema.
@@ -1574,12 +1589,6 @@ type DirectoryGroupResponseSchema struct {
 type EntityResponseSchema struct {
 	Email openapi_types.Email `json:"email"`
 	Id    openapi_types.UUID  `json:"id"`
-}
-
-// EntitySchema defines model for EntitySchema.
-type EntitySchema struct {
-	// Name Entity name
-	Name string `json:"name"`
 }
 
 // EnumAllowedDurations defines model for EnumAllowedDurations.
@@ -2166,24 +2175,30 @@ type PermissionResponseSchema struct {
 
 // PermissionSchema defines model for PermissionSchema.
 type PermissionSchema struct {
-	// Actor Permission's actor
-	Actor ActorSchema `json:"actor"`
+	// Account Permission's account
+	Account AccountResultSchema `json:"account"`
 
 	// CreatedAt Date of the permission creation
 	CreatedAt time.Time `json:"createdAt"`
 
-	// DeprecatedAt Date of the permission deprecation
-	DeprecatedAt *time.Time `json:"deprecatedAt"`
+	// Path Whether this permission is a direct permission / indirect permission or both
+	Path PermissionSchemaPath `json:"path"`
 
-	// Integration Permission's integration
-	Integration EntitySchema `json:"integration"`
-
-	// Resource Permission's resource
-	Resource EntitySchema `json:"resource"`
+	// PermissionId Permission ID
+	PermissionId openapi_types.UUID `json:"permissionId"`
 
 	// Role Permission's role
-	Role EntitySchema `json:"role"`
+	Role IntegrationResourceRoleListItemResponseSchema `json:"role"`
+
+	// Types Origin of the permission
+	Types []PermissionSchemaTypes `json:"types"`
 }
+
+// PermissionSchemaPath Whether this permission is a direct permission / indirect permission or both
+type PermissionSchemaPath string
+
+// PermissionSchemaTypes defines model for PermissionSchema.Types.
+type PermissionSchemaTypes string
 
 // PolicyApplicationResponseSchema defines model for PolicyApplicationResponseSchema.
 type PolicyApplicationResponseSchema struct {
@@ -2385,15 +2400,6 @@ type UserResultSchema struct {
 	FamilyName string             `json:"familyName"`
 	GivenName  string             `json:"givenName"`
 	Id         openapi_types.UUID `json:"id"`
-}
-
-// UserSchema defines model for UserSchema.
-type UserSchema struct {
-	// Email User's email
-	Email string `json:"email"`
-
-	// Name Entity name
-	Name string `json:"name"`
 }
 
 // WorkflowApprovalFlowResponseSchema defines model for WorkflowApprovalFlowResponseSchema.

@@ -4144,43 +4144,60 @@
           "name"
         ]
       },
+      "AccountResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "euid": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/AccountsIntegrationResultSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "euid",
+          "email",
+          "createdAt",
+          "integration"
+        ]
+      },
       "PermissionSchema": {
         "type": "object",
         "properties": {
+          "permissionId": {
+            "type": "string",
+            "description": "Permission ID",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
             "example": "2021-01-21T00:00:00.000Z",
             "description": "Date of the permission creation"
           },
-          "deprecatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true,
-            "example": "2021-01-21T00:00:00.000Z",
-            "description": "Date of the permission deprecation"
-          },
-          "actor": {
-            "description": "Permission's actor",
+          "account": {
+            "description": "Permission's account",
             "allOf": [
               {
-                "$ref": "#/components/schemas/ActorSchema"
-              }
-            ]
-          },
-          "integration": {
-            "description": "Permission's integration",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntitySchema"
-              }
-            ]
-          },
-          "resource": {
-            "description": "Permission's resource",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntitySchema"
+                "$ref": "#/components/schemas/AccountResultSchema"
               }
             ]
           },
@@ -4188,17 +4205,45 @@
             "description": "Permission's role",
             "allOf": [
               {
-                "$ref": "#/components/schemas/EntitySchema"
+                "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
               }
             ]
+          },
+          "types": {
+            "type": "array",
+            "description": "Origin of the permission",
+            "example": [
+              "external",
+              "jit",
+              "policy"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "external",
+                "jit",
+                "policy"
+              ]
+            }
+          },
+          "path": {
+            "type": "string",
+            "description": "Whether this permission is a direct permission / indirect permission or both",
+            "enum": [
+              "direct",
+              "indirect",
+              "both"
+            ],
+            "example": "both"
           }
         },
         "required": [
+          "permissionId",
           "createdAt",
-          "actor",
-          "integration",
-          "resource",
-          "role"
+          "account",
+          "role",
+          "types",
+          "path"
         ]
       },
       "PermissionResponseSchema": {
