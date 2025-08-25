@@ -2,7 +2,7 @@
 <!-- e.g. JIRA-123 -->
 
 ### Type
-<!-- Select one: Feature / Bug / Docs / Other -->
+<!-- Select one: feat / bug / docs / other -->
 
 ### Title
 <!-- Short summary -->

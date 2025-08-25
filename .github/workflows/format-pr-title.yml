@@ -23,7 +23,7 @@ jobs:
 
           # Extract Type
           TYPE=$(awk '/^### Type/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
-          | tr '[:lower:]' \
+          | tr '[:upper:]' '[:lower:]' \
           | tr -d '\r\n')
 
           # Extract Title
@@ -67,8 +67,8 @@ jobs:
             const { TYPE } = process.env;
             let label;
 
-            switch (TYPE.toLowerCase()) {
-              case "feature":
+            switch (TYPE) {
+              case "feat":
                 label = "enhancement";
                 break;
               case "bug":
