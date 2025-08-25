@@ -21,7 +21,7 @@ jobs:
             | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs)
 
           # Normalize Jira (trim + uppercase)
-          JIRA=$(echo "$JIRA" | tr '[:lower:]' '[:upper:]')
+          JIRA=$(echo "$JIRA" | xargs | tr '[:lower:]' '[:upper:]')
 
           # Extract Type
           TYPE=$(echo "$BODY" | awk '/^### Type/{flag=1;next}/^### /{flag=0}flag' \
