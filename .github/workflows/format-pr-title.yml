@@ -1,3 +1,6 @@
+permissions:
+  pull-requests: write
+  issues: write
 name: Format PR Title
 
 on:
