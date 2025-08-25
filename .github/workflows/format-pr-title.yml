@@ -19,12 +19,16 @@ jobs:
           # Extract Jira Ticket
           JIRA=$(awk '/^### Jira Ticket/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
           | tr '[:lower:]' '[:upper:]' \
-          | tr -d '\r\n')          
+          | tr -d '\r\n')
+
           # Extract Type
-          TYPE=$(echo "$BODY" | awk '/^### Type/{flag=1;next}/^### /{flag=0}flag' | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs echo -n)
+          TYPE=$(awk '/^### Type/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
+          | tr '[:lower:]' \
+          | tr -d '\r\n')
 
           # Extract Title
-          TITLE=$(echo "$BODY" | awk '/^### Title/{flag=1;next}/^### /{flag=0}flag' | grep -v '^<!--' | grep -v '^\s*$' | head -n1 | xargs echo -n)
+          TITLE=$(awk '/^### Title/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
+          | tr -d '\r\n')
 
           echo "JIRA=$JIRA" >> $GITHUB_ENV
           echo "TYPE=$TYPE" >> $GITHUB_ENV
