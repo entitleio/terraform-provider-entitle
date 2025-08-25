@@ -1,0 +1,64 @@
+name: License Compliance Check
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  # Allow manual trigger
+  workflow_dispatch:
+  # Run monthly to catch new dependency updates
+  schedule:
+    - cron: '0 0 1 * *'  # First day of each month
+
+jobs:
+  license-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.3'
+        
+    - name: Install go-licenses
+      run: go install github.com/google/go-licenses@latest
+      
+    - name: Download dependencies
+      run: go mod download
+      
+    - name: Run license compliance scan
+      run: ./scripts/license-scan.sh
+      
+    - name: Upload license scan results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: license-scan-results
+        path: |
+          scripts/license-scan-results.csv
+          scripts/license-compatibility-report.txt
+        retention-days: 30
+        
+    - name: Comment PR with license status
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = './scripts/license-compatibility-report.txt';
+          
+          if (fs.existsSync(path)) {
+            const report = fs.readFileSync(path, 'utf8');
+            const summary = report.split('DETAILED ANALYSIS:')[0];
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📄 License Compliance Report\n\n\`\`\`\n${summary}\n\`\`\`\n\nFull report available in the workflow artifacts.`
+            });
+          }

@@ -85,3 +85,15 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## License Compliance
+
+This project is licensed under the Mozilla Public License 2.0 (MPL-2.0). All dependencies have been scanned and verified to be compatible with MPL-2.0.
+
+To run a license compliance scan:
+
+```shell
+./scripts/license-scan.sh
+```
+
+For detailed license analysis, see [LICENCE_ANALYSIS.md](./LICENCE_ANALYSIS.md).

@@ -35,3 +35,7 @@ website/vendor
 # Keep windows files with windows line endings
 *.winfile eol=crlf
 .fleet/
+
+# License scanning output files
+scripts/license-scan-results.csv
+scripts/license-compatibility-report.txt
