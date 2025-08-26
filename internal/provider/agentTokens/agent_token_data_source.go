@@ -129,16 +129,15 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	// Check if the API response indicates success
-	if agentTokenResp.StatusCode() != 200 || agentTokenResp.JSON200 == nil {
-		errBody, _ := utils.GetErrorBody(agentTokenResp.Body)
+	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Failed to get the Agent Token by the ID (%s), status code: %d%s",
+				"Failed to get the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),
-				agentTokenResp.StatusCode(),
-				errBody.GetMessage(),
+				agentTokenResp.HTTPResponse.StatusCode,
+				err.Error(),
 			),
 		)
 		return
