@@ -4,7 +4,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/entitleio/terraform-provider-entitle)](https://goreportcard.com/report/github.com/entitleio/terraform-provider-entitle)
 ![Code Scanning](https://img.shields.io/badge/CodeQL-Enabled-brightgreen)
 [![Scorecard](https://api.scorecard.dev/projects/github.com/entitleio/terraform-provider-entitle/badge)](https://scorecard.dev/viewer/?uri=github.com/entitleio/terraform-provider-entitle)
-[![License](https://img.shields.io/github/license/entitleio/terraform-provider-entitle)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/entitleio/terraform-provider-entitle)](https://github.com/entitleio/terraform-provider-entitle/commits)
 
 <div align="center">
