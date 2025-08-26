@@ -14,6 +14,8 @@ on:
         required: true
       ENTITLE_API_KEY:
         required: true
+      ENTITLE_BUNDLE_ID:
+        required: true
       ENTITLE_INTEGRATION_ID:
         required: true
       ENTITLE_OWNER_EMAIL:
@@ -118,6 +120,7 @@ jobs:
           ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REQUEST_FORWARD_ID }}
           ENTITLE_AGENT_TOKEN_ID: ${{ secrets.ENTITLE_AGENT_TOKEN_ID }}
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
+          ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
