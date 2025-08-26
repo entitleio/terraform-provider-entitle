@@ -40,10 +40,11 @@ jobs:
             const JIRA = extractField(body, "Jira Ticket").toUpperCase();
             const TYPE = extractField(body, "Type").toLowerCase() || "feat";
             const TITLE = extractField(body, "Title");
-
-            core.setOutput("JIRA", JIRA);
-            core.setOutput("TYPE", TYPE);
-            core.setOutput("TITLE", TITLE);
+            
+            const safeString = str => str.replace(/[^a-zA-Z0-9-_ ]/g, "");
+            core.setOutput("JIRA", safeString(JIRA));
+            core.setOutput("TYPE", safeString(TYPE));
+            core.setOutput("TITLE", safeString(TITLE));
       - name: Update PR title
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
