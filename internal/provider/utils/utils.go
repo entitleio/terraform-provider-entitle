@@ -7,18 +7,13 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// GetEmailString is a function that extracts a string value from an openapi_types.Email.
+// GetEmailStringValue is a function that extracts a string value from an openapi_types.Email.
 // It marshals the email to JSON, trims any surrounding double quotes and escape characters,
-// and returns the resulting string.
-func GetEmailString(email openapi_types.Email) (result string, err error) {
-	emailBytes, err := email.MarshalJSON()
-	if err != nil {
-		return "", err
-	}
-
-	result = strings.Trim(string(emailBytes), `"`)
+// and returns the resulting string type.
+func GetEmailStringValue(email openapi_types.Email) types.String {
+	result := strings.Trim(string(email), `"`)
 	result = strings.Trim(result, "\\\"")
-	return
+	return TrimmedStringValue(result)
 }
 
 // TrimPrefixSuffix is a function that trims double quotes and escape characters
