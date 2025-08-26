@@ -11,45 +11,36 @@ jobs:
   format-title:
     runs-on: ubuntu-latest
     steps:
-      - name: Extract PR body fields
-        id: extract
-        run: |
-          BODY="${{ github.event.pull_request.body }}"
-
-          # Extract Jira Ticket
-          JIRA=$(awk '/^### Jira Ticket/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
-          | tr '[:lower:]' '[:upper:]' \
-          | tr -d '\r\n')
-
-          # Extract Type
-          TYPE=$(awk '/^### Type/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
-          | tr '[:upper:]' '[:lower:]' \
-          | tr -d '\r\n')
-
-          # Extract Title
-          TITLE=$(awk '/^### Title/{flag=1;next}/^### /{flag=0}flag && !/^<!--/ && NF{print; exit}' <<<"$BODY" \
-          | tr -d '\r\n')
-
-          echo "JIRA=$JIRA" >> $GITHUB_ENV
-          echo "TYPE=$TYPE" >> $GITHUB_ENV
-          echo "TITLE=$TITLE" >> $GITHUB_ENV
-
-      - name: Validate Jira ticket format
-        run: |
-          if [[ ! "$JIRA" =~ ^[A-Z]+-[0-9]+$ ]]; then
-            echo "❌ Invalid Jira ticket format: '$JIRA'"
-            echo "Must look like ABC-1234"
-            exit 1
-          fi
-
-      - name: Update PR title
-        uses: actions/github-script@v7
+      - name: Parse PR body
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { TYPE, JIRA, TITLE } = process.env;
-            const newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
+            const body = context.payload.pull_request.body || "";
+            const jiraMatch = body.match(/^### Jira Ticket\s*([\w-]+)/m);
+            const typeMatch = body.match(/^### Type\s*(\w+)/m);
+            const titleMatch = body.match(/^### Title\s*(.+)/m);
 
+            const JIRA = jiraMatch ? jiraMatch[1].toUpperCase() : "";
+            const TYPE = typeMatch ? typeMatch[1].toLowerCase() : "feat";
+            const TITLE = titleMatch ? titleMatch[1].trim() : "";
+
+            core.setOutput("JIRA", JIRA);
+            core.setOutput("TYPE", TYPE);
+            core.setOutput("TITLE", TITLE);
+
+      - name: Update PR title
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { JIRA, TYPE, TITLE } = core.getInput("JIRA") ? { 
+              JIRA: core.getInput("JIRA"), 
+              TYPE: core.getInput("TYPE"), 
+              TITLE: core.getInput("TITLE") 
+            } : process.env;
+
+            const newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
             console.log("✅ Updating PR title to:", newTitle);
 
             await github.rest.pulls.update({
@@ -60,13 +51,13 @@ jobs:
             });
 
       - name: Add label based on Type
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { TYPE } = process.env;
+            const TYPE = core.getInput("TYPE") || "feat";
+            
             let label;
-
             switch (TYPE) {
               case "feat":
                 label = "enhancement";
@@ -80,9 +71,8 @@ jobs:
               default:
                 label = "enhancement";
             }
-
+            
             console.log(`🏷️ Adding label: ${label}`);
-
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
