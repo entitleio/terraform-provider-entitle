@@ -6,21 +6,31 @@ name: Tests
 on:
   workflow_call:
     secrets:
+      ENTITLE_ACCESS_REQUEST_FORWARD_ID:
+        required: true
+      ENTITLE_ACCESS_REVIEW_FORWARD_ID:
+        required: true
+      ENTITLE_AGENT_TOKEN_ID:
+        required: true
       ENTITLE_API_KEY:
+        required: true
+      ENTITLE_BUNDLE_ID:
+        required: true
+      ENTITLE_INTEGRATION_ID:
         required: true
       ENTITLE_OWNER_EMAIL:
         required: true
       ENTITLE_OWNER_ID:
         required: true
-      ENTITLE_WORKFLOW_ID:
+      ENTITLE_ROLE_ID:
+        required: true
+      ENTITLE_RESOURCE_ID:
         required: true
       ENTITLE_USER1_ID:
         required: true
       ENTITLE_USER2_ID:
         required: true
-      ENTITLE_ROLE_ID:
-        required: true
-      ENTITLE_RESOURCE_ID:
+      ENTITLE_WORKFLOW_ID:
         required: true
   push:
     branches:
@@ -42,8 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-go@v5.5.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -63,8 +73,8 @@ jobs:
           - '1.4.*' # Intermediate
           - '1.12.*' # Latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-go@v5.5.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -99,20 +109,25 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
-      - uses: hashicorp/setup-terraform@v3.1.2
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
       - env:
           TF_ACC: "1"
+          ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REVIEW_FORWARD_ID }}
+          ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REQUEST_FORWARD_ID }}
+          ENTITLE_AGENT_TOKEN_ID: ${{ secrets.ENTITLE_AGENT_TOKEN_ID }}
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
+          ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+          ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
-          ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
-          ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
-          ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_ROLE_ID }}
           ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_RESOURCE_ID }}
+          ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
+          ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
+          ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
         run: go test -v -cover -tags=acceptance ./internal/provider/...
         timeout-minutes: 10
