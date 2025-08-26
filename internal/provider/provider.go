@@ -170,6 +170,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		accessRequestForwards.NewAccessRequestForwardResource,
 		accessReviewForwards.NewAccessReviewForwardResource,
 		roles.NewRoleResource,
+		resources.NewResourceResource,
 	}
 }
 
