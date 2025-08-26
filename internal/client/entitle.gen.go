@@ -886,16 +886,16 @@ const (
 
 // Defines values for PermissionSchemaPath.
 const (
-	Both     PermissionSchemaPath = "both"
-	Direct   PermissionSchemaPath = "direct"
-	Indirect PermissionSchemaPath = "indirect"
+	PermissionSchemaPathBoth     PermissionSchemaPath = "both"
+	PermissionSchemaPathDirect   PermissionSchemaPath = "direct"
+	PermissionSchemaPathIndirect PermissionSchemaPath = "indirect"
 )
 
 // Defines values for PermissionSchemaTypes.
 const (
-	External PermissionSchemaTypes = "external"
-	Jit      PermissionSchemaTypes = "jit"
-	Policy   PermissionSchemaTypes = "policy"
+	PermissionSchemaTypesExternal PermissionSchemaTypes = "external"
+	PermissionSchemaTypesJit      PermissionSchemaTypes = "jit"
+	PermissionSchemaTypesPolicy   PermissionSchemaTypes = "policy"
 )
 
 // Defines values for PolicyAuditLogResponseSchemaType.
@@ -991,6 +991,20 @@ const (
 	PolicyAuditLogResponseSchemaTypeTicketTaskCreated                                          PolicyAuditLogResponseSchemaType = "ticket.taskCreated"
 	PolicyAuditLogResponseSchemaTypeTicketUserApproved                                         PolicyAuditLogResponseSchemaType = "ticket.userApproved"
 	PolicyAuditLogResponseSchemaTypeTicketUserDeclined                                         PolicyAuditLogResponseSchemaType = "ticket.userDeclined"
+)
+
+// Defines values for RevokePermissionResultResponseSchemaPath.
+const (
+	RevokePermissionResultResponseSchemaPathBoth     RevokePermissionResultResponseSchemaPath = "both"
+	RevokePermissionResultResponseSchemaPathDirect   RevokePermissionResultResponseSchemaPath = "direct"
+	RevokePermissionResultResponseSchemaPathIndirect RevokePermissionResultResponseSchemaPath = "indirect"
+)
+
+// Defines values for RevokePermissionResultResponseSchemaTypes.
+const (
+	RevokePermissionResultResponseSchemaTypesExternal RevokePermissionResultResponseSchemaTypes = "external"
+	RevokePermissionResultResponseSchemaTypesJit      RevokePermissionResultResponseSchemaTypes = "jit"
+	RevokePermissionResultResponseSchemaTypesPolicy   RevokePermissionResultResponseSchemaTypes = "policy"
 )
 
 // Defines values for TicketAuditLogResponseSchemaType.
@@ -2325,6 +2339,41 @@ type ResourceResponseSchema struct {
 	Integration IntegrationBaseResponseSchema `json:"integration"`
 	Name        string                        `json:"name"`
 }
+
+// RevokePermissionResponseSchema defines model for RevokePermissionResponseSchema.
+type RevokePermissionResponseSchema struct {
+	Result RevokePermissionResultResponseSchema `json:"result"`
+}
+
+// RevokePermissionResultResponseSchema defines model for RevokePermissionResultResponseSchema.
+type RevokePermissionResultResponseSchema struct {
+	// Account Permission's account
+	Account AccountResultSchema `json:"account"`
+
+	// CreatedAt Date of the permission creation
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Message Message describing the revocation status
+	Message string `json:"message"`
+
+	// Path Whether this permission is a direct permission / indirect permission or both
+	Path RevokePermissionResultResponseSchemaPath `json:"path"`
+
+	// PermissionId Permission ID
+	PermissionId openapi_types.UUID `json:"permissionId"`
+
+	// Role Permission's role
+	Role IntegrationResourceRoleListItemResponseSchema `json:"role"`
+
+	// Types Origin of the permission
+	Types []RevokePermissionResultResponseSchemaTypes `json:"types"`
+}
+
+// RevokePermissionResultResponseSchemaPath Whether this permission is a direct permission / indirect permission or both
+type RevokePermissionResultResponseSchemaPath string
+
+// RevokePermissionResultResponseSchemaTypes defines model for RevokePermissionResultResponseSchema.Types.
+type RevokePermissionResultResponseSchemaTypes string
 
 // ScheduleEntitySchema defines model for ScheduleEntitySchema.
 type ScheduleEntitySchema struct {
@@ -4280,6 +4329,9 @@ type ClientInterface interface {
 	// PermissionsIndex request
 	PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PermissionsRevoke request
+	PermissionsRevoke(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PoliciesIndex request
 	PoliciesIndex(ctx context.Context, params *PoliciesIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4829,6 +4881,18 @@ func (c *Client) IntegrationsUpdate(ctx context.Context, id openapi_types.UUID, 
 
 func (c *Client) PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPermissionsIndexRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PermissionsRevoke(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPermissionsRevokeRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -6658,6 +6722,40 @@ func NewPermissionsIndexRequest(server string, params *PermissionsIndexParams) (
 	return req, nil
 }
 
+// NewPermissionsRevokeRequest generates requests for PermissionsRevoke
+func NewPermissionsRevokeRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/permissions/%s/revoke", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewPoliciesIndexRequest generates requests for PoliciesIndex
 func NewPoliciesIndexRequest(server string, params *PoliciesIndexParams) (*http.Request, error) {
 	var err error
@@ -7996,6 +8094,9 @@ type ClientWithResponsesInterface interface {
 	// PermissionsIndexWithResponse request
 	PermissionsIndexWithResponse(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*PermissionsIndexResponse, error)
 
+	// PermissionsRevokeWithResponse request
+	PermissionsRevokeWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*PermissionsRevokeResponse, error)
+
 	// PoliciesIndexWithResponse request
 	PoliciesIndexWithResponse(ctx context.Context, params *PoliciesIndexParams, reqEditors ...RequestEditorFn) (*PoliciesIndexResponse, error)
 
@@ -8723,6 +8824,28 @@ func (r PermissionsIndexResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PermissionsIndexResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PermissionsRevokeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON2XX      *RevokePermissionResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r PermissionsRevokeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PermissionsRevokeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9598,6 +9721,15 @@ func (c *ClientWithResponses) PermissionsIndexWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsePermissionsIndexResponse(rsp)
+}
+
+// PermissionsRevokeWithResponse request returning *PermissionsRevokeResponse
+func (c *ClientWithResponses) PermissionsRevokeWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*PermissionsRevokeResponse, error) {
+	rsp, err := c.PermissionsRevoke(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePermissionsRevokeResponse(rsp)
 }
 
 // PoliciesIndexWithResponse request returning *PoliciesIndexResponse
@@ -10664,6 +10796,32 @@ func ParsePermissionsIndexResponse(rsp *http.Response) (*PermissionsIndexRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePermissionsRevokeResponse parses an HTTP response from a PermissionsRevokeWithResponse call
+func ParsePermissionsRevokeResponse(rsp *http.Response) (*PermissionsRevokeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PermissionsRevokeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode/100 == 2:
+		var dest RevokePermissionResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON2XX = &dest
 
 	}
 

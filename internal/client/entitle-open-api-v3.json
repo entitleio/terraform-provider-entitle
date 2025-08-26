@@ -1532,6 +1532,47 @@
         ]
       }
     },
+    "/public/v1/permissions/{id}/revoke": {
+      "delete": {
+        "operationId": "Permissions_revoke",
+        "summary": "Revoke a permission",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "2XX": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokePermissionResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Permissions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/policies": {
       "get": {
         "operationId": "Policies_index",
@@ -4261,6 +4302,90 @@
         },
         "required": [
           "pagination",
+          "result"
+        ]
+      },
+      "RevokePermissionResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "permissionId": {
+            "type": "string",
+            "description": "Permission ID",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the permission creation"
+          },
+          "account": {
+            "description": "Permission's account",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountResultSchema"
+              }
+            ]
+          },
+          "role": {
+            "description": "Permission's role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+              }
+            ]
+          },
+          "types": {
+            "type": "array",
+            "description": "Origin of the permission",
+            "example": [
+              "external",
+              "jit",
+              "policy"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "external",
+                "jit",
+                "policy"
+              ]
+            }
+          },
+          "path": {
+            "type": "string",
+            "description": "Whether this permission is a direct permission / indirect permission or both",
+            "enum": [
+              "direct",
+              "indirect",
+              "both"
+            ],
+            "example": "both"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the revocation status"
+          }
+        },
+        "required": [
+          "permissionId",
+          "createdAt",
+          "account",
+          "role",
+          "types",
+          "path",
+          "message"
+        ]
+      },
+      "RevokePermissionResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/RevokePermissionResultResponseSchema"
+          }
+        },
+        "required": [
           "result"
         ]
       },

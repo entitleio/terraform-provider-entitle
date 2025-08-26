@@ -4,7 +4,6 @@
 package permissions_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -13,131 +12,28 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/testhelpers"
 )
 
-func TestIntegrationResource(t *testing.T) {
+func TestPermissionResource(t *testing.T) {
+	resourceName := "entitle_permission.test"
+	permissionID := os.Getenv("ENTITLE_PERMISSION_ID")
+
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing
+			// Import the existing permission
 			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
-resource "entitle_integration" "my_gitlab" {
-  	name                               = "My Gitlab Integration"
-    requestable                     = true
-    requestable_by_default                     = true
-    application = {
-   	  name = "Gitlab"
-    }
-	allowed_durations = [-1]
-    auto_assign_recommended_maintainers      = false
-    auto_assign_recommended_owners           = false
-    allow_creating_accounts           = false
-    connection_json                          = jsonencode({
-		domain                   = "https://gitlab.com"
-		private_token            = "%s"
-		configurationSchemaName = "Configuration "
-	  })
-    notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
-    readonly = false
-    workflow = {
-      id   = "%s"
-    }
-	maintainers = []
-	prerequisite_permissions = [
-		{
-			default = true
-			role = {
-				id = "%s"
-			}
-		}
-	]
+				ResourceName:  resourceName,
+				ImportState:   true,
+				ImportStateId: permissionID,
+				Config: testhelpers.ProviderConfig + `
+resource "entitle_permission" "test" {
+  id = "` + permissionID + `"
 }
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable_by_default", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "Gitlab"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allowed_durations.0", "-1"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_maintainers", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
-
-					// Verify dynamic values have any value set in the state.
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
-
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
-				),
-			},
-			// Update testing
-			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
-resource "entitle_integration" "my_gitlab" {
-  	name                               = "My Gitlab Integration UPDATED"
-    requestable                     = true
-    requestable_by_default                     = true
-    application = {
-   	  name = "Gitlab"
-    }
-	allowed_durations = [-1]
-    auto_assign_recommended_maintainers      = false
-    auto_assign_recommended_owners           = false
-    allow_creating_accounts           = false
-    connection_json                          = jsonencode({
-		domain                   = "https://gitlab.com"
-		private_token            = "%s"
-		configurationSchemaName = "Configuration "
-	  })
-    notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
-    readonly = false
-    workflow = {
-      id   = "%s"
-    }
-	maintainers = []
-	prerequisite_permissions = [
-		{
-			default = true
-			role = {
-				id = "%s"
-			}
-		}
-	]
-}
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_ROLE_ID")),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// Updated field assertions
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration UPDATED"),
-					// Not updated field assertions
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable_by_default", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "Gitlab"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allowed_durations.0", "-1"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_maintainers", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
+					resource.TestCheckResourceAttr(resourceName, "id", permissionID),
+					resource.TestCheckResourceAttrSet(resourceName, "actor.id"),
+					resource.TestCheckResourceAttrSet(resourceName, "role.id"),
+					resource.TestCheckResourceAttrSet(resourceName, "path"),
 				),
 			},
 		},
