@@ -54,7 +54,12 @@ jobs:
             const TYPE = '${{ steps.parse.outputs.TYPE }}';
             const TITLE = '${{ steps.parse.outputs.TITLE }}';
 
-            const newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
+            let newTitle;
+            if (JIRA === "NA" || !JIRA) {
+              newTitle = `${TYPE}: ${TITLE}`;
+            } else {
+              newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
+            }
             console.log("✅ Updating PR title to:", newTitle);
 
             await github.rest.pulls.update({
