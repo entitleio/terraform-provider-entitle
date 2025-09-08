@@ -129,9 +129,11 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	// Prepare optional search
 	var search *string
-	if data.Filter != nil && !data.Filter.Search.IsNull() && data.Filter.Search.ValueString() != "" {
+	if data.Filter != nil {
 		s := data.Filter.Search.ValueString()
-		search = &s
+		if s != "" {
+			search = &s
+		}
 	}
 
 	// Call API
