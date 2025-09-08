@@ -2,6 +2,7 @@ package validators
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -25,7 +26,7 @@ func (u Email) MarkdownDescription(ctx context.Context) string {
 
 // ValidateString Validate satisfies the validator.String interface.
 func (u Email) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
-	if req.ConfigValue.IsUnknown() {
+	if req.ConfigValue.IsUnknown() || req.ConfigValue.IsNull() {
 		// skip validation when the value is not known yet
 		return
 	}
@@ -33,7 +34,7 @@ func (u Email) ValidateString(ctx context.Context, req validator.StringRequest, 
 	if !emailRegex.MatchString(req.ConfigValue.ValueString()) {
 		resp.Diagnostics.AddError(
 			"Email Validate failed",
-			"Failed to parse Email for resource, invalid format",
+			fmt.Sprintf("Failed to parse Email (%s) for resource, invalid format", req.ConfigValue.ValueString()),
 		)
 	}
 }

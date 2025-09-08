@@ -2489,10 +2489,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForwardResponseSchema"
-            }
+            "$ref": "#/components/schemas/ForwardResponseSchema"
           }
         },
         "required": [
@@ -3275,10 +3272,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
-            }
+            "$ref": "#/components/schemas/IntegrationResourceRoleResultSchema"
           }
         },
         "required": [
@@ -3375,7 +3369,6 @@
         "required": [
           "name",
           "resource",
-          "virtualizedRole",
           "requestable"
         ]
       },

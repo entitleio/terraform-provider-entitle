@@ -46,7 +46,7 @@ resource "entitle_integration" "example" {
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `allow_requests` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `allow_requests_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
-- `allowed_durations` (List of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
 - `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)

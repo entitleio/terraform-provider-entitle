@@ -13,6 +13,11 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
+const (
+	MaintainerTypeUser  = "user"
+	MaintainerTypeGroup = "group"
+)
+
 // MaintainerCommonResponseSchema represents the common structure of a maintainer response in the integration and resource.
 type MaintainerCommonResponseSchema struct {
 	Type  string                      `json:"type"`
@@ -73,7 +78,7 @@ func GetMaintainers[T MaintainerInterface](
 		}
 
 		switch strings.ToLower(body.Type) {
-		case "user":
+		case MaintainerTypeUser:
 			responseSchema, err := item.AsMaintainerUserResponseSchema()
 			if err != nil {
 				diags.AddError(
@@ -109,7 +114,7 @@ func GetMaintainers[T MaintainerInterface](
 				Type:   TrimmedStringValue(body.Type),
 				Entity: uObject,
 			})
-		case "group":
+		case MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
 				diags.AddError(

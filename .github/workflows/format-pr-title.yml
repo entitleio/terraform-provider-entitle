@@ -1,0 +1,99 @@
+permissions:
+  pull-requests: write
+  issues: write
+name: Format PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  format-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse PR body
+        id: parse
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = context.payload.pull_request.body || "";
+
+            // Helper function to extract first non-comment, non-empty line after heading
+            function extractField(body, heading) {
+              const lines = body.split("\n");
+              let capture = false;
+              for (const line of lines) {
+                if (line.trim() === `### ${heading}`) {
+                  capture = true;
+                  continue;
+                }
+                if (capture) {
+                  const trimmed = line.trim();
+                  if (!trimmed || trimmed.startsWith("<!--")) continue;
+                  return trimmed;
+                }
+              }
+              return "";
+            }
+
+            const JIRA = extractField(body, "Jira Ticket").toUpperCase();
+            const TYPE = extractField(body, "Type").toLowerCase() || "feat";
+            const TITLE = extractField(body, "Title");
+            
+            const safeString = str => str.replace(/[^a-zA-Z0-9-_ ]/g, "");
+            core.setOutput("JIRA", safeString(JIRA));
+            core.setOutput("TYPE", safeString(TYPE));
+            core.setOutput("TITLE", safeString(TITLE));
+      - name: Update PR title
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const JIRA = '${{ steps.parse.outputs.JIRA }}';
+            const TYPE = '${{ steps.parse.outputs.TYPE }}';
+            const TITLE = '${{ steps.parse.outputs.TITLE }}';
+
+            let newTitle;
+            if (JIRA === "NA" || !JIRA) {
+              newTitle = `${TYPE}: ${TITLE}`;
+            } else {
+              newTitle = `${TYPE}(${JIRA}): ${TITLE}`;
+            }
+            console.log("✅ Updating PR title to:", newTitle);
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              title: newTitle
+            });
+      - name: Add label based on Type
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const TYPE = '${{ steps.parse.outputs.TYPE }}';
+            
+            let label;
+            switch (TYPE) {
+              case "feat":
+                label = "enhancement";
+                break;
+              case "bug":
+                label = "bug";
+                break;
+              case "docs":
+                label = "documentation";
+                break;
+              default:
+                label = "enhancement";
+            }
+            
+            console.log(`🏷️ Adding label: ${label}`);
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [label],
+            });

@@ -3,8 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -33,19 +31,19 @@ func NewResourceDataSource() datasource.DataSource {
 
 // ResourceDataSourceModel describes the data source data model.
 type ResourceDataSourceModel struct {
-	Id                     types.String             `tfsdk:"id"`
-	Workflow               *utils.IdNameModel       `tfsdk:"workflow"`
-	Maintainers            []*utils.MaintainerModel `tfsdk:"maintainers"`
-	Integration            types.Object             `tfsdk:"integration"`
-	Tags                   types.List               `tfsdk:"tags"`
-	UserDefinedTags        types.List               `tfsdk:"user_defined_tags"`
-	Owner                  *utils.IdEmailModel      `tfsdk:"owner"`
-	Name                   types.String             `tfsdk:"name"`
-	Description            types.String             `tfsdk:"description"`
-	UserDefinedDescription types.String             `tfsdk:"user_defined_description"`
-	AllowedDurations       types.List               `tfsdk:"allowed_durations"`
-	Requestable            types.Bool               `tfsdk:"requestable"`
-	AllowAsGrantMethod     types.Bool               `tfsdk:"allow_as_grant_method"`
+	Id                      types.String                        `tfsdk:"id"`
+	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
+	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Integration             types.Object                        `tfsdk:"integration"`
+	Tags                    types.List                          `tfsdk:"tags"`
+	UserDefinedTags         types.List                          `tfsdk:"user_defined_tags"`
+	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
+	Name                    types.String                        `tfsdk:"name"`
+	Description             types.String                        `tfsdk:"description"`
+	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
+	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
+	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
+	Requestable             types.Bool                          `tfsdk:"requestable"`
 }
 
 // Metadata sets the metadata for the data source.
@@ -98,11 +96,11 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
-				Description:         "List of allowed access durations",
-				MarkdownDescription: "List of allowed access durations",
+				Description:         "Set of allowed access durations",
+				MarkdownDescription: "Set of allowed access durations",
 			},
 			"requestable": schema.BoolAttribute{
 				Computed:            true,
@@ -176,49 +174,109 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
+							Description:         "\"user\" or \"group\" (default: \"user\")",
+							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
 							Computed:            true,
-							Description:         "Type of maintainer ",
-							MarkdownDescription: "Type of maintainer ",
 						},
-						"user": schema.SingleNestedAttribute{
+						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Maintainer user’s unique identifier",
-									MarkdownDescription: "Maintainer user’s unique identifier",
+									Description:         "user's id",
+									MarkdownDescription: "user's id",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "Maintainer user’s email address",
-									MarkdownDescription: "Maintainer user’s email address",
+									Description:         "user's email",
+									MarkdownDescription: "user's email",
 								},
 							},
 							Computed:            true,
-							Description:         "Maintainer details if the maintainer is a user",
-							MarkdownDescription: "Maintainer details if the maintainer is a user",
-						},
-						"group": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Maintainer group’s unique identifier",
-									MarkdownDescription: "Maintainer group’s unique identifier",
-								},
-								"email": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Maintainer group’s email address",
-									MarkdownDescription: "Maintainer group’s email address",
-								},
-							},
-							Computed:            true,
-							Description:         "Maintainer details if the maintainer is a group",
-							MarkdownDescription: "Maintainer details if the maintainer is a group",
+							Description:         "user",
+							MarkdownDescription: "user",
 						},
 					},
 				},
+				Computed: true,
+				Description: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
+				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
+			},
+			"prerequisite_permissions": schema.ListNestedAttribute{
 				Computed:            true,
-				Description:         "List of resource maintainers",
-				MarkdownDescription: "List of resource maintainers",
+				Description:         "Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below.",
+				MarkdownDescription: "Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"default": schema.BoolAttribute{
+							Computed:            true,
+							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+						},
+						"role": schema.SingleNestedAttribute{
+							Required: true,
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The identifier of the role to be granted.",
+									MarkdownDescription: "The identifier of the role to be granted.",
+								},
+								"name": schema.StringAttribute{
+									Computed:            true,
+									Description:         "The name of the role.",
+									MarkdownDescription: "The name of the role.",
+								},
+								"resource": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The unique identifier of the resource.",
+											MarkdownDescription: "The unique identifier of the resource.",
+										},
+										"name": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The display name of the resource.",
+											MarkdownDescription: "The display name of the resource.",
+										},
+										"integration": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The identifier of the integration.",
+													MarkdownDescription: "The identifier of the integration.",
+												},
+												"name": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The display name of the integration.",
+													MarkdownDescription: "The display name of the integration.",
+												},
+												"application": schema.SingleNestedAttribute{
+													Attributes: map[string]schema.Attribute{
+														"name": schema.StringAttribute{
+															Computed:            true,
+															Description:         "The name of the connected application.",
+															MarkdownDescription: "The name of the connected application.",
+														},
+													},
+													Computed:            true,
+													Description:         "The application that the integration is connected to.",
+													MarkdownDescription: "The application that the integration is connected to.",
+												},
+											},
+											Computed:            true,
+											Description:         "The integration that the resource belongs to.",
+											MarkdownDescription: "The integration that the resource belongs to.",
+										},
+									},
+									Computed:            true,
+									Description:         "The specific resource associated with the role.",
+									MarkdownDescription: "The specific resource associated with the role.",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -263,7 +321,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse Resource id to uuid format, got error: %s", err),
+			fmt.Sprintf("Failed to parse Resource id to uuid format, got error: %s", err),
 		)
 		return
 	}
@@ -277,23 +335,14 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	if resourceResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(resourceResp.Body)
-		if resourceResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(resourceResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the Resource by the id (%s), status code: %d",
+				"Failed to get the Resource by the id (%s), %s",
 				uid.String(),
-				resourceResp.HTTPResponse.StatusCode,
+				err.Error(),
 			),
 		)
 		return
@@ -311,8 +360,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	allowedDurationsValues := utils.GetAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
-	allowedDurations, diags := types.ListValue(types.NumberType, allowedDurationsValues)
+	allowedDurations, diags := utils.GetNumberSetFromAllowedDurations(resourceResp.JSON200.Result.AllowedDurations)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -321,18 +369,9 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	var owner *utils.IdEmailModel
 
 	if resourceResp.JSON200.Result.Owner != nil {
-		ownerEmailString, err := utils.GetEmailString(resourceResp.JSON200.Result.Owner.Email)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Failed to convert the owner email to string",
-				err.Error(),
-			)
-			return
-		}
-
 		owner = &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(resourceResp.JSON200.Result.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(ownerEmailString),
+			Email: utils.GetEmailStringValue(resourceResp.JSON200.Result.Owner.Email),
 		}
 	}
 

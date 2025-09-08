@@ -5,8 +5,6 @@ package agentTokens
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -141,15 +139,14 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Check if the API request was successful.
-	if agentTokenResp.StatusCode() != 200 || agentTokenResp.JSON200 == nil {
-		errBody, _ := utils.GetErrorBody(agentTokenResp.Body)
+	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to create the agent token, status code: %d%s",
+				"Failed to create the Agent Token, status code: %d, %s",
 				agentTokenResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -208,16 +205,15 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	// Check if the API request was successful.
-	if agentTokenResp.StatusCode() != 200 || agentTokenResp.JSON200 == nil {
-		errBody, _ := utils.GetErrorBody(agentTokenResp.Body)
+	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the agent token by the id (%s), status code: %d%s",
+				"Failed to get the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),
-				agentTokenResp.StatusCode(),
-				errBody.GetMessage(),
+				agentTokenResp.HTTPResponse.StatusCode,
+				err.Error(),
 			),
 		)
 		return
@@ -287,16 +283,15 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Check if the API request was successful.
-	if agentTokenResp.StatusCode() != 200 || agentTokenResp.JSON200 == nil {
-		errBody, _ := utils.GetErrorBody(agentTokenResp.Body)
+	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to update the agent token by the id (%s), status code: %d%s",
+				"Failed to update the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),
-				agentTokenResp.StatusCode(),
-				errBody.GetMessage(),
+				agentTokenResp.HTTPResponse.StatusCode,
+				err.Error(),
 			),
 		)
 		return
@@ -354,34 +349,16 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	// Check if the API request was successful.
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			httpResp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to delete agent token, id: (%s), status code: %v%s", data.ID.String(), httpResp.HTTPResponse.StatusCode, errBody.GetMessage()),
+			fmt.Sprintf(
+				"Failed to delete the Agent by the id (%s), status code: %d, %s",
+				data.ID.String(),
+				httpResp.HTTPResponse.StatusCode,
+				err.Error(),
+			),
 		)
 		return
 	}

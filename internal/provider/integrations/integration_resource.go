@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,7 +43,7 @@ type IntegrationResource struct {
 type IntegrationResourceModel struct {
 	ID                                   types.String                        `tfsdk:"id"`
 	Name                                 types.String                        `tfsdk:"name"`
-	AllowedDurations                     types.List                          `tfsdk:"allowed_durations"`
+	AllowedDurations                     types.Set                           `tfsdk:"allowed_durations"`
 	AllowChangingAccountPermissions      types.Bool                          `tfsdk:"allow_changing_account_permissions"`
 	AllowCreatingAccounts                types.Bool                          `tfsdk:"allow_creating_accounts"`
 	Readonly                             types.Bool                          `tfsdk:"readonly"`
@@ -93,9 +91,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					validators.NewName(2, 50),
 				},
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
-				Required:    false,
 				Optional:    true,
 				Description: "As the admin, you can set different durations for the integration, " +
 					"compared to the workflow linked to it.",
@@ -459,24 +456,15 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	name = plan.Name.ValueString()
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
-		for _, item := range plan.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
+	var allowedDurations *[]client.EnumAllowedDurations
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var workflow client.IdParamsSchema
@@ -571,7 +559,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 
 		switch maintainer.Type.String() {
-		case "user":
+		case utils.MaintainerTypeUser:
 			maintainerUser := client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
 				User: client.UserEntitySchema{
@@ -589,7 +577,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			}
 
 			maintainers = append(maintainers, item)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			maintainerGroup := client.GroupMaintainerSchema{
 				Type: client.EnumMaintainerTypeGroupGroup,
 				Group: client.GroupEntitySchema{
@@ -655,7 +643,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		AllowRequestsByDefault:               plan.AllowRequestsByDefault.ValueBoolPointer(),
 		Requestable:                          plan.Requestable.ValueBoolPointer(),
 		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
-		AllowedDurations:                     &allowedDurations,
+		AllowedDurations:                     allowedDurations,
 		Application:                          application,
 		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
@@ -762,24 +750,15 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the integration by the id (%s), status code: %d%s",
+				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -843,24 +822,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	name := data.Name.ValueString()
 
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
-		for _, item := range data.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
+	var allowedDurations *[]client.EnumAllowedDurations
+	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
-
+	if aDurations != nil {
+		allowedDurations = &aDurations
 	}
 
 	var workflow client.IdParamsSchema
@@ -947,7 +917,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 			}
 
 			switch maintainer.Type.String() {
-			case "user":
+			case utils.MaintainerTypeUser:
 
 				maintainerUser := client.UserMaintainerSchema{
 					Type: client.EnumMaintainerTypeUserUser,
@@ -966,7 +936,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 				}
 
 				maintainers = append(maintainers, item)
-			case "group":
+			case utils.MaintainerTypeGroup:
 				maintainerGroup := client.GroupMaintainerSchema{
 					Type: client.EnumMaintainerTypeGroupGroup,
 					Group: client.GroupEntitySchema{
@@ -1026,7 +996,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	integrationResp, err := r.client.IntegrationsUpdateWithResponse(ctx, uid, client.IntegrationsUpdateBodySchema{
 		AllowRequests:                        utils.BoolPointer(data.AllowRequests.ValueBool()),
 		AllowRequestsByDefault:               utils.BoolPointer(data.AllowRequestsByDefault.ValueBool()),
-		AllowedDurations:                     &allowedDurations,
+		AllowedDurations:                     allowedDurations,
 		AutoAssignRecommendedMaintainers:     utils.BoolPointer(data.AutoAssignRecommendedMaintainers.ValueBool()),
 		AutoAssignRecommendedOwners:          utils.BoolPointer(data.AutoAssignRecommendedOwners.ValueBool()),
 		ConnectionJson:                       connectionJson,
@@ -1045,24 +1015,15 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to update the integration by the id (%s), status code: %d%s",
+				"Failed to update the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -1121,28 +1082,15 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if httpResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(httpResp.Body)
-		if httpResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(httpResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		if errBody.ID == "resource.notFound" {
-			return
-		}
-
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"Unable to delete integrations, id: (%s), status code: %d%s",
+				"Failed to delete the Integration by the id (%s), status code: %d, %s",
 				data.ID.String(),
 				httpResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -1180,16 +1128,9 @@ func convertFullIntegrationResultResponseSchemaToModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
-	if data.AllowedDurations != nil {
-		for i, duration := range data.AllowedDurations {
-			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
-		}
-	}
-
-	allowedDurations, errs := types.ListValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
-	if diags.HasError() {
+	allowedDurationsValues, advDiags := utils.GetNumberSetFromAllowedDurations(data.AllowedDurations)
+	if advDiags.HasError() {
+		diags.Append(advDiags...)
 		return IntegrationResourceModel{}, diags
 	}
 
@@ -1223,7 +1164,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 
 		switch strings.ToLower(body.Type) {
-		case "user":
+		case utils.MaintainerTypeUser:
 			responseSchema, err := item.AsMaintainerUserResponseSchema()
 			if err != nil {
 				diags.AddError(
@@ -1261,7 +1202,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			}
 
 			maintainers = append(maintainers, maintainerUser)
-		case "group":
+		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
 				diags.AddError(
@@ -1345,7 +1286,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 	return IntegrationResourceModel{
 		ID:                                   utils.TrimmedStringValue(data.Id.String()),
 		Name:                                 utils.TrimmedStringValue(data.Name),
-		AllowedDurations:                     allowedDurations,
+		AllowedDurations:                     allowedDurationsValues,
 		AllowChangingAccountPermissions:      types.BoolValue(data.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(data.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(data.Readonly),

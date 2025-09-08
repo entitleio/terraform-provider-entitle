@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"net/http"
 	"sort"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -209,18 +208,6 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Description:         "Notified schedule details",
 															MarkdownDescription: "Notified schedule details",
 														},
-														"value": schema.SingleNestedAttribute{
-															Attributes: map[string]schema.Attribute{
-																"notified": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Notified value",
-																	MarkdownDescription: "Notified value",
-																},
-															},
-															Computed:            true,
-															Description:         "Arbitrary value for notification logic",
-															MarkdownDescription: "Arbitrary value for notification logic",
-														},
 													},
 												},
 												Computed:            true,
@@ -285,18 +272,6 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Computed:            true,
 															Description:         "Approver schedule details",
 															MarkdownDescription: "Approver schedule details",
-														},
-														"value": schema.SingleNestedAttribute{
-															Attributes: map[string]schema.Attribute{
-																"approval": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Approval value",
-																	MarkdownDescription: "Approval value",
-																},
-															},
-															Computed:            true,
-															Description:         "Arbitrary value for approval logic",
-															MarkdownDescription: "Arbitrary value for approval logic",
 														},
 													},
 												},
@@ -378,24 +353,15 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	if workflowResp.HTTPResponse.StatusCode != 200 {
-		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
-		errBody, _ := utils.GetErrorBody(workflowResp.Body)
+	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to get the workflow by the id (%s), status code: %d%s",
+				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
 				workflowResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -429,14 +395,6 @@ func converterWorkflow(
 			"failed the given schema data is nil",
 		)
 
-		return WorkflowDataSourceModel{}, diags
-	}
-
-	nullApprovalEntity, diagsAs := workflowRulesApprovalFlowStepApprovalEntityModel{
-		Approval: types.StringNull(),
-	}.AsObjectValue(ctx)
-	if diagsAs.HasError() {
-		diags.Append(diagsAs...)
 		return WorkflowDataSourceModel{}, diags
 	}
 
@@ -534,7 +492,6 @@ func converterWorkflow(
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepNotifiedEntityModel{}).attributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
 							val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -547,19 +504,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -573,7 +520,6 @@ func converterWorkflow(
 								User:     vObj,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepNotifiedEntityModel{}).attributeTypes()),
 							})
 						case string(client.DirectoryGroup):
 							val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -602,7 +548,6 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    types.ObjectNull((&workflowRulesApprovalFlowStepNotifiedEntityModel{}).attributeTypes()),
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -621,25 +566,8 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							v := workflowRulesApprovalFlowStepNotifiedEntityModel{
-								Notified: types.StringPointerValue(val.Entity),
-							}
-
-							if val.Entity == nil {
-								v = workflowRulesApprovalFlowStepNotifiedEntityModel{
-									Notified: types.StringNull(),
-								}
-							}
-
-							vObj, diagsAs := v.AsObjectValue(ctx)
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
 								Type:     utils.TrimmedStringValue(string(val.Type)),
-								Value:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -701,7 +629,6 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
@@ -715,19 +642,9 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							emailString, err := utils.GetEmailString(val.Entity.Email)
-							if err != nil {
-								diags.AddError(
-									"Failed to convert the user email to string",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							v := utils.IdEmailModel{
 								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.TrimmedStringValue(emailString),
+								Email: utils.GetEmailStringValue(val.Entity.Email),
 							}
 
 							vObj, diagsAs := v.AsObjectValue(ctx)
@@ -740,7 +657,6 @@ func converterWorkflow(
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    nullApprovalEntity,
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
@@ -770,7 +686,6 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    nullApprovalEntity,
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -789,28 +704,11 @@ func converterWorkflow(
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							v := workflowRulesApprovalFlowStepApprovalEntityModel{
-								Approval: types.StringPointerValue(val.Entity),
-							}
-
-							if val.Entity == nil {
-								v = workflowRulesApprovalFlowStepApprovalEntityModel{
-									Approval: types.StringNull(),
-								}
-							}
-
-							vObj, diagsAs := v.AsObjectValue(ctx)
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return WorkflowDataSourceModel{}, diags
-							}
-
 							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
 								Type:     utils.TrimmedStringValue(string(val.Type)),
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Value:    vObj,
 							})
 						}
 					}
