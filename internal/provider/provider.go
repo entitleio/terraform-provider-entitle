@@ -163,32 +163,32 @@ func (p *EntitleProvider) Configure(
 // Resources returns the list of provider resources.
 func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		integrations.NewIntegrationResource,
-		bundles.NewBundleResource,
-		policies.NewPolicyResource,
-		workflows.NewWorkflowResource,
-		agentTokens.NewAgentTokenResource,
 		accessRequestForwards.NewAccessRequestForwardResource,
 		accessReviewForwards.NewAccessReviewForwardResource,
-		roles.NewRoleResource,
+		agentTokens.NewAgentTokenResource,
+		bundles.NewBundleResource,
+		integrations.NewIntegrationResource,
+		policies.NewPolicyResource,
 		resources.NewResourceResource,
+		roles.NewRoleResource,
+		workflows.NewWorkflowResource,
 	}
 }
 
 // DataSources returns the list of provider data sources.
 func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		integrations.NewIntegrationDataSource,
-		bundles.NewBundleDataSource,
-		policies.NewPolicyDataSource,
-		workflows.NewWorkflowDataSource,
 		agentTokens.NewAgentTokenDataSource,
-		resources.NewResourceDataSource,
-		users.NewUserDataSource,
 		accessRequestForwards.NewAccessRequestForwardDataSource,
 		accessReviewForwards.NewAccessReviewForwardDataSource,
+		bundles.NewBundleDataSource,
+		directoryGroups.NewDirectoryGroupsDataSource,
+		integrations.NewIntegrationDataSource,
+		policies.NewPolicyDataSource,
+		resources.NewResourceDataSource,
 		roles.NewRoleDataSource,
-		directoryGroups.NewDirectoryGroupDataSource,
+		workflows.NewWorkflowDataSource,
+		users.NewUserDataSource,
 	}
 }
 

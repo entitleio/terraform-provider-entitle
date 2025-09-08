@@ -20,6 +20,12 @@ provider "entitle" {
   api_key  = "%s"
 }
 `, os.Getenv("ENTITLE_API_KEY"))
+	ProviderConfig2 = fmt.Sprintf(`
+provider "entitle" {
+  endpoint = "https://api.entitle.io"
+  api_key  = "%s"
+}
+`, os.Getenv("ENTITLE_API_KEY2"))
 	TestAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 		"entitle": providerserver.NewProtocol6WithError(provider.New("test")()),
 	}
