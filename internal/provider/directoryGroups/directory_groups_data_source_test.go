@@ -34,6 +34,19 @@ data "entitle_directory_groups" "my_list" {
 					resource.TestCheckResourceAttrSet("data.entitle_directory_groups.my_list", "directory_groups.0.email"),
 				),
 			},
+			{
+				Config: testhelpers.ProviderConfig2 + fmt.Sprintf(`
+data "entitle_directory_groups" "my_list" {
+	filter {
+		search = "%s"
+	}
+}
+`, "nothingthatcouldbefound"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttr("data.entitle_directory_groups.my_list", "directory_groups.#", "0"),
+				),
+			},
 		},
 	})
 }
