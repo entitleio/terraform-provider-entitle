@@ -34,7 +34,9 @@ type DirectoryGroupsDataSourceModel struct {
 
 // DirectoryGroupsListFilterModel defines filter attributes.
 type DirectoryGroupsListFilterModel struct {
-	Search types.String `tfsdk:"search"`
+	Search  types.String `tfsdk:"search"`
+	Page    types.Int64  `tfsdk:"page"`
+	PerPage types.Int64  `tfsdk:"per_page"`
 }
 
 // DirectoryGroupListItem represents a single directory group in the list.
@@ -61,6 +63,14 @@ func (d *DirectoryGroupsDataSource) Schema(ctx context.Context, req datasource.S
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter directoryGroups.",
+					},
+					"page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Page number.",
+					},
+					"per_page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Number of results per page.",
 					},
 				},
 			},
@@ -108,18 +118,23 @@ func (d *DirectoryGroupsDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	var search *string
+	var params client.DirectoryGroupsIndexParams
+
 	if data.Filter != nil {
 		s := data.Filter.Search.ValueString()
 		if s != "" {
-			search = &s
+			params.Search = &s
 		}
-	}
 
-	params := client.DirectoryGroupsIndexParams{
-		Page:    nil,
-		PerPage: nil,
-		Search:  search,
+		page := int(data.Filter.Page.ValueInt64())
+		if page > 0 {
+			params.Page = &page
+		}
+
+		perPage := int(data.Filter.PerPage.ValueInt64())
+		if perPage > 0 {
+			params.PerPage = &perPage
+		}
 	}
 
 	apiResp, err := d.client.DirectoryGroupsIndexWithResponse(ctx, &params)

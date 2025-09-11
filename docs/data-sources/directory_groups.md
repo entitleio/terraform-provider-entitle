@@ -45,6 +45,8 @@ output "directory_groups" {
 
 Optional:
 
+- `page` (Number) Page number.
+- `per_page` (Number) Number of results per page.
 - `search` (String) Search string to filter directoryGroups.
 
 
