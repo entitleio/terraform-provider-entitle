@@ -1,3 +1,11 @@
+[![Terraform Registry](https://img.shields.io/badge/Terraform-Registry-5C4EE5?logo=terraform)](https://registry.terraform.io/providers/entitleio/entitle/latest)
+[![OpenTofu Registry](https://img.shields.io/badge/OpenTofu-Registry-FFDA18?logo=opentofu)](https://search.opentofu.org/provider/entitleio/entitle/latest)
+[![Release Version](https://img.shields.io/github/v/release/entitleio/terraform-provider-entitle?logo=github)](https://github.com/entitleio/terraform-provider-entitle/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/entitleio/terraform-provider-entitle)](https://goreportcard.com/report/github.com/entitleio/terraform-provider-entitle)
+![Code Scanning](https://img.shields.io/badge/CodeQL-Enabled-brightgreen)
+[![Scorecard](https://api.scorecard.dev/projects/github.com/entitleio/terraform-provider-entitle/badge)](https://scorecard.dev/viewer/?uri=github.com/entitleio/terraform-provider-entitle)
+[![Last Commit](https://img.shields.io/github/last-commit/entitleio/terraform-provider-entitle)](https://github.com/entitleio/terraform-provider-entitle/commits)
+
 <div align="center">
 <img
     width=70%
