@@ -51,6 +51,8 @@ output "accounts" {
 
 Optional:
 
+- `page` (Number) Page number of results to return (starting from 1). Used together with `per_page` for pagination.
+- `per_page` (Number) Number of results to return per page. Defaults to the API's configured page size if not specified.
 - `search` (String) Search string to filter accounts.
 
 

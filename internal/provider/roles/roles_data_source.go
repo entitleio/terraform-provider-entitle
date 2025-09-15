@@ -29,14 +29,9 @@ func NewRolesDataSource() datasource.DataSource {
 
 // RolesDataSourceModel describes the data source model.
 type RolesDataSourceModel struct {
-	ResourceID types.String          `tfsdk:"resource_id"`
-	Filter     *RolesListFilterModel `tfsdk:"filter"`
-	Roles      []RoleListItem        `tfsdk:"roles"`
-}
-
-// RolesListFilterModel defines filter attributes.
-type RolesListFilterModel struct {
-	Search types.String `tfsdk:"search"`
+	ResourceID types.String                     `tfsdk:"resource_id"`
+	Filter     *utils.PaginationWithSearchModel `tfsdk:"filter"`
+	Roles      []RoleListItem                   `tfsdk:"roles"`
 }
 
 // RoleListItem represents a single role in the list.
@@ -61,6 +56,14 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter roles.",
+					},
+					"page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
+					},
+					"per_page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
 					},
 				},
 			},
@@ -110,13 +113,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	if data.ResourceID.IsNull() || data.ResourceID.ValueString() == "" {
-		resp.Diagnostics.AddError("Invalid Configuration", "filter.resource_id is mandatory")
-		return
-	}
-
 	resourceID := data.ResourceID.ValueString()
-	// inside Read() after validating resourceID
 	uid, err := uuid.Parse(resourceID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -126,19 +123,12 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	var search *string
-	if data.Filter != nil {
-		s := data.Filter.Search.ValueString()
-		if s != "" {
-			search = &s
-		}
+	params := client.RolesIndexParams{
+		ResourceId: uid,
 	}
 
-	params := client.RolesIndexParams{
-		Page:       nil,
-		PerPage:    nil,
-		ResourceId: uid,
-		Search:     search,
+	if data.Filter != nil {
+		params.Search, params.Page, params.PerPage = data.Filter.GetValues()
 	}
 
 	apiResp, err := d.client.RolesIndexWithResponse(ctx, &params)

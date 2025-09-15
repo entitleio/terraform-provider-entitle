@@ -27,13 +27,8 @@ func NewUsersDataSource() datasource.DataSource {
 
 // UsersDataSourceModel describes the top-level data source state.
 type UsersDataSourceModel struct {
-	Filter *UsersFilterModel `tfsdk:"filter"`
-	Users  []UserModel       `tfsdk:"users"`
-}
-
-// UsersFilterModel describes the filter block.
-type UsersFilterModel struct {
-	Search types.String `tfsdk:"search"`
+	Filter *utils.PaginationWithSearchModel `tfsdk:"filter"`
+	Users  []UserModel                      `tfsdk:"users"`
 }
 
 // UserModel describes a single user in the list.
@@ -90,6 +85,14 @@ func (d *UsersDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 						Optional:            true,
 						MarkdownDescription: "Free-text search term (matches email or full name).",
 					},
+					"page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
+					},
+					"per_page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
+					},
 				},
 			},
 		},
@@ -122,19 +125,10 @@ func (d *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	// Get search filter if provided
-	var search *string
-	if data.Filter != nil {
-		s := data.Filter.Search.ValueString()
-		if s != "" {
-			search = &s
-		}
-	}
+	var params client.UsersIndexParams
 
-	params := client.UsersIndexParams{
-		Page:    nil,
-		PerPage: nil,
-		Search:  search,
+	if data.Filter != nil {
+		params.Search, params.Page, params.PerPage = data.Filter.GetValues()
 	}
 
 	resourceResp, err := d.client.UsersIndexWithResponse(ctx, &params)

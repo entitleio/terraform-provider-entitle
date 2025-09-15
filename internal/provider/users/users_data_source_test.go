@@ -38,6 +38,19 @@ data "entitle_users" "my_list" {
 				),
 			},
 			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_users" "my_list" {
+	filter {
+		search = "%s"
+	}
+}
+`, "valuewhichcouldnotbefound"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("data.entitle_users.my_list", "users.#", "0"),
+				),
+			},
+			{
 				Config: testhelpers.ProviderConfig + `
 data "entitle_users" "my_list" {}
 `,

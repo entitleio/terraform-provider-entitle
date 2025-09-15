@@ -30,14 +30,9 @@ func NewAccountsDataSource() datasource.DataSource {
 
 // AccountsDataSourceModel describes the data source model.
 type AccountsDataSourceModel struct {
-	IntegrationID types.String         `tfsdk:"integration_id"`
-	Filter        *AccountsFilterModel `tfsdk:"filter"`
-	Accounts      []AccountListItem    `tfsdk:"accounts"`
-}
-
-// AccountsFilterModel defines filter attributes.
-type AccountsFilterModel struct {
-	Search types.String `tfsdk:"search"`
+	IntegrationID types.String                     `tfsdk:"integration_id"`
+	Filter        *utils.PaginationWithSearchModel `tfsdk:"filter"`
+	Accounts      []AccountListItem                `tfsdk:"accounts"`
 }
 
 // IntegrationModel matches the Terraform schema for integration.
@@ -72,6 +67,14 @@ func (d *AccountsDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter accounts.",
+					},
+					"page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
+					},
+					"per_page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
 					},
 				},
 			},
@@ -139,26 +142,15 @@ func (d *AccountsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	if data.IntegrationID.IsNull() || data.IntegrationID.ValueString() == "" {
-		resp.Diagnostics.AddError("Invalid Configuration", "integration_id is mandatory")
-		return
+	params := client.AccountsIndexParams{
+		IntegrationId: data.IntegrationID.ValueString(),
 	}
 
-	// Prepare optional search
-	var search *string
-
 	if data.Filter != nil {
-		s := data.Filter.Search.ValueString()
-		if s != "" {
-			search = &s
-		}
+		params.Search, params.Page, params.PerPage = data.Filter.GetValues()
 	}
 
 	// Call API
-	params := client.AccountsIndexParams{
-		IntegrationId: data.IntegrationID.ValueString(),
-		Search:        search,
-	}
 	apiResp, err := d.client.AccountsIndexWithResponse(ctx, &params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list accounts: %s", err))

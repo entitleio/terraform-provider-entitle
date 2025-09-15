@@ -37,7 +37,9 @@ type ResourcesDataSourceModel struct {
 
 // ResourcesFilterModel defines filter attributes.
 type ResourcesFilterModel struct {
-	Search types.String `tfsdk:"search"`
+	Search  types.String `tfsdk:"search"`
+	Page    types.Int64  `tfsdk:"page"`
+	PerPage types.Int64  `tfsdk:"per_page"`
 }
 
 // ResourceListItemModel represents a single resource in the list.
@@ -63,6 +65,14 @@ func (d *ResourcesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter resources.",
+					},
+					"page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
+					},
+					"per_page": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
 					},
 				},
 			},
@@ -127,20 +137,27 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	// Prepare optional search
-	var search *string
+	params := client.ResourcesIndexParams{
+		IntegrationId: data.IntegrationID.ValueString(),
+	}
+
 	if data.Filter != nil {
 		s := data.Filter.Search.ValueString()
 		if s != "" {
-			search = &s
+			params.Search = &s
+		}
+
+		page := int(data.Filter.Page.ValueInt64())
+		if page > 0 {
+			params.Page = &page
+		}
+
+		perPage := int(data.Filter.PerPage.ValueInt64())
+		if perPage > 0 {
+			params.PerPage = &perPage
 		}
 	}
 
-	// Call API
-	params := client.ResourcesIndexParams{
-		IntegrationId: data.IntegrationID.ValueString(),
-		Search:        search,
-	}
 	apiResp, err := d.client.ResourcesIndexWithResponse(ctx, &params)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list resources: %s", err))
@@ -171,7 +188,13 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 
 	data.Resources = resources
-	tflog.Trace(ctx, "Read entitle resources list data source")
+	tflog.Trace(ctx, "Successfully read resources data source", map[string]interface{}{
+		"integration_id": data.IntegrationID.ValueString(),
+		"resource_count": len(resources),
+		"search":         params.Search,
+		"page":           params.Page,
+		"per_page":       params.PerPage,
+	})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
