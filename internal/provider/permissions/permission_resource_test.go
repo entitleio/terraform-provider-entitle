@@ -5,6 +5,7 @@ package permissions_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -28,7 +29,7 @@ data "entitle_permissions" "my_integration_permissions" {
 resource "entitle_permission" "my_integration_permission" {
 	id = data.entitle_permissions.my_integration_permissions.permissions[0].id
 }
-`, "c5f7a1ad-bc4f-44b0-9744-e027dfa9431d"),
+`, os.Getenv("ENTITLE_INTEGRATION_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.entitle_permissions.my_integration_permissions", "permissions.0.id"),
 					resource.TestCheckResourceAttrSet("entitle_permission.my_integration_permission", "id"),
