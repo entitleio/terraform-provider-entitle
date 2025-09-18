@@ -40,6 +40,11 @@ jobs:
             const JIRA = extractField(body, "Jira Ticket").toUpperCase();
             const TYPE = extractField(body, "Type").toLowerCase() || "feat";
             const TITLE = extractField(body, "Title");
+      
+            if (!TITLE) {
+              core.setFailed("❌ PR body must include a Title under '### Title'");
+              return;
+            }
             
             const safeString = str => str.replace(/[^a-zA-Z0-9-_ ]/g, "");
             core.setOutput("JIRA", safeString(JIRA));

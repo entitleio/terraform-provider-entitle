@@ -4,7 +4,7 @@
 package permissions_test
 
 import (
-	"os"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -13,27 +13,25 @@ import (
 )
 
 func TestPermissionResource(t *testing.T) {
-	resourceName := "entitle_permission.test"
-	permissionID := os.Getenv("ENTITLE_PERMISSION_ID")
-
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Import the existing permission
+			// Create and Read testing
 			{
-				ResourceName:  resourceName,
-				ImportState:   true,
-				ImportStateId: permissionID,
-				Config: testhelpers.ProviderConfig + `
-resource "entitle_permission" "test" {
-  id = "` + permissionID + `"
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_permissions" "my_integration_permissions" {
+	filter {
+		integration_id = "%s"
+	}
 }
-`,
+
+resource "entitle_permission" "my_integration_permission" {
+	id = data.entitle_permissions.my_integration_permissions.permissions[0].id
+}
+`, "c5f7a1ad-bc4f-44b0-9744-e027dfa9431d"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "id", permissionID),
-					resource.TestCheckResourceAttrSet(resourceName, "actor.id"),
-					resource.TestCheckResourceAttrSet(resourceName, "role.id"),
-					resource.TestCheckResourceAttrSet(resourceName, "path"),
+					resource.TestCheckResourceAttrSet("data.entitle_permissions.my_integration_permissions", "permissions.0.id"),
+					resource.TestCheckResourceAttrSet("entitle_permission.my_integration_permission", "id"),
 				),
 			},
 		},

@@ -1118,6 +1118,14 @@ const (
 	PermissionsIndexParamsSortOrderDesc PermissionsIndexParamsSortOrder = "desc"
 )
 
+// Defines values for PermissionsIndexAccountParamsSortOrder.
+const (
+	ASC  PermissionsIndexAccountParamsSortOrder = "ASC"
+	Asc  PermissionsIndexAccountParamsSortOrder = "asc"
+	DESC PermissionsIndexAccountParamsSortOrder = "DESC"
+	Desc PermissionsIndexAccountParamsSortOrder = "desc"
+)
+
 // AccessRequestApplicationResponseSchema defines model for AccessRequestApplicationResponseSchema.
 type AccessRequestApplicationResponseSchema struct {
 	// Name The application's name
@@ -2580,16 +2588,31 @@ type IntegrationsIndexParams struct {
 
 // PermissionsIndexParams defines parameters for PermissionsIndex.
 type PermissionsIndexParams struct {
-	SortOrder *PermissionsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-
-	// Date Filter permissions up to a certain point in time
-	Date    *openapi_types.Date `form:"date,omitempty" json:"date,omitempty"`
-	Page    *float32            `form:"page,omitempty" json:"page,omitempty"`
-	PerPage *float32            `form:"perPage,omitempty" json:"perPage,omitempty"`
+	SortOrder     *PermissionsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+	Page          *float32                         `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *float32                         `form:"perPage,omitempty" json:"perPage,omitempty"`
+	IntegrationId *string                          `form:"integrationId,omitempty" json:"integrationId,omitempty"`
+	ResourceId    *string                          `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	RoleId        *string                          `form:"roleId,omitempty" json:"roleId,omitempty"`
+	Search        *string                          `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // PermissionsIndexParamsSortOrder defines parameters for PermissionsIndex.
 type PermissionsIndexParamsSortOrder string
+
+// PermissionsIndexAccountParams defines parameters for PermissionsIndexAccount.
+type PermissionsIndexAccountParams struct {
+	SortOrder     *PermissionsIndexAccountParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+	Page          *float32                                `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *float32                                `form:"perPage,omitempty" json:"perPage,omitempty"`
+	IntegrationId *string                                 `form:"integrationId,omitempty" json:"integrationId,omitempty"`
+	ResourceId    *string                                 `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	RoleId        *string                                 `form:"roleId,omitempty" json:"roleId,omitempty"`
+	Search        *string                                 `form:"search,omitempty" json:"search,omitempty"`
+}
+
+// PermissionsIndexAccountParamsSortOrder defines parameters for PermissionsIndexAccount.
+type PermissionsIndexAccountParamsSortOrder string
 
 // PoliciesIndexParams defines parameters for PoliciesIndex.
 type PoliciesIndexParams struct {
@@ -4329,6 +4352,9 @@ type ClientInterface interface {
 	// PermissionsIndex request
 	PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PermissionsIndexAccount request
+	PermissionsIndexAccount(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PermissionsRevoke request
 	PermissionsRevoke(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4881,6 +4907,18 @@ func (c *Client) IntegrationsUpdate(ctx context.Context, id openapi_types.UUID, 
 
 func (c *Client) PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPermissionsIndexRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PermissionsIndexAccount(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPermissionsIndexAccountRequest(c.Server, accountId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6663,9 +6701,145 @@ func NewPermissionsIndexRequest(server string, params *PermissionsIndexParams) (
 
 		}
 
-		if params.Date != nil {
+		if params.Page != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "date", runtime.ParamLocationQuery, *params.Date); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IntegrationId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, *params.IntegrationId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourceId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, *params.ResourceId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RoleId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "roleId", runtime.ParamLocationQuery, *params.RoleId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPermissionsIndexAccountRequest generates requests for PermissionsIndexAccount
+func NewPermissionsIndexAccountRequest(server string, accountId openapi_types.UUID, params *PermissionsIndexAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "accountId", runtime.ParamLocationPath, accountId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/permissions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortOrder", runtime.ParamLocationQuery, *params.SortOrder); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -6698,6 +6872,70 @@ func NewPermissionsIndexRequest(server string, params *PermissionsIndexParams) (
 		if params.PerPage != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IntegrationId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, *params.IntegrationId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourceId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, *params.ResourceId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RoleId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "roleId", runtime.ParamLocationQuery, *params.RoleId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -8094,6 +8332,9 @@ type ClientWithResponsesInterface interface {
 	// PermissionsIndexWithResponse request
 	PermissionsIndexWithResponse(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*PermissionsIndexResponse, error)
 
+	// PermissionsIndexAccountWithResponse request
+	PermissionsIndexAccountWithResponse(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*PermissionsIndexAccountResponse, error)
+
 	// PermissionsRevokeWithResponse request
 	PermissionsRevokeWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*PermissionsRevokeResponse, error)
 
@@ -8824,6 +9065,28 @@ func (r PermissionsIndexResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PermissionsIndexResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PermissionsIndexAccountResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PermissionResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r PermissionsIndexAccountResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PermissionsIndexAccountResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9721,6 +9984,15 @@ func (c *ClientWithResponses) PermissionsIndexWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsePermissionsIndexResponse(rsp)
+}
+
+// PermissionsIndexAccountWithResponse request returning *PermissionsIndexAccountResponse
+func (c *ClientWithResponses) PermissionsIndexAccountWithResponse(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*PermissionsIndexAccountResponse, error) {
+	rsp, err := c.PermissionsIndexAccount(ctx, accountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePermissionsIndexAccountResponse(rsp)
 }
 
 // PermissionsRevokeWithResponse request returning *PermissionsRevokeResponse
@@ -10785,6 +11057,32 @@ func ParsePermissionsIndexResponse(rsp *http.Response) (*PermissionsIndexRespons
 	}
 
 	response := &PermissionsIndexResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PermissionResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePermissionsIndexAccountResponse parses an HTTP response from a PermissionsIndexAccountWithResponse call
+func ParsePermissionsIndexAccountResponse(rsp *http.Response) (*PermissionsIndexAccountResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PermissionsIndexAccountResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

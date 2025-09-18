@@ -168,11 +168,11 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		agentTokens.NewAgentTokenResource,
 		bundles.NewBundleResource,
 		integrations.NewIntegrationResource,
-		permissions.NewPermissionResource,
 		policies.NewPolicyResource,
 		resources.NewResourceResource,
 		roles.NewRoleResource,
 		workflows.NewWorkflowResource,
+		permissions.NewPermissionResource,
 	}
 }
 
@@ -184,7 +184,7 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		agentTokens.NewAgentTokenDataSource,
 		bundles.NewBundleDataSource,
 		integrations.NewIntegrationDataSource,
-		permissions.NewPermissionDataSource,
+		permissions.NewPermissionsDataSource,
 		policies.NewPolicyDataSource,
 		resources.NewResourceDataSource,
 		roles.NewRoleDataSource,
