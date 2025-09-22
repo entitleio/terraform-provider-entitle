@@ -26,7 +26,7 @@ resource "entitle_integration" "my_gitlab" {
     requestable                     = true
     requestable_by_default                     = true
     application = {
-   	  name = "Gitlab"
+   	  name = "gitlab"
     }
 	allowed_durations = [-1]
     auto_assign_recommended_maintainers      = false
@@ -61,7 +61,7 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable", "true"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable_by_default", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "Gitlab"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "gitlab"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allowed_durations.0", "-1"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_maintainers", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
@@ -91,7 +91,7 @@ resource "entitle_integration" "my_gitlab" {
     requestable                     = true
     requestable_by_default                     = true
     application = {
-   	  name = "Gitlab"
+   	  name = "gitlab"
     }
 	allowed_durations = [-1]
     auto_assign_recommended_maintainers      = false
@@ -127,7 +127,7 @@ resource "entitle_integration" "my_gitlab" {
 					// Not updated field assertions
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable", "true"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "requestable_by_default", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "Gitlab"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "application.name", "gitlab"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allowed_durations.0", "-1"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_maintainers", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
