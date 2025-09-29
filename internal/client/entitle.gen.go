@@ -2508,8 +2508,8 @@ type BundlesIndexParams struct {
 // DirectoryGroupsIndexParams defines parameters for DirectoryGroupsIndex.
 type DirectoryGroupsIndexParams struct {
 	SortOrder  *DirectoryGroupsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-	Page       *float32                             `form:"page,omitempty" json:"page,omitempty"`
-	PerPage    *float32                             `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Page       *int                                 `form:"page,omitempty" json:"page,omitempty"`
+	PerPage    *int                                 `form:"perPage,omitempty" json:"perPage,omitempty"`
 	SortFields *[]string                            `form:"sortFields,omitempty" json:"sortFields,omitempty"`
 	Search     *string                              `form:"search,omitempty" json:"search,omitempty"`
 }
