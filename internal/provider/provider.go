@@ -15,8 +15,10 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessRequestForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/accounts"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/directoryGroups"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/permissions"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
@@ -168,27 +170,29 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		agentTokens.NewAgentTokenResource,
 		bundles.NewBundleResource,
 		integrations.NewIntegrationResource,
+		permissions.NewPermissionResource,
 		policies.NewPolicyResource,
 		resources.NewResourceResource,
 		roles.NewRoleResource,
 		workflows.NewWorkflowResource,
-		permissions.NewPermissionResource,
 	}
 }
 
 // DataSources returns the list of provider data sources.
 func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		accounts.NewAccountsDataSource,
+		agentTokens.NewAgentTokenDataSource,
 		accessRequestForwards.NewAccessRequestForwardDataSource,
 		accessReviewForwards.NewAccessReviewForwardDataSource,
-		agentTokens.NewAgentTokenDataSource,
 		bundles.NewBundleDataSource,
+		directoryGroups.NewDirectoryGroupsDataSource,
 		integrations.NewIntegrationDataSource,
 		permissions.NewPermissionsDataSource,
 		policies.NewPolicyDataSource,
 		resources.NewResourceDataSource,
 		roles.NewRoleDataSource,
-		users.NewUserDataSource,
+		users.NewUsersDataSource,
 		workflows.NewWorkflowDataSource,
 	}
 }

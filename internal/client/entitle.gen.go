@@ -2550,10 +2550,10 @@ type AccessReviewForwardsIndexParams struct {
 
 // AccountsIndexParams defines parameters for AccountsIndex.
 type AccountsIndexParams struct {
-	Page          *float32 `form:"page,omitempty" json:"page,omitempty"`
-	PerPage       *float32 `form:"perPage,omitempty" json:"perPage,omitempty"`
-	IntegrationId string   `form:"integrationId" json:"integrationId"`
-	Search        *string  `form:"search,omitempty" json:"search,omitempty"`
+	Page          *int    `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *int    `form:"perPage,omitempty" json:"perPage,omitempty"`
+	IntegrationId string  `form:"integrationId" json:"integrationId"`
+	Search        *string `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // AgentTokensIndexParams defines parameters for AgentTokensIndex.
@@ -2571,8 +2571,8 @@ type BundlesIndexParams struct {
 // DirectoryGroupsIndexParams defines parameters for DirectoryGroupsIndex.
 type DirectoryGroupsIndexParams struct {
 	SortOrder  *DirectoryGroupsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-	Page       *float32                             `form:"page,omitempty" json:"page,omitempty"`
-	PerPage    *float32                             `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Page       *int                                 `form:"page,omitempty" json:"page,omitempty"`
+	PerPage    *int                                 `form:"perPage,omitempty" json:"perPage,omitempty"`
 	SortFields *[]string                            `form:"sortFields,omitempty" json:"sortFields,omitempty"`
 	Search     *string                              `form:"search,omitempty" json:"search,omitempty"`
 }
@@ -2622,25 +2622,25 @@ type PoliciesIndexParams struct {
 
 // ResourcesIndexParams defines parameters for ResourcesIndex.
 type ResourcesIndexParams struct {
-	Page          *float32 `form:"page,omitempty" json:"page,omitempty"`
-	PerPage       *float32 `form:"perPage,omitempty" json:"perPage,omitempty"`
-	Search        *string  `form:"search,omitempty" json:"search,omitempty"`
-	IntegrationId string   `form:"integrationId" json:"integrationId"`
+	Page          *int    `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *int    `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Search        *string `form:"search,omitempty" json:"search,omitempty"`
+	IntegrationId string  `form:"integrationId" json:"integrationId"`
 }
 
 // RolesIndexParams defines parameters for RolesIndex.
 type RolesIndexParams struct {
-	Page       *float32           `form:"page,omitempty" json:"page,omitempty"`
-	PerPage    *float32           `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Page       *int               `form:"page,omitempty" json:"page,omitempty"`
+	PerPage    *int               `form:"perPage,omitempty" json:"perPage,omitempty"`
 	ResourceId openapi_types.UUID `form:"resourceId" json:"resourceId"`
 	Search     *string            `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // UsersIndexParams defines parameters for UsersIndex.
 type UsersIndexParams struct {
-	Page    *float32 `form:"page,omitempty" json:"page,omitempty"`
-	PerPage *float32 `form:"perPage,omitempty" json:"perPage,omitempty"`
-	Search  *string  `form:"search,omitempty" json:"search,omitempty"`
+	Page    *int    `form:"page,omitempty" json:"page,omitempty"`
+	PerPage *int    `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Search  *string `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // UsersAccountsIndexParams defines parameters for UsersAccountsIndex.

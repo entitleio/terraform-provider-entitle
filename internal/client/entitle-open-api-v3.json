@@ -804,7 +804,7 @@
             "schema": {
               "minimum": 1,
               "default": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -815,7 +815,7 @@
               "minimum": 1,
               "maximum": 100,
               "default": 100,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -1036,7 +1036,7 @@
             "schema": {
               "minimum": 1,
               "default": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -1047,7 +1047,7 @@
               "minimum": 1,
               "maximum": 100,
               "default": 100,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2203,7 +2203,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2212,7 +2212,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2269,7 +2269,7 @@
             "schema": {
               "minimum": 1,
               "default": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2280,7 +2280,7 @@
               "minimum": 1,
               "maximum": 100,
               "default": 100,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2326,7 +2326,7 @@
             "schema": {
               "minimum": 1,
               "default": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2337,7 +2337,7 @@
               "minimum": 1,
               "maximum": 100,
               "default": 100,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
