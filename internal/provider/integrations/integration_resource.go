@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
@@ -54,10 +53,10 @@ type IntegrationResourceModel struct {
 	AutoAssignRecommendedMaintainers     types.Bool                          `tfsdk:"auto_assign_recommended_maintainers"`
 	AutoAssignRecommendedOwners          types.Bool                          `tfsdk:"auto_assign_recommended_owners"`
 	NotifyAboutExternalPermissionChanges types.Bool                          `tfsdk:"notify_about_external_permission_changes"`
-	Owner                                *utils.IdEmailModel                 `tfsdk:"owner"`
-	Application                          *utils.NameModel                    `tfsdk:"application"`
+	Owner                                utils.IdEmailModel                  `tfsdk:"owner"`
+	Application                          utils.NameModel                     `tfsdk:"application"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
-	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
+	Workflow                             utils.IdNameModel                   `tfsdk:"workflow"`
 	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
 	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
@@ -84,7 +83,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Optional:            false,
 				MarkdownDescription: "The display name for the integration. Length between 2 and 50.",
 				Description:         "The display name for the integration. Length between 2 and 50.",
 				Validators: []validator.String{
@@ -92,8 +90,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 			"allowed_durations": schema.SetAttribute{
+				Required:    true,
 				ElementType: types.NumberType,
-				Optional:    true,
 				Description: "As the admin, you can set different durations for the integration, " +
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the integration, " +
@@ -103,7 +101,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Required:            false,
 							Optional:            true,
 							Description:         "\"user\" or \"group\" (default: \"user\")",
 							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
@@ -115,7 +112,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"id": schema.ListAttribute{
 									ElementType:         types.StringType,
 									Required:            true,
-									Optional:            false,
 									Description:         "user's id",
 									MarkdownDescription: "user's id",
 								},
@@ -126,7 +122,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 									MarkdownDescription: "user's email",
 								},
 							},
-							Required:            false,
 							Optional:            true,
 							Description:         "user",
 							MarkdownDescription: "user",
@@ -136,7 +131,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"id": schema.ListAttribute{
 									ElementType:         types.StringType,
 									Required:            true,
-									Optional:            false,
 									Description:         "group's id",
 									MarkdownDescription: "group's id",
 								},
@@ -147,15 +141,13 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 									MarkdownDescription: "group's email",
 								},
 							},
-							Required:            false,
 							Optional:            true,
 							Description:         "group",
 							MarkdownDescription: "group",
 						},
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "Maintainer of the integration, second tier owner of that integration you can " +
 					"have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration.",
 				MarkdownDescription: "Maintainer of the integration, second tier owner of that integration you can " +
@@ -164,14 +156,16 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
-						Required:            false,
-						Optional:            true,
+						Required:            true,
 						Description:         "The application's name",
 						MarkdownDescription: "The application's name",
+						Validators: []validator.String{
+							validators.NewName(2, 50),
+							validators.Lowercase{},
+						},
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "The application the integration connects to must be chosen from the list " +
 					"of supported applications.",
 				MarkdownDescription: "The application the integration connects to must be chosen from the list " +
@@ -180,7 +174,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"agent_token": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
-						Required:            false,
 						Optional:            true,
 						Description:         "agent token's name",
 						MarkdownDescription: "agent token's name",
@@ -200,7 +193,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
 			},
 			"allow_creating_accounts": schema.BoolAttribute{
-				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
@@ -208,7 +200,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
 			},
 			"readonly": schema.BoolAttribute{
-				Required: false,
 				Optional: true,
 				Computed: true,
 				Description: "If turned on, any request opened by a user will not be automatically granted, " +
@@ -218,7 +209,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: booldefault.StaticBool(defaultIntegrationReadonly),
 			},
 			"allow_requests": schema.BoolAttribute{
-				Required: false,
 				Optional: true,
 				Computed: true,
 				Description: "Controls whether a user can create requests for entitlements for resources " +
@@ -228,7 +218,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
 			},
 			"allow_requests_by_default": schema.BoolAttribute{
-				Required: false,
 				Optional: true,
 				Computed: true,
 				Description: "Controls whether resources that are added to the integration could be shown " +
@@ -238,7 +227,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
 			},
 			"requestable": schema.BoolAttribute{
-				Required: false,
 				Optional: true,
 				Computed: true,
 				Description: "Controls whether a user can create requests for entitlements for resources " +
@@ -248,7 +236,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
 			},
 			"requestable_by_default": schema.BoolAttribute{
-				Required: false,
 				Optional: true,
 				Computed: true,
 				Description: "Controls whether resources that are added to the integration could be shown " +
@@ -258,7 +245,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
-				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Description:         "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
@@ -274,7 +260,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedOwners),
 			},
 			"notify_about_external_permission_changes": schema.BoolAttribute{
-				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Description:         "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
@@ -283,7 +268,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"connection_json": schema.StringAttribute{
 				Required:            true,
-				Optional:            false,
 				Description:         "go to https://app.entitle.io/integrations and provide the latest schema.",
 				MarkdownDescription: "go to https://app.entitle.io/integrations and provide the latest schema.",
 			},
@@ -367,8 +351,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"owner": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            false,
-						Optional:            true,
+						Required:            true,
 						Description:         "the owner's id",
 						MarkdownDescription: "the owner's id",
 					},
@@ -378,8 +361,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						MarkdownDescription: "the owner's email",
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "Define the owner of the integration, which will be used for administrative " +
 					"purposes and approval workflows.",
 				MarkdownDescription: "Define the owner of the integration, which will be used for administrative " +
@@ -388,8 +370,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            false,
-						Optional:            true,
+						Required:            true,
 						Description:         "the workflow's id",
 						MarkdownDescription: "the workflow's id",
 					},
@@ -399,8 +380,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						MarkdownDescription: "the workflow's name",
 					},
 				},
-				Required: false,
-				Optional: true,
+				Required: true,
 				Description: "The default approval workflow for entitlements for the integration " +
 					"(can be overwritten on resource/role level).",
 				MarkdownDescription: "The default approval workflow for entitlements for the integration " +
@@ -446,15 +426,14 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	var name string
-	if plan.Name.String() == "" {
+	integrationName := plan.Name.ValueString()
+	if integrationName == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			"missing the name variable for entitle integration",
 		)
 		return
 	}
-	name = plan.Name.ValueString()
 
 	var allowedDurations *[]client.EnumAllowedDurations
 	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
@@ -468,17 +447,13 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	var workflow client.IdParamsSchema
-	if plan.Workflow != nil {
-		if !plan.Workflow.ID.IsNull() && !plan.Workflow.ID.IsUnknown() {
-			workflow.Id, err = uuid.Parse(plan.Workflow.ID.String())
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
-				)
-				return
-			}
-		}
+	workflow.Id, err = uuid.Parse(plan.Workflow.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
+		)
+		return
 	}
 
 	var agentToken *client.NameSchema
@@ -493,18 +468,12 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
-	var owner client.UserEntitySchema
-	if plan.Owner != nil {
-		if !plan.Owner.Id.IsNull() && !plan.Owner.Id.IsUnknown() {
-			owner.Id = utils.TrimPrefixSuffix(plan.Owner.Id.String())
-		}
+	owner := client.UserEntitySchema{
+		Id: utils.TrimPrefixSuffix(plan.Owner.Id.ValueString()),
 	}
 
-	var application client.NameSchema
-	if plan.Application != nil {
-		if !plan.Application.Name.IsNull() && !plan.Application.Name.IsUnknown() {
-			application.Name = utils.TrimPrefixSuffix(plan.Application.Name.String())
-		}
+	application := client.NameSchema{
+		Name: utils.TrimPrefixSuffix(plan.Application.Name.ValueString()),
 	}
 
 	var connectionJson *map[string]interface{}
@@ -649,7 +618,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
 		ConnectionJson:                       connectionJson,
 		Maintainers:                          &maintainers,
-		Name:                                 name,
+		Name:                                 integrationName,
 		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
 		Owner:                                owner,
 		Readonly:                             plan.Readonly.ValueBool(),
@@ -666,26 +635,16 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if integrationResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(integrationResp.Body)
-		if integrationResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(integrationResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to create the integration, %s, status code: %d%s",
+				"Failed to create the Integration, %s, status code: %d, %s",
 				string(integrationResp.Body),
 				integrationResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
-			),
-		)
+				err.Error(),
+			))
 		return
 	}
 
@@ -834,42 +793,18 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	var workflow client.IdParamsSchema
-	if data.Workflow != nil {
-		if !data.Workflow.ID.IsNull() && !data.Workflow.ID.IsUnknown() {
-			workflow.Id, err = uuid.Parse(data.Workflow.ID.String())
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
-				)
-				return
-			}
-		}
-	}
-
-	var owner client.UserEntitySchema
-	if data.Owner != nil {
-		if !data.Owner.Id.IsNull() && !data.Owner.Id.IsUnknown() {
-			owner.Id = utils.TrimPrefixSuffix(data.Owner.Id.String())
-		}
-	}
-
-	var application client.NameSchema
-	if data.Application != nil {
-		if !data.Application.Name.IsNull() && !data.Application.Name.IsUnknown() {
-			application.Name = utils.TrimPrefixSuffix(data.Application.Name.String())
+	if data.Workflow.ID.ValueString() != "" {
+		workflow.Id, err = uuid.Parse(data.Workflow.ID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
+			)
+			return
 		}
 	}
 
 	var connectionJson *map[string]interface{}
-	if data.ConnectionJson.IsNull() || data.ConnectionJson.IsUnknown() {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"missing the connection_json variable for entitle integration",
-		)
-		return
-	}
-
 	if data.ConnectionJson.ValueString() != "" {
 		var result map[string]interface{}
 
@@ -1003,7 +938,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		Maintainers:                          &maintainers,
 		Name:                                 utils.StringPointer(name),
 		NotifyAboutExternalPermissionChanges: utils.BoolPointer(data.NotifyAboutExternalPermissionChanges.ValueBool()),
-		Owner:                                &owner,
+		Owner:                                &client.UserEntitySchema{Id: data.Owner.Id.ValueString()},
 		Workflow:                             &workflow,
 		PrerequisitePermissions:              prerequisitePermissions,
 	})
@@ -1297,15 +1232,15 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		AutoAssignRecommendedMaintainers:     types.BoolValue(data.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(data.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
-		Owner: &utils.IdEmailModel{
+		Owner: utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
 			Email: utils.TrimmedStringValue(string(marshalJSON)),
 		},
-		Application: &utils.NameModel{
-			Name: utils.TrimmedStringValue(data.Application.Name),
+		Application: utils.NameModel{
+			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name)),
 		},
 		AgentToken: agentToken,
-		Workflow: &utils.IdNameModel{
+		Workflow: utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},

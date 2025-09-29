@@ -2039,7 +2039,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
@@ -2048,7 +2048,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "type": "number"
+              "type": "integer"
             }
           },
           {
