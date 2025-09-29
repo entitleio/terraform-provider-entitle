@@ -76,6 +76,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Validators: []validator.String{
+					validators.UUID{},
+				},
 			},
 			"name": schema.StringAttribute{
 				Computed:            false,
@@ -451,14 +454,7 @@ func (r *WorkflowResource) Read(
 		return
 	}
 
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
-		)
-		return
-	}
+	uid := uuid.MustParse(data.ID.String())
 
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -516,16 +512,7 @@ func (r *WorkflowResource) Update(
 		return
 	}
 
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
-		)
-
-		return
-	}
-
+	uid := uuid.MustParse(data.ID.String())
 	name := data.Name.ValueStringPointer()
 
 	rules, diags := getWorkflowsRules(ctx, data.Rules)
@@ -594,14 +581,7 @@ func (r *WorkflowResource) Delete(
 		return
 	}
 
-	parsedUUID, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to parse uuid of the workflow, id: (%s), got error: %v", data.ID.String(), err),
-		)
-		return
-	}
+	parsedUUID := uuid.MustParse(data.ID.String())
 
 	httpResp, err := r.client.WorkflowsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {

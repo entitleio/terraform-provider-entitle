@@ -186,14 +186,7 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	var reqBody []byte
 	var reqResponse []client.PermissionSchema
 	if data.Filter.AccountID.ValueString() != "" {
-		accountId, err := uuid.Parse(data.Filter.AccountID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				fmt.Sprintf("failed to parse account id to uuid format, got error: %s", err),
-			)
-			return
-		}
+		accountId := uuid.MustParse(data.Filter.AccountID.ValueString())
 
 		permissionsResp, err := d.client.PermissionsIndexAccountWithResponse(ctx, accountId, &client.PermissionsIndexAccountParams{
 			Page:          params.Page,

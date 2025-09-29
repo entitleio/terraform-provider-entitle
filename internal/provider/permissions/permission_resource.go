@@ -9,11 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure the interface is satisfied
@@ -49,6 +51,9 @@ func (r *PermissionResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"id": schema.StringAttribute{
 				Required:    true,
 				Description: "The unique ID of the permission (UUID).",
+				Validators: []validator.String{
+					validators.UUID{},
+				},
 			},
 			"actor": schema.SingleNestedAttribute{
 				Computed: true,
@@ -116,11 +121,6 @@ func (r *PermissionResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	if plan.ID.IsNull() || plan.ID.ValueString() == "" {
-		resp.Diagnostics.AddError("Missing ID", "You must provide an existing permission ID to manage.")
-		return
-	}
-
 	perm, err := r.findPermissionByID(ctx, plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Permission Not Found", err.Error())
@@ -166,7 +166,15 @@ func (r *PermissionResource) Update(ctx context.Context, req resource.UpdateRequ
 		"Update Not Supported",
 		"This resource is import-only. To change it, delete and re-import the correct permission.",
 	)
-	resp.Diagnostics.Append(req.State.Get(ctx, nil)...)
+
+	// Leave the state unchanged but safely mapped through the schema
+	var state PermissionResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 // Delete removes the permission via API
@@ -177,22 +185,16 @@ func (r *PermissionResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	permissionID, err := uuid.Parse(state.ID.ValueString())
+	permissionID := uuid.MustParse(state.ID.ValueString())
 	tflog.Debug(ctx, "Deleting Entitle Permission", map[string]any{"id": permissionID})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse account id to uuid format, got error: %s", err),
-		)
-		return
-	}
+
 	apiResp, err := r.client.PermissionsRevokeWithResponse(ctx, permissionID)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete permission %s: %s", permissionID, err))
 		return
 	}
 
-	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body, utils.WithIgnorePending()); err != nil {
+	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body, utils.WithIgnorePending(), utils.WithIgnoreNotFound()); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to delete permission: %s", err))
 		return
 	}

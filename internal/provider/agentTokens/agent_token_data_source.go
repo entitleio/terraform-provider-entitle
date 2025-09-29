@@ -110,14 +110,7 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	// Parse the Agent Token ID from the configuration model
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse the resource ID (%s) to UUID, got error: %s", data.ID.String(), err),
-		)
-		return
-	}
+	uid := uuid.MustParse(data.ID.String())
 
 	// Fetch Agent Token details from the Entitle API
 	agentTokenResp, err := d.client.AgentTokensShowWithResponse(ctx, uid)
