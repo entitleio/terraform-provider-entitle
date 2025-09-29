@@ -36,8 +36,13 @@ resource "entitle_integration" "example" {
 
 ### Required
 
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
+- `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
 - `connection_json` (String) go to https://app.entitle.io/integrations and provide the latest schema.
+- `maintainers` (Attributes List) Maintainer of the integration, second tier owner of that integration you can have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration. (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) The display name for the integration. Length between 2 and 50.
+- `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
+- `workflow` (Attributes) The default approval workflow for entitlements for the integration (can be overwritten on resource/role level). (see [below for nested schema](#nestedatt--workflow))
 
 ### Optional
 
@@ -46,35 +51,22 @@ resource "entitle_integration" "example" {
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `allow_requests` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `allow_requests_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
-- `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
-- `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
-- `maintainers` (Attributes List) Maintainer of the integration, second tier owner of that integration you can have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration. (see [below for nested schema](#nestedatt--maintainers))
 - `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
-- `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `prerequisite_permissions` (Attributes List) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `readonly` (Boolean) If turned on, any request opened by a user will not be automatically granted, instead a ticket will be opened for manual resolution. (default: false)
 - `requestable` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `requestable_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
-- `workflow` (Attributes) The default approval workflow for entitlements for the integration (can be overwritten on resource/role level). (see [below for nested schema](#nestedatt--workflow))
 
 ### Read-Only
 
 - `id` (String) Entitle Integration identifier in uuid format
 
-<a id="nestedatt--agent_token"></a>
-### Nested Schema for `agent_token`
-
-Optional:
-
-- `name` (String) agent token's name
-
-
 <a id="nestedatt--application"></a>
 ### Nested Schema for `application`
 
-Optional:
+Required:
 
 - `name` (String) The application's name
 
@@ -116,13 +108,33 @@ Read-Only:
 <a id="nestedatt--owner"></a>
 ### Nested Schema for `owner`
 
-Optional:
+Required:
 
 - `id` (String) the owner's id
 
 Read-Only:
 
 - `email` (String) the owner's email
+
+
+<a id="nestedatt--workflow"></a>
+### Nested Schema for `workflow`
+
+Required:
+
+- `id` (String) the workflow's id
+
+Read-Only:
+
+- `name` (String) the workflow's name
+
+
+<a id="nestedatt--agent_token"></a>
+### Nested Schema for `agent_token`
+
+Optional:
+
+- `name` (String) agent token's name
 
 
 <a id="nestedatt--prerequisite_permissions"></a>
@@ -172,19 +184,3 @@ Read-Only:
 Read-Only:
 
 - `name` (String) The name of the connected application.
-
-
-
-
-
-
-<a id="nestedatt--workflow"></a>
-### Nested Schema for `workflow`
-
-Optional:
-
-- `id` (String) the workflow's id
-
-Read-Only:
-
-- `name` (String) the workflow's name
