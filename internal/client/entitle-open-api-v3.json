@@ -4690,10 +4690,10 @@
             }
           },
           "number": {
-            "type": "number"
+            "type": "integer"
           },
           "sortOrder": {
-            "type": "number"
+            "type": "integer"
           }
         },
         "required": [
@@ -4709,10 +4709,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
-            }
+            "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
           }
         },
         "required": [

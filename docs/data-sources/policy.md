@@ -29,7 +29,9 @@ data "entitle_policy" "example" {
 
 - `bundles` (Attributes List) List of bundles granted by the policy (see [below for nested schema](#nestedatt--bundles))
 - `in_groups` (Attributes List) List of groups that trigger the policy (see [below for nested schema](#nestedatt--in_groups))
+- `number` (Number) Entitle Policy number
 - `roles` (Attributes List) List of roles granted by the policy (see [below for nested schema](#nestedatt--roles))
+- `sort_order` (Number) Entitle Policy sort order
 
 <a id="nestedatt--bundles"></a>
 ### Nested Schema for `bundles`

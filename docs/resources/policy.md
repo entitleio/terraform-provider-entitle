@@ -35,10 +35,12 @@ resource "entitle_policy" "example" {
 
 - `bundles` (Attributes List) A list of bundles (collections of entitlements) to be assigned by the policy. (see [below for nested schema](#nestedatt--bundles))
 - `roles` (Attributes List) A list of roles that the policy assigns to users. Each role grants access to a specific resource. (see [below for nested schema](#nestedatt--roles))
+- `sort_order` (Number) Entitle Policy sort order
 
 ### Read-Only
 
 - `id` (String) Entitle Policy identifier in uuid format
+- `number` (Number) Entitle Policy number
 
 <a id="nestedatt--in_groups"></a>
 ### Nested Schema for `in_groups`

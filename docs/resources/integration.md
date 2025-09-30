@@ -132,7 +132,7 @@ Read-Only:
 <a id="nestedatt--agent_token"></a>
 ### Nested Schema for `agent_token`
 
-Optional:
+Required:
 
 - `name` (String) agent token's name
 

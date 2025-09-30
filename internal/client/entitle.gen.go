@@ -1703,7 +1703,7 @@ type FullBundleResultResponseSchema struct {
 
 // FullPolicyResponseSchema defines model for FullPolicyResponseSchema.
 type FullPolicyResponseSchema struct {
-	Result []FullPolicyResultResponseSchema `json:"result"`
+	Result FullPolicyResultResponseSchema `json:"result"`
 }
 
 // FullPolicyResultResponseSchema defines model for FullPolicyResultResponseSchema.
@@ -1711,9 +1711,9 @@ type FullPolicyResultResponseSchema struct {
 	Bundles   []PolicyBundleResponseSchema `json:"bundles"`
 	Id        openapi_types.UUID           `json:"id"`
 	InGroups  []PolicyGroupResponseSchema  `json:"inGroups"`
-	Number    float32                      `json:"number"`
+	Number    int                          `json:"number"`
 	Roles     []PolicyRoleResponseSchema   `json:"roles"`
-	SortOrder float32                      `json:"sortOrder"`
+	SortOrder int                          `json:"sortOrder"`
 }
 
 // FullWorkflowResponseSchema defines model for FullWorkflowResponseSchema.
