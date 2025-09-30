@@ -364,7 +364,7 @@ func (r *BundleResource) Create(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to create the bundle, got error: %v", err),
 		)
 		return
@@ -373,7 +373,7 @@ func (r *BundleResource) Create(
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to create a Bundle status code: %d, %s",
 				bundleResp.HTTPResponse.StatusCode,
@@ -438,7 +438,7 @@ func (r *BundleResource) Read(
 	bundleResp, err := r.client.BundlesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -447,7 +447,7 @@ func (r *BundleResource) Read(
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -586,7 +586,7 @@ func (r *BundleResource) Update(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -595,7 +595,7 @@ func (r *BundleResource) Update(
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -654,7 +654,7 @@ func (r *BundleResource) Delete(
 	httpResp, err := r.client.BundlesDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to delete bundle, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -663,7 +663,7 @@ func (r *BundleResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Bundle by the id (%s), status code: %d, %s",
 				data.ID.String(),

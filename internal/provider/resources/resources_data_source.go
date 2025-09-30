@@ -161,14 +161,14 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	apiResp, err := d.client.ResourcesIndexWithResponse(ctx, &params)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to list resources: %s", err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Failed to list resources: %s", err))
 		return
 	}

@@ -239,7 +239,7 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	policyResp, err := d.client.PoliciesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the Policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -248,7 +248,7 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Policy by the id (%s), status code: %d, %s",
 				uid.String(),

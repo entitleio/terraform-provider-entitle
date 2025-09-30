@@ -610,7 +610,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	integrationResp, err := r.client.IntegrationsCreateWithResponse(ctx, body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to create the integration, got error: %v", err),
 		)
 		return
@@ -619,7 +619,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to create the Integration, %s, status code: %d, %s",
 				string(integrationResp.Body),
@@ -684,7 +684,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	integrationResp, err := r.client.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the integration by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -693,7 +693,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -917,7 +917,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the integration by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -926,7 +926,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -984,7 +984,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	httpResp, err := r.client.IntegrationsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to delete integrations, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -993,7 +993,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Integration by the id (%s), status code: %d, %s",
 				data.ID.String(),

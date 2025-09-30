@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	ApiConnectionError   = errors.New("API Connection Error")
-	ApiResponseError     = errors.New("API Response Error")
+	ErrApiConnection     = errors.New("API Connection Error")
+	ErrApiResponse       = errors.New("API Response Error")
 	errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
 )
 

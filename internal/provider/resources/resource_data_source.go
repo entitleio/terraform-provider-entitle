@@ -329,7 +329,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	resourceResp, err := d.client.ResourcesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the Resource by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -338,7 +338,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Resource by the id (%s), %s",
 				uid.String(),

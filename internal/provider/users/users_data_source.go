@@ -134,7 +134,7 @@ func (d *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	resourceResp, err := d.client.UsersIndexWithResponse(ctx, &params)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to list users, got error: %s", err),
 		)
 		return
@@ -143,7 +143,7 @@ func (d *UsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Unable to list users, got error: %s", err),
 		)
 		return

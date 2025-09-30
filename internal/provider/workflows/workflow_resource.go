@@ -376,7 +376,7 @@ func (r *WorkflowResource) Create(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to create the workflow, got error: %v", err),
 		)
 		return
@@ -385,7 +385,7 @@ func (r *WorkflowResource) Create(
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to create the Workflow, status code: %d, %s",
 				workflowResp.HTTPResponse.StatusCode,
@@ -437,7 +437,7 @@ func (r *WorkflowResource) Read(
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the workflow by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -446,7 +446,7 @@ func (r *WorkflowResource) Read(
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -505,7 +505,7 @@ func (r *WorkflowResource) Update(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the workflow by the id (%s), got error: %s", uid.String(), err),
 		)
 
@@ -515,7 +515,7 @@ func (r *WorkflowResource) Update(
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -564,7 +564,7 @@ func (r *WorkflowResource) Delete(
 	httpResp, err := r.client.WorkflowsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to delete workflow, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -573,7 +573,7 @@ func (r *WorkflowResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Workflow by the id (%s), status code: %d, %s",
 				parsedUUID.String(),
