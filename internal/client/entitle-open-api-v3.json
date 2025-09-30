@@ -1481,13 +1481,104 @@
             }
           },
           {
-            "name": "date",
+            "name": "page",
             "required": false,
             "in": "query",
-            "description": "Filter permissions up to a certain point in time",
             "schema": {
-              "format": "date",
-              "example": "2021-01-21",
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "integrationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Experimental"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/permissions/{accountId}": {
+      "get": {
+        "operationId": "Permissions_index+account",
+        "summary": "Get permissions for account",
+        "parameters": [
+          {
+            "name": "accountId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC",
+                "asc",
+                "desc"
+              ],
               "type": "string"
             }
           },
@@ -1508,6 +1599,38 @@
               "minimum": 1,
               "type": "number"
             }
+          },
+          {
+            "name": "integrationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1524,6 +1647,47 @@
         },
         "tags": [
           "Experimental"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/permissions/{id}/revoke": {
+      "delete": {
+        "operationId": "Permissions_revoke",
+        "summary": "Revoke a permission",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "2XX": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokePermissionResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Permissions"
         ],
         "security": [
           {
@@ -4144,43 +4308,60 @@
           "name"
         ]
       },
+      "AccountResultSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "name": {
+            "type": "string"
+          },
+          "euid": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/AccountsIntegrationResultSchema"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "euid",
+          "email",
+          "createdAt",
+          "integration"
+        ]
+      },
       "PermissionSchema": {
         "type": "object",
         "properties": {
+          "permissionId": {
+            "type": "string",
+            "description": "Permission ID",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
             "example": "2021-01-21T00:00:00.000Z",
             "description": "Date of the permission creation"
           },
-          "deprecatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true,
-            "example": "2021-01-21T00:00:00.000Z",
-            "description": "Date of the permission deprecation"
-          },
-          "actor": {
-            "description": "Permission's actor",
+          "account": {
+            "description": "Permission's account",
             "allOf": [
               {
-                "$ref": "#/components/schemas/ActorSchema"
-              }
-            ]
-          },
-          "integration": {
-            "description": "Permission's integration",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntitySchema"
-              }
-            ]
-          },
-          "resource": {
-            "description": "Permission's resource",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntitySchema"
+                "$ref": "#/components/schemas/AccountResultSchema"
               }
             ]
           },
@@ -4188,17 +4369,45 @@
             "description": "Permission's role",
             "allOf": [
               {
-                "$ref": "#/components/schemas/EntitySchema"
+                "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
               }
             ]
+          },
+          "types": {
+            "type": "array",
+            "description": "Origin of the permission",
+            "example": [
+              "external",
+              "jit",
+              "policy"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "external",
+                "jit",
+                "policy"
+              ]
+            }
+          },
+          "path": {
+            "type": "string",
+            "description": "Whether this permission is a direct permission / indirect permission or both",
+            "enum": [
+              "direct",
+              "indirect",
+              "both"
+            ],
+            "example": "both"
           }
         },
         "required": [
+          "permissionId",
           "createdAt",
-          "actor",
-          "integration",
-          "resource",
-          "role"
+          "account",
+          "role",
+          "types",
+          "path"
         ]
       },
       "PermissionResponseSchema": {
@@ -4216,6 +4425,90 @@
         },
         "required": [
           "pagination",
+          "result"
+        ]
+      },
+      "RevokePermissionResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "permissionId": {
+            "type": "string",
+            "description": "Permission ID",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2021-01-21T00:00:00.000Z",
+            "description": "Date of the permission creation"
+          },
+          "account": {
+            "description": "Permission's account",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountResultSchema"
+              }
+            ]
+          },
+          "role": {
+            "description": "Permission's role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IntegrationResourceRoleListItemResponseSchema"
+              }
+            ]
+          },
+          "types": {
+            "type": "array",
+            "description": "Origin of the permission",
+            "example": [
+              "external",
+              "jit",
+              "policy"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "external",
+                "jit",
+                "policy"
+              ]
+            }
+          },
+          "path": {
+            "type": "string",
+            "description": "Whether this permission is a direct permission / indirect permission or both",
+            "enum": [
+              "direct",
+              "indirect",
+              "both"
+            ],
+            "example": "both"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the revocation status"
+          }
+        },
+        "required": [
+          "permissionId",
+          "createdAt",
+          "account",
+          "role",
+          "types",
+          "path",
+          "message"
+        ]
+      },
+      "RevokePermissionResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/RevokePermissionResultResponseSchema"
+          }
+        },
+        "required": [
           "result"
         ]
       },
@@ -4397,10 +4690,10 @@
             }
           },
           "number": {
-            "type": "number"
+            "type": "integer"
           },
           "sortOrder": {
-            "type": "number"
+            "type": "integer"
           }
         },
         "required": [
@@ -4416,10 +4709,7 @@
         "type": "object",
         "properties": {
           "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
-            }
+            "$ref": "#/components/schemas/FullPolicyResultResponseSchema"
           }
         },
         "required": [

@@ -265,7 +265,7 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	bundleResp, err := d.client.BundlesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -274,7 +274,7 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),

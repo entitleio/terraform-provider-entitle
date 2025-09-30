@@ -335,19 +335,12 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	uid, err := uuid.Parse(data.Id.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse the entitle policy id (%s) to UUID, got error: %s", data.Id.String(), err),
-		)
-		return
-	}
+	uid := uuid.MustParse(data.Id.String())
 
 	workflowResp, err := d.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -356,7 +349,7 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),

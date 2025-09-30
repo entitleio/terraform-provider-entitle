@@ -8,6 +8,7 @@ import (
 
 type httpErrorOptions struct {
 	ignoreNotFound bool
+	ignorePending  bool
 }
 
 type HTTPErrorOption func(*httpErrorOptions)
@@ -15,6 +16,11 @@ type HTTPErrorOption func(*httpErrorOptions)
 func WithIgnoreNotFound() HTTPErrorOption {
 	return func(opt *httpErrorOptions) {
 		opt.ignoreNotFound = true
+	}
+}
+func WithIgnorePending() HTTPErrorOption {
+	return func(opt *httpErrorOptions) {
+		opt.ignorePending = true
 	}
 }
 
@@ -37,6 +43,10 @@ func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) e
 		}
 
 		if options.ignoreNotFound && errBody.ID == "resource.notFound" {
+			return nil
+		}
+
+		if options.ignorePending && strings.Contains(errBody.Message, "is pending") {
 			return nil
 		}
 

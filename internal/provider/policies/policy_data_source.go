@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -32,10 +33,12 @@ func NewPolicyDataSource() datasource.DataSource {
 
 // PolicyDataSourceModel defines the data model for FullPolicyResultResponseSchema.
 type PolicyDataSourceModel struct {
-	ID       types.String          `tfsdk:"id" json:"id"`
-	Bundles  []*utils.IdNameModel  `tfsdk:"bundles" json:"bundles"`
-	InGroups []*PolicyInGroupModel `tfsdk:"in_groups" json:"inGroups"`
-	Roles    []*utils.Role         `tfsdk:"roles" json:"roles"`
+	ID        types.String          `tfsdk:"id" json:"id"`
+	Bundles   []*utils.IdNameModel  `tfsdk:"bundles" json:"bundles"`
+	InGroups  []*PolicyInGroupModel `tfsdk:"in_groups" json:"inGroups"`
+	Roles     []*utils.Role         `tfsdk:"roles" json:"roles"`
+	Number    types.Int64           `tfsdk:"number"`
+	SortOrder types.Int64           `tfsdk:"sort_order" json:"sortOrder"`
 }
 
 // Metadata sets the data source's metadata, such as its type name.
@@ -66,6 +69,16 @@ func (d *PolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				Validators: []validator.String{
 					validators.UUID{},
 				},
+			},
+			"number": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "Entitle Policy number",
+				Description:         "Entitle Policy number",
+			},
+			"sort_order": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "Entitle Policy sort order",
+				Description:         "Entitle Policy sort order",
 			},
 			"roles": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -226,8 +239,8 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	policyResp, err := d.client.PoliciesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to get the Policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
 	}
@@ -235,7 +248,7 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -246,22 +259,20 @@ func (d *PolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	for _, policy := range policyResp.JSON200.Result {
-		// Convert the policy response to the data source model
-		data, diags := converterPolicyToDataSource(ctx, &policy)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Convert the policy response to the data source model
+	data, diags := converterPolicyToDataSource(ctx, &policyResp.JSON200.Result)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-		tflog.Trace(ctx, "read an entitle policy data source")
+	tflog.Trace(ctx, "read an entitle policy data source")
 
-		// Save data into Terraform state
-		diagsResult := resp.State.Set(ctx, &data)
-		resp.Diagnostics.Append(diagsResult...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Save data into Terraform state
+	diagsResult := resp.State.Set(ctx, &data)
+	resp.Diagnostics.Append(diagsResult...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 }
 
@@ -290,9 +301,11 @@ func converterPolicyToDataSource(
 
 	// Create the Terraform resource model using the extracted data
 	return PolicyDataSourceModel{
-		ID:       utils.TrimmedStringValue(data.Id.String()),
-		Roles:    roles,
-		Bundles:  getBundles(data.Bundles),
-		InGroups: getInGroups(data.InGroups),
+		ID:        utils.TrimmedStringValue(data.Id.String()),
+		Roles:     roles,
+		Bundles:   getBundles(data.Bundles),
+		InGroups:  getInGroups(data.InGroups),
+		Number:    basetypes.NewInt64Value(int64(data.Number)),
+		SortOrder: basetypes.NewInt64Value(int64(data.SortOrder)),
 	}, diags
 }

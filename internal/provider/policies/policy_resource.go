@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -35,10 +36,12 @@ type PolicyResource struct {
 
 // PolicyResourceModel describes the resource data model.
 type PolicyResourceModel struct {
-	ID       types.String          `tfsdk:"id" json:"id"`
-	Bundles  []*utils.IdNameModel  `tfsdk:"bundles" json:"bundles"`
-	InGroups []*PolicyInGroupModel `tfsdk:"in_groups" json:"inGroups"`
-	Roles    []*utils.Role         `tfsdk:"roles" json:"roles"`
+	ID        types.String          `tfsdk:"id" json:"id"`
+	Bundles   []*utils.IdNameModel  `tfsdk:"bundles" json:"bundles"`
+	InGroups  []*PolicyInGroupModel `tfsdk:"in_groups" json:"inGroups"`
+	Roles     []*utils.Role         `tfsdk:"roles" json:"roles"`
+	Number    types.Int64           `tfsdk:"number"`
+	SortOrder types.Int64           `tfsdk:"sort_order" json:"sortOrder"`
 }
 
 func (r *PolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -65,6 +68,17 @@ func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"number": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "Entitle Policy number",
+				Description:         "Entitle Policy number",
+			},
+			"sort_order": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Entitle Policy sort order",
+				Description:         "Entitle Policy sort order",
 			},
 			"roles": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -242,15 +256,21 @@ func (r *PolicyResource) Create(
 	}
 
 	inGroups := getInGroupsFromPlan(plan.InGroups)
+	var sortOrder *float32
+	if plan.SortOrder.ValueInt64() > 0 {
+		sortOrder = utils.Float32Pointer(float32(plan.SortOrder.ValueInt64()))
+	}
+
 	policyResp, err := r.client.PoliciesCreateWithResponse(ctx, client.PolicyCreateSchema{
-		Bundles:  bundles,
-		InGroups: inGroups,
-		Roles:    roles,
+		Bundles:   bundles,
+		InGroups:  inGroups,
+		Roles:     roles,
+		SortOrder: sortOrder,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to crete the policy, got error: %v", err),
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to create the policy, got error: %v", err),
 		)
 		return
 	}
@@ -258,7 +278,7 @@ func (r *PolicyResource) Create(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to create the Policy, status code: %d, %s",
 				policyResp.HTTPResponse.StatusCode,
@@ -272,13 +292,13 @@ func (r *PolicyResource) Create(
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a entitle policy resource")
 
-	plan.ID = utils.TrimmedStringValue(policyResp.JSON200.Result[0].Id.String())
+	plan.ID = utils.TrimmedStringValue(policyResp.JSON200.Result.Id.String())
 	plan, diags = convertFullPolicyResultResponseSchemaToModel(
 		ctx,
 		bundles,
 		inGroups,
 		roles,
-		&policyResp.JSON200.Result[0],
+		&policyResp.JSON200.Result,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -324,7 +344,7 @@ func (r *PolicyResource) Read(
 	policyResp, err := r.client.PoliciesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -333,7 +353,7 @@ func (r *PolicyResource) Read(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -344,7 +364,7 @@ func (r *PolicyResource) Read(
 		return
 	}
 
-	data, diags = convertFullPolicyResultResponseSchemaToModel(ctx, nil, nil, nil, &policyResp.JSON200.Result[0])
+	data, diags = convertFullPolicyResultResponseSchemaToModel(ctx, nil, nil, nil, &policyResp.JSON200.Result)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -399,14 +419,20 @@ func (r *PolicyResource) Update(
 	}
 
 	inGroups := getInGroupsFromPlan(data.InGroups)
+	var sortOrder *float32
+	if data.SortOrder.ValueInt64() > 0 {
+		sortOrder = utils.Float32Pointer(float32(data.SortOrder.ValueInt64()))
+	}
+
 	policyResp, err := r.client.PoliciesUpdateWithResponse(ctx, uid, client.PolicyUpdateSchema{
-		Bundles:  &bundles,
-		InGroups: &inGroups,
-		Roles:    &roles,
+		Bundles:   &bundles,
+		InGroups:  &inGroups,
+		Roles:     &roles,
+		SortOrder: sortOrder,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update the policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -415,7 +441,7 @@ func (r *PolicyResource) Update(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -431,7 +457,7 @@ func (r *PolicyResource) Update(
 		bundles,
 		inGroups,
 		roles,
-		&policyResp.JSON200.Result[0],
+		&policyResp.JSON200.Result,
 	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -477,7 +503,7 @@ func (r *PolicyResource) Delete(
 	httpResp, err := r.client.PoliciesDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete policy, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -486,7 +512,7 @@ func (r *PolicyResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Policy by the id (%s), status code: %d, %s",
 				data.ID.String(),
@@ -563,9 +589,11 @@ func convertFullPolicyResultResponseSchemaToModel(
 
 	// Create the Terraform resource model using the extracted data
 	return PolicyResourceModel{
-		ID:       utils.TrimmedStringValue(data.Id.String()),
-		Roles:    roles,
-		Bundles:  bundles,
-		InGroups: inGroups,
+		ID:        utils.TrimmedStringValue(data.Id.String()),
+		Roles:     roles,
+		Bundles:   bundles,
+		InGroups:  inGroups,
+		Number:    basetypes.NewInt64Value(int64(data.Number)),
+		SortOrder: basetypes.NewInt64Value(int64(data.SortOrder)),
 	}, diags
 }

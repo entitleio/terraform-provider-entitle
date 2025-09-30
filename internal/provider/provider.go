@@ -20,6 +20,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/directoryGroups"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/permissions"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/policies"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/roles"
@@ -169,6 +170,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		agentTokens.NewAgentTokenResource,
 		bundles.NewBundleResource,
 		integrations.NewIntegrationResource,
+		permissions.NewPermissionResource,
 		policies.NewPolicyResource,
 		resources.NewResourceResource,
 		roles.NewRoleResource,
@@ -186,6 +188,7 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		bundles.NewBundleDataSource,
 		directoryGroups.NewDirectoryGroupsDataSource,
 		integrations.NewIntegrationDataSource,
+		permissions.NewPermissionsDataSource,
 		policies.NewPolicyDataSource,
 		resources.NewResourceDataSource,
 		roles.NewRoleDataSource,

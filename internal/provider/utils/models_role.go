@@ -18,6 +18,11 @@ type Role struct {
 	Resource types.Object `tfsdk:"resource" json:"resource"`
 }
 
+// AsObjectValue converts Role to ObjectValue.
+func (m Role) AsObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	return types.ObjectValueFrom(ctx, Role{}.AttributeTypes(), m)
+}
+
 // attributeTypes returns the attribute types for Role.
 func (m Role) AttributeTypes() map[string]attr.Type {
 	return map[string]attr.Type{

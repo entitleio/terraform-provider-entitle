@@ -211,7 +211,7 @@ func (r *AccessReviewForwardResource) Create(
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to create the access review forward, got error: %v", err),
 		)
 		return
@@ -220,7 +220,7 @@ func (r *AccessReviewForwardResource) Create(
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf("Unable to create the Access Review Forward, got error: %s", err),
 		)
 		return
@@ -278,7 +278,7 @@ func (r *AccessReviewForwardResource) Read(
 	apiResp, err := r.client.AccessReviewForwardsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the access review forward by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -287,7 +287,7 @@ func (r *AccessReviewForwardResource) Read(
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Access Review Forward by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -388,7 +388,7 @@ func (r *AccessReviewForwardResource) Delete(
 	httpResp, err := r.client.AccessReviewForwardsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete access review forward, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -397,7 +397,7 @@ func (r *AccessReviewForwardResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Unable to delete Access Review Forward, id: (%s), status code: %v, %s",
 				data.ID.String(),

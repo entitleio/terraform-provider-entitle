@@ -884,6 +884,20 @@ const (
 	IntegrationResourceRoleAuditLogResponseSchemaTypeTicketUserDeclined                                         IntegrationResourceRoleAuditLogResponseSchemaType = "ticket.userDeclined"
 )
 
+// Defines values for PermissionSchemaPath.
+const (
+	PermissionSchemaPathBoth     PermissionSchemaPath = "both"
+	PermissionSchemaPathDirect   PermissionSchemaPath = "direct"
+	PermissionSchemaPathIndirect PermissionSchemaPath = "indirect"
+)
+
+// Defines values for PermissionSchemaTypes.
+const (
+	PermissionSchemaTypesExternal PermissionSchemaTypes = "external"
+	PermissionSchemaTypesJit      PermissionSchemaTypes = "jit"
+	PermissionSchemaTypesPolicy   PermissionSchemaTypes = "policy"
+)
+
 // Defines values for PolicyAuditLogResponseSchemaType.
 const (
 	PolicyAuditLogResponseSchemaTypeAccessReviewActivated                                      PolicyAuditLogResponseSchemaType = "accessReview.activated"
@@ -977,6 +991,20 @@ const (
 	PolicyAuditLogResponseSchemaTypeTicketTaskCreated                                          PolicyAuditLogResponseSchemaType = "ticket.taskCreated"
 	PolicyAuditLogResponseSchemaTypeTicketUserApproved                                         PolicyAuditLogResponseSchemaType = "ticket.userApproved"
 	PolicyAuditLogResponseSchemaTypeTicketUserDeclined                                         PolicyAuditLogResponseSchemaType = "ticket.userDeclined"
+)
+
+// Defines values for RevokePermissionResultResponseSchemaPath.
+const (
+	RevokePermissionResultResponseSchemaPathBoth     RevokePermissionResultResponseSchemaPath = "both"
+	RevokePermissionResultResponseSchemaPathDirect   RevokePermissionResultResponseSchemaPath = "direct"
+	RevokePermissionResultResponseSchemaPathIndirect RevokePermissionResultResponseSchemaPath = "indirect"
+)
+
+// Defines values for RevokePermissionResultResponseSchemaTypes.
+const (
+	RevokePermissionResultResponseSchemaTypesExternal RevokePermissionResultResponseSchemaTypes = "external"
+	RevokePermissionResultResponseSchemaTypesJit      RevokePermissionResultResponseSchemaTypes = "jit"
+	RevokePermissionResultResponseSchemaTypesPolicy   RevokePermissionResultResponseSchemaTypes = "policy"
 )
 
 // Defines values for TicketAuditLogResponseSchemaType.
@@ -1088,6 +1116,14 @@ const (
 	PermissionsIndexParamsSortOrderAsc  PermissionsIndexParamsSortOrder = "asc"
 	PermissionsIndexParamsSortOrderDESC PermissionsIndexParamsSortOrder = "DESC"
 	PermissionsIndexParamsSortOrderDesc PermissionsIndexParamsSortOrder = "desc"
+)
+
+// Defines values for PermissionsIndexAccountParamsSortOrder.
+const (
+	ASC  PermissionsIndexAccountParamsSortOrder = "ASC"
+	Asc  PermissionsIndexAccountParamsSortOrder = "asc"
+	DESC PermissionsIndexAccountParamsSortOrder = "DESC"
+	Desc PermissionsIndexAccountParamsSortOrder = "desc"
 )
 
 // AccessRequestApplicationResponseSchema defines model for AccessRequestApplicationResponseSchema.
@@ -1279,6 +1315,16 @@ type AccessReviewAuditLogResponseSchema struct {
 // AccessReviewAuditLogResponseSchemaType Type of the audit log
 type AccessReviewAuditLogResponseSchemaType string
 
+// AccountResultSchema defines model for AccountResultSchema.
+type AccountResultSchema struct {
+	CreatedAt   time.Time                       `json:"createdAt"`
+	Email       string                          `json:"email"`
+	Euid        string                          `json:"euid"`
+	Id          openapi_types.UUID              `json:"id"`
+	Integration AccountsIntegrationResultSchema `json:"integration"`
+	Name        string                          `json:"name"`
+}
+
 // AccountsApplicationResultSchema defines model for AccountsApplicationResultSchema.
 type AccountsApplicationResultSchema struct {
 	Name string `json:"name"`
@@ -1299,15 +1345,6 @@ type AccountsResultSchema struct {
 	Id          openapi_types.UUID              `json:"id"`
 	Integration AccountsIntegrationResultSchema `json:"integration"`
 	Name        string                          `json:"name"`
-}
-
-// ActorSchema defines model for ActorSchema.
-type ActorSchema struct {
-	// Name Actor's display name
-	Name string `json:"name"`
-
-	// Users Users associated with the actor
-	Users []UserSchema `json:"users"`
 }
 
 // AgentTokenCreateBodySchema defines model for AgentTokenCreateBodySchema.
@@ -1576,12 +1613,6 @@ type EntityResponseSchema struct {
 	Id    openapi_types.UUID  `json:"id"`
 }
 
-// EntitySchema defines model for EntitySchema.
-type EntitySchema struct {
-	// Name Entity name
-	Name string `json:"name"`
-}
-
 // EnumAllowedDurations defines model for EnumAllowedDurations.
 type EnumAllowedDurations float32
 
@@ -1672,7 +1703,7 @@ type FullBundleResultResponseSchema struct {
 
 // FullPolicyResponseSchema defines model for FullPolicyResponseSchema.
 type FullPolicyResponseSchema struct {
-	Result []FullPolicyResultResponseSchema `json:"result"`
+	Result FullPolicyResultResponseSchema `json:"result"`
 }
 
 // FullPolicyResultResponseSchema defines model for FullPolicyResultResponseSchema.
@@ -1680,9 +1711,9 @@ type FullPolicyResultResponseSchema struct {
 	Bundles   []PolicyBundleResponseSchema `json:"bundles"`
 	Id        openapi_types.UUID           `json:"id"`
 	InGroups  []PolicyGroupResponseSchema  `json:"inGroups"`
-	Number    float32                      `json:"number"`
+	Number    int                          `json:"number"`
 	Roles     []PolicyRoleResponseSchema   `json:"roles"`
-	SortOrder float32                      `json:"sortOrder"`
+	SortOrder int                          `json:"sortOrder"`
 }
 
 // FullWorkflowResponseSchema defines model for FullWorkflowResponseSchema.
@@ -2166,24 +2197,30 @@ type PermissionResponseSchema struct {
 
 // PermissionSchema defines model for PermissionSchema.
 type PermissionSchema struct {
-	// Actor Permission's actor
-	Actor ActorSchema `json:"actor"`
+	// Account Permission's account
+	Account AccountResultSchema `json:"account"`
 
 	// CreatedAt Date of the permission creation
 	CreatedAt time.Time `json:"createdAt"`
 
-	// DeprecatedAt Date of the permission deprecation
-	DeprecatedAt *time.Time `json:"deprecatedAt"`
+	// Path Whether this permission is a direct permission / indirect permission or both
+	Path PermissionSchemaPath `json:"path"`
 
-	// Integration Permission's integration
-	Integration EntitySchema `json:"integration"`
-
-	// Resource Permission's resource
-	Resource EntitySchema `json:"resource"`
+	// PermissionId Permission ID
+	PermissionId openapi_types.UUID `json:"permissionId"`
 
 	// Role Permission's role
-	Role EntitySchema `json:"role"`
+	Role IntegrationResourceRoleListItemResponseSchema `json:"role"`
+
+	// Types Origin of the permission
+	Types []PermissionSchemaTypes `json:"types"`
 }
+
+// PermissionSchemaPath Whether this permission is a direct permission / indirect permission or both
+type PermissionSchemaPath string
+
+// PermissionSchemaTypes defines model for PermissionSchema.Types.
+type PermissionSchemaTypes string
 
 // PolicyApplicationResponseSchema defines model for PolicyApplicationResponseSchema.
 type PolicyApplicationResponseSchema struct {
@@ -2311,6 +2348,41 @@ type ResourceResponseSchema struct {
 	Name        string                        `json:"name"`
 }
 
+// RevokePermissionResponseSchema defines model for RevokePermissionResponseSchema.
+type RevokePermissionResponseSchema struct {
+	Result RevokePermissionResultResponseSchema `json:"result"`
+}
+
+// RevokePermissionResultResponseSchema defines model for RevokePermissionResultResponseSchema.
+type RevokePermissionResultResponseSchema struct {
+	// Account Permission's account
+	Account AccountResultSchema `json:"account"`
+
+	// CreatedAt Date of the permission creation
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Message Message describing the revocation status
+	Message string `json:"message"`
+
+	// Path Whether this permission is a direct permission / indirect permission or both
+	Path RevokePermissionResultResponseSchemaPath `json:"path"`
+
+	// PermissionId Permission ID
+	PermissionId openapi_types.UUID `json:"permissionId"`
+
+	// Role Permission's role
+	Role IntegrationResourceRoleListItemResponseSchema `json:"role"`
+
+	// Types Origin of the permission
+	Types []RevokePermissionResultResponseSchemaTypes `json:"types"`
+}
+
+// RevokePermissionResultResponseSchemaPath Whether this permission is a direct permission / indirect permission or both
+type RevokePermissionResultResponseSchemaPath string
+
+// RevokePermissionResultResponseSchemaTypes defines model for RevokePermissionResultResponseSchema.Types.
+type RevokePermissionResultResponseSchemaTypes string
+
 // ScheduleEntitySchema defines model for ScheduleEntitySchema.
 type ScheduleEntitySchema struct {
 	// Id A unique identifier of the schedule
@@ -2385,15 +2457,6 @@ type UserResultSchema struct {
 	FamilyName string             `json:"familyName"`
 	GivenName  string             `json:"givenName"`
 	Id         openapi_types.UUID `json:"id"`
-}
-
-// UserSchema defines model for UserSchema.
-type UserSchema struct {
-	// Email User's email
-	Email string `json:"email"`
-
-	// Name Entity name
-	Name string `json:"name"`
 }
 
 // WorkflowApprovalFlowResponseSchema defines model for WorkflowApprovalFlowResponseSchema.
@@ -2525,16 +2588,31 @@ type IntegrationsIndexParams struct {
 
 // PermissionsIndexParams defines parameters for PermissionsIndex.
 type PermissionsIndexParams struct {
-	SortOrder *PermissionsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-
-	// Date Filter permissions up to a certain point in time
-	Date    *openapi_types.Date `form:"date,omitempty" json:"date,omitempty"`
-	Page    *float32            `form:"page,omitempty" json:"page,omitempty"`
-	PerPage *float32            `form:"perPage,omitempty" json:"perPage,omitempty"`
+	SortOrder     *PermissionsIndexParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+	Page          *float32                         `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *float32                         `form:"perPage,omitempty" json:"perPage,omitempty"`
+	IntegrationId *string                          `form:"integrationId,omitempty" json:"integrationId,omitempty"`
+	ResourceId    *string                          `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	RoleId        *string                          `form:"roleId,omitempty" json:"roleId,omitempty"`
+	Search        *string                          `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // PermissionsIndexParamsSortOrder defines parameters for PermissionsIndex.
 type PermissionsIndexParamsSortOrder string
+
+// PermissionsIndexAccountParams defines parameters for PermissionsIndexAccount.
+type PermissionsIndexAccountParams struct {
+	SortOrder     *PermissionsIndexAccountParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+	Page          *float32                                `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *float32                                `form:"perPage,omitempty" json:"perPage,omitempty"`
+	IntegrationId *string                                 `form:"integrationId,omitempty" json:"integrationId,omitempty"`
+	ResourceId    *string                                 `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	RoleId        *string                                 `form:"roleId,omitempty" json:"roleId,omitempty"`
+	Search        *string                                 `form:"search,omitempty" json:"search,omitempty"`
+}
+
+// PermissionsIndexAccountParamsSortOrder defines parameters for PermissionsIndexAccount.
+type PermissionsIndexAccountParamsSortOrder string
 
 // PoliciesIndexParams defines parameters for PoliciesIndex.
 type PoliciesIndexParams struct {
@@ -4274,6 +4352,12 @@ type ClientInterface interface {
 	// PermissionsIndex request
 	PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PermissionsIndexAccount request
+	PermissionsIndexAccount(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PermissionsRevoke request
+	PermissionsRevoke(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PoliciesIndex request
 	PoliciesIndex(ctx context.Context, params *PoliciesIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4823,6 +4907,30 @@ func (c *Client) IntegrationsUpdate(ctx context.Context, id openapi_types.UUID, 
 
 func (c *Client) PermissionsIndex(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPermissionsIndexRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PermissionsIndexAccount(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPermissionsIndexAccountRequest(c.Server, accountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PermissionsRevoke(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPermissionsRevokeRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -6593,9 +6701,145 @@ func NewPermissionsIndexRequest(server string, params *PermissionsIndexParams) (
 
 		}
 
-		if params.Date != nil {
+		if params.Page != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "date", runtime.ParamLocationQuery, *params.Date); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PerPage != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IntegrationId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, *params.IntegrationId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourceId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, *params.ResourceId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RoleId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "roleId", runtime.ParamLocationQuery, *params.RoleId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPermissionsIndexAccountRequest generates requests for PermissionsIndexAccount
+func NewPermissionsIndexAccountRequest(server string, accountId openapi_types.UUID, params *PermissionsIndexAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "accountId", runtime.ParamLocationPath, accountId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/permissions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sortOrder", runtime.ParamLocationQuery, *params.SortOrder); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -6641,10 +6885,108 @@ func NewPermissionsIndexRequest(server string, params *PermissionsIndexParams) (
 
 		}
 
+		if params.IntegrationId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, *params.IntegrationId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourceId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, *params.ResourceId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RoleId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "roleId", runtime.ParamLocationQuery, *params.RoleId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPermissionsRevokeRequest generates requests for PermissionsRevoke
+func NewPermissionsRevokeRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/permissions/%s/revoke", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -7990,6 +8332,12 @@ type ClientWithResponsesInterface interface {
 	// PermissionsIndexWithResponse request
 	PermissionsIndexWithResponse(ctx context.Context, params *PermissionsIndexParams, reqEditors ...RequestEditorFn) (*PermissionsIndexResponse, error)
 
+	// PermissionsIndexAccountWithResponse request
+	PermissionsIndexAccountWithResponse(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*PermissionsIndexAccountResponse, error)
+
+	// PermissionsRevokeWithResponse request
+	PermissionsRevokeWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*PermissionsRevokeResponse, error)
+
 	// PoliciesIndexWithResponse request
 	PoliciesIndexWithResponse(ctx context.Context, params *PoliciesIndexParams, reqEditors ...RequestEditorFn) (*PoliciesIndexResponse, error)
 
@@ -8717,6 +9065,50 @@ func (r PermissionsIndexResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PermissionsIndexResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PermissionsIndexAccountResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PermissionResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r PermissionsIndexAccountResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PermissionsIndexAccountResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PermissionsRevokeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON2XX      *RevokePermissionResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r PermissionsRevokeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PermissionsRevokeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9592,6 +9984,24 @@ func (c *ClientWithResponses) PermissionsIndexWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsePermissionsIndexResponse(rsp)
+}
+
+// PermissionsIndexAccountWithResponse request returning *PermissionsIndexAccountResponse
+func (c *ClientWithResponses) PermissionsIndexAccountWithResponse(ctx context.Context, accountId openapi_types.UUID, params *PermissionsIndexAccountParams, reqEditors ...RequestEditorFn) (*PermissionsIndexAccountResponse, error) {
+	rsp, err := c.PermissionsIndexAccount(ctx, accountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePermissionsIndexAccountResponse(rsp)
+}
+
+// PermissionsRevokeWithResponse request returning *PermissionsRevokeResponse
+func (c *ClientWithResponses) PermissionsRevokeWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*PermissionsRevokeResponse, error) {
+	rsp, err := c.PermissionsRevoke(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePermissionsRevokeResponse(rsp)
 }
 
 // PoliciesIndexWithResponse request returning *PoliciesIndexResponse
@@ -10658,6 +11068,58 @@ func ParsePermissionsIndexResponse(rsp *http.Response) (*PermissionsIndexRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePermissionsIndexAccountResponse parses an HTTP response from a PermissionsIndexAccountWithResponse call
+func ParsePermissionsIndexAccountResponse(rsp *http.Response) (*PermissionsIndexAccountResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PermissionsIndexAccountResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PermissionResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePermissionsRevokeResponse parses an HTTP response from a PermissionsRevokeWithResponse call
+func ParsePermissionsRevokeResponse(rsp *http.Response) (*PermissionsRevokeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PermissionsRevokeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode/100 == 2:
+		var dest RevokePermissionResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON2XX = &dest
 
 	}
 

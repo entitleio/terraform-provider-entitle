@@ -174,12 +174,11 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			"agent_token": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
-						Optional:            true,
+						Required:            true,
 						Description:         "agent token's name",
 						MarkdownDescription: "agent token's name",
 					},
 				},
-				Required:            false,
 				Optional:            true,
 				Description:         "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
 				MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n",
@@ -373,6 +372,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:            true,
 						Description:         "the workflow's id",
 						MarkdownDescription: "the workflow's id",
+						Validators: []validator.String{
+							validators.UUID{},
+						},
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -426,15 +428,6 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	integrationName := plan.Name.ValueString()
-	if integrationName == "" {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"missing the name variable for entitle integration",
-		)
-		return
-	}
-
 	var allowedDurations *[]client.EnumAllowedDurations
 	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
 	if diags.HasError() {
@@ -447,24 +440,12 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	var workflow client.IdParamsSchema
-	workflow.Id, err = uuid.Parse(plan.Workflow.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
-		)
-		return
-	}
+	workflow.Id = uuid.MustParse(plan.Workflow.ID.ValueString())
 
 	var agentToken *client.NameSchema
 	if plan.AgentToken != nil {
-		if !plan.AgentToken.Name.IsNull() && !plan.AgentToken.Name.IsUnknown() {
-			name := plan.AgentToken.Name.ValueString()
-			if name != "" {
-				agentToken = &client.NameSchema{
-					Name: name,
-				}
-			}
+		agentToken = &client.NameSchema{
+			Name: plan.AgentToken.Name.ValueString(),
 		}
 	}
 
@@ -618,7 +599,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
 		ConnectionJson:                       connectionJson,
 		Maintainers:                          &maintainers,
-		Name:                                 integrationName,
+		Name:                                 plan.Name.ValueString(),
 		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
 		Owner:                                owner,
 		Readonly:                             plan.Readonly.ValueBool(),
@@ -629,8 +610,8 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	integrationResp, err := r.client.IntegrationsCreateWithResponse(ctx, body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to crete the integration, got error: %v", err),
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to create the integration, got error: %v", err),
 		)
 		return
 	}
@@ -638,7 +619,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to create the Integration, %s, status code: %d, %s",
 				string(integrationResp.Body),
@@ -703,7 +684,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	integrationResp, err := r.client.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the integration by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -712,7 +693,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -767,14 +748,6 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("falied to parse the given id to UUID format, got error: %v", err),
-		)
-		return
-	}
-
-	if data.Name.IsNull() || data.Name.IsUnknown() {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"missing the name variable for entitle integration",
 		)
 		return
 	}
@@ -944,7 +917,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update the integration by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -953,7 +926,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the Integration by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -1011,7 +984,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	httpResp, err := r.client.IntegrationsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete integrations, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -1020,7 +993,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Integration by the id (%s), status code: %d, %s",
 				data.ID.String(),

@@ -233,19 +233,12 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	uid, err := uuid.Parse(data.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse integration id to uuid format, got error: %s", err),
-		)
-		return
-	}
+	uid := uuid.MustParse(data.Id.ValueString())
 
 	integrationResp, err := d.client.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the integration by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -254,7 +247,7 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Integration by the id (%s), status code: %d, %s",
 				uid.String(),

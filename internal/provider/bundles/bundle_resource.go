@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -95,7 +93,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			// Attribute: name
 			"name": schema.StringAttribute{
 				Required:            true,
-				Optional:            false,
 				MarkdownDescription: "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
 				Description:         "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
 				Validators: []validator.String{
@@ -105,7 +102,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			// Attribute: description
 			"description": schema.StringAttribute{
 				Required: true,
-				Optional: false,
 				MarkdownDescription: "The bundle’s extended description, for example, " +
 					"“Permissions bundle for junior accountants” or “factory floor worker permissions bundle”.",
 				Description: "The bundle’s extended description, for example, " +
@@ -124,7 +120,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			// Attribute: allowed_durations
 			"allowed_durations": schema.ListAttribute{
 				ElementType:         types.NumberType,
-				Required:            false,
 				Optional:            true,
 				Description:         "You can override your organization’s default duration on each bundle",
 				MarkdownDescription: "You can override your organization’s default duration on each bundle",
@@ -164,7 +159,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					Attributes: map[string]schema.Attribute{
 						// Attribute: role id
 						"id": schema.StringAttribute{
-							Required:            false,
 							Optional:            true,
 							Description:         "The unique ID of the role.",
 							MarkdownDescription: "The unique ID of the role.",
@@ -232,7 +226,6 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 				},
 				Required:            true,
-				Optional:            false,
 				Description:         "List of roles included in the bundle.",
 				MarkdownDescription: "List of roles included in the bundle.",
 			},
@@ -359,53 +352,32 @@ func (r *BundleResource) Create(
 		return
 	}
 
-	// Process Name
-	name := plan.Name.ValueString()
-	if name == "" {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"failed to create bundle resource required name variable",
-		)
-		return
-	}
-
 	// Call Entitle API to create the bundle resource
 	bundleResp, err := r.client.BundlesCreateWithResponse(ctx, client.PublicBundleCreateBodySchema{
 		AllowedDurations: &allowedDurations,
 		Category:         plan.Category.ValueStringPointer(),
 		Description:      plan.Description.ValueStringPointer(),
-		Name:             name,
+		Name:             plan.Name.ValueString(),
 		Roles:            roles,
 		Tags:             &tags,
 		Workflow:         workflow,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to create the bundle, got error: %v", err),
 		)
 		return
 	}
 
-	// Handle API response status
-	if bundleResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(bundleResp.Body)
-		if bundleResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(bundleResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body, utils.WithIgnoreNotFound())
+	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
-				"failed to create the bundle, %s, status code: %d%s",
-				string(bundleResp.Body),
+				"Failed to create a Bundle status code: %d, %s",
 				bundleResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -466,7 +438,7 @@ func (r *BundleResource) Read(
 	bundleResp, err := r.client.BundlesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -475,7 +447,7 @@ func (r *BundleResource) Read(
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -614,7 +586,7 @@ func (r *BundleResource) Update(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update the bundle by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -623,7 +595,7 @@ func (r *BundleResource) Update(
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the Bundle by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -682,7 +654,7 @@ func (r *BundleResource) Delete(
 	httpResp, err := r.client.BundlesDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete bundle, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -691,7 +663,7 @@ func (r *BundleResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Bundle by the id (%s), status code: %d, %s",
 				data.ID.String(),

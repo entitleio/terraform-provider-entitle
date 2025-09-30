@@ -151,7 +151,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 	apiResp, err := d.client.AccessRequestForwardsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the access request forward by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -160,7 +160,7 @@ func (d *AccessRequestForwardDataSource) Read(ctx context.Context, req datasourc
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Access Request Forward by the id (%s), status code: %d, %s",
 				uid.String(),
