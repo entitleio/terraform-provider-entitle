@@ -139,12 +139,16 @@ func (d *DirectoryGroupsDataSource) Read(ctx context.Context, req datasource.Rea
 
 	apiResp, err := d.client.DirectoryGroupsIndexWithResponse(ctx, &params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list Directory Groups: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to list Directory Groups: %s", err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to list Directory Groups: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiResponseError.Error(),
+			fmt.Sprintf("Failed to list Directory Groups: %s", err))
 		return
 	}
 

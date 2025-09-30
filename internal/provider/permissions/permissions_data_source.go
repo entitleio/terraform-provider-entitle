@@ -197,7 +197,9 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			Search:        params.Search,
 		})
 		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list permissions: %s", err))
+			resp.Diagnostics.AddError(
+				utils.ApiConnectionError.Error(),
+				fmt.Sprintf("Unable to list permissions: %s", err))
 			return
 		}
 
@@ -209,7 +211,9 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else {
 		permissionsResp, err := d.client.PermissionsIndexWithResponse(ctx, &params)
 		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list permissions: %s", err))
+			resp.Diagnostics.AddError(
+				utils.ApiConnectionError.Error(),
+				fmt.Sprintf("Unable to list permissions: %s", err))
 			return
 		}
 
@@ -221,7 +225,8 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	if err := utils.HTTPResponseToError(reqStatusCode, reqBody); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to list permissions: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiResponseError.Error(), fmt.Sprintf("Failed to list permissions: %s", err))
 		return
 	}
 

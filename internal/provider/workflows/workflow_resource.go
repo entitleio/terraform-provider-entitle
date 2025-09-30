@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
@@ -81,7 +79,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				},
 			},
 			"name": schema.StringAttribute{
-				Computed:            false,
 				Required:            true,
 				MarkdownDescription: "The human-readable name of the workflow. Must be between 2 and 50 characters.",
 				Description:         "The human-readable name of the workflow. Must be between 2 and 50 characters.",
@@ -117,7 +114,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Required:            false,
 										Optional:            true,
 										Description:         "A unique identifier of the group",
 										MarkdownDescription: "A unique identifier of the group",
@@ -137,7 +133,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Required:            false,
 										Optional:            true,
 										Description:         "A unique identifier of the schedule",
 										MarkdownDescription: "A unique identifier of the schedule",
@@ -368,14 +363,6 @@ func (r *WorkflowResource) Create(
 	}
 
 	name := plan.Name.ValueString()
-	if name == "" {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"failed create workflow resource required name variable",
-		)
-
-		return
-	}
 
 	rules, diags := getWorkflowsRules(ctx, plan.Rules)
 	resp.Diagnostics.Append(diags...)
@@ -389,29 +376,20 @@ func (r *WorkflowResource) Create(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to crete the workflow, got error: %v", err),
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to create the workflow, got error: %v", err),
 		)
 		return
 	}
 
-	if workflowResp.HTTPResponse.StatusCode != 200 {
-		errBody, _ := utils.GetErrorBody(workflowResp.Body)
-		if workflowResp.HTTPResponse.StatusCode == http.StatusUnauthorized ||
-			(workflowResp.HTTPResponse.StatusCode == http.StatusBadRequest && strings.Contains(errBody.GetMessage(), "is not a valid uuid")) {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				"unauthorized token, update the entitle token and retry please",
-			)
-			return
-		}
-
+	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
+	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
-				"failed to create the workflow, status code: %d%s",
+				"Failed to create the Workflow, status code: %d, %s",
 				workflowResp.HTTPResponse.StatusCode,
-				errBody.GetMessage(),
+				err.Error(),
 			),
 		)
 		return
@@ -459,7 +437,7 @@ func (r *WorkflowResource) Read(
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the workflow by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -468,7 +446,7 @@ func (r *WorkflowResource) Read(
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -527,7 +505,7 @@ func (r *WorkflowResource) Update(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update the workflow by the id (%s), got error: %s", uid.String(), err),
 		)
 
@@ -537,7 +515,7 @@ func (r *WorkflowResource) Update(
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the Workflow by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -586,7 +564,7 @@ func (r *WorkflowResource) Delete(
 	httpResp, err := r.client.WorkflowsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete workflow, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -595,7 +573,7 @@ func (r *WorkflowResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Workflow by the id (%s), status code: %d, %s",
 				parsedUUID.String(),

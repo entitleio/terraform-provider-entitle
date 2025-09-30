@@ -133,7 +133,7 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to create the agent token, got error: %v", err),
 		)
 		return
@@ -142,7 +142,7 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to create the Agent Token, status code: %d, %s",
 				agentTokenResp.HTTPResponse.StatusCode,
@@ -199,7 +199,7 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 	agentTokenResp, err := r.client.AgentTokensShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the agent token by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -208,7 +208,7 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -277,7 +277,7 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update agent token by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -286,7 +286,7 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -343,7 +343,7 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 	httpResp, err := r.client.AgentTokensDestroyWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete agent token, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -352,7 +352,7 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Agent by the id (%s), status code: %d, %s",
 				data.ID.String(),

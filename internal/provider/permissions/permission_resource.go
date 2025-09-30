@@ -190,12 +190,12 @@ func (r *PermissionResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	apiResp, err := r.client.PermissionsRevokeWithResponse(ctx, permissionID)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete permission %s: %s", permissionID, err))
+		resp.Diagnostics.AddError(utils.ApiConnectionError.Error(), fmt.Sprintf("Unable to delete permission %s: %s", permissionID, err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body, utils.WithIgnorePending(), utils.WithIgnoreNotFound()); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to delete permission: %s", err))
+		resp.Diagnostics.AddError(utils.ApiResponseError.Error(), fmt.Sprintf("Failed to delete permission: %s", err))
 		return
 	}
 }

@@ -116,7 +116,7 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	agentTokenResp, err := d.client.AgentTokensShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the Agent Token by the ID (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -125,7 +125,7 @@ func (d *AgentTokenDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Agent Token by the id (%s), status code: %d, %s",
 				uid.String(),

@@ -278,7 +278,7 @@ func (r *AccessRequestForwardResource) Read(
 	apiResp, err := r.client.AccessRequestForwardsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the access request forward by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -287,7 +287,7 @@ func (r *AccessRequestForwardResource) Read(
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Access Request Forward by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -388,7 +388,7 @@ func (r *AccessRequestForwardResource) Delete(
 	httpResp, err := r.client.AccessRequestForwardsDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete access request forward, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -397,7 +397,7 @@ func (r *AccessRequestForwardResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Unable to delete Access Request Forward, id: (%s), status code: %v, %s",
 				data.ID.String(),

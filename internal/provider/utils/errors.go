@@ -6,7 +6,11 @@ import (
 	"fmt"
 )
 
-var errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
+var (
+	ApiConnectionError   = errors.New("API Connection Error")
+	ApiResponseError     = errors.New("API Response Error")
+	errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
+)
 
 type ErrorBody struct {
 	ID      string `json:"errorId"`

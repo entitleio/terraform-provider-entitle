@@ -153,12 +153,16 @@ func (d *AccountsDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Call API
 	apiResp, err := d.client.AccountsIndexWithResponse(ctx, &params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list accounts: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to list accounts: %s", err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to list accounts: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiResponseError.Error(),
+			fmt.Sprintf("Failed to list accounts: %s", err))
 		return
 	}
 

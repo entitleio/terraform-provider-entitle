@@ -351,7 +351,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to create the role, got error: %v", err),
 		)
 		return
@@ -360,7 +360,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to create the role: %s",
 				err.Error(),
@@ -415,7 +415,7 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	apiResp, err := r.client.RolesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the role by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -424,7 +424,7 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the role by the id (%s), %s",
 				uid.String(),
@@ -534,7 +534,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to update role by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -543,7 +543,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to update the role by the id (%s),%s",
 				uid.String(),
@@ -598,7 +598,7 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	httpResp, err := r.client.RoleDeleteWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to delete role, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -607,7 +607,7 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf("Unable to delete role, id: (%s), %s", data.ID.String(), err.Error()),
 		)
 		return

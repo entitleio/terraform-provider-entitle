@@ -132,7 +132,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resourceResp, err := d.client.UsersIndexWithResponse(ctx, &params)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the User by the email (%s), got error: %s", email, err),
 		)
 		return
@@ -141,7 +141,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf("Unable to get the User by the email (%s), got error: %s", email, err),
 		)
 		return
@@ -150,7 +150,7 @@ func (d *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	results := resourceResp.JSON200.Result
 	if len(results) == 0 {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the User by the email (%s), no results found",
 				email,

@@ -152,7 +152,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	apiResp, err := d.client.AccessReviewForwardsShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiConnectionError.Error(),
 			fmt.Sprintf("Unable to get the access review forward by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -161,7 +161,7 @@ func (d *AccessReviewForwardDataSource) Read(ctx context.Context, req datasource
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Client Error",
+			utils.ApiResponseError.Error(),
 			fmt.Sprintf(
 				"Failed to get the Access Review Forward by the id (%s), status code: %d, %s",
 				uid.String(),

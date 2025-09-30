@@ -133,12 +133,16 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	apiResp, err := d.client.RolesIndexWithResponse(ctx, &params)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list roles: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiConnectionError.Error(),
+			fmt.Sprintf("Unable to list roles: %s", err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to list roles: %s", err))
+		resp.Diagnostics.AddError(
+			utils.ApiResponseError.Error(),
+			fmt.Sprintf("Failed to list roles: %s", err))
 		return
 	}
 
