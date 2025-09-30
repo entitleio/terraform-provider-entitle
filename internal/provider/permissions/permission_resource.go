@@ -18,7 +18,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
-// Ensure the interface is satisfied
+// Ensure the interface is satisfied.
 var _ resource.Resource = &PermissionResource{}
 var _ resource.ResourceWithImportState = &PermissionResource{}
 
@@ -26,7 +26,7 @@ type PermissionResource struct {
 	client *client.ClientWithResponses
 }
 
-// PermissionResourceModel defines the Terraform schema model
+// PermissionResourceModel defines the Terraform schema model.
 type PermissionResourceModel struct {
 	ID    types.String `tfsdk:"id"`
 	Actor types.Object `tfsdk:"actor"`
@@ -113,7 +113,7 @@ func (r *PermissionResource) Configure(ctx context.Context, req resource.Configu
 	r.client = c
 }
 
-// Create verifies the permission exists in the list and sets ID (import-only)
+// Create verifies the permission exists in the list and sets ID (import-only).
 func (r *PermissionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan PermissionResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -136,7 +136,7 @@ func (r *PermissionResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-// Read fetches the permission from the list and updates state
+// Read fetches the permission from the list and updates state.
 func (r *PermissionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state PermissionResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -160,7 +160,7 @@ func (r *PermissionResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-// Update is not supported
+// Update is not supported.
 func (r *PermissionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	resp.Diagnostics.AddWarning(
 		"Update Not Supported",
@@ -177,7 +177,7 @@ func (r *PermissionResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-// Delete removes the permission via API
+// Delete removes the permission via API.
 func (r *PermissionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state PermissionResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -190,24 +190,24 @@ func (r *PermissionResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	apiResp, err := r.client.PermissionsRevokeWithResponse(ctx, permissionID)
 	if err != nil {
-		resp.Diagnostics.AddError(utils.ApiConnectionError.Error(), fmt.Sprintf("Unable to delete permission %s: %s", permissionID, err))
+		resp.Diagnostics.AddError(utils.ErrApiConnection.Error(), fmt.Sprintf("Unable to delete permission %s: %s", permissionID, err))
 		return
 	}
 
 	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body, utils.WithIgnorePending(), utils.WithIgnoreNotFound()); err != nil {
-		resp.Diagnostics.AddError(utils.ApiResponseError.Error(), fmt.Sprintf("Failed to delete permission: %s", err))
+		resp.Diagnostics.AddError(utils.ErrApiResponse.Error(), fmt.Sprintf("Failed to delete permission: %s", err))
 		return
 	}
 }
 
-// ImportState allows terraform import
+// ImportState allows terraform import.
 func (r *PermissionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 }
 
 // --- Helper functions ---
 
-// findPermissionByID searches the permission list for the given ID
+// findPermissionByID searches the permission list for the given ID.
 func (r *PermissionResource) findPermissionByID(ctx context.Context, id string, page int) (*client.PermissionSchema, error) {
 	params := client.PermissionsIndexParams{
 		PerPage: utils.Float32Pointer(1000),
@@ -234,7 +234,7 @@ func (r *PermissionResource) findPermissionByID(ctx context.Context, id string, 
 	return nil, fmt.Errorf("permission %s not found", id)
 }
 
-// mapPermissionToModel maps API response into Terraform model
+// mapPermissionToModel maps API response into Terraform model.
 func mapPermissionToModel(ctx context.Context, model *PermissionResourceModel, perm *client.PermissionSchema) diag.Diagnostics {
 	typesSet, diags := GetTypesFromResponse(perm.Types)
 	if diags.HasError() {

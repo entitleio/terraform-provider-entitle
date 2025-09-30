@@ -16,7 +16,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
-// Ensure the interface is satisfied
+// Ensure the interface is satisfied.
 var _ datasource.DataSource = &PermissionsDataSource{}
 
 // PermissionDataSourceModel describes the data source data model.
@@ -28,12 +28,12 @@ type PermissionDataSourceModel struct {
 	Types types.Set           `tfsdk:"types"`
 }
 
-// PermissionsDataSource defines the list data source
+// PermissionsDataSource defines the list data source.
 type PermissionsDataSource struct {
 	client *client.ClientWithResponses
 }
 
-// PermissionFilterModel represents optional filters
+// PermissionFilterModel represents optional filters.
 type PermissionFilterModel struct {
 	IntegrationID types.String `tfsdk:"integration_id"`
 	ResourceID    types.String `tfsdk:"resource_id"`
@@ -42,13 +42,13 @@ type PermissionFilterModel struct {
 	Search        types.String `tfsdk:"search"`
 }
 
-// PermissionListDataSourceModel is the Terraform state model
+// PermissionListDataSourceModel is the Terraform state model.
 type PermissionListDataSourceModel struct {
 	Filter      *PermissionFilterModel      `tfsdk:"filter"`
 	Permissions []PermissionDataSourceModel `tfsdk:"permissions"`
 }
 
-// NewPermissionsDataSource constructor
+// NewPermissionsDataSource constructor.
 func NewPermissionsDataSource() datasource.DataSource {
 	return &PermissionsDataSource{}
 }
@@ -198,7 +198,7 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		})
 		if err != nil {
 			resp.Diagnostics.AddError(
-				utils.ApiConnectionError.Error(),
+				utils.ErrApiConnection.Error(),
 				fmt.Sprintf("Unable to list permissions: %s", err))
 			return
 		}
@@ -212,7 +212,7 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		permissionsResp, err := d.client.PermissionsIndexWithResponse(ctx, &params)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				utils.ApiConnectionError.Error(),
+				utils.ErrApiConnection.Error(),
 				fmt.Sprintf("Unable to list permissions: %s", err))
 			return
 		}
@@ -226,7 +226,7 @@ func (d *PermissionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	if err := utils.HTTPResponseToError(reqStatusCode, reqBody); err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(), fmt.Sprintf("Failed to list permissions: %s", err))
+			utils.ErrApiResponse.Error(), fmt.Sprintf("Failed to list permissions: %s", err))
 		return
 	}
 

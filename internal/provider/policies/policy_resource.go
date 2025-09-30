@@ -269,7 +269,7 @@ func (r *PolicyResource) Create(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to create the policy, got error: %v", err),
 		)
 		return
@@ -278,7 +278,7 @@ func (r *PolicyResource) Create(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to create the Policy, status code: %d, %s",
 				policyResp.HTTPResponse.StatusCode,
@@ -344,7 +344,7 @@ func (r *PolicyResource) Read(
 	policyResp, err := r.client.PoliciesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -353,7 +353,7 @@ func (r *PolicyResource) Read(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -432,7 +432,7 @@ func (r *PolicyResource) Update(
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the policy by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -441,7 +441,7 @@ func (r *PolicyResource) Update(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the Policy by the id (%s), status code: %d, %s",
 				uid.String(),
@@ -503,7 +503,7 @@ func (r *PolicyResource) Delete(
 	httpResp, err := r.client.PoliciesDestroyWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to delete policy, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -512,7 +512,7 @@ func (r *PolicyResource) Delete(
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Policy by the id (%s), status code: %d, %s",
 				data.ID.String(),

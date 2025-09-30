@@ -500,7 +500,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	resourceResp, err := r.client.ResourcesCreateWithResponse(ctx, body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to create the resource, got error: %v", err),
 		)
 		return
@@ -509,7 +509,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to create the resource, %s",
 				err.Error(),
@@ -567,7 +567,7 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 	resourceResp, err := r.client.ResourcesShowWithResponse(ctx, uid)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the resource by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -576,7 +576,7 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the resource by the id (%s), %s",
 				uid.String(),
@@ -800,7 +800,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the resource by the id (%s), got error: %s", uid.String(), err),
 		)
 		return
@@ -809,7 +809,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the resource by the id (%s), %s",
 				uid.String(),
@@ -860,7 +860,7 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 	httpResp, err := r.client.ResourcesDeleteWithResponse(ctx, parsedUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiConnectionError.Error(),
+			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to delete resource, id: (%s), got error: %v", data.ID.String(), err),
 		)
 		return
@@ -869,7 +869,7 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			utils.ApiResponseError.Error(),
+			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the resource by the id (%s), %s",
 				data.ID.String(),
