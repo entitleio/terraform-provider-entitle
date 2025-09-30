@@ -121,7 +121,7 @@ func (r *PermissionResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	perm, err := r.findPermissionByID(ctx, plan.ID.ValueString())
+	perm, err := r.findPermissionByID(ctx, plan.ID.ValueString(), 1)
 	if err != nil {
 		resp.Diagnostics.AddError("Permission Not Found", err.Error())
 		return
@@ -144,7 +144,7 @@ func (r *PermissionResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	perm, err := r.findPermissionByID(ctx, state.ID.ValueString())
+	perm, err := r.findPermissionByID(ctx, state.ID.ValueString(), 1)
 	if err != nil {
 		// Permission no longer exists → remove from state
 		resp.State.RemoveResource(ctx)
@@ -208,9 +208,10 @@ func (r *PermissionResource) ImportState(ctx context.Context, req resource.Impor
 // --- Helper functions ---
 
 // findPermissionByID searches the permission list for the given ID
-func (r *PermissionResource) findPermissionByID(ctx context.Context, id string) (*client.PermissionSchema, error) {
+func (r *PermissionResource) findPermissionByID(ctx context.Context, id string, page int) (*client.PermissionSchema, error) {
 	params := client.PermissionsIndexParams{
-		PerPage: utils.Float32Pointer(10000000000000000), // no way to get all or by id, hence fetching the maximum limit
+		PerPage: utils.Float32Pointer(1000),
+		Page:    utils.Float32Pointer(float32(page)),
 	}
 	permissionsResp, err := r.client.PermissionsIndexWithResponse(ctx, &params)
 	if err != nil {
@@ -224,6 +225,10 @@ func (r *PermissionResource) findPermissionByID(ctx context.Context, id string) 
 		if perm.PermissionId.String() == id {
 			return &perm, nil
 		}
+	}
+
+	if permissionsResp.JSON200.Pagination.TotalPages > float32(page) {
+		return r.findPermissionByID(ctx, id, page+1)
 	}
 
 	return nil, fmt.Errorf("permission %s not found", id)
