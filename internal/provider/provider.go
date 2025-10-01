@@ -190,8 +190,11 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		integrations.NewIntegrationDataSource,
 		permissions.NewPermissionsDataSource,
 		policies.NewPolicyDataSource,
+		resources.NewResourcesDataSource,
 		resources.NewResourceDataSource,
 		roles.NewRoleDataSource,
+		roles.NewRolesDataSource,
+		users.NewUserDataSource,
 		users.NewUsersDataSource,
 		workflows.NewWorkflowDataSource,
 	}
