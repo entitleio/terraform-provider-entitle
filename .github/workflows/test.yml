@@ -14,7 +14,11 @@ on:
         required: true
       ENTITLE_API_KEY:
         required: true
+      ENTITLE_API_KEY2:
+        required: true
       ENTITLE_BUNDLE_ID:
+        required: true
+      ENTITLE_DIRECTORY_GROUP_EMAIL:
         required: true
       ENTITLE_INTEGRATION_ID:
         required: true
@@ -24,9 +28,13 @@ on:
         required: true
       ENTITLE_OWNER_ID:
         required: true
-      ENTITLE_ROLE_ID:
+      ENTITLE_PERMISSION_ID:
+        required: true
+      ENTITLE_POLICY_ID:
         required: true
       ENTITLE_RESOURCE_ID:
+        required: true
+      ENTITLE_ROLE_ID:
         required: true
       ENTITLE_USER1_ID:
         required: true
@@ -34,12 +42,16 @@ on:
         required: true
       ENTITLE_WORKFLOW_ID:
         required: true
+      GITLAB_ACCESS_TOKEN:
+        required: true
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - 'README.md'
       - 'examples/**'
+  pull_request:
+    types: [opened, reopened, synchronize]
   schedule:
     - cron: '0 2 * * *' # Every day at 02:00 UTC
 
@@ -116,19 +128,24 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "1"
-          ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REVIEW_FORWARD_ID }}
           ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REQUEST_FORWARD_ID }}
+          ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REVIEW_FORWARD_ID }}
           ENTITLE_AGENT_TOKEN_ID: ${{ secrets.ENTITLE_AGENT_TOKEN_ID }}
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
+          ENTITLE_API_KEY2: ${{ secrets.ENTITLE_API_KEY2 }}
           ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+          ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
-          ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_ROLE_ID }}
+          ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_PERMISSION_ID }}
+          ENTITLE_POLICY_ID: ${{ secrets.ENTITLE_POLICY_ID }}
           ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_RESOURCE_ID }}
+          ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_ROLE_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
         run: go test -v -cover -tags=acceptance ./internal/provider/...
         timeout-minutes: 10
