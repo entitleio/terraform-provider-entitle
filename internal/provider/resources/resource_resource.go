@@ -84,6 +84,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				Validators: []validator.String{
 					validators.NewName(2, 50),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
