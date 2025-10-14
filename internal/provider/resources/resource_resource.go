@@ -91,7 +91,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
 				Optional:    true,
-				Computed:    true,
 				Description: "As the admin, you can set different durations for the resource, " +
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the resource, " +
@@ -127,7 +126,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					},
 				},
 				Optional: true,
-				Computed: true,
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
@@ -800,15 +798,26 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
+	// Only include Owner and Workflow pointers if they have values
+	var ownerPtr *client.UserEntitySchema
+	if data.Owner != nil && owner.Id != "" {
+		ownerPtr = &owner
+	}
+
+	var workflowPtr *client.IdParamsSchema
+	if data.Workflow != nil && workflow.Id != uuid.Nil {
+		workflowPtr = &workflow
+	}
+
 	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, client.ResourcesUpdateJSONRequestBody{
 		AllowedDurations:        &allowedDurations,
 		Maintainers:             &maintainers,
-		Owner:                   &owner,
+		Owner:                   ownerPtr,
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
 		UserDefinedDescription:  data.UserDefinedDescription.ValueStringPointer(),
 		UserDefinedTags:         &userDefinedTags,
-		Workflow:                &workflow,
+		Workflow:                workflowPtr,
 	})
 
 	if err != nil {
