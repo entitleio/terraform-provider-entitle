@@ -134,3 +134,54 @@ resource "entitle_resource" "my_resource" {
 		},
 	})
 }
+
+// TestResourceResourceNullFields tests that null values for optional fields like
+// allowed_durations and maintainers don't cause drift when imported or read from API
+func TestResourceResourceNullFields(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create resource with minimal required fields (no allowed_durations, no maintainers)
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_resource" "minimal_resource" {
+	name        = "Minimal Resource"
+	requestable = false
+	integration = {
+		id = "%s"
+	}
+}
+`, os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify basic attributes
+					resource.TestCheckResourceAttr("entitle_resource.minimal_resource", "name", "Minimal Resource"),
+					resource.TestCheckResourceAttr("entitle_resource.minimal_resource", "requestable", "false"),
+					resource.TestCheckResourceAttr("entitle_resource.minimal_resource", "integration.id", os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID")),
+					// Verify ID is set
+					resource.TestCheckResourceAttrSet("entitle_resource.minimal_resource", "id"),
+					// Verify integration name is populated from API
+					resource.TestCheckResourceAttrSet("entitle_resource.minimal_resource", "integration.name"),
+				),
+			},
+			// Apply same config again to verify no drift with null fields
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_resource" "minimal_resource" {
+	name        = "Minimal Resource"
+	requestable = false
+	integration = {
+		id = "%s"
+	}
+}
+`, os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID")),
+				PlanOnly: true,
+			},
+			// Import the resource and verify no drift
+			{
+				ResourceName:      "entitle_resource.minimal_resource",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
