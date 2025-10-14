@@ -50,7 +50,7 @@ type ResourceResourceModel struct {
 	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
-	Integration             utils.IdNameModel                   `tfsdk:"integration"`
+	Integration             *utils.IdNameModel                  `tfsdk:"integration"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 	Requestable             types.Bool                          `tfsdk:"requestable"`
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
@@ -91,6 +91,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
 				Optional:    true,
+				Computed:    true,
 				Description: "As the admin, you can set different durations for the resource, " +
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the resource, " +
@@ -126,6 +127,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					},
 				},
 				Optional: true,
+				Computed: true,
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
@@ -164,6 +166,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the workflow's name",
 						MarkdownDescription: "the workflow's name",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Optional:            true,
@@ -181,6 +186,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the integration's name",
 						MarkdownDescription: "the integration's name",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Required:            true,
@@ -356,13 +364,15 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	var integration client.IdParamsSchema
-	integration.Id, err = uuid.Parse(plan.Integration.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse given integration id to UUID, got error: %v", err),
-		)
-		return
+	if plan.Integration != nil && !plan.Integration.ID.IsNull() && !plan.Integration.ID.IsUnknown() {
+		integration.Id, err = uuid.Parse(plan.Integration.ID.String())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf("Failed to parse given integration id to UUID, got error: %v", err),
+			)
+			return
+		}
 	}
 
 	var owner client.UserEntitySchema
@@ -914,20 +924,26 @@ func convertFullResourceResultResponseSchemaToModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
-	if data.AllowedDurations != nil {
+	var allowedDurations types.Set
+	if data.AllowedDurations != nil && len(data.AllowedDurations) > 0 {
+		allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
 		for i, duration := range data.AllowedDurations {
 			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 		}
+		var errs diag.Diagnostics
+		allowedDurations, errs = types.SetValue(types.NumberType, allowedDurationsValues)
+		diags.Append(errs...)
+		if diags.HasError() {
+			return ResourceResourceModel{}, diags
+		}
+	} else {
+		allowedDurations = types.SetNull(types.NumberType)
 	}
 
-	allowedDurations, errs := types.SetValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
-	if diags.HasError() {
-		return ResourceResourceModel{}, diags
+	var maintainers []*utils.MaintainerModel
+	if len(data.Maintainers) > 0 {
+		maintainers = make([]*utils.MaintainerModel, 0, len(data.Maintainers))
 	}
-
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
 
@@ -1110,6 +1126,22 @@ func convertFullResourceResultResponseSchemaToModel(
 		}
 	}
 
+	var integration *utils.IdNameModel
+	if data.Integration.Id.String() != "" {
+		integration = &utils.IdNameModel{
+			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
+			Name: utils.TrimmedStringValue(data.Integration.Name),
+		}
+	}
+
+	var workflow *utils.IdNameModel
+	if data.Workflow != nil && data.Workflow.Id.String() != "" {
+		workflow = &utils.IdNameModel{
+			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
+			Name: utils.TrimmedStringValue(data.Workflow.Name),
+		}
+	}
+
 	// Create the Terraform resource model using the extracted data
 	return ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
@@ -1119,14 +1151,8 @@ func convertFullResourceResultResponseSchemaToModel(
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
 		UserDefinedDescription: types.StringPointerValue(data.UserDefinedDescription),
-		Workflow: &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
-			Name: utils.TrimmedStringValue(data.Workflow.Name),
-		},
-		Integration: utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
-			Name: utils.TrimmedStringValue(data.Integration.Name),
-		},
+		Workflow:                workflow,
+		Integration:             integration,
 		Requestable:             types.BoolValue(data.Requestable),
 		Owner:                   owner,
 		PrerequisitePermissions: prerequisitePermissions,
