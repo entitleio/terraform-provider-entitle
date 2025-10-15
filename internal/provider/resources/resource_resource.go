@@ -497,7 +497,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	body := client.IntegrationResourcesCreateBodySchema{
-		AllowedDurations:        &allowedDurations,
+		AllowedDurations:        allowedDurations,
 		Integration:             integration,
 		Maintainers:             &maintainers,
 		Name:                    name,
@@ -810,7 +810,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, client.ResourcesUpdateJSONRequestBody{
-		AllowedDurations:        &allowedDurations,
+		AllowedDurations:        allowedDurations,
 		Maintainers:             &maintainers,
 		Owner:                   ownerPtr,
 		PrerequisitePermissions: prerequisitePermissions,
