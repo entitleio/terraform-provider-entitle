@@ -75,6 +75,9 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Validators: []validator.String{
 					validators.NewName(2, 50),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"resource": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
