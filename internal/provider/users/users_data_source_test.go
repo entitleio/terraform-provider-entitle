@@ -1,5 +1,4 @@
 //go:build acceptance
-// +build acceptance
 
 package users_test
 

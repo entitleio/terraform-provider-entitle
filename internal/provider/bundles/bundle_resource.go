@@ -98,6 +98,9 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Validators: []validator.String{
 					validators.NewName(2, 50),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			// Attribute: description
 			"description": schema.StringAttribute{
