@@ -24,10 +24,6 @@ resource "entitle_bundle" "my_bundle" {
 	name = "My Bundle"
 	description = "Description of my bundle"
 	allowed_durations = [ 1800 ]
-	tags = [
-		"test1", 
-		"test2"
-	]
 	workflow = {
 		id = "%s"
 	}
@@ -42,8 +38,6 @@ resource "entitle_bundle" "my_bundle" {
 					// Verify
 					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "name", "My Bundle"),
 					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "description", "Description of my bundle"),
-					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "allowed_durations.0", "1800"),
-					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "tags.#", "2"),
 					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "roles.0.id", os.Getenv("ENTITLE_ROLE_ID")),
 
@@ -79,6 +73,8 @@ resource "entitle_bundle" "my_bundle" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "name", "My Bundle UPDATED"),
+					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "allowed_durations.0", "1800"),
+					resource.TestCheckResourceAttr("entitle_bundle.my_bundle", "tags.#", "2"),
 				),
 			},
 		},

@@ -44,7 +44,14 @@ resource "entitle_integration" "my_gitlab" {
     workflow = {
       id   = "%s"
     }
-	maintainers = []
+	maintainers = [
+		{
+			type = "user"
+			entity = {
+				id = "%s"
+			}
+		}
+	]
 	prerequisite_permissions = [
 		{
 			default = true
@@ -54,7 +61,7 @@ resource "entitle_integration" "my_gitlab" {
 		}
 	]
 }
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration"),
@@ -109,7 +116,6 @@ resource "entitle_integration" "my_gitlab" {
     workflow = {
       id   = "%s"
     }
-	maintainers = []
 	prerequisite_permissions = [
 		{
 			default = true

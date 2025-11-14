@@ -35,8 +35,8 @@ type ResourceDataSourceModel struct {
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
 	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
 	Integration             types.Object                        `tfsdk:"integration"`
-	Tags                    types.List                          `tfsdk:"tags"`
-	UserDefinedTags         types.List                          `tfsdk:"user_defined_tags"`
+	Tags                    types.Set                           `tfsdk:"tags"`
+	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
 	Name                    types.String                        `tfsdk:"name"`
 	Description             types.String                        `tfsdk:"description"`
@@ -80,7 +80,7 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: "Custom description provided by the user",
 				Description:         "Custom description provided by the user",
 			},
-			"tags": schema.ListAttribute{
+			"tags": schema.SetAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
 				Description: "Any meta-data searchable tags should be added here, " +
@@ -88,7 +88,7 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 			},
-			"user_defined_tags": schema.ListAttribute{
+			"user_defined_tags": schema.SetAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
 				Description: "Any meta-data searchable tags should be added here, " +
@@ -348,13 +348,13 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	tags, diagsTags := utils.GetStringList(resourceResp.JSON200.Result.Tags)
+	tags, diagsTags := utils.GetStringSet(resourceResp.JSON200.Result.Tags)
 	resp.Diagnostics.Append(diagsTags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	userDefinedTags, diagsTags := utils.GetStringList(resourceResp.JSON200.Result.UserDefinedTags)
+	userDefinedTags, diagsTags := utils.GetStringSet(resourceResp.JSON200.Result.UserDefinedTags)
 	resp.Diagnostics.Append(diagsTags...)
 	if resp.Diagnostics.HasError() {
 		return

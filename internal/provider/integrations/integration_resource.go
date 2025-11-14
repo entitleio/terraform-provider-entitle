@@ -96,8 +96,11 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the integration, " +
 					"compared to the workflow linked to it.",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -107,51 +110,30 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Computed:            true,
 							Default:             stringdefault.StaticString("user"),
 						},
-						"user": schema.SingleNestedAttribute{
+						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
-								"id": schema.ListAttribute{
-									ElementType:         types.StringType,
+								"id": schema.StringAttribute{
 									Required:            true,
-									Description:         "user's id",
-									MarkdownDescription: "user's id",
+									Description:         "Maintainer's unique identifier",
+									MarkdownDescription: "Maintainer's unique identifier",
 								},
-								"email": schema.ListAttribute{
-									ElementType:         types.StringType,
+								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "user's email",
-									MarkdownDescription: "user's email",
+									Description:         "Maintainer's email",
+									MarkdownDescription: "Maintainer's email",
 								},
 							},
 							Optional:            true,
-							Description:         "user",
-							MarkdownDescription: "user",
-						},
-						"group": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"id": schema.ListAttribute{
-									ElementType:         types.StringType,
-									Required:            true,
-									Description:         "group's id",
-									MarkdownDescription: "group's id",
-								},
-								"email": schema.ListAttribute{
-									ElementType:         types.StringType,
-									Computed:            true,
-									Description:         "group's email",
-									MarkdownDescription: "group's email",
-								},
-							},
-							Optional:            true,
-							Description:         "group",
-							MarkdownDescription: "group",
+							Description:         "Maintainer's entity",
+							MarkdownDescription: "Maintainer's entity",
 						},
 					},
 				},
-				Required: true,
-				Description: "Maintainer of the integration, second tier owner of that integration you can " +
-					"have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration.",
-				MarkdownDescription: "Maintainer of the integration, second tier owner of that integration you can " +
-					"have multiple integration Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Integration.",
+				Optional: true,
+				Description: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
+				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 			},
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -162,6 +144,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.String{
 							validators.NewName(2, 50),
 							validators.Lowercase{},
+						},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
 						},
 					},
 				},
@@ -461,7 +446,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	if plan.ConnectionJson.IsNull() || plan.ConnectionJson.IsUnknown() || plan.ConnectionJson.ValueString() == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			"missing the connection_json variable for entitle integration",
+			"Missing the connection_json variable for entitle integration",
 		)
 		return
 	}
@@ -476,7 +461,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf(
-				"failed to parse given connection json to json, %s, error: %v",
+				"Failed to parse given connection json to json, %s, error: %v",
 				plan.ConnectionJson.ValueString(),
 				err,
 			),
@@ -495,25 +480,28 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		if maintainer.Entity.IsNull() {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"failed missing data for entity maintainer",
+				"Missing data for entity maintainer",
 			)
 			return
 		}
 
-		var target client.EntityResponseSchema
-		diagsAs := maintainer.Entity.As(ctx, &target, basetypes.ObjectAsOptions{
-			UnhandledUnknownAsEmpty: true,
-		})
-		if diagsAs.HasError() {
-			diags.Append(diagsAs...)
+		idAttr := maintainer.Entity.Attributes()["id"]
+		strVal, ok := idAttr.(basetypes.StringValue)
+		if !ok {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Missing data for entity maintainer id",
+			)
+			return
 		}
+		entityID := strVal.ValueString()
 
-		switch maintainer.Type.String() {
+		switch maintainer.Type.ValueString() {
 		case utils.MaintainerTypeUser:
 			maintainerUser := client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
 				User: client.UserEntitySchema{
-					Id: target.Id.String(),
+					Id: entityID,
 				},
 			}
 
@@ -522,7 +510,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
+					fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
 				)
 			}
 
@@ -531,7 +519,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			maintainerGroup := client.GroupMaintainerSchema{
 				Type: client.EnumMaintainerTypeGroupGroup,
 				Group: client.GroupEntitySchema{
-					Id: target.Id.String(),
+					Id: entityID,
 				},
 			}
 
@@ -540,7 +528,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed to merge group maintainer",
+					"Failed to merge group maintainer",
 				)
 				return
 			}
@@ -549,7 +537,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		default:
 			resp.Diagnostics.AddError(
 				"Client Error",
-				"failed invalid maintainer type only support user and group",
+				"Invalid maintainer type only support user and group",
 			)
 			return
 		}
@@ -573,7 +561,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					fmt.Sprintf("failed to merge prerequisite permission data, error: %v", err),
+					fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err),
 				)
 				return
 			}
@@ -676,7 +664,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}
@@ -747,7 +735,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("falied to parse the given id to UUID format, got error: %v", err),
+			fmt.Sprintf("Falied to parse the given id to UUID format, got error: %v", err),
 		)
 		return
 	}
@@ -771,7 +759,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				fmt.Sprintf("failed to parse given workflow id to UUID, got error: %v", err),
+				fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err),
 			)
 			return
 		}
@@ -789,7 +777,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf(
-					"failed to parse given connection json to json, %s, error: %v",
+					"Failed to parse given connection json to json, %s, error: %v",
 					utils.TrimPrefixSuffix(data.ConnectionJson.String()),
 					err,
 				),
@@ -800,75 +788,75 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		connectionJson = &result
 	}
 
-	var maintainers []client.IntegrationsUpdateBodySchema_Maintainers_Item
-	if len(data.Maintainers) > 0 {
-		maintainers = make([]client.IntegrationsUpdateBodySchema_Maintainers_Item, 0)
-		for _, maintainer := range data.Maintainers {
-			if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
-				continue
+	maintainers := make([]client.IntegrationsUpdateBodySchema_Maintainers_Item, 0)
+	for _, maintainer := range data.Maintainers {
+		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
+			continue
+		}
+
+		if maintainer.Entity.IsNull() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Missing data for entity maintainer",
+			)
+			return
+		}
+
+		idAttr := maintainer.Entity.Attributes()["id"]
+		strVal, ok := idAttr.(basetypes.StringValue)
+		if !ok {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Missing data for entity maintainer id",
+			)
+			return
+		}
+		entityID := strVal.ValueString()
+
+		switch maintainer.Type.ValueString() {
+		case utils.MaintainerTypeUser:
+			maintainerUser := client.UserMaintainerSchema{
+				Type: client.EnumMaintainerTypeUserUser,
+				User: client.UserEntitySchema{
+					Id: entityID,
+				},
 			}
 
-			if maintainer.Entity.IsNull() {
+			item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
+			err := item.MergeUserMaintainerSchema(maintainerUser)
+			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"failed missing data for entity maintainer",
+					fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
+				)
+			}
+
+			maintainers = append(maintainers, item)
+		case utils.MaintainerTypeGroup:
+			maintainerGroup := client.GroupMaintainerSchema{
+				Type: client.EnumMaintainerTypeGroupGroup,
+				Group: client.GroupEntitySchema{
+					Id: entityID,
+				},
+			}
+
+			item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
+			err := item.MergeGroupMaintainerSchema(maintainerGroup)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					"Failed to merge group maintainer",
 				)
 				return
 			}
 
-			var target client.EntityResponseSchema
-			diagsAs := maintainer.Entity.As(ctx, &target, basetypes.ObjectAsOptions{
-				UnhandledUnknownAsEmpty: true,
-			})
-			if diagsAs.HasError() {
-				diags.Append(diagsAs...)
-			}
-
-			switch maintainer.Type.String() {
-			case utils.MaintainerTypeUser:
-
-				maintainerUser := client.UserMaintainerSchema{
-					Type: client.EnumMaintainerTypeUserUser,
-					User: client.UserEntitySchema{
-						Id: target.Id.String(),
-					},
-				}
-
-				item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
-				err := item.MergeUserMaintainerSchema(maintainerUser)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("failed to merge user maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			case utils.MaintainerTypeGroup:
-				maintainerGroup := client.GroupMaintainerSchema{
-					Type: client.EnumMaintainerTypeGroupGroup,
-					Group: client.GroupEntitySchema{
-						Id: target.Id.String(),
-					},
-				}
-
-				item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
-				err = item.MergeGroupMaintainerSchema(maintainerGroup)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("failed to merge group maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			default:
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"failed invalid maintainer type only support user and group",
-				)
-				return
-			}
+			maintainers = append(maintainers, item)
+		default:
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Invalid maintainer type only support user and group",
+			)
+			return
 		}
 	}
 
@@ -1055,7 +1043,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		if err != nil {
 			diags.AddError(
 				"No data",
-				"failed to marshal the maintainer data",
+				"Failed to marshal the maintainer data",
 			)
 
 			return IntegrationResourceModel{}, diags
@@ -1188,6 +1176,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				)
 			}
 		}
+	}
+
+	if len(maintainers) == 0 {
+		maintainers = nil
 	}
 
 	// Create the Terraform resource model using the extracted data

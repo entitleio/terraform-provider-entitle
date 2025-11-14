@@ -385,7 +385,7 @@ func converterWorkflow(
 	if data == nil {
 		diags.AddError(
 			"No data",
-			"failed the given schema data is nil",
+			"Given schema data is nil",
 		)
 
 		return WorkflowDataSourceModel{}, diags
