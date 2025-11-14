@@ -50,7 +50,7 @@ type ResourceResourceModel struct {
 	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
-	Integration             utils.IdNameModel                   `tfsdk:"integration"`
+	Integration             *utils.IdNameModel                  `tfsdk:"integration"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 	Requestable             types.Bool                          `tfsdk:"requestable"`
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
@@ -164,6 +164,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the workflow's name",
 						MarkdownDescription: "the workflow's name",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Optional:            true,
@@ -181,6 +184,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the integration's name",
 						MarkdownDescription: "the integration's name",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Required:            true,
@@ -356,13 +362,15 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	var integration client.IdParamsSchema
-	integration.Id, err = uuid.Parse(plan.Integration.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse given integration id to UUID, got error: %v", err),
-		)
-		return
+	if plan.Integration != nil && !plan.Integration.ID.IsNull() && !plan.Integration.ID.IsUnknown() {
+		integration.Id, err = uuid.Parse(plan.Integration.ID.String())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf("Failed to parse given integration id to UUID, got error: %v", err),
+			)
+			return
+		}
 	}
 
 	var owner client.UserEntitySchema
@@ -380,6 +388,17 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		}
 	}
 
+	// Custom structs to match API requirements (email field needed for groups)
+	type GroupEntityWithEmail struct {
+		Id    string  `json:"id"`
+		Email *string `json:"email"`
+	}
+	type GroupMaintainerWithEmail struct {
+		Type  string               `json:"type"`
+		Group GroupEntityWithEmail `json:"group"`
+	}
+
+	// Always initialize as empty array, not nil, so it serializes as [] instead of null
 	maintainers := make([]client.IntegrationResourcesCreateBodySchema_Maintainers_Item, 0)
 	for _, maintainer := range plan.Maintainers {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
@@ -425,19 +444,30 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 
 			maintainers = append(maintainers, item)
 		case utils.MaintainerTypeGroup:
-			maintainerGroup := client.GroupMaintainerSchema{
-				Type: client.EnumMaintainerTypeGroupGroup,
-				Group: client.GroupEntitySchema{
-					Id: entityID,
+			// Use custom struct with email field (required by API, must be null for groups)
+			maintainerGroup := GroupMaintainerWithEmail{
+				Type: "group",
+				Group: GroupEntityWithEmail{
+					Id:    entityID,
+					Email: nil, // API requires explicit null
 				},
 			}
 
-			item := client.IntegrationResourcesCreateBodySchema_Maintainers_Item{}
-			err := item.MergeGroupMaintainerSchema(maintainerGroup)
+			// Marshal to JSON and unmarshal into the union type
+			maintainerJSON, err := json.Marshal(maintainerGroup)
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
-					"Failed to merge group maintainer",
+					fmt.Sprintf("Failed to marshal group maintainer data, error: %v", err),
+				)
+				return
+			}
+
+			item := client.IntegrationResourcesCreateBodySchema_Maintainers_Item{}
+			if err := item.UnmarshalJSON(maintainerJSON); err != nil {
+				resp.Diagnostics.AddError(
+					"Client Error",
+					fmt.Sprintf("Failed to unmarshal group maintainer data, error: %v", err),
 				)
 				return
 			}
@@ -489,7 +519,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	body := client.IntegrationResourcesCreateBodySchema{
-		AllowedDurations:        &allowedDurations,
+		AllowedDurations:        allowedDurations,
 		Integration:             integration,
 		Maintainers:             &maintainers,
 		Name:                    name,
@@ -674,7 +704,18 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
-	var maintainers []client.IntegrationResourcesUpdateBodySchema_Maintainers_Item
+	// Custom structs to match API requirements (email field needed for groups)
+	type GroupEntityWithEmail struct {
+		Id    string  `json:"id"`
+		Email *string `json:"email"`
+	}
+	type GroupMaintainerWithEmail struct {
+		Type  string                `json:"type"`
+		Group GroupEntityWithEmail  `json:"group"`
+	}
+
+	// Always initialize as empty array, not nil, so it serializes as [] instead of null
+	maintainers := make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0)
 	if len(data.Maintainers) > 0 {
 		maintainers = make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(data.Maintainers))
 		for _, maintainer := range data.Maintainers {
@@ -703,7 +744,6 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 
 			switch maintainer.Type.ValueString() {
 			case utils.MaintainerTypeUser:
-
 				maintainerUser := client.UserMaintainerSchema{
 					Type: client.EnumMaintainerTypeUserUser,
 					User: client.UserEntitySchema{
@@ -722,20 +762,32 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 
 				maintainers = append(maintainers, item)
 			case utils.MaintainerTypeGroup:
-				maintainerGroup := client.GroupMaintainerSchema{
-					Type: client.EnumMaintainerTypeGroupGroup,
-					Group: client.GroupEntitySchema{
-						Id: entityID,
+				// Use custom struct with email field (required by API, must be null for groups)
+				maintainerGroup := GroupMaintainerWithEmail{
+					Type: "group",
+					Group: GroupEntityWithEmail{
+						Id:    entityID,
+						Email: nil, // API requires explicit null
 					},
 				}
 
-				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
-				err = item.MergeGroupMaintainerSchema(maintainerGroup)
+				// Marshal to JSON and unmarshal into the union type
+				maintainerJSON, err := json.Marshal(maintainerGroup)
 				if err != nil {
 					resp.Diagnostics.AddError(
 						"Client Error",
-						fmt.Sprintf("Failed to merge group maintainer data, error: %v", err),
+						fmt.Sprintf("Failed to marshal group maintainer data, error: %v", err),
 					)
+					return
+				}
+
+				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
+				if err := item.UnmarshalJSON(maintainerJSON); err != nil {
+					resp.Diagnostics.AddError(
+						"Client Error",
+						fmt.Sprintf("Failed to unmarshal group maintainer data, error: %v", err),
+					)
+					return
 				}
 
 				maintainers = append(maintainers, item)
@@ -790,15 +842,26 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
+	// Only include Owner and Workflow pointers if they have values
+	var ownerPtr *client.UserEntitySchema
+	if data.Owner != nil && owner.Id != "" {
+		ownerPtr = &owner
+	}
+
+	var workflowPtr *client.IdParamsSchema
+	if data.Workflow != nil && workflow.Id != uuid.Nil {
+		workflowPtr = &workflow
+	}
+
 	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, client.ResourcesUpdateJSONRequestBody{
-		AllowedDurations:        &allowedDurations,
+		AllowedDurations:        allowedDurations,
 		Maintainers:             &maintainers,
-		Owner:                   &owner,
+		Owner:                   ownerPtr,
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
 		UserDefinedDescription:  data.UserDefinedDescription.ValueStringPointer(),
 		UserDefinedTags:         &userDefinedTags,
-		Workflow:                &workflow,
+		Workflow:                workflowPtr,
 	})
 
 	if err != nil {
@@ -914,23 +977,40 @@ func convertFullResourceResultResponseSchemaToModel(
 	}
 
 	// Extract and convert allowed durations from the API response
-	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
-	if data.AllowedDurations != nil {
+	var allowedDurations types.Set
+	if data.AllowedDurations != nil && len(data.AllowedDurations) > 0 {
+		allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
 		for i, duration := range data.AllowedDurations {
 			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 		}
+		var errs diag.Diagnostics
+		allowedDurations, errs = types.SetValue(types.NumberType, allowedDurationsValues)
+		diags.Append(errs...)
+		if diags.HasError() {
+			return ResourceResourceModel{}, diags
+		}
+	} else {
+		allowedDurations = types.SetNull(types.NumberType)
 	}
 
-	allowedDurations, errs := types.SetValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
-	if diags.HasError() {
-		return ResourceResourceModel{}, diags
+	// Custom struct to handle null email in API responses
+	type MaintainerCommonResponse struct {
+		Type  string `json:"type"`
+		Group *struct {
+			Id    string  `json:"id"`
+			Email *string `json:"email"`
+		} `json:"group,omitempty"`
+		User *struct {
+			Id    string `json:"id"`
+			Email string `json:"email"`
+		} `json:"user,omitempty"`
 	}
 
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	var maintainers []*utils.MaintainerModel
+	if len(data.Maintainers) > 0 {
+		maintainers = make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	}
 	for _, item := range data.Maintainers {
-		var body utils.MaintainerCommonResponseSchema
-
 		dataBytes, err := item.MarshalJSON()
 		if err != nil {
 			diags.AddError(
@@ -942,6 +1022,7 @@ func convertFullResourceResultResponseSchemaToModel(
 			return ResourceResourceModel{}, diags
 		}
 
+		var body MaintainerCommonResponse
 		err = json.Unmarshal(dataBytes, &body)
 		if err != nil {
 			diags.AddError(
@@ -986,32 +1067,23 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			maintainers = append(maintainers, maintainerUser)
 		case utils.MaintainerTypeGroup:
-			responseSchema, err := item.AsMaintainerGroupResponseSchema()
-			if err != nil {
+			if body.Group == nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf(
-						"Failed to convert response schema to group response schema, error: %v",
-						err,
-					),
+					"Group maintainer missing group data",
 				)
-
 				return ResourceResourceModel{}, diags
 			}
 
-			bytes, err := responseSchema.Group.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to get maintainer group email bytes, error: %v", err),
-				)
-
-				return ResourceResourceModel{}, diags
+			// Handle null email field
+			emailValue := ""
+			if body.Group.Email != nil {
+				emailValue = *body.Group.Email
 			}
 
 			g := &utils.IdEmailModel{
-				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: utils.TrimmedStringValue(string(bytes)),
+				Id:    utils.TrimmedStringValue(body.Group.Id),
+				Email: utils.TrimmedStringValue(emailValue),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
@@ -1110,6 +1182,22 @@ func convertFullResourceResultResponseSchemaToModel(
 		}
 	}
 
+	var integration *utils.IdNameModel
+	if data.Integration.Id.String() != "" {
+		integration = &utils.IdNameModel{
+			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
+			Name: utils.TrimmedStringValue(data.Integration.Name),
+		}
+	}
+
+	var workflow *utils.IdNameModel
+	if data.Workflow != nil && data.Workflow.Id.String() != "" {
+		workflow = &utils.IdNameModel{
+			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
+			Name: utils.TrimmedStringValue(data.Workflow.Name),
+		}
+	}
+
 	// Create the Terraform resource model using the extracted data
 	return ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
@@ -1119,14 +1207,8 @@ func convertFullResourceResultResponseSchemaToModel(
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
 		UserDefinedDescription: types.StringPointerValue(data.UserDefinedDescription),
-		Workflow: &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
-			Name: utils.TrimmedStringValue(data.Workflow.Name),
-		},
-		Integration: utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
-			Name: utils.TrimmedStringValue(data.Integration.Name),
-		},
+		Workflow:                workflow,
+		Integration:             integration,
 		Requestable:             types.BoolValue(data.Requestable),
 		Owner:                   owner,
 		PrerequisitePermissions: prerequisitePermissions,
