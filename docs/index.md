@@ -76,7 +76,7 @@ resource "entitle_integration" "gitlab" {
   requestable_by_default = true
   
   application = {
-    name = "Gitlab"
+    name = "GitLab"
   }
   
   allowed_durations = [3600, 7200, -1]
