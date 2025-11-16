@@ -135,7 +135,7 @@ provider "entitle" {
 
 ### Optional
 
-- `api_key` (String, Sensitive) The API key for authenticating with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
+- `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
 - `endpoint` (String) The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints) below.
 
 ### Regional Endpoints
