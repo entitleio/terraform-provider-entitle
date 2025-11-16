@@ -95,24 +95,6 @@ resource "entitle_integration" "gitlab" {
 
 The provider requires an API key to authenticate with the Entitle API.
 
-### API Key
-
-The API key can be provided in two ways:
-
-1. **Provider configuration block** (shown above)
-2. **Environment variable**: `ENTITLE_API_KEY`
-```terraform
-provider "entitle" {
-  # api_key will be read from ENTITLE_API_KEY environment variable
-}
-```
-
-### Getting Your API Key
-
-## Authentication
-
-The provider requires an API key to authenticate with the Entitle API.
-
 ### Getting Your API Key
 
 To obtain an API key:
