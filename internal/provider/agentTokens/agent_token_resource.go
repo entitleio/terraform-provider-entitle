@@ -122,7 +122,7 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 	if name == "" {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			"failed to create agent token resource; required name variable missing",
+			"Failed to create agent token resource; required name variable missing",
 		)
 		return
 	}
@@ -190,7 +190,7 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
 		)
 		return
 	}

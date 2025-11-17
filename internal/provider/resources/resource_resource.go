@@ -95,6 +95,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the resource, " +
 					"compared to the workflow linked to it.",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
 			"maintainers": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -146,6 +149,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
 			"user_defined_description": schema.StringAttribute{
 				Optional: true,
@@ -176,6 +182,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Required:            true,
 						Description:         "the integration's id",
 						MarkdownDescription: "the integration's id",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -335,7 +344,7 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 
 	name := plan.Name.ValueString()
 
-	allowedDurations, diags := ConvertTerraformSetToAllowedDurations(ctx, plan.AllowedDurations)
+	allowedDurations, diags := utils.ConvertTerraformSetToAllowedDurations(ctx, plan.AllowedDurations)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -489,7 +498,6 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	body := client.IntegrationResourcesCreateBodySchema{
-		AllowedDurations:        &allowedDurations,
 		Integration:             integration,
 		Maintainers:             &maintainers,
 		Name:                    name,
@@ -500,6 +508,11 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		UserDefinedTags:         &userDefinedTags,
 		Workflow:                &workflow,
 	}
+
+	if len(allowedDurations) > 0 {
+		body.AllowedDurations = &allowedDurations
+	}
+
 	resourceResp, err := r.client.ResourcesCreateWithResponse(ctx, body)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -626,7 +639,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("failed to parse the given id to UUID format, got error: %v", err),
+			fmt.Sprintf("Failed to parse the given id to UUID format, got error: %v", err),
 		)
 		return
 	}
@@ -639,7 +652,7 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	allowedDurations, diags := ConvertTerraformSetToAllowedDurations(ctx, data.AllowedDurations)
+	allowedDurations, diags := utils.ConvertTerraformSetToAllowedDurations(ctx, data.AllowedDurations)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -790,16 +803,33 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
-	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, client.ResourcesUpdateJSONRequestBody{
-		AllowedDurations:        &allowedDurations,
-		Maintainers:             &maintainers,
-		Owner:                   &owner,
+	request := client.ResourcesUpdateJSONRequestBody{
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
 		UserDefinedDescription:  data.UserDefinedDescription.ValueStringPointer(),
-		UserDefinedTags:         &userDefinedTags,
-		Workflow:                &workflow,
-	})
+	}
+
+	if len(maintainers) > 0 {
+		request.Maintainers = &maintainers
+	}
+
+	if owner.Id != "" {
+		request.Owner = &owner
+	}
+
+	if len(allowedDurations) > 0 {
+		request.AllowedDurations = &allowedDurations
+	}
+
+	if workflow.Id.String() != "" {
+		request.Workflow = &workflow
+	}
+
+	if len(userDefinedTags) > 0 {
+		request.UserDefinedTags = &userDefinedTags
+	}
+
+	resourceResp, err := r.client.ResourcesUpdateWithResponse(ctx, uid, request)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -915,14 +945,21 @@ func convertFullResourceResultResponseSchemaToModel(
 
 	// Extract and convert allowed durations from the API response
 	allowedDurationsValues := make([]attr.Value, len(data.AllowedDurations))
+	allowedDurations := types.SetNull(types.NumberType)
+
 	if data.AllowedDurations != nil {
 		for i, duration := range data.AllowedDurations {
 			allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 		}
+
+		var sDiag diag.Diagnostics
+
+		allowedDurations, sDiag = types.SetValue(types.NumberType, allowedDurationsValues)
+		if sDiag.HasError() {
+			return ResourceResourceModel{}, sDiag
+		}
 	}
 
-	allowedDurations, errs := types.SetValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
 	if diags.HasError() {
 		return ResourceResourceModel{}, diags
 	}
@@ -999,19 +1036,9 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			bytes, err := responseSchema.Group.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to get maintainer group email bytes, error: %v", err),
-				)
-
-				return ResourceResourceModel{}, diags
-			}
-
 			g := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: utils.TrimmedStringValue(string(bytes)),
+				Email: utils.TrimmedStringValue(string(responseSchema.Group.Email)),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
@@ -1110,8 +1137,15 @@ func convertFullResourceResultResponseSchemaToModel(
 		}
 	}
 
-	// Create the Terraform resource model using the extracted data
-	return ResourceResourceModel{
+	var workflow *utils.IdNameModel
+	if data.Workflow.Id.String() != "" {
+		workflow = &utils.IdNameModel{
+			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
+			Name: utils.TrimmedStringValue(data.Workflow.Name),
+		}
+	}
+
+	model := ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
 		Name:                   utils.TrimmedStringValue(data.Name),
 		AllowedDurations:       allowedDurations,
@@ -1119,10 +1153,7 @@ func convertFullResourceResultResponseSchemaToModel(
 		Tags:                   tags,
 		UserDefinedTags:        userDefinedTags,
 		UserDefinedDescription: types.StringPointerValue(data.UserDefinedDescription),
-		Workflow: &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
-			Name: utils.TrimmedStringValue(data.Workflow.Name),
-		},
+		Workflow:               workflow,
 		Integration: utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
 			Name: utils.TrimmedStringValue(data.Integration.Name),
@@ -1130,5 +1161,8 @@ func convertFullResourceResultResponseSchemaToModel(
 		Requestable:             types.BoolValue(data.Requestable),
 		Owner:                   owner,
 		PrerequisitePermissions: prerequisitePermissions,
-	}, diags
+	}
+
+	// Create the Terraform resource model using the extracted data
+	return model, diags
 }

@@ -98,11 +98,14 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"allowed_durations": schema.SetAttribute{
 				ElementType: types.NumberType,
-				Optional:    true,
+				Required:    true,
 				Description: "As the admin, you can set different durations for the role, " +
 					"compared to the workflow linked to it.",
 				MarkdownDescription: "As the admin, you can set different durations for the role, " +
 					"compared to the workflow linked to it.",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{

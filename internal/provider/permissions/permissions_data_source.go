@@ -130,8 +130,13 @@ func (d *PermissionsDataSource) Schema(ctx context.Context, req datasource.Schem
 								},
 							},
 						},
-						"path":  schema.StringAttribute{Computed: true},
-						"types": schema.SetAttribute{Computed: true, ElementType: types.StringType},
+						"path": schema.StringAttribute{
+							Computed: true,
+						},
+						"types": schema.SetAttribute{
+							Computed:    true,
+							ElementType: types.StringType,
+						},
 					},
 				},
 			},

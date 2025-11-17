@@ -49,13 +49,13 @@ type BundleDataSourceModel struct {
 	Category types.String `tfsdk:"category" json:"category"`
 
 	// AllowedDurations the allowed durations for the resource
-	AllowedDurations types.List `tfsdk:"allowed_durations" json:"allowedDurations"`
+	AllowedDurations types.Set `tfsdk:"allowed_durations" json:"allowedDurations"`
 
 	// Workflow the id and name of the workflows associated with the resource
 	Workflow *utils.IdNameModel `tfsdk:"workflow" json:"workflow"`
 
 	// Tags list of tags associated with the resource
-	Tags types.List `tfsdk:"tags" json:"tags"`
+	Tags types.Set `tfsdk:"tags" json:"tags"`
 
 	// Roles list of roles associated with the resource
 	Roles []*utils.Role `tfsdk:"roles" json:"roles"`
@@ -109,13 +109,13 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 					"The category will usually describe a department, working group, etc. within your organization " +
 					"like “Marketing”, “Operations” and so on.",
 			},
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
 				Computed:            true,
 				Description:         "You can override your organization’s default duration on each bundle",
 				MarkdownDescription: "You can override your organization’s default duration on each bundle",
 			},
-			"tags": schema.ListAttribute{
+			"tags": schema.SetAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
 				Description: "Any meta-data searchable tags should be added here, " +
@@ -333,14 +333,14 @@ func convertFullBundleResultResponseSchemaToBundleDataSourceModel(
 		}
 	}
 
-	allowedDurations, errs := types.ListValue(types.NumberType, allowedDurationsValues)
+	allowedDurations, errs := types.SetValue(types.NumberType, allowedDurationsValues)
 	diags.Append(errs...)
 	if diags.HasError() {
 		return BundleDataSourceModel{}, diags
 	}
 
 	// Extract and convert tags from the API response
-	tags, diagsTags := utils.GetStringList(data.Tags)
+	tags, diagsTags := utils.GetStringSet(data.Tags)
 	diags.Append(diagsTags...)
 	if diags.HasError() {
 		return BundleDataSourceModel{}, diags

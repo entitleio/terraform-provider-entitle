@@ -81,49 +81,34 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
+							Description:         "\"user\" or \"group\" (default: \"user\")",
+							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
 							Computed:            true,
-							Description:         "The maintainer type (e.g., user or group)",
-							MarkdownDescription: "The maintainer type (e.g., user or group)",
 						},
-						"user": schema.SingleNestedAttribute{
+						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Computed:            true,
-									Description:         "id",
-									MarkdownDescription: "User's unique identifier",
+									Description:         "Maintainer's unique identifier",
+									MarkdownDescription: "Maintainer's unique identifier",
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
-									Description:         "User's email address",
-									MarkdownDescription: "User's email address",
+									Description:         "Maintainer's email",
+									MarkdownDescription: "Maintainer's email",
 								},
 							},
 							Computed:            true,
-							Description:         "The user maintainer details",
-							MarkdownDescription: "The user maintainer details",
-						},
-						"group": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Group's unique identifier",
-									MarkdownDescription: "Group's unique identifier",
-								},
-								"email": schema.StringAttribute{
-									Computed:            true,
-									Description:         "Group's email address",
-									MarkdownDescription: "Group's email address",
-								},
-							},
-							Computed:            true,
-							Description:         "The group maintainer details",
-							MarkdownDescription: "The group maintainer details",
+							Description:         "Maintainer's entity",
+							MarkdownDescription: "Maintainer's entity",
 						},
 					},
 				},
-				Computed:            true,
-				Description:         "List of maintainers responsible for this integration",
-				MarkdownDescription: "List of maintainers responsible for this integration",
+				Computed: true,
+				Description: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
+				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
+					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 			},
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
