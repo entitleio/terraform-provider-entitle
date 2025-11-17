@@ -1,6 +1,3 @@
-## **docs/resources/workflow.md - COMPLETE DOCUMENT**
-
-```markdown
 ---
 page_title: "entitle_workflow Resource - terraform-provider-entitle"
 subcategory: ""
