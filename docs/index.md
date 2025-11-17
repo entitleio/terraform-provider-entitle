@@ -3,93 +3,53 @@
 page_title: "entitle Provider"
 subcategory: ""
 description: |-
-  The Entitle provider allows you to manage your Entitle https://www.entitle.io resources and configurations through Terraform. It provides the ability to automate the management of integrations, workflows, and access policies within your Entitle environment.
+  The Entitle provider allows you to manage your Entitle https://www.entitle.io access, workflows, integrations, and policies within your Entitle environment using Infrastructure as Code.
+  Use Cases
+  Just-in-Time Access: Grant temporary elevated permissions for specific tasksBreak-Glass Access: Provide emergency access with proper approval and audit trailsOnboarding/Offboarding: Automate permission grants and revocations based on group membershipCompliance: Maintain audit trails and enforce approval workflowsCross-Application Access: Bundle permissions across AWS, GCP, Azure, and SaaS applications
+  Authentication
+  The provider requires an API key to authenticate with the Entitle API.
+  Getting Your API Key
+  To obtain an API key:
+  Log in to your Entitle accountNavigate to Organization Settings → TokensClick Create Token or Generate New TokenProvide a name/description for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
+  → View detailed instructions https://docs.beyondtrust.com/entitle/docs/org-settings#view-and-manage-tokens
+  Important: API tokens are organization-level credentials. Treat them as sensitive secrets and never commit them to version control.
+  Configuring the API Key
+  The API key can be provided in two ways:
+  Option 1: Provider configuration block
+  
+  provider "entitle" {
+  api_key = var.entitle_api_key
+  }
+  
+  Option 2: Environment variable
+  
+  export ENTITLE_API_KEY="your-api-key-here"
+  
+  Regional Endpoints
+  Entitle provides different API endpoints based on your organization's region:
+  | Region | Endpoint URL | Usage |
+  |--------|--------------|-------|
+  | **EU (Default)** | `https://api.entitle.io` | European region (default) |
+  | **US** | `https://api.us.entitle.io` | United States region |
+  How to determine your region:
+  Check your Entitle login URL or contact your Entitle administratorYour organization's region is determined during initial setupIf unsure, the default EU endpoint is https://api.entitle.io
+  The following environment variables can be used as an alternative to provider configuration:
+  | Environment Variable | Description |
+  |---------------------|-------------|
+  | `ENTITLE_API_KEY` | API key for authentication |
+  | `ENTITLE_ENDPOINT` | API endpoint URL |
 ---
 
-# Entitle Provider
+# entitle Provider
 
-The Entitle Terraform provider enables you to manage just-in-time access, workflows, integrations, and policies within your Entitle environment using Infrastructure as Code.
-
-## What is Entitle?
-Entitle is a platform that provides seamless, granular, and just-in-time access management for employees within cloud infrastructures and SaaS applications. It enables organizations to:
-
-- Grant temporary, time-bound access to resources
-- Implement approval workflows for access requests
-- Manage permissions across multiple cloud providers and SaaS applications
-- Automate birthright permissions through policies
-- Bundle related permissions across applications
+The Entitle provider allows you to manage your [Entitle](https://www.entitle.io) access, workflows, integrations, and policies within your Entitle environment using Infrastructure as Code.
 
 ## Use Cases
-
 - **Just-in-Time Access**: Grant temporary elevated permissions for specific tasks
 - **Break-Glass Access**: Provide emergency access with proper approval and audit trails
 - **Onboarding/Offboarding**: Automate permission grants and revocations based on group membership
 - **Compliance**: Maintain audit trails and enforce approval workflows
 - **Cross-Application Access**: Bundle permissions across AWS, GCP, Azure, and SaaS applications
-
-## Example Usage
-
-```terraform
-terraform {
-  required_providers {
-    entitle = {
-      source = "entitleio/entitle"
-    }
-  }
-}
-
-# Configure the Entitle Provider
-provider "entitle" {
-  api_key  = var.entitle_api_key
-  endpoint = "https://api.entitle.io"
-}
-
-# Example: Create a workflow
-resource "entitle_workflow" "auto_approve" {
-  name = "Auto-approve development access"
-  
-  rules = [{
-    sort_order     = 1
-    under_duration = 3600
-    any_schedule   = true
-    
-    approval_flow = {
-      steps = [{
-        sort_order = 1
-        operator   = "or"
-        approval_entities = [{
-          type = "Automatic"
-        }]
-        notified_entities = []
-      }]
-    }
-    
-    in_groups    = []
-    in_schedules = []
-  }]
-}
-
-# Example: Create an integration
-resource "entitle_integration" "gitlab" {
-  name                   = "Company GitLab"
-  requestable            = true
-  requestable_by_default = true
-  
-  application = {
-    name = "GitLab"
-  }
-  
-  allowed_durations = [3600, 7200, -1]
-  
-  connection_json = jsonencode({
-    domain                  = "https://gitlab.com"
-    private_token           = var.gitlab_token
-    configurationSchemaName = "Configuration"
-  })
-  
-  workflow_id = entitle_workflow.auto_approve.id
-}
-```
 
 ## Authentication
 
@@ -117,7 +77,7 @@ The API key can be provided in two ways:
 **Option 1: Provider configuration block**
 ```terraform
 provider "entitle" {
-  api_key = var.entitle_api_key
+api_key = var.entitle_api_key
 }
 ```
 
@@ -125,18 +85,6 @@ provider "entitle" {
 ```bash
 export ENTITLE_API_KEY="your-api-key-here"
 ```
-```terraform
-provider "entitle" {
-  # api_key will be read from ENTITLE_API_KEY environment variable
-}
-```
-
-## Schema
-
-### Optional
-
-- `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
-- `endpoint` (String) The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints) below.
 
 ### Regional Endpoints
 
@@ -147,37 +95,39 @@ Entitle provides different API endpoints based on your organization's region:
 | **EU (Default)** | `https://api.entitle.io` | European region (default) |
 | **US** | `https://api.us.entitle.io` | United States region |
 
-**Example for US region:**
-```terraform
-provider "entitle" {
-  api_key  = var.entitle_api_key
-  endpoint = "https://api.us.entitle.io"
-}
-```
-
 **How to determine your region:**
 - Check your Entitle login URL or contact your Entitle administrator
 - Your organization's region is determined during initial setup
 - If unsure, the default EU endpoint is `https://api.entitle.io`
 
-## Environment Variables
-
 The following environment variables can be used as an alternative to provider configuration:
 
-| Environment Variable | Description | Default |
-|---------------------|-------------|---------|
-| `ENTITLE_API_KEY` | API key for authentication | None (required) |
-| `ENTITLE_ENDPOINT` | API endpoint URL | `https://api.entitle.io` |
+| Environment Variable | Description |
+|---------------------|-------------|
+| `ENTITLE_API_KEY` | API key for authentication |
+| `ENTITLE_ENDPOINT` | API endpoint URL |
 
-### Example with Environment Variables
-```bash
-# For EU region (default)
-export ENTITLE_API_KEY="your-api-key-here"
-export ENTITLE_ENDPOINT="https://api.entitle.io"
+## Example Usage
 
-# For US region
-export ENTITLE_API_KEY="your-api-key-here"
-export ENTITLE_ENDPOINT="https://api.us.entitle.io"
+```terraform
+terraform {
+  required_providers {
+    entitle = {
+      source = "entitleio/entitle"
+    }
+  }
+}
 
-terraform plan
+provider "entitle" {
+  endpoint = "https://api.entitle.io"
+  api_key  = "PUT_YOUR_TOKEN"
+}
 ```
+
+<!-- schema generated by tfplugindocs -->
+## Schema
+
+### Optional
+
+- `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
+- `endpoint` (String) The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).
