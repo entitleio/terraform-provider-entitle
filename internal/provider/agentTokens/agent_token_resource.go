@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
@@ -48,10 +49,7 @@ func (r *AgentTokenResource) Metadata(ctx context.Context, req resource.Metadata
 // Schema sets the schema for the resource.
 func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines the schema for an Entitle Agent Token resource. " +
-			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
-		Description: "Defines the schema for an Entitle Agent Token resource. " +
-			"[Read more about agents](https://docs.beyondtrust.com/entitle/docs/entitle-agent).",
+		MarkdownDescription: docs.AgentTokenResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

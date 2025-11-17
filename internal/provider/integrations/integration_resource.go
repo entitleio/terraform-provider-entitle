@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -68,10 +69,7 @@ func (r *IntegrationResource) Metadata(ctx context.Context, req resource.Metadat
 
 func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "A specific instance or integration with an \"Application\". Integration includes the " +
-			"configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
-		Description: "A specific instance or integration with an \"Application\". Integration includes the " +
-			"configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		MarkdownDescription: docs.IntegrationResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

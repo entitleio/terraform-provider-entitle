@@ -1,0 +1,3 @@
+A workflow in Entitle is a generic description of Just-In-Time permissions approval process, which is triggered after the permissions were requested by a user. Who should approve by approval order, to whom, and for how long. After the workflow is defined, it can be assigned to multiple entities which are part of the Just-In-Time permissions approval process: integrations, resources, roles and bundles.
+
+Each workflow consists of multiple rules, and their order matters. The first rule that is successfully validated determines the approval process for the permission request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).

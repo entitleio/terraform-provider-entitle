@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -54,8 +55,7 @@ func (d *ResourceDataSource) Metadata(ctx context.Context, req datasource.Metada
 // Schema defines the data source schema.
 func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
-		Description:         "Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		MarkdownDescription: docs.ResourceDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,

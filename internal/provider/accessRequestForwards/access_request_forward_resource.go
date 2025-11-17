@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -46,10 +47,7 @@ func (r *AccessRequestForwardResource) Metadata(ctx context.Context, req resourc
 
 func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Access Request Forward allows delegating access request responsibilities to another user. " +
-			"This enables request tasks to be reassigned when the original requester is unavailable.",
-		Description: "Entitle Access Request Forward allows delegating access request responsibilities to another user. " +
-			"This enables request tasks to be reassigned when the original requester is unavailable.",
+		MarkdownDescription: docs.AccessRequestForwardResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

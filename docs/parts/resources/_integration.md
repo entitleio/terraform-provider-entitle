@@ -1,0 +1,1 @@
+A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
