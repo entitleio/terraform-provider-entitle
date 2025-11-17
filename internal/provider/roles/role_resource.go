@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -57,8 +58,7 @@ func (r *RoleResource) Metadata(ctx context.Context, req resource.MetadataReques
 // Schema sets the schema for the resource.
 func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines the schema for an Entitle Role resource.",
-		Description:         "Defines the schema for an Entitle Role resource.",
+		MarkdownDescription: docs.RoleResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

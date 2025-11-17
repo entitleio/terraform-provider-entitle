@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -52,20 +53,8 @@ func (r *WorkflowResource) Metadata(ctx context.Context, req resource.MetadataRe
 
 func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
-			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
-			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
-			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
-			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request. ",
-		Description: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
-			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
-			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
-			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
-			"resources, roles and bundles." +
-			"\n\nEvery workflow is comprised of multiple rules. Their order of is important, the first rule to be " +
-			"validated sets the actual approval process for the permissions request. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
+		MarkdownDescription: docs.WorkflowResourceMarkdownDescription,
+		Description:         "Manages an Entitle workflow that defines approval processes for just-in-time access requests.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -80,8 +69,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The human-readable name of the workflow. Must be between 2 and 50 characters.",
-				Description:         "The human-readable name of the workflow. Must be between 2 and 50 characters.",
+				MarkdownDescription: "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
+				Description:         "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
 				Validators: []validator.String{
 					validators.NewName(2, 50),
 				},

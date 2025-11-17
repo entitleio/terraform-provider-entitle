@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
@@ -45,10 +46,7 @@ func (d *AccessRequestForwardDataSource) Metadata(ctx context.Context, req datas
 // Schema defines the expected structure of the data source.
 func (d *AccessRequestForwardDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Access Request Forward allows delegating access request responsibilities to another user. " +
-			"This enables request tasks to be reassigned when the original requester is unavailable.",
-		Description: "Entitle Access Request Forward allows delegating access request responsibilities to another user. " +
-			"This enables request tasks to be reassigned when the original requester is unavailable.",
+		MarkdownDescription: docs.AccessRequestForwardDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,

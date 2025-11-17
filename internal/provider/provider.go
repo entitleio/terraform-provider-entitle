@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	_ "embed"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessRequestForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
@@ -66,18 +68,17 @@ func (p *EntitleProvider) Schema(
 	resp *provider.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The Entitle provider allows you to manage your [Entitle](https://www.entitle.io) resources and configurations through Terraform. It provides the ability to automate the management of integrations, workflows, and access policies within your Entitle environment.",
-		Description:         "The Entitle provider allows you to manage your Entitle resources and configurations through Terraform.",
+		MarkdownDescription: docs.ProviderMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "entitle API server address, default: https://api.entitle.io",
-				Description:         "entitle API server address, default: https://api.entitle.io",
+			"api_key": schema.StringAttribute{
+				MarkdownDescription: "API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.",
+				Description:         "API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.",
+				Sensitive:           true,
 				Optional:            true,
 			},
-			"api_key": schema.StringAttribute{
-				MarkdownDescription: "entitle API bearer authorizations (http, Bearer)",
-				Description:         "entitle API bearer authorizations (http, Bearer)",
-				Sensitive:           true,
+			"endpoint": schema.StringAttribute{
+				MarkdownDescription: "The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).",
+				Description:         "The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).",
 				Optional:            true,
 			},
 		},

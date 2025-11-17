@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
@@ -69,16 +70,7 @@ func (d *BundleDataSource) Metadata(ctx context.Context, req datasource.Metadata
 // Schema defines the expected structure of the data source.
 func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle bundle is a set of entitlements that can be requested, approved, " +
-			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
-			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
-			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
-		Description: "Entitle bundle is a set of entitlements that can be requested, approved, " +
-			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
-			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
-			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
+		MarkdownDescription: docs.BundleDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,

@@ -1,0 +1,1 @@
+Entitle Access Review Forward allows delegating access review responsibilities to another user. This enables review tasks to be reassigned when the original reviewer is unavailable. [Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).

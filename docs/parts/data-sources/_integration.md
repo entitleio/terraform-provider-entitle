@@ -1,0 +1,1 @@
+Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).

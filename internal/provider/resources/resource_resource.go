@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -62,12 +63,7 @@ func (r *ResourceResource) Metadata(ctx context.Context, req resource.MetadataRe
 
 func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
-		Description: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		MarkdownDescription: docs.ResourceResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

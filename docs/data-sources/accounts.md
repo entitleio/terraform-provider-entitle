@@ -17,7 +17,9 @@ Retrieve a list of Entitle Accounts filtered by integration ID (mandatory) and o
 data "entitle_accounts" "all" {
   integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
 }
+```
 
+```terraform
 # With additional filter
 data "entitle_accounts" "search" {
   integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"

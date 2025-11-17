@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -70,16 +71,7 @@ func (r *BundleResource) Metadata(ctx context.Context, req resource.MetadataRequ
 // Schema is a function to define the schema for the Entitle bundle resource.
 func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle bundle is a set of entitlements that can be requested, approved, " +
-			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
-			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
-			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
-		Description: "Entitle bundle is a set of entitlements that can be requested, approved, " +
-			"or revoked by users in a single action, and set in a policy by the admin. Each entitlement can " +
-			"provide the user with access to a resource, which can be as fine-grained as a MongoDB table " +
-			"for example, usually by the use of a “Role”. Thus, one can think of a bundle " +
-			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
+		MarkdownDescription: docs.BundleResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			// Attribute: id
 			"id": schema.StringAttribute{
