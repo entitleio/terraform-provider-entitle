@@ -31,13 +31,13 @@ resource "entitle_role" "example" {
 
 ### Required
 
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the role, compared to the workflow linked to it.
 - `name` (String) The display name for Entitle Role.
 - `requestable` (Boolean) Indicates if the role is requestable (default: true)
 - `resource` (Attributes) In this field, you can assign an existing resource to the new role. (see [below for nested schema](#nestedatt--resource))
 
 ### Optional
 
-- `allowed_durations` (Set of Number) As the admin, you can set different durations for the role, compared to the workflow linked to it.
 - `prerequisite_permissions` (Attributes List) Users granted any role from this role through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `virtualized_role` (Attributes) In this field, you can assign an existing virtualized role to the new role. (see [below for nested schema](#nestedatt--virtualized_role))
 - `workflow` (Attributes) In this field, you can assign an existing workflow to the new role. (see [below for nested schema](#nestedatt--workflow))

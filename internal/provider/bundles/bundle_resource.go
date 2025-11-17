@@ -50,7 +50,7 @@ type BundleResourceModel struct {
 	Category types.String `tfsdk:"category" json:"category"`
 
 	// AllowedDurations the allowed durations for the resource
-	AllowedDurations types.List `tfsdk:"allowed_durations" json:"allowedDurations"`
+	AllowedDurations types.Set `tfsdk:"allowed_durations" json:"allowedDurations"`
 
 	// Workflow the id and name of the workflows associated with the resource
 	Workflow *utils.IdNameModel `tfsdk:"workflow" json:"workflow"`
@@ -121,11 +121,14 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					"like “Marketing”, “Operations” and so on.",
 			},
 			// Attribute: allowed_durations
-			"allowed_durations": schema.ListAttribute{
+			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
-				Optional:            true,
+				Required:            true,
 				Description:         "You can override your organization’s default duration on each bundle",
 				MarkdownDescription: "You can override your organization’s default duration on each bundle",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
 			// Attribute: tags
 			"tags": schema.SetAttribute{
@@ -135,6 +138,9 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
+				},
 			},
 			// Attribute: workflow
 			"workflow": schema.SingleNestedAttribute{
@@ -281,24 +287,10 @@ func (r *BundleResource) Create(
 		return
 	}
 
-	// Process AllowedDurations
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
-		for _, item := range plan.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
-
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
+	allowedDurations, diags := utils.ConvertTerraformSetToAllowedDurations(ctx, plan.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	// Process Tags
@@ -505,24 +497,10 @@ func (r *BundleResource) Update(
 		return
 	}
 
-	// Process AllowedDurations
-	allowedDurations := make([]client.EnumAllowedDurations, 0)
-	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
-		for _, item := range data.AllowedDurations.Elements() {
-			val, ok := item.(types.Number)
-			if !ok {
-				continue
-			}
-
-			val, diags := val.ToNumberValue(ctx)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			valFloat32, _ := val.ValueBigFloat().Float32()
-			allowedDurations = append(allowedDurations, client.EnumAllowedDurations(valFloat32))
-		}
+	allowedDurations, diags := utils.ConvertTerraformSetToAllowedDurations(ctx, data.AllowedDurations)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	// Process Tags
@@ -718,10 +696,9 @@ func convertFullBundleResultResponseSchemaToModel(
 		allowedDurationsValues[i] = types.NumberValue(big.NewFloat(float64(duration)))
 	}
 
-	allowedDurations, errs := types.ListValue(types.NumberType, allowedDurationsValues)
-	diags.Append(errs...)
-	if diags.HasError() {
-		return BundleResourceModel{}, diags
+	allowedDurations, tDiags := types.SetValue(types.NumberType, allowedDurationsValues)
+	if tDiags.HasError() {
+		return BundleResourceModel{}, tDiags
 	}
 
 	// Extract tags from the API response

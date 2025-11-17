@@ -27,12 +27,12 @@ data "entitle_bundle" "example" {
 
 ### Read-Only
 
-- `allowed_durations` (List of Number) You can override your organization’s default duration on each bundle
+- `allowed_durations` (Set of Number) You can override your organization’s default duration on each bundle
 - `category` (String) You can select a category for the newly created bundle, or create a new one. The category will usually describe a department, working group, etc. within your organization like “Marketing”, “Operations” and so on.
 - `description` (String) The bundle’s extended description, for example, “Permissions bundle for junior accountants” or “factory floor worker permissions bundle”.
 - `name` (String) The bundle’s name. Users will ask for this name when requesting access.
 - `roles` (Attributes List) List of roles included in this bundle. (see [below for nested schema](#nestedatt--roles))
-- `tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
+- `tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 - `workflow` (Attributes) In this field, you can assign an existing workflow to the new bundle. (see [below for nested schema](#nestedatt--workflow))
 
 <a id="nestedatt--roles"></a>
