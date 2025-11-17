@@ -35,9 +35,9 @@ data "entitle_resource" "example" {
 - `owner` (Attributes) Owner of the resource (see [below for nested schema](#nestedatt--owner))
 - `prerequisite_permissions` (Attributes List) Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `requestable` (Boolean) Indicates if the resource is requestable (default: true)
-- `tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
+- `tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 - `user_defined_description` (String) Custom description provided by the user
-- `user_defined_tags` (List of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
+- `user_defined_tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 - `workflow` (Attributes) Workflow configuration for the resource (see [below for nested schema](#nestedatt--workflow))
 
 <a id="nestedatt--integration"></a>

@@ -11,6 +11,5 @@ resource "entitle_integration" "example" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
   }
   allowed_durations       = [3600]
-  maintainers             = []
   allow_creating_accounts = false
 }

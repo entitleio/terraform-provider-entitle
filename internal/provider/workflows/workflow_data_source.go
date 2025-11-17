@@ -400,171 +400,180 @@ func converterWorkflow(
 				ApprovalFlow: workflowRulesApprovalFlowModel{
 					Steps: make([]*workflowRulesApprovalFlowStepModel, 0),
 				},
-				InGroups:      make([]*utils.IdNameModel, 0, len(rule.InGroups)),
-				InSchedules:   make([]*utils.IdNameModel, 0, len(rule.InSchedules)),
 				SortOrder:     types.NumberValue(big.NewFloat(float64(rule.SortOrder))),
 				UnderDuration: types.NumberValue(big.NewFloat(float64(rule.UnderDuration))),
 			}
 
-			for _, inGroup := range rule.InGroups {
-				ruleModel.InGroups = append(ruleModel.InGroups, &utils.IdNameModel{
-					ID:   utils.TrimmedStringValue(inGroup.Id.String()),
-					Name: utils.TrimmedStringValue(inGroup.Name),
-				})
+			if len(rule.InGroups) > 0 {
+				ruleModel.InGroups = make([]*utils.IdNameModel, 0, len(rule.InGroups))
+
+				for _, inGroup := range rule.InGroups {
+					ruleModel.InGroups = append(ruleModel.InGroups, &utils.IdNameModel{
+						ID:   utils.TrimmedStringValue(inGroup.Id.String()),
+						Name: utils.TrimmedStringValue(inGroup.Name),
+					})
+				}
 			}
 
-			for _, inSchedule := range rule.InSchedules {
-				ruleModel.InSchedules = append(ruleModel.InSchedules, &utils.IdNameModel{
-					ID:   utils.TrimmedStringValue(inSchedule.Id.String()),
-					Name: utils.TrimmedStringValue(inSchedule.Name),
-				})
+			if len(rule.InSchedules) > 0 {
+				ruleModel.InSchedules = make([]*utils.IdNameModel, 0, len(rule.InSchedules))
+
+				for _, inSchedule := range rule.InSchedules {
+					ruleModel.InSchedules = append(ruleModel.InSchedules, &utils.IdNameModel{
+						ID:   utils.TrimmedStringValue(inSchedule.Id.String()),
+						Name: utils.TrimmedStringValue(inSchedule.Name),
+					})
+				}
 			}
 
 			if len(rule.ApprovalFlow.Steps) > 0 {
 				for _, step := range rule.ApprovalFlow.Steps {
 					flowStep := &workflowRulesApprovalFlowStepModel{
 						ApprovalEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.ApprovalEntities)),
-						NotifiedEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.NotifiedEntities)),
 						Operator:         utils.TrimmedStringValue(string(step.Operator)),
 						SortOrder:        types.NumberValue(big.NewFloat(float64(step.SortOrder))),
 					}
 
-					for _, entity := range step.NotifiedEntities {
-						var stepMap = make(map[string]interface{})
+					if len(step.NotifiedEntities) > 0 {
+						flowStep.NotifiedEntities = make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.NotifiedEntities))
 
-						jsonData, err := entity.MarshalJSON()
-						if err != nil {
-							diags.AddError(
-								"Failed to marshal step data",
-								err.Error(),
-							)
+						for _, entity := range step.NotifiedEntities {
+							var stepMap = make(map[string]interface{})
 
-							return WorkflowDataSourceModel{}, diags
-						}
-
-						err = json.Unmarshal(jsonData, &stepMap)
-						if err != nil {
-							diags.AddError(
-								"Failed to marshal step data",
-								err.Error(),
-							)
-
-							return WorkflowDataSourceModel{}, diags
-						}
-
-						typeStep, ok := stepMap["type"]
-						if !ok {
-							continue
-						}
-
-						switch fmt.Sprintf("%v", typeStep) {
-						case string(client.OnCallIntegrationSchedule):
-							val, err := entity.AsApprovalEntityScheduleResponseSchema()
+							jsonData, err := entity.MarshalJSON()
 							if err != nil {
 								diags.AddError(
-									"Failed to convert entity to schedule type",
+									"Failed to marshal step data",
 									err.Error(),
 								)
 
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							v := utils.IdNameModel{
-								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
-								Name: utils.TrimmedStringValue(val.Entity.Name),
-							}
-
-							vObj, diagsAs := v.AsObjectValue(ctx)
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return WorkflowDataSourceModel{}, diags
-							}
-
-							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     utils.TrimmedStringValue(string(val.Type)),
-								Schedule: vObj,
-								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-							})
-						case string(client.EnumApprovalEntityUserUserUser):
-							val, err := entity.AsApprovalEntityUserResponseSchema()
+							err = json.Unmarshal(jsonData, &stepMap)
 							if err != nil {
 								diags.AddError(
-									"Failed to convert entity to user type",
+									"Failed to marshal step data",
 									err.Error(),
 								)
 
 								return WorkflowDataSourceModel{}, diags
 							}
 
-							v := utils.IdEmailModel{
-								Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
-								Email: utils.GetEmailStringValue(val.Entity.Email),
+							typeStep, ok := stepMap["type"]
+							if !ok {
+								continue
 							}
 
-							vObj, diagsAs := v.AsObjectValue(ctx)
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return WorkflowDataSourceModel{}, diags
+							switch fmt.Sprintf("%v", typeStep) {
+							case string(client.OnCallIntegrationSchedule):
+								val, err := entity.AsApprovalEntityScheduleResponseSchema()
+								if err != nil {
+									diags.AddError(
+										"Failed to convert entity to schedule type",
+										err.Error(),
+									)
+
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								v := utils.IdNameModel{
+									ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+									Name: utils.TrimmedStringValue(val.Entity.Name),
+								}
+
+								vObj, diagsAs := v.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(val.Type)),
+									Schedule: vObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
+							case string(client.EnumApprovalEntityUserUserUser):
+								val, err := entity.AsApprovalEntityUserResponseSchema()
+								if err != nil {
+									diags.AddError(
+										"Failed to convert entity to user type",
+										err.Error(),
+									)
+
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								v := utils.IdEmailModel{
+									Id:    utils.TrimmedStringValue(val.Entity.Id.String()),
+									Email: utils.GetEmailStringValue(val.Entity.Email),
+								}
+
+								vObj, diagsAs := v.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(val.Type)),
+									User:     vObj,
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
+							case string(client.DirectoryGroup):
+								val, err := entity.AsApprovalEntityGroupResponseSchema()
+								if err != nil {
+									diags.AddError(
+										"Failed to convert entity to directory group type",
+										err.Error(),
+									)
+
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								v := utils.IdNameModel{
+									ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
+									Name: utils.TrimmedStringValue(val.Entity.Name),
+								}
+
+								vObj, diagsAs := v.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(val.Type)),
+									Group:    vObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
+							case string(client.EnumApprovalEntityWithoutEntityDirectManager),
+								string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
+								string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
+								string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
+								string(client.EnumApprovalEntityWithoutEntityResourceOwner),
+								string(client.EnumApprovalEntityWithoutEntityTeamMember),
+								string(client.EnumApprovalEntityWithoutEntityAutomatic):
+								val, err := entity.AsNotifiedEntityNullResponseSchema()
+								if err != nil {
+									diags.AddError(
+										"Failed to convert entity to notified entity",
+										err.Error(),
+									)
+
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(val.Type)),
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
 							}
-
-							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     utils.TrimmedStringValue(string(val.Type)),
-								User:     vObj,
-								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-							})
-						case string(client.DirectoryGroup):
-							val, err := entity.AsApprovalEntityGroupResponseSchema()
-							if err != nil {
-								diags.AddError(
-									"Failed to convert entity to directory group type",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
-							v := utils.IdNameModel{
-								ID:   utils.TrimmedStringValue(val.Entity.Id.String()),
-								Name: utils.TrimmedStringValue(val.Entity.Name),
-							}
-
-							vObj, diagsAs := v.AsObjectValue(ctx)
-							if diagsAs.HasError() {
-								diags.Append(diagsAs...)
-								return WorkflowDataSourceModel{}, diags
-							}
-
-							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     utils.TrimmedStringValue(string(val.Type)),
-								Group:    vObj,
-								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-							})
-						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
-							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
-							string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
-							string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
-							string(client.EnumApprovalEntityWithoutEntityResourceOwner),
-							string(client.EnumApprovalEntityWithoutEntityTeamMember),
-							string(client.EnumApprovalEntityWithoutEntityAutomatic):
-							val, err := entity.AsNotifiedEntityNullResponseSchema()
-							if err != nil {
-								diags.AddError(
-									"Failed to convert entity to notified entity",
-									err.Error(),
-								)
-
-								return WorkflowDataSourceModel{}, diags
-							}
-
-							flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-								Type:     utils.TrimmedStringValue(string(val.Type)),
-								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
-								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-							})
 						}
 					}
 

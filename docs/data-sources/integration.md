@@ -33,7 +33,7 @@ data "entitle_integration" "example" {
 - `application` (Attributes) Application associated with this integration (see [below for nested schema](#nestedatt--application))
 - `auto_assign_recommended_maintainers` (Boolean) Whether recommended maintainers are auto-assigned (default: true)
 - `auto_assign_recommended_owners` (Boolean) Whether recommended owners are auto-assigned (default: true)
-- `maintainers` (Attributes List) List of maintainers responsible for this integration (see [below for nested schema](#nestedatt--maintainers))
+- `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) Entitle Integration name
 - `notify_about_external_permission_changes` (Boolean) Whether to notify about external permission changes (default: true)
 - `readonly` (Boolean) Whether the integration is read-only (default: true)
@@ -54,26 +54,16 @@ Read-Only:
 
 Read-Only:
 
-- `group` (Attributes) The group maintainer details (see [below for nested schema](#nestedatt--maintainers--group))
-- `type` (String) The maintainer type (e.g., user or group)
-- `user` (Attributes) The user maintainer details (see [below for nested schema](#nestedatt--maintainers--user))
+- `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
+- `type` (String) "user" or "group" (default: "user")
 
-<a id="nestedatt--maintainers--group"></a>
-### Nested Schema for `maintainers.group`
-
-Read-Only:
-
-- `email` (String) Group's email address
-- `id` (String) Group's unique identifier
-
-
-<a id="nestedatt--maintainers--user"></a>
-### Nested Schema for `maintainers.user`
+<a id="nestedatt--maintainers--entity"></a>
+### Nested Schema for `maintainers.entity`
 
 Read-Only:
 
-- `email` (String) User's email address
-- `id` (String) User's unique identifier
+- `email` (String) Maintainer's email
+- `id` (String) Maintainer's unique identifier
 
 
 

@@ -128,6 +128,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of user groups for which this rule is applicable.",
 							MarkdownDescription: "List of user groups for which this rule is applicable.",
+							Validators: []validator.Set{
+								validators.NewSetMinLength(1),
+							},
 						},
 						"in_schedules": schema.SetNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
@@ -147,6 +150,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of schedules during which this rule is valid.",
 							MarkdownDescription: "List of schedules during which this rule is valid.",
+							Validators: []validator.Set{
+								validators.NewSetMinLength(1),
+							},
 						},
 						"approval_flow": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -231,6 +237,10 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												Optional:            true,
 												Description:         "List of users or groups to be notified during this approval step.",
 												MarkdownDescription: "List of users or groups to be notified during this approval step.",
+
+												Validators: []validator.Set{
+													validators.NewSetMinLength(1),
+												},
 											},
 											"approval_entities": schema.SetNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{

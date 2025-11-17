@@ -81,7 +81,6 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Optional:            true,
 							Description:         "\"user\" or \"group\" (default: \"user\")",
 							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
 							Computed:            true,
@@ -89,7 +88,7 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Required:            true,
+									Computed:            true,
 									Description:         "Maintainer's unique identifier",
 									MarkdownDescription: "Maintainer's unique identifier",
 								},
@@ -99,13 +98,13 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 									MarkdownDescription: "Maintainer's email",
 								},
 							},
-							Optional:            true,
+							Computed:            true,
 							Description:         "Maintainer's entity",
 							MarkdownDescription: "Maintainer's entity",
 						},
 					},
 				},
-				Optional: true,
+				Computed: true,
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +

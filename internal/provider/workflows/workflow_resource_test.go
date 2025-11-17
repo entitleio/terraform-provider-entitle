@@ -25,8 +25,6 @@ resource "entitle_workflow" "my_workflow" {
 	rules = [
 		{
 			sort_order = 1
-			in_groups = []
-			in_schedules = []
 			approval_flow = {
 				steps = [
 					{
@@ -47,8 +45,6 @@ resource "entitle_workflow" "my_workflow" {
 					},
 					{
 						sort_order = 1
-						notified_entities = [
-						]
 						approval_entities = [
 							{
 								type = "User"
@@ -93,8 +89,6 @@ resource "entitle_workflow" "my_workflow" {
 	rules = [
 		{
 			sort_order = 1
-			in_groups = []
-			in_schedules = []
 			approval_flow = {
 				steps = [
 					{
@@ -118,8 +112,6 @@ resource "entitle_workflow" "my_workflow" {
 					},
 					{
 						sort_order = 1
-						notified_entities = [
-						]
 						approval_entities = [
 							{
 								type = "User"
