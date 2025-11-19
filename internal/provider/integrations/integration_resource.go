@@ -100,7 +100,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					validators.NewSetMinLength(1),
 				},
 			},
-			"maintainers": schema.SetNestedAttribute{
+			"maintainers": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -134,6 +134,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
+				Validators: []validator.List{
+					validators.NewListMinLength(1),
+				},
 			},
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{

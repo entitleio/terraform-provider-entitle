@@ -110,7 +110,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(3600)),
 						},
-						"in_groups": schema.SetNestedAttribute{
+						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -128,11 +128,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of user groups for which this rule is applicable.",
 							MarkdownDescription: "List of user groups for which this rule is applicable.",
-							Validators: []validator.Set{
-								validators.NewSetMinLength(1),
+							Validators: []validator.List{
+								validators.NewListMinLength(1),
 							},
 						},
-						"in_schedules": schema.SetNestedAttribute{
+						"in_schedules": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -150,8 +150,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of schedules during which this rule is valid.",
 							MarkdownDescription: "List of schedules during which this rule is valid.",
-							Validators: []validator.Set{
-								validators.NewSetMinLength(1),
+							Validators: []validator.List{
+								validators.NewListMinLength(1),
 							},
 						},
 						"approval_flow": schema.SingleNestedAttribute{
@@ -173,7 +173,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												MarkdownDescription: "Order of the step within the approval flow. Lower numbers indicate earlier steps.",
 												Default:             numberdefault.StaticBigFloat(big.NewFloat(0)),
 											},
-											"notified_entities": schema.SetNestedAttribute{
+											"notified_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
@@ -238,11 +238,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												Description:         "List of users or groups to be notified during this approval step.",
 												MarkdownDescription: "List of users or groups to be notified during this approval step.",
 
-												Validators: []validator.Set{
-													validators.NewSetMinLength(1),
+												Validators: []validator.List{
+													validators.NewListMinLength(1),
 												},
 											},
-											"approval_entities": schema.SetNestedAttribute{
+											"approval_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
