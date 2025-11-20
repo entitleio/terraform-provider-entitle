@@ -36,15 +36,15 @@ resource "entitle_workflow" "my_workflow" {
 						]
 						approval_entities = [
 							{
-								type = "IntegrationOwner"
+								type = "ResourceOwner"
 							},
 							{
-								type = "ResourceOwner"
+								type = "IntegrationOwner"
 							}
 						]
 					},
 					{
-						sort_order = 1
+						sort_order = 2
 						approval_entities = [
 							{
 								type = "User"
@@ -65,8 +65,8 @@ resource "entitle_workflow" "my_workflow" {
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "name", "My Workflow CI"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.sort_order", "1"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.sort_order", "1"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "IntegrationOwner"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "ResourceOwner"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "ResourceOwner"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "IntegrationOwner"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.1.approval_entities.0.type", "User"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.1.approval_entities.0.user.id", os.Getenv("ENTITLE_OWNER_ID")),
 
@@ -132,8 +132,8 @@ resource "entitle_workflow" "my_workflow" {
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "name", "My Workflow CI UPDATED"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.sort_order", "1"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.sort_order", "1"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "IntegrationOwner"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "ResourceOwner"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "ResourceOwner"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "IntegrationOwner"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.1.approval_entities.0.user.id", os.Getenv("ENTITLE_OWNER_ID")),
 
 					// Verify default values
