@@ -64,8 +64,8 @@ Optional:
 
 - `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to true.
 - `approval_flow` (Attributes) The approval process defined by one or more ordered steps. Each step includes approvers and conditions. (see [below for nested schema](#nestedatt--rules--approval_flow))
-- `in_groups` (Attributes Set) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
-- `in_schedules` (Attributes Set) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
+- `in_groups` (Attributes List) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
+- `in_schedules` (Attributes List) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
 - `sort_order` (Number) Determines the evaluation priority of the rule.
 - `under_duration` (Number) Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).
 
@@ -81,8 +81,8 @@ Optional:
 
 Optional:
 
-- `approval_entities` (Attributes Set) List of users or groups that must approve in this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
-- `notified_entities` (Attributes Set) List of users or groups to be notified during this approval step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
+- `approval_entities` (Attributes List) List of users or groups that must approve in this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
+- `notified_entities` (Attributes List) List of users or groups to be notified during this approval step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
 - `operator` (String) Logical operator for combining approval entities.
 - `sort_order` (Number) Order of the step within the approval flow. Lower numbers indicate earlier steps.
 

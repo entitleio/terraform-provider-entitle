@@ -214,7 +214,7 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 												Description:         "Entities to notify when the step is triggered",
 												MarkdownDescription: "Entities to notify when the step is triggered",
 											},
-											"approval_entities": schema.SetNestedAttribute{
+											"approval_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{

@@ -42,3 +42,39 @@ func (u SetMinLength) ValidateSet(ctx context.Context, req validator.SetRequest,
 		)
 	}
 }
+
+// NewListMinLength creates a new set length validator.
+func NewListMinLength(minLength int) ListMinLength {
+	return ListMinLength{
+		minLength: minLength,
+	}
+}
+
+type ListMinLength struct {
+	minLength int
+}
+
+// Description satisfies the validator.List interface.
+func (u ListMinLength) Description(ctx context.Context) string {
+	return fmt.Sprintf("Validating the set length - minimum %d", u.minLength)
+}
+
+// MarkdownDescription satisfies the validator.List interface.
+func (u ListMinLength) MarkdownDescription(ctx context.Context) string {
+	return fmt.Sprintf("Validating the set length - minimum %d", u.minLength)
+}
+
+// ValidateList Validate satisfies the validator.List interface.
+func (u ListMinLength) ValidateList(ctx context.Context, req validator.ListRequest, resp *validator.ListResponse) {
+	// Skip validation if value is empty (not provided) or not known yet
+	if req.ConfigValue.IsUnknown() || req.ConfigValue.IsNull() {
+		return
+	}
+
+	if len(req.ConfigValue.Elements()) < u.minLength {
+		resp.Diagnostics.AddError(
+			"List length Validate Failed",
+			fmt.Sprintf("Incorrect %s list length - minimum %d, got %d", req.Path, u.minLength, len(req.ConfigValue.Elements())),
+		)
+	}
+}

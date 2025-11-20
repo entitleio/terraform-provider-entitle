@@ -57,7 +57,7 @@ Read-Only:
 
 Read-Only:
 
-- `approval_entities` (Attributes Set) Entities that must approve the step (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
+- `approval_entities` (Attributes List) Entities that must approve the step (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
 - `notified_entities` (Attributes List) Entities to notify when the step is triggered (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
 - `operator` (String) Approval step operator
 - `sort_order` (Number) Step execution order
