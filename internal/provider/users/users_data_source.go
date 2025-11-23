@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
@@ -46,7 +47,7 @@ func (d *UsersDataSource) Metadata(ctx context.Context, req datasource.MetadataR
 
 func (d *UsersDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Retrieve a list of Entitle Users with optional filters. [Read more about users](https://docs.beyondtrust.com/entitle/docs/users).",
+		MarkdownDescription: docs.UsersDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"users": schema.ListNestedAttribute{
 				Computed:            true,

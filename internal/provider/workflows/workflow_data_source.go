@@ -2,11 +2,13 @@ package workflows
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"sort"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
@@ -48,22 +50,7 @@ func (d *WorkflowDataSource) Metadata(ctx context.Context, req datasource.Metada
 
 func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
-			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
-			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
-			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
-			"resources, roles and bundles." +
-			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
-			"successfully validated determines the approval process for the permission request. " +
-			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
-		Description: "A workflow in Entitle is a generic description of Just-In-Time permissions approval " +
-			"process, which is triggered after the permissions were requested by a user. Who should approve by " +
-			"approval order, to whom, and for how long. After the workflow is defined, it can be assigned to " +
-			"multiple entities which are part of the Just-In-Time permissions approval process: integrations, " +
-			"resources, roles and bundles." +
-			"\n\nEach workflow consists of multiple rules, and their order matters. The first rule that is " +
-			"successfully validated determines the approval process for the permission request. " +
-			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
+		MarkdownDescription: docs.WorkflowDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,

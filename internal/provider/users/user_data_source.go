@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -45,8 +46,7 @@ func (d *UserDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 // Schema defines the data source schema.
 func (d *UserDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines an Entitle User, which represents organization's employee. [Read more about users](https://docs.beyondtrust.com/entitle/docs/users).",
-		Description:         "Defines an Entitle User, which represents organization's employee. [Read more about users](https://docs.beyondtrust.com/entitle/docs/users).",
+		MarkdownDescription: docs.UserDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

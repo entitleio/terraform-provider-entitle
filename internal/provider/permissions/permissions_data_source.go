@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -59,7 +60,7 @@ func (d *PermissionsDataSource) Metadata(ctx context.Context, req datasource.Met
 
 func (d *PermissionsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Retrieve a list of Entitle Permissions with optional filters.",
+		MarkdownDescription: docs.PermissionsDataSourceMarkdownDescription,
 		Blocks: map[string]schema.Block{
 			"filter": schema.SingleNestedBlock{
 				Attributes: map[string]schema.Attribute{

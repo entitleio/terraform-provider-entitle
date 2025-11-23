@@ -1,0 +1,1 @@
+Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
