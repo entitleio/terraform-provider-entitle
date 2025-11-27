@@ -251,13 +251,13 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	var uid uuid.UUID
 	if data.ID.ValueString() == "" {
-		bundleID, err := d.getBundleIDByName(ctx, data.Name.ValueString(), 1)
+		id, err := d.getBundleIDByName(ctx, data.Name.ValueString(), 1)
 		if err != nil {
 			resp.Diagnostics.AddError("Bundle not found", err.Error())
 			return
 		}
 
-		uid = *bundleID
+		uid = *id
 
 	} else {
 		uid = uuid.MustParse(data.ID.ValueString())
@@ -313,7 +313,7 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	tflog.Trace(ctx, "saved entitle bundle data source successfully!")
 }
 
-// findBundleByID searches the workflow list for the given name.
+// findBundleByID searches the bundle list for the given name.
 func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string, page int) (*openapi_types.UUID, error) {
 	params := client.BundlesIndexParams{
 		PerPage: utils.Float32Pointer(100),
