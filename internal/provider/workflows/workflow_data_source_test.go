@@ -36,3 +36,28 @@ data "entitle_workflow" "my_workflow" {
 		},
 	})
 }
+
+func TestWorkflowDataSourceByName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_workflow" "my_workflow" {
+	name = "%s"
+}
+`, os.Getenv("ENTITLE_WORKFLOW_NAME")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("data.entitle_workflow.my_workflow", "name", os.Getenv("ENTITLE_WORKFLOW_NAME")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("data.entitle_workflow.my_workflow", "id"),
+					resource.TestCheckResourceAttrSet("data.entitle_workflow.my_workflow", "rules.#"),
+					resource.TestCheckResourceAttrSet("data.entitle_workflow.my_workflow", "rules.0.sort_order"),
+				),
+			},
+		},
+	})
+}
