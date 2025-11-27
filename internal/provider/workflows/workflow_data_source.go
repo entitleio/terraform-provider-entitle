@@ -397,22 +397,22 @@ func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name strin
 		PerPage: utils.Float32Pointer(100),
 		Page:    utils.Float32Pointer(float32(page)),
 	}
-	permissionsResp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
+	resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list workflows: %w", err)
 	}
 
-	if permissionsResp.JSON200 == nil || permissionsResp.JSON200.Result == nil {
+	if resp.JSON200 == nil || resp.JSON200.Result == nil {
 		return nil, fmt.Errorf("no workflow found")
 	}
 
-	for _, w := range permissionsResp.JSON200.Result {
+	for _, w := range resp.JSON200.Result {
 		if w.Name == name {
 			return &w.Id, nil
 		}
 	}
 
-	if permissionsResp.JSON200.Pagination.TotalPages > float32(page) {
+	if resp.JSON200.Pagination.TotalPages > float32(page) {
 		return d.getWorkflowIDByName(ctx, name, page+1)
 	}
 
