@@ -44,3 +44,36 @@ data "entitle_integration" "my_integration" {
 		},
 	})
 }
+
+func TestIntegrationDataSourceByName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_integration" "my_integration" {
+	name = "%s"
+}
+`, os.Getenv("ENTITLE_INTEGRATION_NAME")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("data.entitle_integration.my_integration", "name", os.Getenv("ENTITLE_INTEGRATION_NAME")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "id"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "requestable"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "requestable_by_default"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "application.name"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "allowed_durations.0"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "auto_assign_recommended_maintainers"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "auto_assign_recommended_owners"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "allow_creating_accounts"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "notify_about_external_permission_changes"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "readonly"),
+					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "workflow.id"),
+				),
+			},
+		},
+	})
+}

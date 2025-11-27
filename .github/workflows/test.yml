@@ -22,6 +22,8 @@ on:
         required: true
       ENTITLE_INTEGRATION_ID:
         required: true
+      ENTITLE_INTEGRATION_NAME:
+        required: true
       ENTITLE_MANUAL_INTEGRATION_ID:
         required: true
       ENTITLE_OWNER_EMAIL:
@@ -138,6 +140,7 @@ jobs:
           ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
           ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
+          ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_INTEGRATION_NAME }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
