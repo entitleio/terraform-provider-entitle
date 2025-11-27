@@ -223,13 +223,13 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	var uid uuid.UUID
 	if data.Id.ValueString() == "" {
-		bundleID, err := d.getIntegrationIDByName(ctx, data.Name.ValueString(), 1)
+		id, err := d.getIntegrationIDByName(ctx, data.Name.ValueString(), 1)
 		if err != nil {
 			resp.Diagnostics.AddError("Integration not found", err.Error())
 			return
 		}
 
-		uid = *bundleID
+		uid = *id
 
 	} else {
 		uid = uuid.MustParse(data.Id.ValueString())
