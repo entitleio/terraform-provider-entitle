@@ -341,13 +341,13 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	var uid openapi_types.UUID
 	if data.Id.ValueString() == "" {
-		workflowID, err := d.getWorkflowIDByName(ctx, data.Name.ValueString(), 1)
+		id, err := d.getWorkflowIDByName(ctx, data.Name.ValueString(), 1)
 		if err != nil {
 			resp.Diagnostics.AddError("Workflow not found", err.Error())
 			return
 		}
 
-		uid = *workflowID
+		uid = *id
 	} else {
 		uid = uuid.MustParse(data.Id.String())
 	}
