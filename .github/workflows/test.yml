@@ -18,6 +18,8 @@ on:
         required: true
       ENTITLE_BUNDLE_ID:
         required: true
+      ENTITLE_BUNDLE_NAME:
+        required: true
       ENTITLE_DIRECTORY_GROUP_EMAIL:
         required: true
       ENTITLE_INTEGRATION_ID:
@@ -136,6 +138,7 @@ jobs:
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
           ENTITLE_API_KEY2: ${{ secrets.ENTITLE_API_KEY2 }}
           ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+          ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_BUNDLE_NAME }}
           ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
