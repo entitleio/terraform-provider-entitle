@@ -223,7 +223,7 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	var uid uuid.UUID
 	if data.Id.ValueString() == "" {
-		id, err := d.getIntegrationIDByName(ctx, data.Name.ValueString(), 1)
+		id, err := d.getIntegrationIDByName(ctx, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Integration not found", err.Error())
 			return
@@ -309,29 +309,25 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 }
 
 // findIntegrationByID searches the integration list for the given name.
-func (d *IntegrationDataSource) getIntegrationIDByName(ctx context.Context, name string, page int) (*openapi_types.UUID, error) {
-	params := client.IntegrationsIndexParams{
-		PerPage: utils.Float32Pointer(100),
-		Page:    utils.Float32Pointer(float32(page)),
-	}
-	resp, err := d.client.IntegrationsIndexWithResponse(ctx, &params)
-	if err != nil {
-		return nil, fmt.Errorf("unable to list integrations: %w", err)
-	}
-
-	if resp.JSON200 == nil || resp.JSON200.Result == nil {
-		return nil, fmt.Errorf("no integration found")
-	}
-
-	for _, w := range resp.JSON200.Result {
-		if w.Name == name {
-			return &w.Id, nil
+func (d *IntegrationDataSource) getIntegrationIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.IntegrationBaseResponseSchema, int, error) {
+		params := client.IntegrationsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
 		}
+
+		resp, err := d.client.IntegrationsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing integrations: %w", err)
+		}
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("invalid integration response")
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
 	}
 
-	if resp.JSON200.Pagination.TotalPages > float32(page) {
-		return d.getIntegrationIDByName(ctx, name, page+1)
-	}
-
-	return nil, fmt.Errorf("integration with name '%s' not found", name)
+	return utils.FindIDByName(ctx, name, fetch)
 }

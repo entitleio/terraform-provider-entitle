@@ -251,7 +251,7 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	var uid uuid.UUID
 	if data.ID.ValueString() == "" {
-		id, err := d.getBundleIDByName(ctx, data.Name.ValueString(), 1)
+		id, err := d.getBundleIDByName(ctx, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Bundle not found", err.Error())
 			return
@@ -314,31 +314,27 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 }
 
 // findBundleByID searches the bundle list for the given name.
-func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string, page int) (*openapi_types.UUID, error) {
-	params := client.BundlesIndexParams{
-		PerPage: utils.Float32Pointer(100),
-		Page:    utils.Float32Pointer(float32(page)),
-	}
-	resp, err := d.client.BundlesIndexWithResponse(ctx, &params)
-	if err != nil {
-		return nil, fmt.Errorf("unable to list bundles: %w", err)
-	}
-
-	if resp.JSON200 == nil || resp.JSON200.Result == nil {
-		return nil, fmt.Errorf("no bundle found")
-	}
-
-	for _, w := range resp.JSON200.Result {
-		if w.Name == name {
-			return &w.Id, nil
+func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.BundleIndexResultResponseSchema, int, error) {
+		params := client.BundlesIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
 		}
+
+		resp, err := d.client.BundlesIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing bundles: %w", err)
+		}
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("invalid bundle response")
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
 	}
 
-	if resp.JSON200.Pagination.TotalPages > float32(page) {
-		return d.getBundleIDByName(ctx, name, page+1)
-	}
-
-	return nil, fmt.Errorf("bundle with name '%s' not found", name)
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 // convertFullBundleResultResponseSchemaToBundleDataSourceModel converts the API response to the data source model.
