@@ -39,3 +39,31 @@ data "entitle_bundle" "my_bundle" {
 		},
 	})
 }
+
+func TestBundleDataSourceByName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_bundle" "my_bundle" {
+	name = "%s"
+}
+`, os.Getenv("ENTITLE_BUNDLE_NAME")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("data.entitle_bundle.my_bundle", "name", os.Getenv("ENTITLE_BUNDLE_NAME")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "id"),
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "workflow.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "workflow.name"),
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "roles.0.resource.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "roles.0.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_bundle.my_bundle", "roles.0.name"),
+				),
+			},
+		},
+	})
+}
