@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -59,7 +60,8 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 		Description:         "Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				MarkdownDescription: "Entitle Integration identifier in uuid format",
 				Description:         "Entitle Integration identifier in uuid format",
 				Validators: []validator.String{
@@ -67,6 +69,7 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Entitle Integration name",
 				Description:         "Entitle Integration name",
@@ -218,7 +221,19 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	uid := uuid.MustParse(data.Id.ValueString())
+	var uid uuid.UUID
+	if data.Id.ValueString() == "" {
+		id, err := d.getIntegrationIDByName(ctx, data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Integration not found", err.Error())
+			return
+		}
+
+		uid = *id
+
+	} else {
+		uid = uuid.MustParse(data.Id.ValueString())
+	}
 
 	integrationResp, err := d.client.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -291,4 +306,28 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// findIntegrationByID searches the integration list for the given name.
+func (d *IntegrationDataSource) getIntegrationIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.IntegrationBaseResponseSchema, int, error) {
+		params := client.IntegrationsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.IntegrationsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing integrations: %w", err)
+		}
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("invalid integration response")
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }

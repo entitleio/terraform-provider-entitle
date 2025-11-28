@@ -21,8 +21,10 @@ jobs:
       ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
       ENTITLE_API_KEY2: ${{ secrets.ENTITLE_API_KEY2 }}
       ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+      ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_BUNDLE_NAME }}
       ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
       ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
+      ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_INTEGRATION_NAME }}
       ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
       ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
       ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
@@ -33,6 +35,7 @@ jobs:
       ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
       ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
       ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+      ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_WORKFLOW_NAME }}
       GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
   goreleaser:
     # Releases need permissions to read and write the repository contents.

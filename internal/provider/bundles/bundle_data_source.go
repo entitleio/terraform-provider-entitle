@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
@@ -81,7 +82,8 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				MarkdownDescription: "Entitle Bundle identifier in uuid format",
 				Description:         "Entitle Bundle identifier in uuid format",
 				Validators: []validator.String{
@@ -89,6 +91,7 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access.",
 				Description:         "The bundle’s name. Users will ask for this name when requesting access.",
@@ -246,14 +249,18 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Parse the resource ID from the data source model
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
-		)
-		return
+	var uid uuid.UUID
+	if data.ID.ValueString() == "" {
+		id, err := d.getBundleIDByName(ctx, data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Bundle not found", err.Error())
+			return
+		}
+
+		uid = *id
+
+	} else {
+		uid = uuid.MustParse(data.ID.ValueString())
 	}
 
 	// Log the start of the bundle GET operation with the resource ID
@@ -304,6 +311,30 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Log a trace indicating the successful saving of the entitle bundle data source
 	tflog.Trace(ctx, "saved entitle bundle data source successfully!")
+}
+
+// findBundleByID searches the bundle list for the given name.
+func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.BundleIndexResultResponseSchema, int, error) {
+		params := client.BundlesIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.BundlesIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing bundles: %w", err)
+		}
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("invalid bundle response")
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 // convertFullBundleResultResponseSchemaToBundleDataSourceModel converts the API response to the data source model.

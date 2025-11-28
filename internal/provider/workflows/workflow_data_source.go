@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"sort"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
@@ -66,7 +68,8 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				MarkdownDescription: "Entitle Workflow identifier in uuid format",
 				Description:         "Entitle Workflow identifier in uuid format",
 				Validators: []validator.String{
@@ -74,6 +77,7 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Workflow name",
 				Description:         "Workflow name",
@@ -335,7 +339,18 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	uid := uuid.MustParse(data.Id.String())
+	var uid openapi_types.UUID
+	if data.Id.ValueString() == "" {
+		id, err := d.getWorkflowIDByName(ctx, data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Workflow not found", err.Error())
+			return
+		}
+
+		uid = *id
+	} else {
+		uid = uuid.MustParse(data.Id.String())
+	}
 
 	workflowResp, err := d.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -374,6 +389,29 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.WorkflowIndexResultResponseSchema, int, error) {
+		params := client.WorkflowsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing workflows: %w", err)
+		}
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("invalid workflow response")
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 func converterWorkflow(
