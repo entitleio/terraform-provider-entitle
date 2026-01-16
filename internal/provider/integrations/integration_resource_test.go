@@ -19,7 +19,6 @@ func TestIntegrationResource(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
 resource "entitle_integration" "my_gitlab" {
   	name                               = "My Gitlab Integration"
     requestable                     = true
@@ -77,6 +76,7 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.

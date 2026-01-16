@@ -41,7 +41,7 @@ type RoleResource struct {
 type RoleResourceModel struct {
 	ID                      types.String                        `tfsdk:"id"`
 	Name                    types.String                        `tfsdk:"name"`
-	Resource                utils.IdNameModel                   `tfsdk:"resource" json:"resource"`
+	Resource                *utils.IdNameModel                  `tfsdk:"resource" json:"resource"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
@@ -683,7 +683,7 @@ func IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx context.Context,
 	return RoleResourceModel{
 		ID:   utils.TrimmedStringValue(data.Id.String()),
 		Name: utils.TrimmedStringValue(data.Name),
-		Resource: utils.IdNameModel{
+		Resource: &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Resource.Id.String()),
 			Name: utils.TrimmedStringValue(data.Resource.Name),
 		},

@@ -53,10 +53,10 @@ type IntegrationResourceModel struct {
 	AutoAssignRecommendedMaintainers     types.Bool                          `tfsdk:"auto_assign_recommended_maintainers"`
 	AutoAssignRecommendedOwners          types.Bool                          `tfsdk:"auto_assign_recommended_owners"`
 	NotifyAboutExternalPermissionChanges types.Bool                          `tfsdk:"notify_about_external_permission_changes"`
-	Owner                                utils.IdEmailModel                  `tfsdk:"owner"`
-	Application                          utils.NameModel                     `tfsdk:"application"`
+	Owner                                *utils.IdEmailModel                 `tfsdk:"owner"`
+	Application                          *utils.NameModel                    `tfsdk:"application"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
-	Workflow                             utils.IdNameModel                   `tfsdk:"workflow"`
+	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
 	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
 	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
@@ -1200,15 +1200,15 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		AutoAssignRecommendedMaintainers:     types.BoolValue(data.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(data.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
-		Owner: utils.IdEmailModel{
+		Owner: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
 			Email: utils.TrimmedStringValue(string(marshalJSON)),
 		},
-		Application: utils.NameModel{
+		Application: &utils.NameModel{
 			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name)),
 		},
 		AgentToken: agentToken,
-		Workflow: utils.IdNameModel{
+		Workflow: &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
