@@ -2,6 +2,7 @@ package workflows
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -173,6 +174,35 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
+					case "webhook", "Webhook":
+						if entity.Webhook.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing webhook data for type approval entity",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Webhook.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						item, err := convertWebhookToApprovalFlowSchema(target)
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								"failed to convert webhook to approval flow schema",
+							)
+
+							return rules, diags
+						}
+
+						approvalEntities = append(approvalEntities, item)
 					case "approval", string(client.EnumApprovalEntityWithoutEntityDirectManager),
 						string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
 						string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
@@ -319,7 +349,36 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-					case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
+						case "webhook", "Webhook":
+						if entity.Webhook.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing webhook data for type notified entity",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Webhook.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						item, err := convertWebhookToNotifiedFlowSchema(target)
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								"failed to convert webhook to notified flow schema",
+							)
+
+							return rules, diags
+						}
+
+						notifiedEntities = append(notifiedEntities, item)
+						case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
 						string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
@@ -487,6 +546,48 @@ func convertApprovalToNotifiedFlowSchema(t string, val *string) (client.Approval
 	}
 
 	return item, nil
+}
+
+// webhookEntitySchema represents the webhook entity structure for API requests.
+type webhookEntitySchema struct {
+	Entity struct {
+		Id string `json:"id"`
+	} `json:"entity"`
+	Type string `json:"type"`
+}
+
+// convertWebhookToApprovalFlowSchema converts a webhook to an Approval Flow Schema.
+func convertWebhookToApprovalFlowSchema(webhook *utils.IdNameModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
+	schema := webhookEntitySchema{
+		Type: "Webhook",
+	}
+	schema.Entity.Id = webhook.ID.ValueString()
+
+	item := client.ApprovalFlowSchema_ApprovalEntities_Item{}
+	b, err := json.Marshal(schema)
+	if err != nil {
+		return item, err
+	}
+
+	err = item.UnmarshalJSON(b)
+	return item, err
+}
+
+// convertWebhookToNotifiedFlowSchema converts a webhook to a Notified Flow Schema.
+func convertWebhookToNotifiedFlowSchema(webhook *utils.IdNameModel) (client.ApprovalFlowSchema_NotifiedEntities_Item, error) {
+	schema := webhookEntitySchema{
+		Type: "Webhook",
+	}
+	schema.Entity.Id = webhook.ID.ValueString()
+
+	item := client.ApprovalFlowSchema_NotifiedEntities_Item{}
+	b, err := json.Marshal(schema)
+	if err != nil {
+		return item, err
+	}
+
+	err = item.UnmarshalJSON(b)
+	return item, err
 }
 
 // convertFullWorkflowResultResponseSchemaToModel is a utility function used to convert the API response data

@@ -31,4 +31,5 @@ type workflowRulesApprovalFlowStepApprovalNotifiedModel struct {
 	User     types.Object `tfsdk:"user" json:"user"`
 	Group    types.Object `tfsdk:"group" json:"group"`
 	Schedule types.Object `tfsdk:"schedule" json:"schedule"`
+	Webhook  types.Object `tfsdk:"webhook" json:"webhook"`
 }

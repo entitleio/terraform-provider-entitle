@@ -232,6 +232,23 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
 														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the webhook.",
+																	MarkdownDescription: "Unique identifier of the webhook.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the webhook.",
+																	MarkdownDescription: "Name of the webhook.",
+																},
+															},
+															Optional:            true,
+															Description:         "Webhook to be invoked for notification.",
+															MarkdownDescription: "Webhook to be invoked for notification.",
+														},
 													},
 												},
 												Optional:            true,
@@ -300,6 +317,23 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
+														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the webhook.",
+																	MarkdownDescription: "Unique identifier of the webhook.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the webhook.",
+																	MarkdownDescription: "Name of the webhook.",
+																},
+															},
+															Optional:            true,
+															Description:         "Webhook to be invoked for approval.",
+															MarkdownDescription: "Webhook to be invoked for approval.",
 														},
 													},
 												},
