@@ -349,7 +349,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-						case "webhook", "Webhook":
+					case "webhook", "Webhook":
 						if entity.Webhook.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -378,7 +378,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, item)
-						case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
+					case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
 						string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
