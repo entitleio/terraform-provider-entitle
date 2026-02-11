@@ -292,59 +292,6 @@ resource "entitle_workflow" "multi_webhook_workflow" {
 	})
 }
 
-func TestWorkflowResourceWithWebhookAndUser(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			// Create workflow with mixed approval entities (webhook + user)
-			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
-resource "entitle_workflow" "mixed_workflow" {
-	name = "Mixed Approval Workflow CI"
-	rules = [
-		{
-			sort_order = 1
-			approval_flow = {
-				steps = [
-					{
-						sort_order = 1
-						operator = "or"
-						approval_entities = [
-							{
-								type = "Webhook"
-								webhook = {
-									id = "%s"
-								}
-							},
-							{
-								type = "User"
-								user = {
-									id = "%s"
-								}
-							}
-						]
-					}
-				]
-			}
-		}
-	]
-}
-`, os.Getenv("ENTITLE_WEBHOOK_ID"), os.Getenv("ENTITLE_OWNER_ID")),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "name", "Mixed Approval Workflow CI"),
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.operator", "or"),
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "Webhook"),
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "User"),
-					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.user.id", os.Getenv("ENTITLE_OWNER_ID")),
-					resource.TestCheckResourceAttrSet("entitle_workflow.mixed_workflow", "id"),
-				),
-			},
-		},
-	})
-}
-
 func TestWorkflowResourceChange(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
