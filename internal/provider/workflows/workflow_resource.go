@@ -235,7 +235,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"webhook": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the webhook.",
 																	MarkdownDescription: "Unique identifier of the webhook.",
 																},
