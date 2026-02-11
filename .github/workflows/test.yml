@@ -104,6 +104,7 @@ jobs:
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
+    environment: ${{ github.event.pull_request.head.repo.fork && 'acceptance' || '' }}
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest

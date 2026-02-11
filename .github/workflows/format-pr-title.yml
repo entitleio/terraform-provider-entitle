@@ -9,6 +9,7 @@ on:
 
 jobs:
   format-title:
+    environment: ${{ github.event.pull_request.head.repo.fork && 'acceptance' || '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Parse PR body
