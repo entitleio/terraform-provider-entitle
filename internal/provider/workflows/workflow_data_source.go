@@ -208,6 +208,23 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Description:         "Notified schedule details",
 															MarkdownDescription: "Notified schedule details",
 														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook unique identifier",
+																	MarkdownDescription: "Webhook unique identifier",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook name",
+																	MarkdownDescription: "Webhook name",
+																},
+															},
+															Computed:            true,
+															Description:         "Notified webhook details",
+															MarkdownDescription: "Notified webhook details",
+														},
 													},
 												},
 												Computed:            true,
@@ -272,6 +289,23 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Computed:            true,
 															Description:         "Approver schedule details",
 															MarkdownDescription: "Approver schedule details",
+														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook unique identifier",
+																	MarkdownDescription: "Webhook unique identifier",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook name",
+																	MarkdownDescription: "Webhook name",
+																},
+															},
+															Computed:            true,
+															Description:         "Approver webhook details",
+															MarkdownDescription: "Approver webhook details",
 														},
 													},
 												},
@@ -493,6 +527,7 @@ func converterWorkflow(
 									Schedule: vObj,
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityUserUserUser):
 								val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -521,6 +556,7 @@ func converterWorkflow(
 									User:     vObj,
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								})
 							case string(client.DirectoryGroup):
 								val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -549,6 +585,7 @@ func converterWorkflow(
 									Group:    vObj,
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 								string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -572,6 +609,41 @@ func converterWorkflow(
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
+							case "Webhook":
+								var entityData struct {
+									Entity struct {
+										Id   string `json:"id"`
+										Name string `json:"name"`
+									} `json:"entity"`
+									Type string `json:"type"`
+								}
+								if err := json.Unmarshal(jsonData, &entityData); err != nil {
+									diags.AddError(
+										"Failed to parse webhook entity",
+										err.Error(),
+									)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								v := utils.IdNameModel{
+									ID:   utils.TrimmedStringValue(entityData.Entity.Id),
+									Name: utils.TrimmedStringValue(entityData.Entity.Name),
+								}
+
+								vObj, diagsAs := v.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue("Webhook"),
+									Webhook:  vObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								})
 							}
 						}
@@ -632,6 +704,7 @@ func converterWorkflow(
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
 							val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -660,6 +733,7 @@ func converterWorkflow(
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
 							val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -688,6 +762,7 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -711,6 +786,41 @@ func converterWorkflow(
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+							})
+						case "Webhook":
+							var entityData struct {
+								Entity struct {
+									Id   string `json:"id"`
+									Name string `json:"name"`
+								} `json:"entity"`
+								Type string `json:"type"`
+							}
+							if err := json.Unmarshal(jsonData, &entityData); err != nil {
+								diags.AddError(
+									"Failed to parse webhook entity",
+									err.Error(),
+								)
+								return WorkflowDataSourceModel{}, diags
+							}
+
+							v := utils.IdNameModel{
+								ID:   utils.TrimmedStringValue(entityData.Entity.Id),
+								Name: utils.TrimmedStringValue(entityData.Entity.Name),
+							}
+
+							vObj, diagsAs := v.AsObjectValue(ctx)
+							if diagsAs.HasError() {
+								diags.Append(diagsAs...)
+								return WorkflowDataSourceModel{}, diags
+							}
+
+							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+								Type:     utils.TrimmedStringValue("Webhook"),
+								Webhook:  vObj,
+								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						}
 					}

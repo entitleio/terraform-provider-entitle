@@ -150,6 +150,201 @@ resource "entitle_workflow" "my_workflow" {
 	})
 }
 
+func TestWorkflowResourceWithWebhook(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create workflow with webhook as approval entity
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "webhook_workflow" {
+	name = "Webhook Workflow CI"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						approval_entities = [
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_WEBHOOK_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "name", "Webhook Workflow CI"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.sort_order", "1"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
+					resource.TestCheckResourceAttrSet("entitle_workflow.webhook_workflow", "id"),
+					resource.TestCheckResourceAttrSet("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.name"),
+				),
+			},
+			// Update: add notified entity with webhook
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "webhook_workflow" {
+	name = "Webhook Workflow CI Updated"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						notified_entities = [
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							}
+						]
+						approval_entities = [
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_WEBHOOK_ID"), os.Getenv("ENTITLE_WEBHOOK_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "name", "Webhook Workflow CI Updated"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
+				),
+			},
+		},
+	})
+}
+
+func TestWorkflowResourceWithMultipleWebhooks(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "multi_webhook_workflow" {
+	name = "Multi Webhook Workflow CI"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						operator = "and"
+						approval_entities = [
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							},
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_WEBHOOK_ID"), os.Getenv("ENTITLE_WEBHOOK_ID_2")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "name", "Multi Webhook Workflow CI"),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.operator", "and"),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.#", "2"),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.multi_webhook_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID_2")),
+					resource.TestCheckResourceAttrSet("entitle_workflow.multi_webhook_workflow", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestWorkflowResourceWithWebhookAndUser(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create workflow with mixed approval entities (webhook + user)
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "mixed_workflow" {
+	name = "Mixed Approval Workflow CI"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						operator = "or"
+						approval_entities = [
+							{
+								type = "Webhook"
+								webhook = {
+									id = "%s"
+								}
+							},
+							{
+								type = "User"
+								user = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_WEBHOOK_ID"), os.Getenv("ENTITLE_OWNER_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "name", "Mixed Approval Workflow CI"),
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.operator", "or"),
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "Webhook"),
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.webhook.id", os.Getenv("ENTITLE_WEBHOOK_ID")),
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "User"),
+					resource.TestCheckResourceAttr("entitle_workflow.mixed_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.user.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttrSet("entitle_workflow.mixed_workflow", "id"),
+				),
+			},
+		},
+	})
+}
+
 func TestWorkflowResourceChange(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
