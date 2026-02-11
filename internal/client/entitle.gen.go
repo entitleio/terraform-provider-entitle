@@ -1947,7 +1947,7 @@ type IntegrationResourceRoleCreateBodySchema struct {
 	Resource IdParamsSchema `json:"resource"`
 
 	// VirtualizedRole Unique identifier for the virtualized role
-	VirtualizedRole IdParamsSchema `json:"virtualizedRole"`
+	VirtualizedRole *IdParamsSchema `json:"virtualizedRole,omitempty"`
 
 	// Workflow Workflow associated with the role
 	Workflow *IdParamsSchema `json:"workflow"`

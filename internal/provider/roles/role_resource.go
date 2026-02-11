@@ -330,7 +330,7 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	if virtualizedRole != nil {
-		request.VirtualizedRole = *virtualizedRole
+		request.VirtualizedRole = virtualizedRole
 	}
 
 	request.Resource.Id, err = uuid.Parse(plan.Resource.ID.String())
@@ -522,8 +522,9 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		prerequisitePermissions = &ppData
 	}
 
-	var workflow client.IdParamsSchema
+	var workflow *client.IdParamsSchema
 	if data.Workflow != nil {
+		workflow = new(client.IdParamsSchema)
 		workflow.Id, err = uuid.Parse(data.Workflow.ID.String())
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -539,7 +540,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		AllowedDurations:        allowedDurations,
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
-		Workflow:                &workflow,
+		Workflow:                workflow,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(

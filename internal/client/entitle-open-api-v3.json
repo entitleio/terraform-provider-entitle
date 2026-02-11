@@ -7478,7 +7478,6 @@
         "required": [
           "requestable",
           "resource",
-          "virtualizedRole",
           "name"
         ]
       },
