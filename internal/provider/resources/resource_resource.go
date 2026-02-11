@@ -27,6 +27,8 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
+const tmpDefaultRoleName = "default"
+
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &ResourceResource{}
 var _ resource.ResourceWithImportState = &ResourceResource{}
@@ -64,10 +66,12 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
 			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
+			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
 		Description: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
 			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
+			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -507,6 +511,11 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		UserDefinedDescription:  plan.UserDefinedDescription.ValueStringPointer(),
 		UserDefinedTags:         &userDefinedTags,
 		Workflow:                &workflow,
+		Roles: &[]client.IntegrationResourceRoleCreateSchema{
+			{
+				Name: tmpDefaultRoleName,
+			},
+		},
 	}
 
 	if len(allowedDurations) > 0 {
@@ -535,6 +544,17 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	err = r.MakeUnrequestableDefaultRole(ctx, resourceResp.JSON200.Result.Id)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"API Warning",
+			fmt.Sprintf(
+				"Failed to make unrequestable default role, %s",
+				err.Error(),
+			),
+		)
+	}
+
 	plan, diags = convertFullResourceResultResponseSchemaToModel(
 		ctx,
 		&resourceResp.JSON200.Result,
@@ -554,6 +574,45 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func (r *ResourceResource) MakeUnrequestableDefaultRole(ctx context.Context, resourceID uuid.UUID) error {
+	search := tmpDefaultRoleName
+	params := client.RolesIndexParams{
+		Page:       nil,
+		PerPage:    nil,
+		ResourceId: resourceID,
+		Search:     &search,
+	}
+
+	response, err := r.client.RolesIndexWithResponse(ctx, &params)
+	if err != nil {
+		return err
+	}
+
+	err = utils.HTTPResponseToError(response.HTTPResponse.StatusCode, response.Body)
+	if err != nil {
+		return err
+	}
+
+	for _, role := range response.JSON200.Result {
+		if role.Name == tmpDefaultRoleName {
+			unreqestable := false
+			updateResp, err := r.client.RolesUpdateWithResponse(ctx, role.Id, client.RolesUpdateJSONRequestBody{
+				Requestable: &unreqestable,
+			})
+			if err != nil {
+				return err
+			}
+
+			err = utils.HTTPResponseToError(updateResp.HTTPResponse.StatusCode, updateResp.Body)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // Read this function is used to read an existing resource of type Entitle Resource.
