@@ -196,7 +196,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--webhook"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.webhook`
 
-Optional:
+Required:
 
 - `id` (String) Unique identifier of the webhook.
 
