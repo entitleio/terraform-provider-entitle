@@ -445,6 +445,14 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		Name: utils.TrimPrefixSuffix(plan.Application.Name.ValueString()),
 	}
 
+	if strings.ToLower(application.Name) == "virtual application" && plan.NotifyAboutExternalPermissionChanges.ValueBool() {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			"Virtual integrations cannot set notifyAboutExternalPermissions to true",
+		)
+		return
+	}
+
 	var connectionJson *map[string]interface{}
 	if plan.ConnectionJson.IsNull() || plan.ConnectionJson.IsUnknown() || plan.ConnectionJson.ValueString() == "" {
 		resp.Diagnostics.AddError(
