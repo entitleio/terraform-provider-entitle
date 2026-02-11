@@ -24,6 +24,8 @@ on:
         required: true
       ENTITLE_MANUAL_INTEGRATION_ID:
         required: true
+      ENTITLE_VIRTUAL_INTEGRATION_ID:
+        required: true
       ENTITLE_OWNER_EMAIL:
         required: true
       ENTITLE_OWNER_ID:
@@ -143,6 +145,7 @@ jobs:
           ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
+          ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_VIRTUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
           ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_PERMISSION_ID }}
