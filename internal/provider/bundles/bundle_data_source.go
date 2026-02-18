@@ -84,8 +84,8 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Entitle Bundle identifier in uuid format",
-				Description:         "Entitle Bundle identifier in uuid format",
+				MarkdownDescription: "Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
 				},
@@ -251,9 +251,23 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	var uid uuid.UUID
 	if data.ID.ValueString() == "" {
-		id, err := d.getBundleIDByName(ctx, data.Name.ValueString())
+		name := data.Name.ValueString()
+		if name == "" {
+			resp.Diagnostics.AddError("Bundle not found", fmt.Sprintf(
+				"You must provide Bundle Name or ID",
+			))
+
+			return
+		}
+
+		id, err := d.getBundleIDByName(ctx, name)
 		if err != nil {
-			resp.Diagnostics.AddError("Bundle not found", err.Error())
+			resp.Diagnostics.AddError("Bundle not found", fmt.Sprintf(
+				"Failed to get the Bundle by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
 			return
 		}
 

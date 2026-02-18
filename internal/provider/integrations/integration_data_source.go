@@ -62,8 +62,8 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 			"id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Entitle Integration identifier in uuid format",
-				Description:         "Entitle Integration identifier in uuid format",
+				MarkdownDescription: "Entitle Integration identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Integration identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
 				},
@@ -223,9 +223,23 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	var uid uuid.UUID
 	if data.Id.ValueString() == "" {
-		id, err := d.getIntegrationIDByName(ctx, data.Name.ValueString())
+		name := data.Name.ValueString()
+		if name == "" {
+			resp.Diagnostics.AddError("Integration not found", fmt.Sprintf(
+				"You must provide Integration Name or ID",
+			))
+
+			return
+		}
+
+		id, err := d.getIntegrationIDByName(ctx, name)
 		if err != nil {
-			resp.Diagnostics.AddError("Integration not found", err.Error())
+			resp.Diagnostics.AddError("Integration not found", fmt.Sprintf(
+				"Failed to get the Integration by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
 			return
 		}
 

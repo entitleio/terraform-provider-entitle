@@ -70,8 +70,8 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"id": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Entitle Workflow identifier in uuid format",
-				Description:         "Entitle Workflow identifier in uuid format",
+				MarkdownDescription: "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
 				},
@@ -375,9 +375,23 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	var uid openapi_types.UUID
 	if data.Id.ValueString() == "" {
-		id, err := d.getWorkflowIDByName(ctx, data.Name.ValueString())
+		name := data.Name.ValueString()
+		if name == "" {
+			resp.Diagnostics.AddError("Workflow not found", fmt.Sprintf(
+				"You must provide Workflow Name or ID",
+			))
+
+			return
+		}
+
+		id, err := d.getWorkflowIDByName(ctx, name)
 		if err != nil {
-			resp.Diagnostics.AddError("Workflow not found", err.Error())
+			resp.Diagnostics.AddError("Workflow not found", fmt.Sprintf(
+				"Failed to get the Workflow by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
 			return
 		}
 
