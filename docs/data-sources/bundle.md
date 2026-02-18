@@ -27,7 +27,7 @@ data "entitle_bundle" "example_by_name" {
 
 ### Optional
 
-- `id` (String) Entitle Bundle identifier in uuid format
+- `id` (String) Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.
 - `name` (String) The bundle’s name. Users will ask for this name when requesting access.
 
 ### Read-Only

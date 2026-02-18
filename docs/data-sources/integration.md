@@ -27,7 +27,7 @@ data "entitle_integration" "example_by_name" {
 
 ### Optional
 
-- `id` (String) Entitle Integration identifier in uuid format
+- `id` (String) Entitle Integration identifier in uuid format. If not provided then name will be used to get entity.
 - `name` (String) Entitle Integration name
 
 ### Read-Only
