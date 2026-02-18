@@ -95,6 +95,7 @@ Optional:
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String) Type of approval entity.
 - `user` (Attributes) Represents an individual user who is required to approve the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
+- `webhook` (Attributes) Webhook to be invoked for approval. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--webhook))
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
@@ -132,6 +133,18 @@ Read-Only:
 - `email` (String) Email address of the approver.
 
 
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.webhook`
+
+Optional:
+
+- `id` (String) Unique identifier of the webhook.
+
+Read-Only:
+
+- `name` (String) Name of the webhook.
+
+
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities`
@@ -142,6 +155,7 @@ Optional:
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String) Type of notified entity
 - `user` (Attributes) Represents an individual user who will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
+- `webhook` (Attributes) Webhook to be invoked for notification. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
@@ -177,6 +191,18 @@ Optional:
 Read-Only:
 
 - `email` (String) Email address of the notified user.
+
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.webhook`
+
+Required:
+
+- `id` (String) Unique identifier of the webhook.
+
+Read-Only:
+
+- `name` (String) Name of the webhook.
 
 
 

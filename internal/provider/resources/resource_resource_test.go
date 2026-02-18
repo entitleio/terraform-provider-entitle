@@ -175,3 +175,64 @@ func TestResourceResource(t *testing.T) {
 		},
 	})
 }
+
+func TestResourceResourceForVirtual(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing - null set
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+			
+			resource "entitle_resource" "my_resource" {
+			 	name                               = "My Resource For Virtual"
+				user_defined_description = "test description"
+			   requestable                     = true
+			   owner = {
+			     id    = "%s"
+			   }
+			   workflow = {
+			     id   = "%s"
+			   }
+				integration = {
+				  id = "%s"
+				}
+				maintainers = [
+					{
+						type = "user"
+						entity = {
+							id = "%s"
+						}
+					}
+				]
+				prerequisite_permissions = [
+					{
+						default = true
+						role = {
+							id = "%s"
+						}
+					}
+				]
+			}
+			`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_VIRTUAL_INTEGRATION_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "name", "My Resource For Virtual"),
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "user_defined_description", "test description"),
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "requestable", "true"),
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckResourceAttr("entitle_resource.my_resource", "integration.id", os.Getenv("ENTITLE_VIRTUAL_INTEGRATION_ID")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "id"),
+
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.application.name"),
+				),
+			},
+		},
+	})
+}

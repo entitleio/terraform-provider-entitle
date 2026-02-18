@@ -75,6 +75,7 @@ Read-Only:
 - `schedule` (Attributes) Approver schedule details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String) Approver type
 - `user` (Attributes) Approver user details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
+- `webhook` (Attributes) Approver webhook details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--webhook))
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
@@ -103,6 +104,15 @@ Read-Only:
 - `id` (String) Approver user's unique identifier
 
 
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.webhook`
+
+Read-Only:
+
+- `id` (String) Webhook unique identifier
+- `name` (String) Webhook name
+
+
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities`
@@ -113,6 +123,7 @@ Read-Only:
 - `schedule` (Attributes) Notified schedule details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String) Entity type
 - `user` (Attributes) Notified user details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
+- `webhook` (Attributes) Notified webhook details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
@@ -139,6 +150,15 @@ Read-Only:
 
 - `email` (String) Notified user's email
 - `id` (String) Notified user's unique identifier
+
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.webhook`
+
+Read-Only:
+
+- `id` (String) Webhook unique identifier
+- `name` (String) Webhook name
 
 
 

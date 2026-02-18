@@ -3,12 +3,12 @@
 page_title: "entitle_resource Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
+  Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles. Due to API limitations it will create unrequestable role called 'default'
 ---
 
 # entitle_resource (Resource)
 
-Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
+Defines an Entitle Resource, which represents a target system or asset that can be accessed or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). Due to API limitations it will create unrequestable role called 'default'
 
 ## Example Usage
 

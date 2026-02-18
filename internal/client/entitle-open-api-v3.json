@@ -3481,15 +3481,68 @@
           }
         }
       },
-      "IntegrationResourceRoleCreateBodySchema": {
+      "IntegrationResourcesCreateBodySchema": {
         "type": "object",
         "properties": {
+          "userDefinedDescription": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Optional custom description."
+          },
+          "userDefinedTags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "tag"
+            },
+            "description": "Optional custom tags.",
+            "minLength": 2,
+            "maxLength": 50
+          },
           "allowedDurations": {
             "type": "array",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/EnumAllowedDurations"
             }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "Whether the resource is requestable."
+          },
+          "workflow": {
+            "nullable": true,
+            "description": "Workflow associated with the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "owner": {
+            "nullable": true,
+            "description": "Owner of the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          },
+          "maintainers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            },
+            "description": "Array of maintainers with pagination metadata"
           },
           "prerequisitePermissions": {
             "type": "array",
@@ -3503,37 +3556,47 @@
                     "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
                   }
                 ]
-              }
+              },
+              "description": "Prerequisite permissions required for this resource"
             }
           },
-          "name": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "resource": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "virtualizedRole": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "requestable": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "nullable": true,
+          "integration": {
+            "description": "Integration to attach the resource to (object with 'id' UUID).",
             "allOf": [
               {
                 "$ref": "#/components/schemas/IdParamsSchema"
               }
             ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "Display name for the resource"
+          },
+          "multirole": {
+            "type": "boolean",
+            "description": "Whether the resource includes multiple roles."
+          },
+          "type": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "Optional resource type label."
+          },
+          "roles": {
+            "description": "Initial roles to create with the resource.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleCreateSchema"
+            }
           }
         },
         "required": [
+          "requestable",
+          "integration",
           "name",
-          "resource",
-          "requestable"
+          "multirole"
         ]
       },
       "IntegrationResourceRoleDestroyResponseSchema": {
@@ -7347,6 +7410,75 @@
         "required": [
           "type",
           "role"
+        ]
+      },
+      "IntegrationResourceRoleCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "Indicates if the role is requestable"
+          },
+          "workflow": {
+            "nullable": true,
+            "description": "Workflow associated with the role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            },
+            "description": "Prerequisite permissions required for this role"
+          },
+          "resource": {
+            "description": "Unique identifier for the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "virtualizedRole": {
+            "description": "Unique identifier for the virtualized role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the role",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "requestable",
+          "resource",
+          "name"
         ]
       },
       "PrerequisiteRolePermissionResponseSchema": {

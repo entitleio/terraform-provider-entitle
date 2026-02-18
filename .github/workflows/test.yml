@@ -28,6 +28,8 @@ on:
         required: true
       ENTITLE_MANUAL_INTEGRATION_ID:
         required: true
+      ENTITLE_VIRTUAL_INTEGRATION_ID:
+        required: true
       ENTITLE_OWNER_EMAIL:
         required: true
       ENTITLE_OWNER_ID:
@@ -45,6 +47,10 @@ on:
       ENTITLE_USER2_ID:
         required: true
       ENTITLE_WORKFLOW_ID:
+        required: true
+      ENTITLE_WEBHOOK_ID:
+        required: true
+      ENTITLE_WEBHOOK_ID_2:
         required: true
       ENTITLE_WORKFLOW_NAME:
         required: true
@@ -147,6 +153,7 @@ jobs:
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
           ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_INTEGRATION_NAME }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
+          ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_VIRTUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
           ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_PERMISSION_ID }}
@@ -157,6 +164,8 @@ jobs:
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
           ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_WORKFLOW_NAME }}
+          ENTITLE_WEBHOOK_ID: ${{ secrets.ENTITLE_WEBHOOK_ID }}
+          ENTITLE_WEBHOOK_ID_2: ${{ secrets.ENTITLE_WEBHOOK_ID_2 }}
           GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
         run: go test -v -cover -tags=acceptance ./internal/provider/...
         timeout-minutes: 10

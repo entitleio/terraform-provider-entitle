@@ -19,7 +19,6 @@ func TestIntegrationResource(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
 resource "entitle_integration" "my_gitlab" {
   	name                               = "My Gitlab Integration"
     requestable                     = true
@@ -77,6 +76,7 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
@@ -143,6 +143,62 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
+				),
+			},
+		},
+	})
+}
+
+func TestIntegrationResourceVirtual(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_integration" "test_integration" {
+  name        = "Test Integration"
+  application = {
+    name = "virtual application"
+  }
+  allowed_durations = [1800,3600]
+  connection_json = jsonencode({})
+  owner = {
+    id = "%s"
+  }
+  workflow = {
+    id = "%s"
+  }
+  allow_changing_account_permissions = false
+  allow_creating_accounts = false
+  auto_assign_recommended_owners = false
+  auto_assign_recommended_maintainers = false
+  notify_about_external_permission_changes = false
+}
+`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "name", "Test Integration"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "requestable", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "requestable_by_default", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "application.name", "virtual application"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "allowed_durations.0", "1800"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "auto_assign_recommended_maintainers", "false"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "auto_assign_recommended_owners", "false"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "allow_creating_accounts", "false"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "notify_about_external_permission_changes", "false"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "readonly", "false"),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckResourceAttrSet("entitle_integration.test_integration", "connection_json"),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("entitle_integration.test_integration", "id"),
+
+					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
+					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
+					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
+					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 		},
