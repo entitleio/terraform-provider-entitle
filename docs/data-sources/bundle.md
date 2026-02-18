@@ -28,7 +28,7 @@ data "entitle_bundle" "example_by_name" {
 ### Optional
 
 - `id` (String) Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.
-- `name` (String) The bundle’s name. Users will ask for this name when requesting access.
+- `name` (String) The bundle’s name. Users will ask for this name when requesting access. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.
 
 ### Read-Only
 

@@ -5,6 +5,7 @@ package integrations_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -73,6 +74,40 @@ data "entitle_integration" "my_integration" {
 					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "readonly"),
 					resource.TestCheckResourceAttrSet("data.entitle_integration.my_integration", "workflow.id"),
 				),
+			},
+		},
+	})
+}
+
+func TestIntegrationDataSourceFail(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// ID and Name provided
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_integration" "my_integration" {
+	id = "%s"
+	name = "%s"
+}
+`, os.Getenv("ENTITLE_INTEGRATION_ID"), os.Getenv("ENTITLE_INTEGRATION_NAME")),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			// Name provided, but not found
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_integration" "my_integration" {
+	name = "%sBLABLA"
+}
+`, os.Getenv("ENTITLE_INTEGRATION_NAME")),
+				ExpectError: regexp.MustCompile("Failed to get the Integration by the name"),
+			},
+			// None of ID and Name provided
+			{
+				Config: testhelpers.ProviderConfig + `
+data "entitle_integration" "my_integration" {}
+`,
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
 			},
 		},
 	})

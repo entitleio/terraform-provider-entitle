@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -88,13 +92,23 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				Description:         "Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access.",
-				Description:         "The bundle’s name. Users will ask for this name when requesting access.",
+				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The bundle’s name. Users will ask for this name when requesting access. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"description": schema.StringAttribute{
 				Computed: true,
@@ -252,13 +266,6 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	var uid uuid.UUID
 	if data.ID.ValueString() == "" {
 		name := data.Name.ValueString()
-		if name == "" {
-			resp.Diagnostics.AddError("Bundle not found", fmt.Sprintf(
-				"You must provide Bundle Name or ID",
-			))
-
-			return
-		}
 
 		id, err := d.getBundleIDByName(ctx, name)
 		if err != nil {
@@ -337,10 +344,16 @@ func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string) (
 
 		resp, err := d.client.BundlesIndexWithResponse(ctx, &params)
 		if err != nil {
-			return nil, 0, fmt.Errorf("listing bundles: %w", err)
+			return nil, 0, fmt.Errorf("failed to list bundles: %w", err)
 		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing bundles (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
 		if resp.JSON200 == nil || resp.JSON200.Result == nil {
-			return nil, 0, fmt.Errorf("invalid bundle response")
+			return nil, 0, fmt.Errorf("received invalid bundle response structure (page %d)", page)
 		}
 
 		items := resp.JSON200.Result

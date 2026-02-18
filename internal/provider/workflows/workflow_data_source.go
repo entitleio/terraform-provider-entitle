@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"sort"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -74,13 +77,23 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Description:         "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Workflow name",
-				Description:         "Workflow name",
+				MarkdownDescription: "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -376,13 +389,6 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	var uid openapi_types.UUID
 	if data.Id.ValueString() == "" {
 		name := data.Name.ValueString()
-		if name == "" {
-			resp.Diagnostics.AddError("Workflow not found", fmt.Sprintf(
-				"You must provide Workflow Name or ID",
-			))
-
-			return
-		}
 
 		id, err := d.getWorkflowIDByName(ctx, name)
 		if err != nil {
@@ -448,10 +454,16 @@ func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name strin
 
 		resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
 		if err != nil {
-			return nil, 0, fmt.Errorf("listing workflows: %w", err)
+			return nil, 0, fmt.Errorf("failed to list workflows: %w", err)
 		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing workflows (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
 		if resp.JSON200 == nil || resp.JSON200.Result == nil {
-			return nil, 0, fmt.Errorf("invalid workflow response")
+			return nil, 0, fmt.Errorf("received invalid workflow response structure (page %d)", page)
 		}
 
 		items := resp.JSON200.Result

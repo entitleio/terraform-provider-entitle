@@ -31,7 +31,7 @@ data "entitle_workflow" "example_by_name" {
 ### Optional
 
 - `id` (String) Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.
-- `name` (String) Workflow name
+- `name` (String) The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.
 
 ### Read-Only
 
