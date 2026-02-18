@@ -37,7 +37,7 @@ resource "entitle_integration" "example" {
 
 - `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
 - `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
-- `connection_json` (String) go to https://app.entitle.io/integrations and provide the latest schema.
+- `connection_json` (String) You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).
 - `name` (String) The display name for the integration. Length between 2 and 50.
 - `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `workflow` (Attributes) The default approval workflow for entitlements for the integration (can be overwritten on resource/role level). (see [below for nested schema](#nestedatt--workflow))
@@ -67,7 +67,7 @@ resource "entitle_integration" "example" {
 
 Required:
 
-- `name` (String) The application's name
+- `name` (String) The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).
 
 
 <a id="nestedatt--owner"></a>

@@ -1380,9 +1380,24 @@ type AgentTokensListResponseSchema struct {
 	Result     []AgentTokenResponseSchema `json:"result"`
 }
 
+// ApplicationIndexResultResponseSchema defines model for ApplicationIndexResultResponseSchema.
+type ApplicationIndexResultResponseSchema struct {
+	// Id Unique identifier for the application
+	Id openapi_types.UUID `json:"id"`
+
+	// Name Display name for the application
+	Name string `json:"name"`
+}
+
 // ApplicationResponseSchema defines model for ApplicationResponseSchema.
 type ApplicationResponseSchema struct {
 	Name string `json:"name"`
+}
+
+// ApplicationsIndexResponseSchema defines model for ApplicationsIndexResponseSchema.
+type ApplicationsIndexResponseSchema struct {
+	// Result List of applications
+	Result []ApplicationIndexResultResponseSchema `json:"result"`
 }
 
 // ApprovalAlgorithmAuditLogResponseSchema defines model for ApprovalAlgorithmAuditLogResponseSchema.
@@ -4315,6 +4330,9 @@ type ClientInterface interface {
 
 	AgentTokensUpdate(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ApplicationsIndex request
+	ApplicationsIndex(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AuditLogsSearchWithBody request with any body
 	AuditLogsSearchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4703,6 +4721,18 @@ func (c *Client) AgentTokensUpdateWithBody(ctx context.Context, id openapi_types
 
 func (c *Client) AgentTokensUpdate(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAgentTokensUpdateRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApplicationsIndex(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApplicationsIndexRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -6078,6 +6108,33 @@ func NewAgentTokensUpdateRequestWithBody(server string, id openapi_types.UUID, c
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewApplicationsIndexRequest generates requests for ApplicationsIndex
+func NewApplicationsIndexRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/applications")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -8295,6 +8352,9 @@ type ClientWithResponsesInterface interface {
 
 	AgentTokensUpdateWithResponse(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*AgentTokensUpdateResponse, error)
 
+	// ApplicationsIndexWithResponse request
+	ApplicationsIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ApplicationsIndexResponse, error)
+
 	// AuditLogsSearchWithBodyWithResponse request with any body
 	AuditLogsSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AuditLogsSearchResponse, error)
 
@@ -8790,6 +8850,28 @@ func (r AgentTokensUpdateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r AgentTokensUpdateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApplicationsIndexResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ApplicationsIndexResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r ApplicationsIndexResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApplicationsIndexResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9841,6 +9923,15 @@ func (c *ClientWithResponses) AgentTokensUpdateWithResponse(ctx context.Context,
 	return ParseAgentTokensUpdateResponse(rsp)
 }
 
+// ApplicationsIndexWithResponse request returning *ApplicationsIndexResponse
+func (c *ClientWithResponses) ApplicationsIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ApplicationsIndexResponse, error) {
+	rsp, err := c.ApplicationsIndex(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApplicationsIndexResponse(rsp)
+}
+
 // AuditLogsSearchWithBodyWithResponse request with arbitrary body returning *AuditLogsSearchResponse
 func (c *ClientWithResponses) AuditLogsSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AuditLogsSearchResponse, error) {
 	rsp, err := c.AuditLogsSearchWithBody(ctx, contentType, body, reqEditors...)
@@ -10731,6 +10822,32 @@ func ParseAgentTokensUpdateResponse(rsp *http.Response) (*AgentTokensUpdateRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AgentTokenResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApplicationsIndexResponse parses an HTTP response from a ApplicationsIndexWithResponse call
+func ParseApplicationsIndexResponse(rsp *http.Response) (*ApplicationsIndexResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApplicationsIndexResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApplicationsIndexResponseSchema
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

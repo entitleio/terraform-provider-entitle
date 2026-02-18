@@ -142,8 +142,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
 						Required:            true,
-						Description:         "The application's name",
-						MarkdownDescription: "The application's name",
+						Description:         "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
+						MarkdownDescription: "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						Validators: []validator.String{
 							validators.NewName(2, 50),
 							validators.Lowercase{},
@@ -255,8 +255,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"connection_json": schema.StringAttribute{
 				Required:            true,
-				Description:         "go to https://app.entitle.io/integrations and provide the latest schema.",
-				MarkdownDescription: "go to https://app.entitle.io/integrations and provide the latest schema.",
+				Description:         "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
 			},
 			"prerequisite_permissions": schema.ListNestedAttribute{
 				Optional:            true,
