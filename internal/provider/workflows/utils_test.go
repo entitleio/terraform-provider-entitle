@@ -565,6 +565,81 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 	}
 }
 
+func TestReconcileEntityOrder_ExtraResultEntities(t *testing.T) {
+	// The API may return entities that weren't in the plan (e.g. added
+	// server-side). These extras must be appended after the reordered
+	// plan entities, in their original API response order.
+	groupA := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	groupB := "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	extraUser := "11111111-1111-1111-1111-111111111111"
+	extraGroup := "22222222-2222-2222-2222-222222222222"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupA, "Group A"),
+							makeGroupEntity(t, groupB, "Group B"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns plan entities shuffled, plus two extras
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeUserEntity(t, extraUser, "extra@example.com"),
+							makeGroupEntity(t, groupB, "Group B"),
+							makeGroupEntity(t, extraGroup, "Extra Group"),
+							makeGroupEntity(t, groupA, "Group A"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+
+	// Plan entities first in plan order, then extras in original API order
+	wantKeys := []string{
+		"directory_group:" + groupA,
+		"directory_group:" + groupB,
+		"user:" + extraUser,
+		"directory_group:" + extraGroup,
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
+	}
+}
+
 func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 	// Webhook entities carry an ID via the Webhook object field.
 	// Verify they are matched and reordered correctly alongside

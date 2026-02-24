@@ -655,10 +655,14 @@ func reorderEntities(
 		}
 	}
 
-	// Append any remaining result entities not consumed above.
-	for key, queue := range resultQueues {
-		for i := consumed[key]; i < len(queue); i++ {
-			reordered = append(reordered, queue[i])
+	// Append any remaining result entities not consumed above,
+	// preserving their original order from resultEntities.
+	for _, entity := range resultEntities {
+		key := entitySortKey(entity)
+		idx := consumed[key]
+		if queue := resultQueues[key]; idx < len(queue) {
+			reordered = append(reordered, queue[idx])
+			consumed[key] = idx + 1
 		}
 	}
 
