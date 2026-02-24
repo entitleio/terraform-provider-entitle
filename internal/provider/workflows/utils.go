@@ -691,50 +691,29 @@ func sortOrderKey(n types.Number) string {
 // reconcileEntityOrder reorders approval_entities and notified_entities in the result
 // to match the plan order, preventing "inconsistent result after apply" errors when
 // the API returns entities in a different order than the plan.
-	// Use a slice per sort_order key to handle cases where multiple rules share the same sort_order.
-	planRulesBySort := make(map[string][]*workflowRulesModel, len(planRules))
+//
+// Rules and steps are matched by their sort_order value rather than slice index,
+// because converterWorkflow sorts them by sort_order while the plan preserves
+// HCL definition order.
+func reconcileEntityOrder(
+	planRules []*workflowRulesModel,
+	resultRules []*workflowRulesModel,
+) {
+	// Index plan rules by sort_order for lookup.
+	planRulesBySort := make(map[string]*workflowRulesModel, len(planRules))
 	for _, r := range planRules {
-		key := sortOrderKey(r.SortOrder)
-		planRulesBySort[key] = append(planRulesBySort[key], r)
+		planRulesBySort[sortOrderKey(r.SortOrder)] = r
 	}
 
 	for _, resultRule := range resultRules {
-		ruleKey := sortOrderKey(resultRule.SortOrder)
-		ruleQueue, ok := planRulesBySort[ruleKey]
-		if !ok || len(ruleQueue) == 0 {
+		planRule, ok := planRulesBySort[sortOrderKey(resultRule.SortOrder)]
+		if !ok {
 			continue
 		}
 
-		// Take the next plan rule for this sort_order and consume it from the queue.
-		planRule := ruleQueue[0]
-		if len(ruleQueue) == 1 {
-			planRulesBySort[ruleKey] = nil
-		} else {
-			planRulesBySort[ruleKey] = ruleQueue[1:]
-		}
-
 		// Index plan steps by sort_order for lookup.
-		// Again, use a slice per sort_order key to avoid overwriting on duplicates.
-		planStepsBySort := make(map[string][]*workflowRulesApprovalFlowStepModel, len(planRule.ApprovalFlow.Steps))
+		planStepsBySort := make(map[string]*workflowRulesApprovalFlowStepModel, len(planRule.ApprovalFlow.Steps))
 		for _, s := range planRule.ApprovalFlow.Steps {
-			stepKey := sortOrderKey(s.SortOrder)
-			planStepsBySort[stepKey] = append(planStepsBySort[stepKey], s)
-		}
-
-		for _, resultStep := range resultRule.ApprovalFlow.Steps {
-			stepKey := sortOrderKey(resultStep.SortOrder)
-			stepQueue, ok := planStepsBySort[stepKey]
-			if !ok || len(stepQueue) == 0 {
-				continue
-			}
-
-			// Take the next plan step for this sort_order and consume it from the queue.
-			planStep := stepQueue[0]
-			if len(stepQueue) == 1 {
-				planStepsBySort[stepKey] = nil
-			} else {
-				planStepsBySort[stepKey] = stepQueue[1:]
-			}
 			planStepsBySort[sortOrderKey(s.SortOrder)] = s
 		}
 
