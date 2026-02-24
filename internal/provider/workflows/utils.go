@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -670,25 +671,48 @@ func reorderEntities(
 	return reordered
 }
 
+// sortOrderKey returns a comparable string for a types.Number sort_order value.
+func sortOrderKey(n types.Number) string {
+	if n.IsNull() || n.IsUnknown() {
+		return "0"
+	}
+	return n.ValueBigFloat().String()
+}
+
 // reconcileEntityOrder reorders approval_entities and notified_entities in the result
 // to match the plan order, preventing "inconsistent result after apply" errors when
 // the API returns entities in a different order than the plan.
+//
+// Rules and steps are matched by their sort_order value rather than slice index,
+// because converterWorkflow sorts them by sort_order while the plan preserves
+// HCL definition order.
 func reconcileEntityOrder(
 	planRules []*workflowRulesModel,
 	resultRules []*workflowRulesModel,
 ) {
-	for ruleIdx := range resultRules {
-		if ruleIdx >= len(planRules) {
-			break
+	// Index plan rules by sort_order for lookup.
+	planRulesBySort := make(map[string]*workflowRulesModel, len(planRules))
+	for _, r := range planRules {
+		planRulesBySort[sortOrderKey(r.SortOrder)] = r
+	}
+
+	for _, resultRule := range resultRules {
+		planRule, ok := planRulesBySort[sortOrderKey(resultRule.SortOrder)]
+		if !ok {
+			continue
 		}
 
-		for stepIdx := range resultRules[ruleIdx].ApprovalFlow.Steps {
-			if stepIdx >= len(planRules[ruleIdx].ApprovalFlow.Steps) {
-				break
-			}
+		// Index plan steps by sort_order for lookup.
+		planStepsBySort := make(map[string]*workflowRulesApprovalFlowStepModel, len(planRule.ApprovalFlow.Steps))
+		for _, s := range planRule.ApprovalFlow.Steps {
+			planStepsBySort[sortOrderKey(s.SortOrder)] = s
+		}
 
-			planStep := planRules[ruleIdx].ApprovalFlow.Steps[stepIdx]
-			resultStep := resultRules[ruleIdx].ApprovalFlow.Steps[stepIdx]
+		for _, resultStep := range resultRule.ApprovalFlow.Steps {
+			planStep, ok := planStepsBySort[sortOrderKey(resultStep.SortOrder)]
+			if !ok {
+				continue
+			}
 
 			resultStep.ApprovalEntities = reorderEntities(
 				planStep.ApprovalEntities, resultStep.ApprovalEntities,

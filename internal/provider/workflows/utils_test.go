@@ -430,6 +430,112 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 	}
 }
 
+func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
+	// Plan defines rules in HCL order [sort_order=1, sort_order=0], but
+	// converterWorkflow sorts the result by sort_order [0, 1].
+	// reconcileEntityOrder must match by sort_order, not slice index.
+	groupA := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	groupB := "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	groupC := "cccccccc-cccc-cccc-cccc-cccccccccccc"
+	groupD := "dddddddd-dddd-dddd-dddd-dddddddddddd"
+
+	// Plan: rule sort_order=1 first, sort_order=0 second (HCL order)
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(1)),
+			UnderDuration: types.NumberValue(big.NewFloat(7200)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupC, "Group C"),
+							makeGroupEntity(t, groupD, "Group D"),
+						},
+					},
+				},
+			},
+		},
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupA, "Group A"),
+							makeGroupEntity(t, groupB, "Group B"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Result: sorted by sort_order [0, 1], entities shuffled within
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupB, "Group B"),
+							makeGroupEntity(t, groupA, "Group A"),
+						},
+					},
+				},
+			},
+		},
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(1)),
+			UnderDuration: types.NumberValue(big.NewFloat(7200)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupD, "Group D"),
+							makeGroupEntity(t, groupC, "Group C"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	// Result rule sort_order=0 should match plan rule sort_order=0 → [A, B]
+	got0 := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	if entitySortKey(got0[0]) != "directory_group:"+groupA {
+		t.Errorf("rule[sort=0] entity[0]: got %q, want group A", entitySortKey(got0[0]))
+	}
+	if entitySortKey(got0[1]) != "directory_group:"+groupB {
+		t.Errorf("rule[sort=0] entity[1]: got %q, want group B", entitySortKey(got0[1]))
+	}
+
+	// Result rule sort_order=1 should match plan rule sort_order=1 → [C, D]
+	got1 := resultRules[1].ApprovalFlow.Steps[0].ApprovalEntities
+	if entitySortKey(got1[0]) != "directory_group:"+groupC {
+		t.Errorf("rule[sort=1] entity[0]: got %q, want group C", entitySortKey(got1[0]))
+	}
+	if entitySortKey(got1[1]) != "directory_group:"+groupD {
+		t.Errorf("rule[sort=1] entity[1]: got %q, want group D", entitySortKey(got1[1]))
+	}
+}
+
 func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 	// Entities like direct_manager and integration_owner have no
 	// user/group/schedule, but they have distinct type strings so their
