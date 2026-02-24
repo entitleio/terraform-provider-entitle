@@ -629,27 +629,30 @@ func reorderEntities(
 		return resultEntities
 	}
 
-	resultByKey := make(map[string]*workflowRulesApprovalFlowStepApprovalNotifiedModel, len(resultEntities))
+	// Use a queue per key so duplicate keys (e.g. two "direct_manager"
+	// entities) are consumed one at a time instead of overwritten.
+	resultQueues := make(map[string][]*workflowRulesApprovalFlowStepApprovalNotifiedModel, len(resultEntities))
 	for _, entity := range resultEntities {
 		key := entitySortKey(entity)
-		resultByKey[key] = entity
+		resultQueues[key] = append(resultQueues[key], entity)
 	}
 
 	reordered := make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(resultEntities))
-	used := make(map[string]bool, len(resultEntities))
+	consumed := make(map[string]int, len(resultQueues))
 
 	for _, planEntity := range planEntities {
 		key := entitySortKey(planEntity)
-		if resultEntity, ok := resultByKey[key]; ok {
-			reordered = append(reordered, resultEntity)
-			used[key] = true
+		idx := consumed[key]
+		if queue, ok := resultQueues[key]; ok && idx < len(queue) {
+			reordered = append(reordered, queue[idx])
+			consumed[key] = idx + 1
 		}
 	}
 
-	for _, entity := range resultEntities {
-		key := entitySortKey(entity)
-		if !used[key] {
-			reordered = append(reordered, entity)
+	// Append any remaining result entities not consumed above.
+	for key, queue := range resultQueues {
+		for i := consumed[key]; i < len(queue); i++ {
+			reordered = append(reordered, queue[i])
 		}
 	}
 

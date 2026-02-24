@@ -54,6 +54,17 @@ func makeUserEntity(t *testing.T, id, email string) *workflowRulesApprovalFlowSt
 	}
 }
 
+// makeNullEntity creates an approval entity without a user/group/schedule,
+// such as "direct_manager", "integration_owner", etc.
+func makeNullEntity(id string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
+	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+		Type:     types.StringValue(id),
+		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+	}
+}
+
 func TestReconcileEntityOrder_ReordersShuffledEntities(t *testing.T) {
 	// Simulate the exact bug: plan has entities [A, B, C] but the API
 	// returns them as [B, C, A]. Without reconciliation, Terraform would
@@ -390,5 +401,140 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 	}
 	if entitySortKey(got1[1]) != "directory_group:"+groupD {
 		t.Errorf("rule[1] entity[1]: got %q, want group D", entitySortKey(got1[1]))
+	}
+}
+
+func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
+	// Entities like direct_manager and integration_owner have no
+	// user/group/schedule, but they have distinct type strings so their
+	// keys are unique ("direct_manager:", "integration_owner:").
+	groupA := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("direct_manager"),
+							makeGroupEntity(t, groupA, "Group A"),
+							makeNullEntity("integration_owner"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns them shuffled
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("integration_owner"),
+							makeNullEntity("direct_manager"),
+							makeGroupEntity(t, groupA, "Group A"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	wantKeys := []string{
+		"direct_manager:",
+		"directory_group:" + groupA,
+		"integration_owner:",
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
+	}
+}
+
+func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
+	// Edge case: two entities with the same null-entity type produce
+	// identical keys ("direct_manager:"). The reorder must not lose
+	// any entries even when keys collide.
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("direct_manager"),
+							makeNullEntity("direct_manager"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("direct_manager"),
+							makeNullEntity("direct_manager"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Tag result entities so we can distinguish them after reorder.
+	resultA := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities[0]
+	resultB := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities[1]
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	if len(got) != 2 {
+		t.Fatalf("expected 2 entities, got %d (duplicate key caused entry loss)", len(got))
+	}
+
+	// Both original result entities must be preserved, not the same pointer twice.
+	if got[0] == got[1] {
+		t.Error("both result slots point to the same entity; one was lost due to duplicate key")
+	}
+	// The two original pointers must both appear in the output.
+	gotSet := map[*workflowRulesApprovalFlowStepApprovalNotifiedModel]bool{got[0]: true, got[1]: true}
+	if !gotSet[resultA] || !gotSet[resultB] {
+		t.Error("original result entities were not preserved")
 	}
 }
