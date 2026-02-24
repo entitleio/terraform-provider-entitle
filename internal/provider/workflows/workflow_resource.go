@@ -480,6 +480,7 @@ func (r *WorkflowResource) Read(
 	}
 
 	uid := uuid.MustParse(data.ID.String())
+	priorRules := data.Rules
 
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -509,6 +510,8 @@ func (r *WorkflowResource) Read(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	reconcileEntityOrder(priorRules, data.Rules)
 
 	// Save updated data into Terraform state
 	diags = resp.State.Set(ctx, &data)

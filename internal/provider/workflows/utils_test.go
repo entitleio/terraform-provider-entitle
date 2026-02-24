@@ -640,6 +640,88 @@ func TestReconcileEntityOrder_ExtraResultEntities(t *testing.T) {
 	}
 }
 
+func TestReconcileEntityOrder_TypeCasingMismatch(t *testing.T) {
+	// User config may use "webhook" while the API returns "Webhook".
+	// entitySortKey normalizes to lowercase so these still match.
+	webhookID := "aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	groupID := "bbbb2222-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+	makeWebhookWithType := func(typeName, id, name string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
+		ctx := context.Background()
+		v := utils.IdNameModel{ID: types.StringValue(id), Name: types.StringValue(name)}
+		vObj, diags := v.AsObjectValue(ctx)
+		if diags.HasError() {
+			t.Fatalf("failed to create webhook object: %v", diags.Errors())
+		}
+		return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+			Type:     types.StringValue(typeName),
+			User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+			Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+			Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+			Webhook:  vObj,
+		}
+	}
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeWebhookWithType("webhook", webhookID, "My Hook"),
+							makeGroupEntity(t, groupID, "Group"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns "Webhook" (capitalized) and in reversed order
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupID, "Group"),
+							makeWebhookWithType("Webhook", webhookID, "My Hook"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	wantKeys := []string{
+		"webhook:" + webhookID,
+		"directory_group:" + groupID,
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
+	}
+}
+
 func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 	// Webhook entities carry an ID via the Webhook object field.
 	// Verify they are matched and reordered correctly alongside
@@ -695,9 +777,9 @@ func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
-		"Webhook:" + webhookA,
+		"webhook:" + webhookA,
 		"directory_group:" + groupC,
-		"Webhook:" + webhookB,
+		"webhook:" + webhookB,
 	}
 
 	if len(got) != len(wantKeys) {

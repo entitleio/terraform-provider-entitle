@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -593,7 +594,7 @@ func convertWebhookToNotifiedFlowSchema(webhook *utils.IdNameModel) (client.Appr
 // entitySortKey returns a string key that uniquely identifies an approval/notified entity
 // by its type and entity ID, used for matching entities between plan and API response.
 func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) string {
-	t := entity.Type.ValueString()
+	t := strings.ToLower(entity.Type.ValueString())
 	id := ""
 
 	if !entity.User.IsNull() && !entity.User.IsUnknown() {
