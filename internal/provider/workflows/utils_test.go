@@ -29,6 +29,7 @@ func makeGroupEntity(t *testing.T, id, name string) *workflowRulesApprovalFlowSt
 		Group:    vObj,
 		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -51,10 +52,34 @@ func makeUserEntity(t *testing.T, id, email string) *workflowRulesApprovalFlowSt
 		User:     vObj,
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
-// makeNullEntity creates an approval entity without a user/group/schedule,
+// makeWebhookEntity creates a webhook approval entity with the given ID and name.
+func makeWebhookEntity(t *testing.T, id, name string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
+	t.Helper()
+	ctx := context.Background()
+
+	v := utils.IdNameModel{
+		ID:   types.StringValue(id),
+		Name: types.StringValue(name),
+	}
+	vObj, diags := v.AsObjectValue(ctx)
+	if diags.HasError() {
+		t.Fatalf("failed to create webhook object: %v", diags.Errors())
+	}
+
+	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+		Type:     types.StringValue("Webhook"),
+		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Webhook:  vObj,
+	}
+}
+
+// makeNullEntity creates an approval entity without a user/group/schedule/webhook,
 // such as "direct_manager", "integration_owner", etc.
 func makeNullEntity(id string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
 	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
@@ -62,6 +87,7 @@ func makeNullEntity(id string) *workflowRulesApprovalFlowStepApprovalNotifiedMod
 		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -536,5 +562,76 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 	gotSet := map[*workflowRulesApprovalFlowStepApprovalNotifiedModel]bool{got[0]: true, got[1]: true}
 	if !gotSet[resultA] || !gotSet[resultB] {
 		t.Error("original result entities were not preserved")
+	}
+}
+
+func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
+	// Webhook entities carry an ID via the Webhook object field.
+	// Verify they are matched and reordered correctly alongside
+	// other entity types.
+	webhookA := "aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	webhookB := "bbbb2222-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	groupC := "cccc3333-cccc-cccc-cccc-cccccccccccc"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeWebhookEntity(t, webhookA, "Webhook A"),
+							makeGroupEntity(t, groupC, "Group C"),
+							makeWebhookEntity(t, webhookB, "Webhook B"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns them in a different order
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupC, "Group C"),
+							makeWebhookEntity(t, webhookB, "Webhook B"),
+							makeWebhookEntity(t, webhookA, "Webhook A"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	wantKeys := []string{
+		"Webhook:" + webhookA,
+		"directory_group:" + groupC,
+		"Webhook:" + webhookB,
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
 	}
 }

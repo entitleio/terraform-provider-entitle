@@ -614,6 +614,12 @@ func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) s
 				id = strVal.ValueString()
 			}
 		}
+	} else if !entity.Webhook.IsNull() && !entity.Webhook.IsUnknown() {
+		if idAttr, ok := entity.Webhook.Attributes()["id"]; ok {
+			if strVal, ok := idAttr.(basetypes.StringValue); ok {
+				id = strVal.ValueString()
+			}
+		}
 	}
 
 	return t + ":" + id
