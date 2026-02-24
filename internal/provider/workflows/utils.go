@@ -590,6 +590,102 @@ func convertWebhookToNotifiedFlowSchema(webhook *utils.IdNameModel) (client.Appr
 	return item, err
 }
 
+// entitySortKey returns a string key that uniquely identifies an approval/notified entity
+// by its type and entity ID, used for matching entities between plan and API response.
+func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) string {
+	t := entity.Type.ValueString()
+	id := ""
+
+	if !entity.User.IsNull() && !entity.User.IsUnknown() {
+		if idAttr, ok := entity.User.Attributes()["id"]; ok {
+			if strVal, ok := idAttr.(basetypes.StringValue); ok {
+				id = strVal.ValueString()
+			}
+		}
+	} else if !entity.Group.IsNull() && !entity.Group.IsUnknown() {
+		if idAttr, ok := entity.Group.Attributes()["id"]; ok {
+			if strVal, ok := idAttr.(basetypes.StringValue); ok {
+				id = strVal.ValueString()
+			}
+		}
+	} else if !entity.Schedule.IsNull() && !entity.Schedule.IsUnknown() {
+		if idAttr, ok := entity.Schedule.Attributes()["id"]; ok {
+			if strVal, ok := idAttr.(basetypes.StringValue); ok {
+				id = strVal.ValueString()
+			}
+		}
+	}
+
+	return t + ":" + id
+}
+
+// reorderEntities reorders result entities to match the order of plan entities.
+// Entities are matched by their type and entity ID.
+func reorderEntities(
+	planEntities []*workflowRulesApprovalFlowStepApprovalNotifiedModel,
+	resultEntities []*workflowRulesApprovalFlowStepApprovalNotifiedModel,
+) []*workflowRulesApprovalFlowStepApprovalNotifiedModel {
+	if len(planEntities) == 0 || len(resultEntities) == 0 {
+		return resultEntities
+	}
+
+	resultByKey := make(map[string]*workflowRulesApprovalFlowStepApprovalNotifiedModel, len(resultEntities))
+	for _, entity := range resultEntities {
+		key := entitySortKey(entity)
+		resultByKey[key] = entity
+	}
+
+	reordered := make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(resultEntities))
+	used := make(map[string]bool, len(resultEntities))
+
+	for _, planEntity := range planEntities {
+		key := entitySortKey(planEntity)
+		if resultEntity, ok := resultByKey[key]; ok {
+			reordered = append(reordered, resultEntity)
+			used[key] = true
+		}
+	}
+
+	for _, entity := range resultEntities {
+		key := entitySortKey(entity)
+		if !used[key] {
+			reordered = append(reordered, entity)
+		}
+	}
+
+	return reordered
+}
+
+// reconcileEntityOrder reorders approval_entities and notified_entities in the result
+// to match the plan order, preventing "inconsistent result after apply" errors when
+// the API returns entities in a different order than the plan.
+func reconcileEntityOrder(
+	planRules []*workflowRulesModel,
+	resultRules []*workflowRulesModel,
+) {
+	for ruleIdx := range resultRules {
+		if ruleIdx >= len(planRules) {
+			break
+		}
+
+		for stepIdx := range resultRules[ruleIdx].ApprovalFlow.Steps {
+			if stepIdx >= len(planRules[ruleIdx].ApprovalFlow.Steps) {
+				break
+			}
+
+			planStep := planRules[ruleIdx].ApprovalFlow.Steps[stepIdx]
+			resultStep := resultRules[ruleIdx].ApprovalFlow.Steps[stepIdx]
+
+			resultStep.ApprovalEntities = reorderEntities(
+				planStep.ApprovalEntities, resultStep.ApprovalEntities,
+			)
+			resultStep.NotifiedEntities = reorderEntities(
+				planStep.NotifiedEntities, resultStep.NotifiedEntities,
+			)
+		}
+	}
+}
+
 // convertFullWorkflowResultResponseSchemaToModel is a utility function used to convert the API response data
 // (of type client.FullWorkflowResultResponseSchema) to a Terraform resource model (of type WorkflowResourceModel).
 //
