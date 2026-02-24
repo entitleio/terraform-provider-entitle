@@ -596,6 +596,15 @@ func convertWebhookToNotifiedFlowSchema(webhook *utils.IdNameModel) (client.Appr
 // by its type and entity ID, used for matching entities between plan and API response.
 func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) string {
 	t := strings.ToLower(entity.Type.ValueString())
+	// Normalize known type aliases to the canonical API types so keys match between
+	// plan (which may use "group"/"schedule") and API responses (which use
+	// "directory_group"/"on_call_integration_schedule").
+	switch t {
+	case "group":
+		t = "directory_group"
+	case "schedule":
+		t = "on_call_integration_schedule"
+	}
 	id := ""
 
 	if !entity.User.IsNull() && !entity.User.IsUnknown() {
