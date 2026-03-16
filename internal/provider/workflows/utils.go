@@ -636,6 +636,43 @@ func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) s
 	return t + ":" + id
 }
 
+// reorderIdNameModels reorders result items to match the order of plan items.
+// Items are matched by their ID value.
+func reorderIdNameModels(
+	planItems []*utils.IdNameModel,
+	resultItems []*utils.IdNameModel,
+) []*utils.IdNameModel {
+	if len(planItems) == 0 || len(resultItems) == 0 {
+		return resultItems
+	}
+
+	resultByID := make(map[string]*utils.IdNameModel, len(resultItems))
+	for _, item := range resultItems {
+		resultByID[item.ID.ValueString()] = item
+	}
+
+	reordered := make([]*utils.IdNameModel, 0, len(resultItems))
+	consumed := make(map[string]bool, len(resultItems))
+
+	// First, add items in plan order
+	for _, planItem := range planItems {
+		id := planItem.ID.ValueString()
+		if resultItem, ok := resultByID[id]; ok && !consumed[id] {
+			reordered = append(reordered, resultItem)
+			consumed[id] = true
+		}
+	}
+
+	// Append any remaining result items not in the plan
+	for _, item := range resultItems {
+		if !consumed[item.ID.ValueString()] {
+			reordered = append(reordered, item)
+		}
+	}
+
+	return reordered
+}
+
 // reorderEntities reorders result entities to match the order of plan entities.
 // Entities are matched by their type and entity ID.
 func reorderEntities(
@@ -710,6 +747,10 @@ func reconcileEntityOrder(
 		if !ok {
 			continue
 		}
+
+		// Reconcile in_groups and in_schedules order.
+		resultRule.InGroups = reorderIdNameModels(planRule.InGroups, resultRule.InGroups)
+		resultRule.InSchedules = reorderIdNameModels(planRule.InSchedules, resultRule.InSchedules)
 
 		// Index plan steps by sort_order for lookup.
 		planStepsBySort := make(map[string]*workflowRulesApprovalFlowStepModel, len(planRule.ApprovalFlow.Steps))
