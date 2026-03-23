@@ -91,10 +91,10 @@ func (p *EntitleProvider) Configure(
 	req provider.ConfigureRequest,
 	resp *provider.ConfigureResponse,
 ) {
-	var config EntitleProviderModel
+	config := new(EntitleProviderModel)
 
 	// Retrieve configuration values from the request.
-	diags := req.Config.Get(ctx, &config)
+	diags := req.Config.Get(ctx, config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
