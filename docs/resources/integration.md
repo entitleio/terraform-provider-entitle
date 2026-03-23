@@ -47,8 +47,6 @@ resource "entitle_integration" "example" {
 - `agent_token` (Attributes) Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n (see [below for nested schema](#nestedatt--agent_token))
 - `allow_changing_account_permissions` (Boolean) Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
-- `allow_requests` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
-- `allow_requests_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))

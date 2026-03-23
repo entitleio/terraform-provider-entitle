@@ -174,6 +174,7 @@ resource "entitle_integration" "test_integration" {
   auto_assign_recommended_owners = false
   auto_assign_recommended_maintainers = false
   notify_about_external_permission_changes = false
+  requestable = true
 }
 `, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
