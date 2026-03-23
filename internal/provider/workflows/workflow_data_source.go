@@ -5,7 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"sort"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
@@ -66,17 +71,29 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"[Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Entitle Workflow identifier in uuid format",
-				Description:         "Entitle Workflow identifier in uuid format",
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Workflow name",
-				Description:         "Workflow name",
+				MarkdownDescription: "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -369,7 +386,25 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	uid := uuid.MustParse(data.Id.String())
+	var uid openapi_types.UUID
+	if data.Id.ValueString() == "" {
+		name := data.Name.ValueString()
+
+		id, err := d.getWorkflowIDByName(ctx, name)
+		if err != nil {
+			resp.Diagnostics.AddError("Workflow not found", fmt.Sprintf(
+				"Failed to get the Workflow by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
+			return
+		}
+
+		uid = *id
+	} else {
+		uid = uuid.MustParse(data.Id.String())
+	}
 
 	workflowResp, err := d.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -408,6 +443,35 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.WorkflowIndexResultResponseSchema, int, error) {
+		params := client.WorkflowsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list workflows: %w", err)
+		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing workflows (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("received invalid workflow response structure (page %d)", page)
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 func converterWorkflow(

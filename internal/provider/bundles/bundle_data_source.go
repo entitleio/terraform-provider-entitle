@@ -4,13 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -81,17 +86,29 @@ func (d *BundleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"as a cross-application super role. [Read more about bundles](https://docs.beyondtrust.com/entitle/docs/bundles).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Entitle Bundle identifier in uuid format",
-				Description:         "Entitle Bundle identifier in uuid format",
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Bundle identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access.",
-				Description:         "The bundle’s name. Users will ask for this name when requesting access.",
+				MarkdownDescription: "The bundle’s name. Users will ask for this name when requesting access. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The bundle’s name. Users will ask for this name when requesting access. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"description": schema.StringAttribute{
 				Computed: true,
@@ -246,14 +263,25 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	// Parse the resource ID from the data source model
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
-		)
-		return
+	var uid uuid.UUID
+	if data.ID.ValueString() == "" {
+		name := data.Name.ValueString()
+
+		id, err := d.getBundleIDByName(ctx, name)
+		if err != nil {
+			resp.Diagnostics.AddError("Bundle not found", fmt.Sprintf(
+				"Failed to get the Bundle by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
+			return
+		}
+
+		uid = *id
+
+	} else {
+		uid = uuid.MustParse(data.ID.ValueString())
 	}
 
 	// Log the start of the bundle GET operation with the resource ID
@@ -304,6 +332,36 @@ func (d *BundleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	// Log a trace indicating the successful saving of the entitle bundle data source
 	tflog.Trace(ctx, "saved entitle bundle data source successfully!")
+}
+
+// findBundleByID searches the bundle list for the given name.
+func (d *BundleDataSource) getBundleIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.BundleIndexResultResponseSchema, int, error) {
+		params := client.BundlesIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.BundlesIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list bundles: %w", err)
+		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing bundles (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("received invalid bundle response structure (page %d)", page)
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 // convertFullBundleResultResponseSchemaToBundleDataSourceModel converts the API response to the data source model.
