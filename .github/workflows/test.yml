@@ -18,9 +18,13 @@ on:
         required: true
       ENTITLE_BUNDLE_ID:
         required: true
+      ENTITLE_BUNDLE_NAME:
+        required: true
       ENTITLE_DIRECTORY_GROUP_EMAIL:
         required: true
       ENTITLE_INTEGRATION_ID:
+        required: true
+      ENTITLE_INTEGRATION_NAME:
         required: true
       ENTITLE_MANUAL_INTEGRATION_ID:
         required: true
@@ -47,6 +51,8 @@ on:
       ENTITLE_WEBHOOK_ID:
         required: true
       ENTITLE_WEBHOOK_ID_2:
+        required: true
+      ENTITLE_WORKFLOW_NAME:
         required: true
       GITLAB_ACCESS_TOKEN:
         required: true
@@ -142,8 +148,10 @@ jobs:
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
           ENTITLE_API_KEY2: ${{ secrets.ENTITLE_API_KEY2 }}
           ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+          ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_BUNDLE_NAME }}
           ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
+          ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_INTEGRATION_NAME }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
           ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_VIRTUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
@@ -155,6 +163,7 @@ jobs:
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+          ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_WORKFLOW_NAME }}
           ENTITLE_WEBHOOK_ID: ${{ secrets.ENTITLE_WEBHOOK_ID }}
           ENTITLE_WEBHOOK_ID_2: ${{ secrets.ENTITLE_WEBHOOK_ID_2 }}
           GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}

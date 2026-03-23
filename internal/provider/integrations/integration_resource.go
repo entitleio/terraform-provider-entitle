@@ -46,8 +46,6 @@ type IntegrationResourceModel struct {
 	AllowChangingAccountPermissions      types.Bool                          `tfsdk:"allow_changing_account_permissions"`
 	AllowCreatingAccounts                types.Bool                          `tfsdk:"allow_creating_accounts"`
 	Readonly                             types.Bool                          `tfsdk:"readonly"`
-	AllowRequests                        types.Bool                          `tfsdk:"allow_requests"`
-	AllowRequestsByDefault               types.Bool                          `tfsdk:"allow_requests_by_default"`
 	Requestable                          types.Bool                          `tfsdk:"requestable"`
 	RequestableByDefault                 types.Bool                          `tfsdk:"requestable_by_default"`
 	AutoAssignRecommendedMaintainers     types.Bool                          `tfsdk:"auto_assign_recommended_maintainers"`
@@ -142,8 +140,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
 						Required:            true,
-						Description:         "The application's name",
-						MarkdownDescription: "The application's name",
+						Description:         "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
+						MarkdownDescription: "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						Validators: []validator.String{
 							validators.NewName(2, 50),
 							validators.Lowercase{},
@@ -195,24 +193,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"instead a ticket will be opened for manual resolution. (default: false)",
 				Default: booldefault.StaticBool(defaultIntegrationReadonly),
 			},
-			"allow_requests": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
-				Description: "Controls whether a user can create requests for entitlements for resources " +
-					"under the integration. (default: true)",
-				MarkdownDescription: "Controls whether a user can create requests for entitlements for resources " +
-					"under the integration. (default: true)",
-				Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
-			},
-			"allow_requests_by_default": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
-				Description: "Controls whether resources that are added to the integration could be shown " +
-					"to the user. (default: true)",
-				MarkdownDescription: "Controls whether resources that are added to the integration could be shown " +
-					"to the user. (default: true)",
-				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
-			},
 			"requestable": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
@@ -255,8 +235,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"connection_json": schema.StringAttribute{
 				Required:            true,
-				Description:         "go to https://app.entitle.io/integrations and provide the latest schema.",
-				MarkdownDescription: "go to https://app.entitle.io/integrations and provide the latest schema.",
+				Description:         "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
 			},
 			"prerequisite_permissions": schema.ListNestedAttribute{
 				Optional:            true,
@@ -445,12 +425,60 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		Name: utils.TrimPrefixSuffix(plan.Application.Name.ValueString()),
 	}
 
-	if strings.ToLower(application.Name) == "virtual application" && plan.NotifyAboutExternalPermissionChanges.ValueBool() {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			"Virtual integrations cannot set notifyAboutExternalPermissions to true",
-		)
-		return
+	if strings.ToLower(application.Name) == "virtual application" {
+		if plan.NotifyAboutExternalPermissionChanges.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set notifyAboutExternalPermissions to true",
+			)
+
+			return
+		}
+
+		if plan.AutoAssignRecommendedMaintainers.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set autoAssignRecommendedResourceMaintainers to true",
+			)
+
+			return
+		}
+
+		if plan.AutoAssignRecommendedOwners.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set autoAssignRecommendedResourceOwner to true",
+			)
+
+			return
+		}
+
+		if plan.Readonly.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set readonly to true",
+			)
+
+			return
+		}
+
+		if !plan.Requestable.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set requestable to false",
+			)
+
+			return
+		}
+
+		if !plan.RequestableByDefault.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				"Virtual integrations cannot set requestableByDefault to false",
+			)
+
+			return
+		}
 	}
 
 	var connectionJson *map[string]interface{}
@@ -588,8 +616,6 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		AgentToken:                           agentToken,
 		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
 		AllowCreatingAccounts:                plan.AllowCreatingAccounts.ValueBool(),
-		AllowRequests:                        plan.AllowRequests.ValueBoolPointer(),
-		AllowRequestsByDefault:               plan.AllowRequestsByDefault.ValueBoolPointer(),
 		Requestable:                          plan.Requestable.ValueBoolPointer(),
 		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
 		AllowedDurations:                     allowedDurations,
@@ -901,8 +927,6 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	integrationResp, err := r.client.IntegrationsUpdateWithResponse(ctx, uid, client.IntegrationsUpdateBodySchema{
-		AllowRequests:                        utils.BoolPointer(data.AllowRequests.ValueBool()),
-		AllowRequestsByDefault:               utils.BoolPointer(data.AllowRequestsByDefault.ValueBool()),
 		AllowedDurations:                     allowedDurations,
 		AutoAssignRecommendedMaintainers:     utils.BoolPointer(data.AutoAssignRecommendedMaintainers.ValueBool()),
 		AutoAssignRecommendedOwners:          utils.BoolPointer(data.AutoAssignRecommendedOwners.ValueBool()),
@@ -1201,8 +1225,6 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		AllowChangingAccountPermissions:      types.BoolValue(data.AllowChangingAccountPermissions),
 		AllowCreatingAccounts:                types.BoolValue(data.AllowCreatingAccounts),
 		Readonly:                             types.BoolValue(data.Readonly),
-		AllowRequests:                        types.BoolValue(data.Requestable),
-		AllowRequestsByDefault:               types.BoolValue(data.RequestableByDefault),
 		Requestable:                          types.BoolValue(data.Requestable),
 		RequestableByDefault:                 types.BoolValue(data.RequestableByDefault),
 		AutoAssignRecommendedMaintainers:     types.BoolValue(data.AutoAssignRecommendedMaintainers),

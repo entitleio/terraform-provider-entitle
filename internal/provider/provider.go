@@ -17,6 +17,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accounts"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/applications"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/directoryGroups"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
@@ -182,9 +183,10 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		accounts.NewAccountsDataSource,
-		agentTokens.NewAgentTokenDataSource,
 		accessRequestForwards.NewAccessRequestForwardDataSource,
 		accessReviewForwards.NewAccessReviewForwardDataSource,
+		agentTokens.NewAgentTokenDataSource,
+		applications.NewApplicationsDataSource,
 		bundles.NewBundleDataSource,
 		directoryGroups.NewDirectoryGroupsDataSource,
 		integrations.NewIntegrationDataSource,
