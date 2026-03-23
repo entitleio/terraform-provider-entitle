@@ -588,6 +588,34 @@
         ]
       }
     },
+    "/public/v1/applications": {
+      "get": {
+        "operationId": "Applications_index",
+        "summary": "Get a list of applications",
+        "description": "Returns a list of applications available to the organization.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationsIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Applications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/bundles": {
       "get": {
         "operationId": "Bundles_index",
@@ -7509,6 +7537,41 @@
         "required": [
           "default",
           "role"
+        ]
+      },
+      "ApplicationIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "description": "Unique identifier for the application"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the application",
+            "example": "Salesforce"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ApplicationsIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "description": "List of applications",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
         ]
       }
     }
