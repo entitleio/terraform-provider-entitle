@@ -51,7 +51,7 @@ on:
       - 'README.md'
       - 'examples/**'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [ opened, reopened, synchronize ]
   schedule:
     - cron: '0 2 * * *' # Every day at 02:00 UTC
 
@@ -102,9 +102,10 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
+
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
-    environment: ${{ github.event.pull_request.head.repo.fork && 'acceptance' || '' }}
+    environment: acceptance
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
