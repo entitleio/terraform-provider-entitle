@@ -266,7 +266,7 @@ func getWorkflowsRules(
 						err := t.FromApprovalEntityUserSchema(client.ApprovalEntityUserSchema{
 							Type: client.EnumApprovalEntityUserUserUser,
 							Entity: client.UserEntitySchema{
-								Id: target.Id.String(),
+								Id: target.Id.ValueString(),
 							},
 						})
 						if err != nil {
@@ -301,7 +301,7 @@ func getWorkflowsRules(
 						err := t.FromApprovalEntityGroupSchema(client.ApprovalEntityGroupSchema{
 							Type: client.DirectoryGroup,
 							Entity: client.GroupEntitySchema{
-								Id: target.ID.String(),
+								Id: target.ID.ValueString(),
 							},
 						})
 						if err != nil {
@@ -336,7 +336,7 @@ func getWorkflowsRules(
 						err := t.FromApprovalEntityScheduleSchema(client.ApprovalEntityScheduleSchema{
 							Type: client.OnCallIntegrationSchedule,
 							Entity: client.ScheduleEntitySchema{
-								Id: target.ID.String(),
+								Id: target.ID.ValueString(),
 							},
 						})
 						if err != nil {
