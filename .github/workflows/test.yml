@@ -62,7 +62,7 @@ on:
     paths-ignore:
       - 'README.md'
       - 'examples/**'
-  pull_request:
+  pull_request_target:
     types: [ opened, reopened, synchronize ]
   schedule:
     - cron: '0 2 * * *' # Every day at 02:00 UTC

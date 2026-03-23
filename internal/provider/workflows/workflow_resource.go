@@ -407,6 +407,7 @@ func (r *WorkflowResource) Create(
 	}
 
 	name := plan.Name.ValueString()
+	planRules := plan.Rules
 
 	rules, diags := getWorkflowsRules(ctx, plan.Rules)
 	resp.Diagnostics.Append(diags...)
@@ -449,6 +450,8 @@ func (r *WorkflowResource) Create(
 		return
 	}
 
+	reconcileEntityOrder(planRules, plan.Rules)
+
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -477,6 +480,7 @@ func (r *WorkflowResource) Read(
 	}
 
 	uid := uuid.MustParse(data.ID.String())
+	priorRules := data.Rules
 
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -507,6 +511,8 @@ func (r *WorkflowResource) Read(
 		return
 	}
 
+	reconcileEntityOrder(priorRules, data.Rules)
+
 	// Save updated data into Terraform state
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -536,6 +542,7 @@ func (r *WorkflowResource) Update(
 
 	uid := uuid.MustParse(data.ID.String())
 	name := data.Name.ValueStringPointer()
+	planRules := data.Rules
 
 	rules, diags := getWorkflowsRules(ctx, data.Rules)
 	resp.Diagnostics.Append(diags...)
@@ -575,6 +582,8 @@ func (r *WorkflowResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	reconcileEntityOrder(planRules, data.Rules)
 
 	// Save updated data into Terraform state
 	diags = resp.State.Set(ctx, &data)
