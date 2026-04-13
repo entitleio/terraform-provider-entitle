@@ -33,4 +33,8 @@ provider "entitle" {
 ### Optional
 
 - `api_key` (String, Sensitive) entitle API bearer authorizations (http, Bearer)
-- `endpoint` (String) entitle API server address, default: https://api.entitle.io
+- `endpoint` (String) Entitle API server address. Allowed values:
+
+  - https://api.entitle.io (default, Europe)
+  - https://api.ca.entitle.io (Canada)
+  - https://api.us.entitle.io (United States)
