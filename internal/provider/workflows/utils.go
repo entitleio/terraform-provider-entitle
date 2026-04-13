@@ -118,7 +118,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case "user", string(client.EnumApprovalEntityUserUserUser):
+					case strings.ToLower(string(client.EnumApprovalEntityUserUserUser)):
 						if entity.User.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -199,6 +199,64 @@ func getWorkflowsRules(
 							diags.AddError(
 								"Client Error",
 								"failed to convert webhook to approval flow schema",
+							)
+
+							return rules, diags
+						}
+
+						approvalEntities = append(approvalEntities, item)
+					case string(client.SlackChannel):
+						if entity.Channel.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing channel data for type approval entity",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						item, err := convertSlackChannelToApprovalFlowSchema(target)
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								"failed to convert slack channel to approval flow schema",
+							)
+
+							return rules, diags
+						}
+
+						approvalEntities = append(approvalEntities, item)
+					case string(client.TeamsChannel):
+						if entity.Channel.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing channel data for type approval entity",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						item, err := convertTeamsChannelToApprovalFlowSchema(target)
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								"failed to convert teams channel to approval flow schema",
 							)
 
 							return rules, diags
@@ -380,6 +438,77 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, item)
+
+					case string(client.SlackChannel):
+						if entity.Channel.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing channel data for type slack channel approval entities",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Schedule.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						t := client.ApprovalFlowSchema_NotifiedEntities_Item{}
+						err := t.FromApprovalEntitySlackChannelResponseSchema(client.ApprovalEntitySlackChannelResponseSchema{
+							Type: client.SlackChannel,
+							Entity: client.SlackChannelEntityResponseSchema{
+								Id: target.ID.ValueString(),
+							},
+						})
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								fmt.Sprintf("failed to convert user to approval to notified entity, error: %v", err),
+							)
+
+							return rules, diags
+						}
+
+						notifiedEntities = append(notifiedEntities, t)
+					case string(client.TeamsChannel):
+						if entity.Channel.IsNull() {
+							diags.AddError(
+								"Client Error",
+								"failed missing channel data for type teams channel approval entities",
+							)
+							return rules, diags
+						}
+
+						target := &utils.IdNameModel{}
+						diagsAs := entity.Schedule.As(ctx, target, basetypes.ObjectAsOptions{
+							UnhandledUnknownAsEmpty: true,
+						})
+						if diagsAs.HasError() {
+							diags.Append(diagsAs...)
+							return rules, diags
+						}
+
+						t := client.ApprovalFlowSchema_NotifiedEntities_Item{}
+						err := t.FromApprovalEntityTeamsChannelResponseSchema(client.ApprovalEntityTeamsChannelResponseSchema{
+							Type: client.TeamsChannel,
+							Entity: client.TeamsChannelEntityResponseSchema{
+								Id: target.ID.ValueString(),
+							},
+						})
+						if err != nil {
+							diags.AddError(
+								"Client Error",
+								fmt.Sprintf("failed to convert user to approval to notified entity, error: %v", err),
+							)
+
+							return rules, diags
+						}
+
+						notifiedEntities = append(notifiedEntities, t)
 					case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
@@ -481,6 +610,50 @@ func convertDirectoryGroupToApprovalFlowSchema(directoryGroup *utils.IdNameModel
 
 	// Merge the ApprovalEntityGroupSchema into the item
 	err := item.MergeApprovalEntityGroupSchema(schemaGroup)
+	if err != nil {
+		return item, err
+	}
+
+	return item, nil
+}
+
+// convertSlackChannelToApprovalFlowSchema is a function that converts a slack channel to an Approval Flow Schema.
+func convertSlackChannelToApprovalFlowSchema(directoryGroup *utils.IdNameModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
+	// Create an ApprovalEntityTeamsChannelSchema with slack channel information
+	schemaGroup := client.ApprovalEntitySlackChannelSchema{
+		Type: client.SlackChannel,
+		Entity: client.SlackChannelEntitySchema{
+			Id: directoryGroup.ID.ValueString(),
+		},
+	}
+
+	// Create an empty ApprovalFlowSchema_ApprovalEntities_Item
+	item := client.ApprovalFlowSchema_ApprovalEntities_Item{}
+
+	// Merge the ApprovalEntitySlackChannelSchema into the item
+	err := item.MergeApprovalEntitySlackChannelSchema(schemaGroup)
+	if err != nil {
+		return item, err
+	}
+
+	return item, nil
+}
+
+// convertTeamsChannelToApprovalFlowSchema is a function that converts a teams channel to an Approval Flow Schema.
+func convertTeamsChannelToApprovalFlowSchema(directoryGroup *utils.IdNameModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
+	// Create an ApprovalEntityTeamsChannelSchema with teams channel information
+	schemaGroup := client.ApprovalEntityTeamsChannelSchema{
+		Type: client.TeamsChannel,
+		Entity: client.TeamsChannelEntitySchema{
+			Id: directoryGroup.ID.ValueString(),
+		},
+	}
+
+	// Create an empty ApprovalFlowSchema_ApprovalEntities_Item
+	item := client.ApprovalFlowSchema_ApprovalEntities_Item{}
+
+	// Merge the ApprovalEntityTeamsChannelSchema into the item
+	err := item.MergeApprovalEntityTeamsChannelSchema(schemaGroup)
 	if err != nil {
 		return item, err
 	}

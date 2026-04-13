@@ -5226,6 +5226,12 @@
                   "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
                 },
                 {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
+                },
+                {
                   "$ref": "#/components/schemas/ApprovalEntityNullResponseSchema"
                 }
               ]
@@ -5244,6 +5250,12 @@
                 },
                 {
                   "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
                 },
                 {
                   "$ref": "#/components/schemas/NotifiedEntityNullResponseSchema"
@@ -5415,6 +5427,12 @@
                   "$ref": "#/components/schemas/ApprovalEntityUserSchema"
                 },
                 {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelSchema"
+                },
+                {
                   "$ref": "#/components/schemas/ApprovalEntityNullSchema"
                 }
               ]
@@ -5433,6 +5451,12 @@
                 },
                 {
                   "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
                 },
                 {
                   "$ref": "#/components/schemas/NotifiedApprovalEntityWithoutEntitySchema"
@@ -7155,6 +7179,94 @@
           "entity"
         ]
       },
+      "SlackChannelEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Slack channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntitySlackChannelResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntitySlackChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Slack channel entity metadata without sensitive values",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlackChannelEntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntityTeamsChannel": {
+        "type": "string",
+        "enum": [
+          "TeamsChannel"
+        ],
+        "description": "Entity type"
+      },
+      "TeamsChannelEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Teams channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntityTeamsChannelResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntityTeamsChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Teams channel entity metadata without sensitive values",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeamsChannelEntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntitySlackChannel": {
+        "type": "string",
+        "enum": [
+          "SlackChannel"
+        ],
+        "description": "Entity type"
+      },
       "EnumApprovalEntityWithoutEntity": {
         "type": "string",
         "enum": [
@@ -7250,6 +7362,80 @@
           },
           "entity": {
             "$ref": "#/components/schemas/UserEntitySchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntitySlackChannelSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type: SlackChannel",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntitySlackChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Slack channel entity details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlackChannelEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "SlackChannelEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Slack channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "TeamsChannelEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Teams channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntityTeamsChannelSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type: TeamsChannel",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntityTeamsChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Teams channel entity details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeamsChannelEntitySchema"
+              }
+            ]
           }
         },
         "required": [

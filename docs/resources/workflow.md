@@ -91,6 +91,7 @@ Optional:
 
 Optional:
 
+- `channel` (String) Unique identifier of the Slack/Teams channel
 - `group` (Attributes) Represents a group whose members are responsible for approving the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String) Type of approval entity.
@@ -151,6 +152,7 @@ Read-Only:
 
 Optional:
 
+- `channel` (String) Unique identifier of the Slack/Teams channel
 - `group` (Attributes) Represents a user group whose members will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String) Type of notified entity

@@ -249,6 +249,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Webhook to be invoked for notification.",
 															MarkdownDescription: "Webhook to be invoked for notification.",
 														},
+														"channel": schema.StringAttribute{
+															Optional:            true,
+															Description:         "Unique identifier of the Slack/Teams channel.",
+															MarkdownDescription: "Unique identifier of the Slack/Teams channel",
+														},
 													},
 												},
 												Optional:            true,
@@ -334,6 +339,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Webhook to be invoked for approval.",
 															MarkdownDescription: "Webhook to be invoked for approval.",
+														},
+														"channel": schema.StringAttribute{
+															Optional:            true,
+															Description:         "Unique identifier of the Slack/Teams channel.",
+															MarkdownDescription: "Unique identifier of the Slack/Teams channel",
 														},
 													},
 												},

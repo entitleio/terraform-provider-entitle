@@ -431,6 +431,16 @@ const (
 	OnCallIntegrationSchedule EnumApprovalEntityScheduleOnCallIntegrationSchedule = "OnCallIntegrationSchedule"
 )
 
+// Defines values for EnumApprovalEntitySlackChannel.
+const (
+	SlackChannel EnumApprovalEntitySlackChannel = "SlackChannel"
+)
+
+// Defines values for EnumApprovalEntityTeamsChannel.
+const (
+	TeamsChannel EnumApprovalEntityTeamsChannel = "TeamsChannel"
+)
+
 // Defines values for EnumApprovalEntityUserUser.
 const (
 	EnumApprovalEntityUserUserUser EnumApprovalEntityUserUser = "User"
@@ -1454,6 +1464,42 @@ type ApprovalEntityScheduleSchema struct {
 	Type   EnumApprovalEntityScheduleOnCallIntegrationSchedule `json:"type"`
 }
 
+// ApprovalEntitySlackChannelResponseSchema defines model for ApprovalEntitySlackChannelResponseSchema.
+type ApprovalEntitySlackChannelResponseSchema struct {
+	// Entity Slack channel entity metadata without sensitive values
+	Entity SlackChannelEntityResponseSchema `json:"entity"`
+
+	// Type Entity type
+	Type EnumApprovalEntitySlackChannel `json:"type"`
+}
+
+// ApprovalEntitySlackChannelSchema defines model for ApprovalEntitySlackChannelSchema.
+type ApprovalEntitySlackChannelSchema struct {
+	// Entity Slack channel entity details
+	Entity SlackChannelEntitySchema `json:"entity"`
+
+	// Type Entity type: SlackChannel
+	Type EnumApprovalEntitySlackChannel `json:"type"`
+}
+
+// ApprovalEntityTeamsChannelResponseSchema defines model for ApprovalEntityTeamsChannelResponseSchema.
+type ApprovalEntityTeamsChannelResponseSchema struct {
+	// Entity Teams channel entity metadata without sensitive values
+	Entity TeamsChannelEntityResponseSchema `json:"entity"`
+
+	// Type Entity type
+	Type EnumApprovalEntityTeamsChannel `json:"type"`
+}
+
+// ApprovalEntityTeamsChannelSchema defines model for ApprovalEntityTeamsChannelSchema.
+type ApprovalEntityTeamsChannelSchema struct {
+	// Entity Teams channel entity details
+	Entity TeamsChannelEntitySchema `json:"entity"`
+
+	// Type Entity type: TeamsChannel
+	Type EnumApprovalEntityTeamsChannel `json:"type"`
+}
+
 // ApprovalEntityUserResponseSchema defines model for ApprovalEntityUserResponseSchema.
 type ApprovalEntityUserResponseSchema struct {
 	Entity UserEntityResponseSchema   `json:"entity"`
@@ -1636,6 +1682,12 @@ type EnumApprovalEntityGroupDirectoryGroup string
 
 // EnumApprovalEntityScheduleOnCallIntegrationSchedule defines model for EnumApprovalEntitySchedule_OnCallIntegrationSchedule.
 type EnumApprovalEntityScheduleOnCallIntegrationSchedule string
+
+// EnumApprovalEntitySlackChannel Entity type
+type EnumApprovalEntitySlackChannel string
+
+// EnumApprovalEntityTeamsChannel Entity type
+type EnumApprovalEntityTeamsChannel string
 
 // EnumApprovalEntityUserUser defines model for EnumApprovalEntityUser_User.
 type EnumApprovalEntityUserUser string
@@ -2416,6 +2468,30 @@ type ScheduleEntitySchema struct {
 	Id string `json:"id"`
 }
 
+// SlackChannelEntityResponseSchema defines model for SlackChannelEntityResponseSchema.
+type SlackChannelEntityResponseSchema struct {
+	// Id Unique identifier for the Slack channel
+	Id string `json:"id"`
+}
+
+// SlackChannelEntitySchema defines model for SlackChannelEntitySchema.
+type SlackChannelEntitySchema struct {
+	// Id Unique identifier for the Slack channel
+	Id string `json:"id"`
+}
+
+// TeamsChannelEntityResponseSchema defines model for TeamsChannelEntityResponseSchema.
+type TeamsChannelEntityResponseSchema struct {
+	// Id Unique identifier for the Teams channel
+	Id string `json:"id"`
+}
+
+// TeamsChannelEntitySchema defines model for TeamsChannelEntitySchema.
+type TeamsChannelEntitySchema struct {
+	// Id Unique identifier for the Teams channel
+	Id string `json:"id"`
+}
+
 // TicketAuditLogResponseSchema defines model for TicketAuditLogResponseSchema.
 type TicketAuditLogResponseSchema struct {
 	// CreatedAt Date of the audit log
@@ -2881,6 +2957,58 @@ func (t *ApprovalFlowSchema_ApprovalEntities_Item) MergeApprovalEntityUserSchema
 	return err
 }
 
+// AsApprovalEntitySlackChannelSchema returns the union data inside the ApprovalFlowSchema_ApprovalEntities_Item as a ApprovalEntitySlackChannelSchema
+func (t ApprovalFlowSchema_ApprovalEntities_Item) AsApprovalEntitySlackChannelSchema() (ApprovalEntitySlackChannelSchema, error) {
+	var body ApprovalEntitySlackChannelSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntitySlackChannelSchema overwrites any union data inside the ApprovalFlowSchema_ApprovalEntities_Item as the provided ApprovalEntitySlackChannelSchema
+func (t *ApprovalFlowSchema_ApprovalEntities_Item) FromApprovalEntitySlackChannelSchema(v ApprovalEntitySlackChannelSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntitySlackChannelSchema performs a merge with any union data inside the ApprovalFlowSchema_ApprovalEntities_Item, using the provided ApprovalEntitySlackChannelSchema
+func (t *ApprovalFlowSchema_ApprovalEntities_Item) MergeApprovalEntitySlackChannelSchema(v ApprovalEntitySlackChannelSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntityTeamsChannelSchema returns the union data inside the ApprovalFlowSchema_ApprovalEntities_Item as a ApprovalEntityTeamsChannelSchema
+func (t ApprovalFlowSchema_ApprovalEntities_Item) AsApprovalEntityTeamsChannelSchema() (ApprovalEntityTeamsChannelSchema, error) {
+	var body ApprovalEntityTeamsChannelSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntityTeamsChannelSchema overwrites any union data inside the ApprovalFlowSchema_ApprovalEntities_Item as the provided ApprovalEntityTeamsChannelSchema
+func (t *ApprovalFlowSchema_ApprovalEntities_Item) FromApprovalEntityTeamsChannelSchema(v ApprovalEntityTeamsChannelSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntityTeamsChannelSchema performs a merge with any union data inside the ApprovalFlowSchema_ApprovalEntities_Item, using the provided ApprovalEntityTeamsChannelSchema
+func (t *ApprovalFlowSchema_ApprovalEntities_Item) MergeApprovalEntityTeamsChannelSchema(v ApprovalEntityTeamsChannelSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsApprovalEntityNullSchema returns the union data inside the ApprovalFlowSchema_ApprovalEntities_Item as a ApprovalEntityNullSchema
 func (t ApprovalFlowSchema_ApprovalEntities_Item) AsApprovalEntityNullSchema() (ApprovalEntityNullSchema, error) {
 	var body ApprovalEntityNullSchema
@@ -2985,6 +3113,58 @@ func (t *ApprovalFlowSchema_NotifiedEntities_Item) FromApprovalEntityUserSchema(
 
 // MergeApprovalEntityUserSchema performs a merge with any union data inside the ApprovalFlowSchema_NotifiedEntities_Item, using the provided ApprovalEntityUserSchema
 func (t *ApprovalFlowSchema_NotifiedEntities_Item) MergeApprovalEntityUserSchema(v ApprovalEntityUserSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntitySlackChannelResponseSchema returns the union data inside the ApprovalFlowSchema_NotifiedEntities_Item as a ApprovalEntitySlackChannelResponseSchema
+func (t ApprovalFlowSchema_NotifiedEntities_Item) AsApprovalEntitySlackChannelResponseSchema() (ApprovalEntitySlackChannelResponseSchema, error) {
+	var body ApprovalEntitySlackChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntitySlackChannelResponseSchema overwrites any union data inside the ApprovalFlowSchema_NotifiedEntities_Item as the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowSchema_NotifiedEntities_Item) FromApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntitySlackChannelResponseSchema performs a merge with any union data inside the ApprovalFlowSchema_NotifiedEntities_Item, using the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowSchema_NotifiedEntities_Item) MergeApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntityTeamsChannelResponseSchema returns the union data inside the ApprovalFlowSchema_NotifiedEntities_Item as a ApprovalEntityTeamsChannelResponseSchema
+func (t ApprovalFlowSchema_NotifiedEntities_Item) AsApprovalEntityTeamsChannelResponseSchema() (ApprovalEntityTeamsChannelResponseSchema, error) {
+	var body ApprovalEntityTeamsChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntityTeamsChannelResponseSchema overwrites any union data inside the ApprovalFlowSchema_NotifiedEntities_Item as the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowSchema_NotifiedEntities_Item) FromApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntityTeamsChannelResponseSchema performs a merge with any union data inside the ApprovalFlowSchema_NotifiedEntities_Item, using the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowSchema_NotifiedEntities_Item) MergeApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -3109,6 +3289,58 @@ func (t *ApprovalFlowStepResponseSchema_ApprovalEntities_Item) MergeApprovalEnti
 	return err
 }
 
+// AsApprovalEntitySlackChannelResponseSchema returns the union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item as a ApprovalEntitySlackChannelResponseSchema
+func (t ApprovalFlowStepResponseSchema_ApprovalEntities_Item) AsApprovalEntitySlackChannelResponseSchema() (ApprovalEntitySlackChannelResponseSchema, error) {
+	var body ApprovalEntitySlackChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntitySlackChannelResponseSchema overwrites any union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item as the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_ApprovalEntities_Item) FromApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntitySlackChannelResponseSchema performs a merge with any union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item, using the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_ApprovalEntities_Item) MergeApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntityTeamsChannelResponseSchema returns the union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item as a ApprovalEntityTeamsChannelResponseSchema
+func (t ApprovalFlowStepResponseSchema_ApprovalEntities_Item) AsApprovalEntityTeamsChannelResponseSchema() (ApprovalEntityTeamsChannelResponseSchema, error) {
+	var body ApprovalEntityTeamsChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntityTeamsChannelResponseSchema overwrites any union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item as the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_ApprovalEntities_Item) FromApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntityTeamsChannelResponseSchema performs a merge with any union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item, using the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_ApprovalEntities_Item) MergeApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 // AsApprovalEntityNullResponseSchema returns the union data inside the ApprovalFlowStepResponseSchema_ApprovalEntities_Item as a ApprovalEntityNullResponseSchema
 func (t ApprovalFlowStepResponseSchema_ApprovalEntities_Item) AsApprovalEntityNullResponseSchema() (ApprovalEntityNullResponseSchema, error) {
 	var body ApprovalEntityNullResponseSchema
@@ -3213,6 +3445,58 @@ func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) FromApprovalEntit
 
 // MergeApprovalEntityUserResponseSchema performs a merge with any union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item, using the provided ApprovalEntityUserResponseSchema
 func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) MergeApprovalEntityUserResponseSchema(v ApprovalEntityUserResponseSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntitySlackChannelResponseSchema returns the union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item as a ApprovalEntitySlackChannelResponseSchema
+func (t ApprovalFlowStepResponseSchema_NotifiedEntities_Item) AsApprovalEntitySlackChannelResponseSchema() (ApprovalEntitySlackChannelResponseSchema, error) {
+	var body ApprovalEntitySlackChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntitySlackChannelResponseSchema overwrites any union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item as the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) FromApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntitySlackChannelResponseSchema performs a merge with any union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item, using the provided ApprovalEntitySlackChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) MergeApprovalEntitySlackChannelResponseSchema(v ApprovalEntitySlackChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsApprovalEntityTeamsChannelResponseSchema returns the union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item as a ApprovalEntityTeamsChannelResponseSchema
+func (t ApprovalFlowStepResponseSchema_NotifiedEntities_Item) AsApprovalEntityTeamsChannelResponseSchema() (ApprovalEntityTeamsChannelResponseSchema, error) {
+	var body ApprovalEntityTeamsChannelResponseSchema
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromApprovalEntityTeamsChannelResponseSchema overwrites any union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item as the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) FromApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeApprovalEntityTeamsChannelResponseSchema performs a merge with any union data inside the ApprovalFlowStepResponseSchema_NotifiedEntities_Item, using the provided ApprovalEntityTeamsChannelResponseSchema
+func (t *ApprovalFlowStepResponseSchema_NotifiedEntities_Item) MergeApprovalEntityTeamsChannelResponseSchema(v ApprovalEntityTeamsChannelResponseSchema) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
