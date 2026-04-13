@@ -449,7 +449,7 @@ func getWorkflowsRules(
 						}
 
 						target := &utils.IdNameModel{}
-						diagsAs := entity.Schedule.As(ctx, target, basetypes.ObjectAsOptions{
+						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
 						if diagsAs.HasError() {
@@ -484,7 +484,7 @@ func getWorkflowsRules(
 						}
 
 						target := &utils.IdNameModel{}
-						diagsAs := entity.Schedule.As(ctx, target, basetypes.ObjectAsOptions{
+						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
 						if diagsAs.HasError() {
@@ -800,6 +800,12 @@ func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) s
 		}
 	} else if !entity.Webhook.IsNull() && !entity.Webhook.IsUnknown() {
 		if idAttr, ok := entity.Webhook.Attributes()["id"]; ok {
+			if strVal, ok := idAttr.(basetypes.StringValue); ok {
+				id = strVal.ValueString()
+			}
+		}
+	} else if !entity.Channel.IsNull() && !entity.Channel.IsUnknown() {
+		if idAttr, ok := entity.Channel.Attributes()["id"]; ok {
 			if strVal, ok := idAttr.(basetypes.StringValue); ok {
 				id = strVal.ValueString()
 			}

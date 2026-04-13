@@ -249,10 +249,22 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Webhook to be invoked for notification.",
 															MarkdownDescription: "Webhook to be invoked for notification.",
 														},
-														"channel": schema.StringAttribute{
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the Slack or Teams channel.",
+																	MarkdownDescription: "Name of the Slack or Teams channel.",
+																},
+															},
 															Optional:            true,
-															Description:         "Unique identifier of the Slack/Teams channel.",
-															MarkdownDescription: "Unique identifier of the Slack/Teams channel",
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
 														},
 													},
 												},
@@ -340,10 +352,22 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Webhook to be invoked for approval.",
 															MarkdownDescription: "Webhook to be invoked for approval.",
 														},
-														"channel": schema.StringAttribute{
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the Slack or Teams channel.",
+																	MarkdownDescription: "Name of the Slack or Teams channel.",
+																},
+															},
 															Optional:            true,
-															Description:         "Unique identifier of the Slack/Teams channel.",
-															MarkdownDescription: "Unique identifier of the Slack/Teams channel",
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
 														},
 													},
 												},

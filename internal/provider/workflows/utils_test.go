@@ -70,18 +70,24 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								User:     userObj,
 								Group:    nullGroup,
 								Schedule: nullSchedule,
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							},
 							{
 								Type:     types.StringValue("group"),
 								User:     nullUser,
 								Group:    groupObj,
 								Schedule: nullSchedule,
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							},
 							{
 								Type:     types.StringValue("schedule"),
 								User:     nullUser,
 								Group:    nullGroup,
 								Schedule: scheduleObj,
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							},
 						},
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
@@ -90,6 +96,8 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								User:     nullUser,
 								Group:    nullGroup,
 								Schedule: nullSchedule,
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							},
 						},
 					},
@@ -160,6 +168,7 @@ func makeGroupEntity(t *testing.T, id, name string) *workflowRulesApprovalFlowSt
 		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -183,6 +192,7 @@ func makeUserEntity(t *testing.T, id, email string) *workflowRulesApprovalFlowSt
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -206,6 +216,7 @@ func makeWebhookEntity(t *testing.T, id, name string) *workflowRulesApprovalFlow
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  vObj,
+		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -218,6 +229,7 @@ func makeNullEntity(id string) *workflowRulesApprovalFlowStepApprovalNotifiedMod
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 	}
 }
 
@@ -1025,6 +1037,457 @@ func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 		gotKey := entitySortKey(got[i])
 		if gotKey != wantKey {
 			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
+	}
+}
+
+// makeChannelEntity creates a Slack or Teams channel approval/notified entity.
+// entityType should be "SlackChannel" or "TeamsChannel".
+func makeChannelEntity(t *testing.T, entityType, channelID string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
+	t.Helper()
+	ctx := context.Background()
+
+	v := utils.IdNameModel{
+		ID:   types.StringValue(channelID),
+		Name: types.StringNull(),
+	}
+	vObj, diags := v.AsObjectValue(ctx)
+	if diags.HasError() {
+		t.Fatalf("failed to create channel object: %v", diags.Errors())
+	}
+
+	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+		Type:     types.StringValue(entityType),
+		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  vObj,
+	}
+}
+
+// TestGetWorkflowsRules_SlackChannelApprovalEntityID verifies that a SlackChannel
+// approval entity sends the correct channel ID to the API (no surrounding quotes,
+// no empty ID due to wrong field access).
+func TestGetWorkflowsRules_SlackChannelApprovalEntityID(t *testing.T) {
+	ctx := context.Background()
+
+	const channelID = "C1111111111"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", channelID),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	approval := rules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	if len(approval) != 1 {
+		t.Fatalf("expected 1 approval entity, got %d", len(approval))
+	}
+
+	// Marshal to JSON to inspect the channel ID
+	b, err := approval[0].MarshalJSON()
+	if err != nil {
+		t.Fatalf("failed to marshal approval entity: %v", err)
+	}
+	jsonStr := string(b)
+	if !containsChannelID(jsonStr, channelID) {
+		t.Errorf("approval entity JSON does not contain channel ID %q: %s", channelID, jsonStr)
+	}
+}
+
+// TestGetWorkflowsRules_TeamsChannelApprovalEntityID verifies that a TeamsChannel
+// approval entity sends the correct channel ID to the API.
+func TestGetWorkflowsRules_TeamsChannelApprovalEntityID(t *testing.T) {
+	ctx := context.Background()
+
+	const channelID = "19:meeting-channel-id@thread.tacv2"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "TeamsChannel", channelID),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	approval := rules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	if len(approval) != 1 {
+		t.Fatalf("expected 1 approval entity, got %d", len(approval))
+	}
+
+	b, err := approval[0].MarshalJSON()
+	if err != nil {
+		t.Fatalf("failed to marshal approval entity: %v", err)
+	}
+	jsonStr := string(b)
+	if !containsChannelID(jsonStr, channelID) {
+		t.Errorf("approval entity JSON does not contain channel ID %q: %s", channelID, jsonStr)
+	}
+}
+
+// TestGetWorkflowsRules_SlackChannelNotifiedEntityID verifies that a SlackChannel
+// notified entity sends the correct channel ID to the API. This specifically tests
+// the bug fix where entity.Schedule was mistakenly used instead of entity.Channel.
+func TestGetWorkflowsRules_SlackChannelNotifiedEntityID(t *testing.T) {
+	ctx := context.Background()
+
+	const channelID = "C2222222222"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", channelID),
+						},
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("Automatic"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	notified := rules[0].ApprovalFlow.Steps[0].NotifiedEntities
+	if len(notified) != 1 {
+		t.Fatalf("expected 1 notified entity, got %d", len(notified))
+	}
+
+	b, err := notified[0].MarshalJSON()
+	if err != nil {
+		t.Fatalf("failed to marshal notified entity: %v", err)
+	}
+	jsonStr := string(b)
+	if !containsChannelID(jsonStr, channelID) {
+		t.Errorf("notified entity JSON does not contain channel ID %q: %s", channelID, jsonStr)
+	}
+}
+
+// TestGetWorkflowsRules_TeamsChannelNotifiedEntityID verifies that a TeamsChannel
+// notified entity sends the correct channel ID to the API. This specifically tests
+// the bug fix where entity.Schedule was mistakenly used instead of entity.Channel.
+func TestGetWorkflowsRules_TeamsChannelNotifiedEntityID(t *testing.T) {
+	ctx := context.Background()
+
+	const channelID = "19:teams-notified-channel@thread.tacv2"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "TeamsChannel", channelID),
+						},
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeNullEntity("Automatic"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	notified := rules[0].ApprovalFlow.Steps[0].NotifiedEntities
+	if len(notified) != 1 {
+		t.Fatalf("expected 1 notified entity, got %d", len(notified))
+	}
+
+	b, err := notified[0].MarshalJSON()
+	if err != nil {
+		t.Fatalf("failed to marshal notified entity: %v", err)
+	}
+	jsonStr := string(b)
+	if !containsChannelID(jsonStr, channelID) {
+		t.Errorf("notified entity JSON does not contain channel ID %q: %s", channelID, jsonStr)
+	}
+}
+
+// TestGetWorkflowsRules_MixedChannelEntities verifies that a step with both
+// approval and notified channel entities is handled correctly.
+func TestGetWorkflowsRules_MixedChannelEntities(t *testing.T) {
+	ctx := context.Background()
+
+	const (
+		slackApprovalID = "C3333333333"
+		teamsNotifiedID = "19:teams-notified@thread.tacv2"
+	)
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "TeamsChannel", teamsNotifiedID),
+						},
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", slackApprovalID),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	step := rules[0].ApprovalFlow.Steps[0]
+
+	// Check approval entity
+	approvalJSON, _ := step.ApprovalEntities[0].MarshalJSON()
+	if !containsChannelID(string(approvalJSON), slackApprovalID) {
+		t.Errorf("approval entity missing SlackChannel ID %q: %s", slackApprovalID, string(approvalJSON))
+	}
+
+	// Check notified entity
+	notifiedJSON, _ := step.NotifiedEntities[0].MarshalJSON()
+	if !containsChannelID(string(notifiedJSON), teamsNotifiedID) {
+		t.Errorf("notified entity missing TeamsChannel ID %q: %s", teamsNotifiedID, string(notifiedJSON))
+	}
+}
+
+// containsChannelID checks whether a JSON string contains a given channel ID value.
+func containsChannelID(jsonStr, channelID string) bool {
+	// The ID appears as a JSON string value: "id":"<channelID>"
+	return len(jsonStr) > 0 && (contains(jsonStr, `"id":"`+channelID+`"`) ||
+		contains(jsonStr, `"Id":"`+channelID+`"`))
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
+}
+
+func containsStr(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// TestEntitySortKey_ChannelEntities verifies that entitySortKey correctly
+// extracts the channel ID for SlackChannel and TeamsChannel entities.
+func TestEntitySortKey_ChannelEntities(t *testing.T) {
+	const (
+		slackChannelID = "C4444444444"
+		teamsChannelID = "19:teams-key-test@thread.tacv2"
+	)
+
+	slackEntity := makeChannelEntity(t, "SlackChannel", slackChannelID)
+	teamsEntity := makeChannelEntity(t, "TeamsChannel", teamsChannelID)
+
+	gotSlack := entitySortKey(slackEntity)
+	wantSlack := "slackchannel:" + slackChannelID
+	if gotSlack != wantSlack {
+		t.Errorf("SlackChannel sort key = %q, want %q", gotSlack, wantSlack)
+	}
+
+	gotTeams := entitySortKey(teamsEntity)
+	wantTeams := "teamschannel:" + teamsChannelID
+	if gotTeams != wantTeams {
+		t.Errorf("TeamsChannel sort key = %q, want %q", gotTeams, wantTeams)
+	}
+}
+
+// TestReconcileEntityOrder_ChannelEntities verifies that Slack and Teams channel
+// entities are correctly reordered when the API returns them in a different order.
+func TestReconcileEntityOrder_ChannelEntities(t *testing.T) {
+	slackA := "C5555555555"
+	slackB := "C6666666666"
+	teamsC := "19:teams-reorder-c@thread.tacv2"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", slackA),
+							makeChannelEntity(t, "TeamsChannel", teamsC),
+							makeChannelEntity(t, "SlackChannel", slackB),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns entities in a different order: [slackB, teamsC, slackA]
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", slackB),
+							makeChannelEntity(t, "TeamsChannel", teamsC),
+							makeChannelEntity(t, "SlackChannel", slackA),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
+	wantKeys := []string{
+		"slackchannel:" + slackA,
+		"teamschannel:" + teamsC,
+		"slackchannel:" + slackB,
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
+		}
+	}
+}
+
+// TestReconcileEntityOrder_ChannelAndGroupMixed verifies that channel and
+// group entities interleaved are reconciled correctly.
+func TestReconcileEntityOrder_ChannelAndGroupMixed(t *testing.T) {
+	slackID := "C7777777777"
+	groupID := "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeChannelEntity(t, "SlackChannel", slackID),
+							makeGroupEntity(t, groupID, "My Group"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// API returns [group, slack] instead of [slack, group]
+	resultRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							makeGroupEntity(t, groupID, "My Group"),
+							makeChannelEntity(t, "SlackChannel", slackID),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	reconcileEntityOrder(planRules, resultRules)
+
+	got := resultRules[0].ApprovalFlow.Steps[0].NotifiedEntities
+	wantKeys := []string{
+		"slackchannel:" + slackID,
+		"directory_group:" + groupID,
+	}
+
+	if len(got) != len(wantKeys) {
+		t.Fatalf("expected %d entities, got %d", len(wantKeys), len(got))
+	}
+	for i, wantKey := range wantKeys {
+		gotKey := entitySortKey(got[i])
+		if gotKey != wantKey {
+			t.Errorf("notified entity[%d]: got key %q, want %q", i, gotKey, wantKey)
 		}
 	}
 }
