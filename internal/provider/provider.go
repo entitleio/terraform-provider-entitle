@@ -4,11 +4,13 @@ import (
 	"context"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -71,9 +73,19 @@ func (p *EntitleProvider) Schema(
 		Description:         "The Entitle provider allows you to manage your Entitle resources and configurations through Terraform.",
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "entitle API server address, default: https://api.entitle.io",
-				Description:         "entitle API server address, default: https://api.entitle.io",
-				Optional:            true,
+				MarkdownDescription: "Entitle API server address. Allowed values:\n\n" +
+					"  - https://api.entitle.io (default, Europe)\n" +
+					"  - https://api.ca.entitle.io (Canada)\n" +
+					"  - https://api.us.entitle.io (United States)\n",
+				Description: "Entitle API server address. Allowed values: https://api.entitle.io (default, Europe), https://api.ca.entitle.io (Canada), https://api.us.entitle.io (United States)",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"https://api.entitle.io",
+						"https://api.ca.entitle.io",
+						"https://api.us.entitle.io",
+					),
+				},
 			},
 			"api_key": schema.StringAttribute{
 				MarkdownDescription: "entitle API bearer authorizations (http, Bearer)",
