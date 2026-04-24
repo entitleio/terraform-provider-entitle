@@ -118,7 +118,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case strings.ToLower(string(client.EnumApprovalEntityUserUserUser)):
+					case "user", string(client.EnumApprovalEntityUserUserUser):
 						if entity.User.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -214,7 +214,7 @@ func getWorkflowsRules(
 							return rules, diags
 						}
 
-						target := &utils.IdNameModel{}
+						target := &utils.IdentityOnlyModel{}
 						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
@@ -243,7 +243,7 @@ func getWorkflowsRules(
 							return rules, diags
 						}
 
-						target := &utils.IdNameModel{}
+						target := &utils.IdentityOnlyModel{}
 						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
@@ -448,7 +448,7 @@ func getWorkflowsRules(
 							return rules, diags
 						}
 
-						target := &utils.IdNameModel{}
+						target := &utils.IdentityOnlyModel{}
 						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
@@ -461,7 +461,7 @@ func getWorkflowsRules(
 						err := t.FromApprovalEntitySlackChannelResponseSchema(client.ApprovalEntitySlackChannelResponseSchema{
 							Type: client.SlackChannel,
 							Entity: client.SlackChannelEntityResponseSchema{
-								Id: target.ID.ValueString(),
+								Id: target.Id.ValueString(),
 							},
 						})
 						if err != nil {
@@ -483,7 +483,7 @@ func getWorkflowsRules(
 							return rules, diags
 						}
 
-						target := &utils.IdNameModel{}
+						target := &utils.IdentityOnlyModel{}
 						diagsAs := entity.Channel.As(ctx, target, basetypes.ObjectAsOptions{
 							UnhandledUnknownAsEmpty: true,
 						})
@@ -496,7 +496,7 @@ func getWorkflowsRules(
 						err := t.FromApprovalEntityTeamsChannelResponseSchema(client.ApprovalEntityTeamsChannelResponseSchema{
 							Type: client.TeamsChannel,
 							Entity: client.TeamsChannelEntityResponseSchema{
-								Id: target.ID.ValueString(),
+								Id: target.Id.ValueString(),
 							},
 						})
 						if err != nil {
@@ -618,12 +618,12 @@ func convertDirectoryGroupToApprovalFlowSchema(directoryGroup *utils.IdNameModel
 }
 
 // convertSlackChannelToApprovalFlowSchema is a function that converts a slack channel to an Approval Flow Schema.
-func convertSlackChannelToApprovalFlowSchema(directoryGroup *utils.IdNameModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
+func convertSlackChannelToApprovalFlowSchema(directoryGroup *utils.IdentityOnlyModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
 	// Create an ApprovalEntityTeamsChannelSchema with slack channel information
 	schemaGroup := client.ApprovalEntitySlackChannelSchema{
 		Type: client.SlackChannel,
 		Entity: client.SlackChannelEntitySchema{
-			Id: directoryGroup.ID.ValueString(),
+			Id: directoryGroup.Id.ValueString(),
 		},
 	}
 
@@ -640,12 +640,12 @@ func convertSlackChannelToApprovalFlowSchema(directoryGroup *utils.IdNameModel) 
 }
 
 // convertTeamsChannelToApprovalFlowSchema is a function that converts a teams channel to an Approval Flow Schema.
-func convertTeamsChannelToApprovalFlowSchema(directoryGroup *utils.IdNameModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
+func convertTeamsChannelToApprovalFlowSchema(directoryGroup *utils.IdentityOnlyModel) (client.ApprovalFlowSchema_ApprovalEntities_Item, error) {
 	// Create an ApprovalEntityTeamsChannelSchema with teams channel information
 	schemaGroup := client.ApprovalEntityTeamsChannelSchema{
 		Type: client.TeamsChannel,
 		Entity: client.TeamsChannelEntitySchema{
-			Id: directoryGroup.ID.ValueString(),
+			Id: directoryGroup.Id.ValueString(),
 		},
 	}
 

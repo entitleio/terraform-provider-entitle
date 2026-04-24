@@ -71,7 +71,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Group:    nullGroup,
 								Schedule: nullSchedule,
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 							{
 								Type:     types.StringValue("group"),
@@ -79,7 +79,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Group:    groupObj,
 								Schedule: nullSchedule,
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 							{
 								Type:     types.StringValue("schedule"),
@@ -87,7 +87,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Group:    nullGroup,
 								Schedule: scheduleObj,
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 						},
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
@@ -97,7 +97,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Group:    nullGroup,
 								Schedule: nullSchedule,
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 						},
 					},
@@ -168,7 +168,7 @@ func makeGroupEntity(t *testing.T, id, name string) *workflowRulesApprovalFlowSt
 		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 	}
 }
 
@@ -192,7 +192,7 @@ func makeUserEntity(t *testing.T, id, email string) *workflowRulesApprovalFlowSt
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 	}
 }
 
@@ -216,7 +216,7 @@ func makeWebhookEntity(t *testing.T, id, name string) *workflowRulesApprovalFlow
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  vObj,
-		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 	}
 }
 
@@ -229,7 +229,7 @@ func makeNullEntity(id string) *workflowRulesApprovalFlowStepApprovalNotifiedMod
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-		Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+		Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 	}
 }
 
@@ -1047,9 +1047,8 @@ func makeChannelEntity(t *testing.T, entityType, channelID string) *workflowRule
 	t.Helper()
 	ctx := context.Background()
 
-	v := utils.IdNameModel{
-		ID:   types.StringValue(channelID),
-		Name: types.StringNull(),
+	v := utils.IdentityOnlyModel{
+		Id: types.StringValue(channelID),
 	}
 	vObj, diags := v.AsObjectValue(ctx)
 	if diags.HasError() {

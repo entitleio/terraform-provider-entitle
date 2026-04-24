@@ -256,11 +256,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
 																},
-																"name": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Name of the Slack or Teams channel.",
-																	MarkdownDescription: "Name of the Slack or Teams channel.",
-																},
 															},
 															Optional:            true,
 															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
@@ -358,11 +353,6 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 																	Optional:            true,
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
-																},
-																"name": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Name of the Slack or Teams channel.",
-																	MarkdownDescription: "Name of the Slack or Teams channel.",
 																},
 															},
 															Optional:            true,

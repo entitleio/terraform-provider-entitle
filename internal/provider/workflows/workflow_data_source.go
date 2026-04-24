@@ -249,11 +249,6 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
 																},
-																"name": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Name of the Slack or Teams channel.",
-																	MarkdownDescription: "Name of the Slack or Teams channel.",
-																},
 															},
 															Computed:            true,
 															Description:         "Slack or Teams channel details.",
@@ -347,11 +342,6 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 																	Computed:            true,
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
-																},
-																"name": schema.StringAttribute{
-																	Computed:            true,
-																	Description:         "Name of the Slack or Teams channel.",
-																	MarkdownDescription: "Name of the Slack or Teams channel.",
 																},
 															},
 															Computed:            true,
@@ -626,7 +616,7 @@ func converterWorkflow(
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-									Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityUserUserUser):
 								val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -656,7 +646,7 @@ func converterWorkflow(
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-									Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.DirectoryGroup):
 								val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -686,7 +676,7 @@ func converterWorkflow(
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-									Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 								string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -711,7 +701,7 @@ func converterWorkflow(
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-									Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case "Webhook":
 								var entityData struct {
@@ -746,7 +736,7 @@ func converterWorkflow(
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-									Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.SlackChannel):
 								var slackChannelData struct {
@@ -762,9 +752,8 @@ func converterWorkflow(
 									)
 									return WorkflowDataSourceModel{}, diags
 								}
-								slackChannelObj, diagsAs := utils.IdNameModel{
-									ID:   utils.TrimmedStringValue(slackChannelData.Entity.Id),
-									Name: types.StringNull(),
+								slackChannelObj, diagsAs := utils.IdentityOnlyModel{
+									Id: utils.TrimmedStringValue(slackChannelData.Entity.Id),
 								}.AsObjectValue(ctx)
 								if diagsAs.HasError() {
 									diags.Append(diagsAs...)
@@ -792,9 +781,8 @@ func converterWorkflow(
 									)
 									return WorkflowDataSourceModel{}, diags
 								}
-								teamsChannelObj, diagsAs := utils.IdNameModel{
-									ID:   utils.TrimmedStringValue(teamsChannelData.Entity.Id),
-									Name: types.StringNull(),
+								teamsChannelObj, diagsAs := utils.IdentityOnlyModel{
+									Id: utils.TrimmedStringValue(teamsChannelData.Entity.Id),
 								}.AsObjectValue(ctx)
 								if diagsAs.HasError() {
 									diags.Append(diagsAs...)
@@ -868,7 +856,7 @@ func converterWorkflow(
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
 							val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -898,7 +886,7 @@ func converterWorkflow(
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
 							val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -928,7 +916,7 @@ func converterWorkflow(
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -953,7 +941,7 @@ func converterWorkflow(
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case "Webhook":
 							var entityData struct {
@@ -988,7 +976,7 @@ func converterWorkflow(
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
-								Channel:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.SlackChannel):
 							var slackChannelData struct {
@@ -1004,9 +992,8 @@ func converterWorkflow(
 								)
 								return WorkflowDataSourceModel{}, diags
 							}
-							slackChannelObj, diagsAs := utils.IdNameModel{
-								ID:   utils.TrimmedStringValue(slackChannelData.Entity.Id),
-								Name: types.StringNull(),
+							slackChannelObj, diagsAs := utils.IdentityOnlyModel{
+								Id: utils.TrimmedStringValue(slackChannelData.Entity.Id),
 							}.AsObjectValue(ctx)
 							if diagsAs.HasError() {
 								diags.Append(diagsAs...)
@@ -1034,9 +1021,8 @@ func converterWorkflow(
 								)
 								return WorkflowDataSourceModel{}, diags
 							}
-							teamsChannelObj, diagsAs := utils.IdNameModel{
-								ID:   utils.TrimmedStringValue(teamsChannelData.Entity.Id),
-								Name: types.StringNull(),
+							teamsChannelObj, diagsAs := utils.IdentityOnlyModel{
+								Id: utils.TrimmedStringValue(teamsChannelData.Entity.Id),
 							}.AsObjectValue(ctx)
 							if diagsAs.HasError() {
 								diags.Append(diagsAs...)
