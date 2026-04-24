@@ -253,12 +253,12 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
 																	Optional:            true,
-																	Description:         "Unique identifier of the Slack or Teams channel.",
-																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																	Description:         "Unique identifier (name) of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier (name) of the Slack or Teams channel.",
 																},
 															},
 															Optional:            true,
-															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\". [Read more about Slack Channels](https://docs.beyondtrust.com/entitle/docs/entitle-for-slack-admins)",
 															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
 														},
 													},
