@@ -58,6 +58,8 @@ on:
       ENTITLE_WORKFLOW_NAME:
         required: true
       # ca region
+      ENTITLE_SLACK_CHANNEL_ID:
+        required: true
       ENTITLE_CA_ACCESS_REQUEST_FORWARD_ID:
         required: true
       ENTITLE_CA_ACCESS_REVIEW_FORWARD_ID:
@@ -326,6 +328,7 @@ jobs:
           ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_CA_PERMISSION_ID }}
           ENTITLE_POLICY_ID: ${{ secrets.ENTITLE_CA_POLICY_ID }}
           ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_CA_RESOURCE_ID }}
+          ENTITLE_SLACK_CHANNEL_ID: ${{ secrets.ENTITLE_SLACK_CHANNEL_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_CA_ROLE_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_CA_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_CA_USER2_ID }}
