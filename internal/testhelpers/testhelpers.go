@@ -15,16 +15,16 @@ import (
 var (
 	ProviderConfig = fmt.Sprintf(`
 provider "entitle" {
-  endpoint = "https://api.entitle.io"
+  endpoint = "%s"
   api_key  = "%s"
 }
-`, os.Getenv("ENTITLE_API_KEY"))
+`, os.Getenv("ENTITLE_DOMAIN"), os.Getenv("ENTITLE_API_KEY"))
 	ProviderConfig2 = fmt.Sprintf(`
 provider "entitle" {
-  endpoint = "https://api.entitle.io"
+  endpoint = "%s"
   api_key  = "%s"
 }
-`, os.Getenv("ENTITLE_API_KEY2"))
+`, os.Getenv("ENTITLE_DOMAIN"), os.Getenv("ENTITLE_API_KEY2"))
 	TestAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 		"entitle": providerserver.NewProtocol6WithError(provider.New("test")()),
 	}

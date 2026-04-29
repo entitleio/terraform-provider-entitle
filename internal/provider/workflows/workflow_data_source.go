@@ -6,7 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"sort"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
@@ -53,17 +58,29 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 		MarkdownDescription: docs.WorkflowDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Entitle Workflow identifier in uuid format",
-				Description:         "Entitle Workflow identifier in uuid format",
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Workflow name",
-				Description:         "Workflow name",
+				MarkdownDescription: "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"rules": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -195,13 +212,42 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Description:         "Notified schedule details",
 															MarkdownDescription: "Notified schedule details",
 														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook unique identifier",
+																	MarkdownDescription: "Webhook unique identifier",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook name",
+																	MarkdownDescription: "Webhook name",
+																},
+															},
+															Computed:            true,
+															Description:         "Notified webhook details",
+															MarkdownDescription: "Notified webhook details",
+														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+															},
+															Computed:            true,
+															Description:         "Slack or Teams channel details.",
+															MarkdownDescription: "Slack or Teams channel details.",
+														},
 													},
 												},
 												Computed:            true,
 												Description:         "Entities to notify when the step is triggered",
 												MarkdownDescription: "Entities to notify when the step is triggered",
 											},
-											"approval_entities": schema.SetNestedAttribute{
+											"approval_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
@@ -259,6 +305,35 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 															Computed:            true,
 															Description:         "Approver schedule details",
 															MarkdownDescription: "Approver schedule details",
+														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook unique identifier",
+																	MarkdownDescription: "Webhook unique identifier",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Webhook name",
+																	MarkdownDescription: "Webhook name",
+																},
+															},
+															Computed:            true,
+															Description:         "Approver webhook details",
+															MarkdownDescription: "Approver webhook details",
+														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+															},
+															Computed:            true,
+															Description:         "Slack or Teams channel details.",
+															MarkdownDescription: "Slack or Teams channel details.",
 														},
 													},
 												},
@@ -322,7 +397,25 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	uid := uuid.MustParse(data.Id.String())
+	var uid openapi_types.UUID
+	if data.Id.ValueString() == "" {
+		name := data.Name.ValueString()
+
+		id, err := d.getWorkflowIDByName(ctx, name)
+		if err != nil {
+			resp.Diagnostics.AddError("Workflow not found", fmt.Sprintf(
+				"Failed to get the Workflow by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
+			return
+		}
+
+		uid = *id
+	} else {
+		uid = uuid.MustParse(data.Id.String())
+	}
 
 	workflowResp, err := d.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -361,6 +454,35 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.WorkflowIndexResultResponseSchema, int, error) {
+		params := client.WorkflowsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list workflows: %w", err)
+		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing workflows (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("received invalid workflow response structure (page %d)", page)
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }
 
 func converterWorkflow(
@@ -480,6 +602,8 @@ func converterWorkflow(
 									Schedule: vObj,
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityUserUserUser):
 								val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -508,6 +632,8 @@ func converterWorkflow(
 									User:     vObj,
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.DirectoryGroup):
 								val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -536,6 +662,8 @@ func converterWorkflow(
 									Group:    vObj,
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 								})
 							case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 								string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -559,6 +687,101 @@ func converterWorkflow(
 									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
+								})
+							case "Webhook":
+								var entityData struct {
+									Entity struct {
+										Id   string `json:"id"`
+										Name string `json:"name"`
+									} `json:"entity"`
+									Type string `json:"type"`
+								}
+								if err := json.Unmarshal(jsonData, &entityData); err != nil {
+									diags.AddError(
+										"Failed to parse webhook entity",
+										err.Error(),
+									)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								v := utils.IdNameModel{
+									ID:   utils.TrimmedStringValue(entityData.Entity.Id),
+									Name: utils.TrimmedStringValue(entityData.Entity.Name),
+								}
+
+								vObj, diagsAs := v.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue("Webhook"),
+									Webhook:  vObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
+								})
+							case string(client.SlackChannel):
+								var slackChannelData struct {
+									Entity struct {
+										Id string `json:"id"`
+									} `json:"entity"`
+									Type string `json:"type"`
+								}
+								if err := json.Unmarshal(jsonData, &slackChannelData); err != nil {
+									diags.AddError(
+										"Failed to parse slack channel entity",
+										err.Error(),
+									)
+									return WorkflowDataSourceModel{}, diags
+								}
+								slackChannelObj, diagsAs := utils.IdentityOnlyModel{
+									Id: utils.TrimmedStringValue(slackChannelData.Entity.Id),
+								}.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(client.SlackChannel)),
+									Channel:  slackChannelObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								})
+							case string(client.TeamsChannel):
+								var teamsChannelData struct {
+									Entity struct {
+										Id string `json:"id"`
+									} `json:"entity"`
+									Type string `json:"type"`
+								}
+								if err := json.Unmarshal(jsonData, &teamsChannelData); err != nil {
+									diags.AddError(
+										"Failed to parse teams channel entity",
+										err.Error(),
+									)
+									return WorkflowDataSourceModel{}, diags
+								}
+								teamsChannelObj, diagsAs := utils.IdentityOnlyModel{
+									Id: utils.TrimmedStringValue(teamsChannelData.Entity.Id),
+								}.AsObjectValue(ctx)
+								if diagsAs.HasError() {
+									diags.Append(diagsAs...)
+									return WorkflowDataSourceModel{}, diags
+								}
+								flowStep.NotifiedEntities = append(flowStep.NotifiedEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+									Type:     utils.TrimmedStringValue(string(client.TeamsChannel)),
+									Channel:  teamsChannelObj,
+									User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+									Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+									Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								})
 							}
 						}
@@ -619,6 +842,8 @@ func converterWorkflow(
 								Schedule: vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityUserUserUser):
 							val, err := entity.AsApprovalEntityUserResponseSchema()
@@ -647,6 +872,8 @@ func converterWorkflow(
 								User:     vObj,
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.DirectoryGroup):
 							val, err := entity.AsApprovalEntityGroupResponseSchema()
@@ -675,6 +902,8 @@ func converterWorkflow(
 								Group:    vObj,
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							})
 						case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 							string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
@@ -698,6 +927,101 @@ func converterWorkflow(
 								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
+							})
+						case "Webhook":
+							var entityData struct {
+								Entity struct {
+									Id   string `json:"id"`
+									Name string `json:"name"`
+								} `json:"entity"`
+								Type string `json:"type"`
+							}
+							if err := json.Unmarshal(jsonData, &entityData); err != nil {
+								diags.AddError(
+									"Failed to parse webhook entity",
+									err.Error(),
+								)
+								return WorkflowDataSourceModel{}, diags
+							}
+
+							v := utils.IdNameModel{
+								ID:   utils.TrimmedStringValue(entityData.Entity.Id),
+								Name: utils.TrimmedStringValue(entityData.Entity.Name),
+							}
+
+							vObj, diagsAs := v.AsObjectValue(ctx)
+							if diagsAs.HasError() {
+								diags.Append(diagsAs...)
+								return WorkflowDataSourceModel{}, diags
+							}
+
+							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+								Type:     utils.TrimmedStringValue("Webhook"),
+								Webhook:  vObj,
+								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
+							})
+						case string(client.SlackChannel):
+							var slackChannelData struct {
+								Entity struct {
+									Id string `json:"id"`
+								} `json:"entity"`
+								Type string `json:"type"`
+							}
+							if err := json.Unmarshal(jsonData, &slackChannelData); err != nil {
+								diags.AddError(
+									"Failed to parse slack channel entity",
+									err.Error(),
+								)
+								return WorkflowDataSourceModel{}, diags
+							}
+							slackChannelObj, diagsAs := utils.IdentityOnlyModel{
+								Id: utils.TrimmedStringValue(slackChannelData.Entity.Id),
+							}.AsObjectValue(ctx)
+							if diagsAs.HasError() {
+								diags.Append(diagsAs...)
+								return WorkflowDataSourceModel{}, diags
+							}
+							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+								Type:     utils.TrimmedStringValue(string(client.SlackChannel)),
+								Channel:  slackChannelObj,
+								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+							})
+						case string(client.TeamsChannel):
+							var teamsChannelData struct {
+								Entity struct {
+									Id string `json:"id"`
+								} `json:"entity"`
+								Type string `json:"type"`
+							}
+							if err := json.Unmarshal(jsonData, &teamsChannelData); err != nil {
+								diags.AddError(
+									"Failed to parse teams channel entity",
+									err.Error(),
+								)
+								return WorkflowDataSourceModel{}, diags
+							}
+							teamsChannelObj, diagsAs := utils.IdentityOnlyModel{
+								Id: utils.TrimmedStringValue(teamsChannelData.Entity.Id),
+							}.AsObjectValue(ctx)
+							if diagsAs.HasError() {
+								diags.Append(diagsAs...)
+								return WorkflowDataSourceModel{}, diags
+							}
+							flowStep.ApprovalEntities = append(flowStep.ApprovalEntities, &workflowRulesApprovalFlowStepApprovalNotifiedModel{
+								Type:     utils.TrimmedStringValue(string(client.TeamsChannel)),
+								Channel:  teamsChannelObj,
+								User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
+								Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
+								Webhook:  types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 							})
 						}
 					}

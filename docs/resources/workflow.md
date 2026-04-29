@@ -2508,8 +2508,8 @@ Optional:
 
 - `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to true.
 - `approval_flow` (Attributes) The approval process defined by one or more ordered steps. Each step includes approvers and conditions. (see [below for nested schema](#nestedatt--rules--approval_flow))
-- `in_groups` (Attributes Set) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
-- `in_schedules` (Attributes Set) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
+- `in_groups` (Attributes List) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
+- `in_schedules` (Attributes List) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
 - `sort_order` (Number) Determines the evaluation priority of the rule.
 - `under_duration` (Number) Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).
 
@@ -2525,8 +2525,8 @@ Optional:
 
 Optional:
 
-- `approval_entities` (Attributes Set) List of users or groups that must approve in this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
-- `notified_entities` (Attributes Set) List of users or groups to be notified during this approval step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
+- `approval_entities` (Attributes List) List of users or groups that must approve in this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities))
+- `notified_entities` (Attributes List) List of users or groups to be notified during this approval step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities))
 - `operator` (String) Logical operator for combining approval entities.
 - `sort_order` (Number) Order of the step within the approval flow. Lower numbers indicate earlier steps.
 
@@ -2535,10 +2535,20 @@ Optional:
 
 Optional:
 
+- `channel` (Attributes) Slack or Teams channel for this step. Use with `type = "SlackChannel"` or `type = "TeamsChannel"`. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--channel))
 - `group` (Attributes) Represents a group whose members are responsible for approving the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String) Type of approval entity.
 - `user` (Attributes) Represents an individual user who is required to approve the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
+- `webhook` (Attributes) Webhook to be invoked for approval. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--webhook))
+
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--channel"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.channel`
+
+Optional:
+
+- `id` (String) Unique identifier of the Slack or Teams channel.
+
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
@@ -2576,16 +2586,38 @@ Read-Only:
 - `email` (String) Email address of the approver.
 
 
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.webhook`
+
+Optional:
+
+- `id` (String) Unique identifier of the webhook.
+
+Read-Only:
+
+- `name` (String) Name of the webhook.
+
+
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities`
 
 Optional:
 
+- `channel` (Attributes) Slack or Teams channel for this step. Use with `type = "SlackChannel"` or `type = "TeamsChannel"`. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--channel))
 - `group` (Attributes) Represents a user group whose members will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String) Type of notified entity
 - `user` (Attributes) Represents an individual user who will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
+- `webhook` (Attributes) Webhook to be invoked for notification. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--channel"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.channel`
+
+Optional:
+
+- `id` (String) Unique identifier (name) of the Slack or Teams channel.
+
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
@@ -2621,6 +2653,18 @@ Optional:
 Read-Only:
 
 - `email` (String) Email address of the notified user.
+
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--webhook"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.webhook`
+
+Required:
+
+- `id` (String) Unique identifier of the webhook.
+
+Read-Only:
+
+- `name` (String) Name of the webhook.
 
 
 

@@ -3,13 +3,17 @@ package integrations
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -59,17 +63,29 @@ func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.Schem
 		MarkdownDescription: docs.IntegrationDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Entitle Integration identifier in uuid format",
-				Description:         "Entitle Integration identifier in uuid format",
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Entitle Integration identifier in uuid format. If not provided then name will be used to get entity.",
+				Description:         "Entitle Integration identifier in uuid format. If not provided then name will be used to get entity.",
 				Validators: []validator.String{
 					validators.UUID{},
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Entitle Integration name",
-				Description:         "Entitle Integration name",
+				MarkdownDescription: "The Integration's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Description:         "The Integration's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("id"),
+						path.MatchRoot("name"),
+					),
+				},
 			},
 			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
@@ -218,7 +234,26 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	uid := uuid.MustParse(data.Id.ValueString())
+	var uid uuid.UUID
+	if data.Id.ValueString() == "" {
+		name := data.Name.ValueString()
+
+		id, err := d.getIntegrationIDByName(ctx, name)
+		if err != nil {
+			resp.Diagnostics.AddError("Integration not found", fmt.Sprintf(
+				"Failed to get the Integration by the name (%s), %s",
+				name,
+				err.Error(),
+			))
+
+			return
+		}
+
+		uid = *id
+
+	} else {
+		uid = uuid.MustParse(data.Id.ValueString())
+	}
 
 	integrationResp, err := d.client.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -291,4 +326,34 @@ func (d *IntegrationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// findIntegrationByID searches the integration list for the given name.
+func (d *IntegrationDataSource) getIntegrationIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.IntegrationBaseResponseSchema, int, error) {
+		params := client.IntegrationsIndexParams{
+			PerPage: utils.Float32Pointer(100),
+			Page:    utils.Float32Pointer(float32(page)),
+		}
+
+		resp, err := d.client.IntegrationsIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list integrations: %w", err)
+		}
+
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing integration (page %d)",
+				resp.HTTPResponse.StatusCode, page)
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("received invalid integration response structure (page %d)", page)
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
+	}
+
+	return utils.FindIDByName(ctx, name, fetch)
 }

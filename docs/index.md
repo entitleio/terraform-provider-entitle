@@ -129,4 +129,10 @@ provider "entitle" {
 ### Optional
 
 - `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
+- `endpoint` (String) Entitle API server address. Allowed values:
+
+  - https://api.entitle.io (default, Europe)
+  - https://api.ca.entitle.io (Canada)
+  - https://api.us.entitle.io (United States)
+- `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
 - `endpoint` (String) The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).

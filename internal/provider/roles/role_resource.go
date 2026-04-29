@@ -42,7 +42,7 @@ type RoleResource struct {
 type RoleResourceModel struct {
 	ID                      types.String                        `tfsdk:"id"`
 	Name                    types.String                        `tfsdk:"name"`
-	Resource                utils.IdNameModel                   `tfsdk:"resource" json:"resource"`
+	Resource                *utils.IdNameModel                  `tfsdk:"resource" json:"resource"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
@@ -268,29 +268,6 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	var err error
 
-	var res client.IdParamsSchema
-	res.Id, err = uuid.Parse(plan.Resource.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", plan.Resource.ID.String(), err),
-		)
-		return
-	}
-
-	var workflow *client.IdParamsSchema
-	if plan.Workflow != nil {
-		workflow = new(client.IdParamsSchema)
-		workflow.Id, err = uuid.Parse(plan.Workflow.ID.String())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				fmt.Sprintf("Failed to parse the workflow id (%s) to UUID, got error: %s", plan.Workflow.ID.String(), err),
-			)
-			return
-		}
-	}
-
 	var virtualizedRole *client.IdParamsSchema
 	if plan.VirtualizedRole != nil {
 		virtualizedRole = new(client.IdParamsSchema)
@@ -345,16 +322,42 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 		prerequisitePermissions = &ppData
 	}
 
-	// Send a request to the Entitle API to create the role.
-	apiResp, err := r.client.RolesCreateWithResponse(ctx, client.RolesCreateJSONRequestBody{
+	request := client.RolesCreateJSONRequestBody{
 		AllowedDurations:        allowedDurations,
 		Name:                    plan.Name.ValueStringPointer(),
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             plan.Requestable.ValueBool(),
-		Resource:                res,
-		VirtualizedRole:         virtualizedRole,
-		Workflow:                workflow,
-	})
+	}
+
+	if virtualizedRole != nil {
+		request.VirtualizedRole = virtualizedRole
+	}
+
+	request.Resource.Id, err = uuid.Parse(plan.Resource.ID.String())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", plan.Resource.ID.String(), err),
+		)
+		return
+	}
+
+	if plan.Workflow != nil {
+		workflow := new(client.IdParamsSchema)
+		workflow.Id, err = uuid.Parse(plan.Workflow.ID.String())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf("Failed to parse the workflow id (%s) to UUID, got error: %s", plan.Workflow.ID.String(), err),
+			)
+			return
+		}
+
+		request.Workflow = workflow
+	}
+
+	// Send a request to the Entitle API to create the role.
+	apiResp, err := r.client.RolesCreateWithResponse(ctx, request)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
@@ -519,8 +522,9 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		prerequisitePermissions = &ppData
 	}
 
-	var workflow client.IdParamsSchema
+	var workflow *client.IdParamsSchema
 	if data.Workflow != nil {
+		workflow = new(client.IdParamsSchema)
 		workflow.Id, err = uuid.Parse(data.Workflow.ID.String())
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -536,7 +540,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		AllowedDurations:        allowedDurations,
 		PrerequisitePermissions: prerequisitePermissions,
 		Requestable:             data.Requestable.ValueBoolPointer(),
-		Workflow:                &workflow,
+		Workflow:                workflow,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -683,7 +687,7 @@ func IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx context.Context,
 	return RoleResourceModel{
 		ID:   utils.TrimmedStringValue(data.Id.String()),
 		Name: utils.TrimmedStringValue(data.Name),
-		Resource: utils.IdNameModel{
+		Resource: &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Resource.Id.String()),
 			Name: utils.TrimmedStringValue(data.Resource.Name),
 		},

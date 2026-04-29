@@ -99,7 +99,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(3600)),
 						},
-						"in_groups": schema.SetNestedAttribute{
+						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -117,11 +117,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of user groups for which this rule is applicable.",
 							MarkdownDescription: "List of user groups for which this rule is applicable.",
-							Validators: []validator.Set{
-								validators.NewSetMinLength(1),
+							Validators: []validator.List{
+								validators.NewListMinLength(1),
 							},
 						},
-						"in_schedules": schema.SetNestedAttribute{
+						"in_schedules": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
@@ -139,8 +139,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Optional:            true,
 							Description:         "List of schedules during which this rule is valid.",
 							MarkdownDescription: "List of schedules during which this rule is valid.",
-							Validators: []validator.Set{
-								validators.NewSetMinLength(1),
+							Validators: []validator.List{
+								validators.NewListMinLength(1),
 							},
 						},
 						"approval_flow": schema.SingleNestedAttribute{
@@ -162,7 +162,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												MarkdownDescription: "Order of the step within the approval flow. Lower numbers indicate earlier steps.",
 												Default:             numberdefault.StaticBigFloat(big.NewFloat(0)),
 											},
-											"notified_entities": schema.SetNestedAttribute{
+											"notified_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
@@ -221,17 +221,46 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
 														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Required:            true,
+																	Description:         "Unique identifier of the webhook.",
+																	MarkdownDescription: "Unique identifier of the webhook.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the webhook.",
+																	MarkdownDescription: "Name of the webhook.",
+																},
+															},
+															Optional:            true,
+															Description:         "Webhook to be invoked for notification.",
+															MarkdownDescription: "Webhook to be invoked for notification.",
+														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier (name) of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier (name) of the Slack or Teams channel.",
+																},
+															},
+															Optional:            true,
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\". [Read more about Slack Channels](https://docs.beyondtrust.com/entitle/docs/entitle-for-slack-admins)",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
+														},
 													},
 												},
 												Optional:            true,
 												Description:         "List of users or groups to be notified during this approval step.",
 												MarkdownDescription: "List of users or groups to be notified during this approval step.",
 
-												Validators: []validator.Set{
-													validators.NewSetMinLength(1),
+												Validators: []validator.List{
+													validators.NewListMinLength(1),
 												},
 											},
-											"approval_entities": schema.SetNestedAttribute{
+											"approval_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
@@ -289,6 +318,35 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Schedule applied to the approval entity.",
 															MarkdownDescription: "Schedule applied to the approval entity.",
+														},
+														"webhook": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the webhook.",
+																	MarkdownDescription: "Unique identifier of the webhook.",
+																},
+																"name": schema.StringAttribute{
+																	Computed:            true,
+																	Description:         "Name of the webhook.",
+																	MarkdownDescription: "Name of the webhook.",
+																},
+															},
+															Optional:            true,
+															Description:         "Webhook to be invoked for approval.",
+															MarkdownDescription: "Webhook to be invoked for approval.",
+														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+															},
+															Optional:            true,
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
 														},
 													},
 												},
@@ -362,6 +420,7 @@ func (r *WorkflowResource) Create(
 	}
 
 	name := plan.Name.ValueString()
+	planRules := plan.Rules
 
 	rules, diags := getWorkflowsRules(ctx, plan.Rules)
 	resp.Diagnostics.Append(diags...)
@@ -404,6 +463,8 @@ func (r *WorkflowResource) Create(
 		return
 	}
 
+	reconcileEntityOrder(planRules, plan.Rules)
+
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -432,6 +493,7 @@ func (r *WorkflowResource) Read(
 	}
 
 	uid := uuid.MustParse(data.ID.String())
+	priorRules := data.Rules
 
 	workflowResp, err := r.client.WorkflowsShowWithResponse(ctx, uid)
 	if err != nil {
@@ -462,6 +524,8 @@ func (r *WorkflowResource) Read(
 		return
 	}
 
+	reconcileEntityOrder(priorRules, data.Rules)
+
 	// Save updated data into Terraform state
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -491,6 +555,7 @@ func (r *WorkflowResource) Update(
 
 	uid := uuid.MustParse(data.ID.String())
 	name := data.Name.ValueStringPointer()
+	planRules := data.Rules
 
 	rules, diags := getWorkflowsRules(ctx, data.Rules)
 	resp.Diagnostics.Append(diags...)
@@ -530,6 +595,8 @@ func (r *WorkflowResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	reconcileEntityOrder(planRules, data.Rules)
 
 	// Save updated data into Terraform state
 	diags = resp.State.Set(ctx, &data)

@@ -6,6 +6,7 @@ name: Tests
 on:
   workflow_call:
     secrets:
+      # eu region
       ENTITLE_ACCESS_REQUEST_FORWARD_ID:
         required: true
       ENTITLE_ACCESS_REVIEW_FORWARD_ID:
@@ -18,11 +19,19 @@ on:
         required: true
       ENTITLE_BUNDLE_ID:
         required: true
+      ENTITLE_BUNDLE_NAME:
+        required: true
       ENTITLE_DIRECTORY_GROUP_EMAIL:
+        required: true
+      ENTITLE_DOMAIN:
         required: true
       ENTITLE_INTEGRATION_ID:
         required: true
+      ENTITLE_INTEGRATION_NAME:
+        required: true
       ENTITLE_MANUAL_INTEGRATION_ID:
+        required: true
+      ENTITLE_VIRTUAL_INTEGRATION_ID:
         required: true
       ENTITLE_OWNER_EMAIL:
         required: true
@@ -42,6 +51,113 @@ on:
         required: true
       ENTITLE_WORKFLOW_ID:
         required: true
+      ENTITLE_WEBHOOK_ID:
+        required: true
+      ENTITLE_WEBHOOK_ID_2:
+        required: true
+      ENTITLE_WORKFLOW_NAME:
+        required: true
+      # ca region
+      ENTITLE_SLACK_CHANNEL_ID:
+        required: true
+      ENTITLE_CA_ACCESS_REQUEST_FORWARD_ID:
+        required: true
+      ENTITLE_CA_ACCESS_REVIEW_FORWARD_ID:
+        required: true
+      ENTITLE_CA_AGENT_TOKEN_ID:
+        required: true
+      ENTITLE_CA_API_KEY:
+        required: true
+      ENTITLE_CA_BUNDLE_ID:
+        required: true
+      ENTITLE_CA_BUNDLE_NAME:
+        required: true
+      ENTITLE_CA_DIRECTORY_GROUP_EMAIL:
+        required: true
+      ENTITLE_CA_DOMAIN:
+        required: true
+      ENTITLE_CA_INTEGRATION_ID:
+        required: true
+      ENTITLE_CA_INTEGRATION_NAME:
+        required: true
+      ENTITLE_CA_MANUAL_INTEGRATION_ID:
+        required: true
+      ENTITLE_CA_VIRTUAL_INTEGRATION_ID:
+        required: true
+      ENTITLE_CA_OWNER_EMAIL:
+        required: true
+      ENTITLE_CA_OWNER_ID:
+        required: true
+      ENTITLE_CA_PERMISSION_ID:
+        required: true
+      ENTITLE_CA_POLICY_ID:
+        required: true
+      ENTITLE_CA_RESOURCE_ID:
+        required: true
+      ENTITLE_CA_ROLE_ID:
+        required: true
+      ENTITLE_CA_USER1_ID:
+        required: true
+      ENTITLE_CA_USER2_ID:
+        required: true
+      ENTITLE_CA_WORKFLOW_ID:
+        required: true
+      ENTITLE_CA_WEBHOOK_ID:
+        required: true
+      ENTITLE_CA_WEBHOOK_ID_2:
+        required: true
+      ENTITLE_CA_WORKFLOW_NAME:
+        required: true
+      # us region
+      ENTITLE_US_ACCESS_REQUEST_FORWARD_ID:
+        required: true
+      ENTITLE_US_ACCESS_REVIEW_FORWARD_ID:
+        required: true
+      ENTITLE_US_AGENT_TOKEN_ID:
+        required: true
+      ENTITLE_US_API_KEY:
+        required: true
+      ENTITLE_US_BUNDLE_ID:
+        required: true
+      ENTITLE_US_BUNDLE_NAME:
+        required: true
+      ENTITLE_US_DIRECTORY_GROUP_EMAIL:
+        required: true
+      ENTITLE_US_DOMAIN:
+        required: true
+      ENTITLE_US_INTEGRATION_ID:
+        required: true
+      ENTITLE_US_INTEGRATION_NAME:
+        required: true
+      ENTITLE_US_MANUAL_INTEGRATION_ID:
+        required: true
+      ENTITLE_US_VIRTUAL_INTEGRATION_ID:
+        required: true
+      ENTITLE_US_OWNER_EMAIL:
+        required: true
+      ENTITLE_US_OWNER_ID:
+        required: true
+      ENTITLE_US_PERMISSION_ID:
+        required: true
+      ENTITLE_US_POLICY_ID:
+        required: true
+      ENTITLE_US_RESOURCE_ID:
+        required: true
+      ENTITLE_US_ROLE_ID:
+        required: true
+      ENTITLE_US_USER1_ID:
+        required: true
+      ENTITLE_US_USER2_ID:
+        required: true
+      ENTITLE_US_WORKFLOW_ID:
+        required: true
+      ENTITLE_US_WEBHOOK_ID:
+        required: true
+      ENTITLE_US_WEBHOOK_ID_2:
+        required: true
+      ENTITLE_US_WORKFLOW_NAME:
+        required: true
+      # gitlab
       GITLAB_ACCESS_TOKEN:
         required: true
   push:
@@ -50,8 +166,8 @@ on:
     paths-ignore:
       - 'README.md'
       - 'examples/**'
-  pull_request:
-    types: [opened, reopened, synchronize]
+  pull_request_target:
+    types: [ opened, reopened, synchronize ]
   schedule:
     - cron: '0 2 * * *' # Every day at 02:00 UTC
 
@@ -67,6 +183,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -88,6 +206,8 @@ jobs:
           - '1.12.*' # Latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -102,8 +222,10 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
+
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
+    environment: ${{ (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork) && 'acceptance' || '' }}
     name: Terraform Provider Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
@@ -115,10 +237,11 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.6.*' # Intermediate
-          - '1.12.*' # Latest
+          - '1.14.*' # Latest
     steps:
-      - run: sleep 30
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -128,7 +251,8 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - env:
+      - name: test eu region
+        env:
           TF_ACC: "1"
           ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REQUEST_FORWARD_ID }}
           ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_ACCESS_REVIEW_FORWARD_ID }}
@@ -136,9 +260,13 @@ jobs:
           ENTITLE_API_KEY: ${{ secrets.ENTITLE_API_KEY }}
           ENTITLE_API_KEY2: ${{ secrets.ENTITLE_API_KEY2 }}
           ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_BUNDLE_ID }}
+          ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_BUNDLE_NAME }}
           ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_DIRECTORY_GROUP_EMAIL }}
+          ENTITLE_DOMAIN: ${{ secrets.ENTITLE_DOMAIN }}
           ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_INTEGRATION_ID }}
+          ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_INTEGRATION_NAME }}
           ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_MANUAL_INTEGRATION_ID }}
+          ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_VIRTUAL_INTEGRATION_ID }}
           ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_OWNER_EMAIL }}
           ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_OWNER_ID }}
           ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_PERMISSION_ID }}
@@ -148,6 +276,74 @@ jobs:
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
+          ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_WORKFLOW_NAME }}
+          ENTITLE_WEBHOOK_ID: ${{ secrets.ENTITLE_WEBHOOK_ID }}
+          ENTITLE_WEBHOOK_ID_2: ${{ secrets.ENTITLE_WEBHOOK_ID_2 }}
           GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
         run: go test -v -cover -tags=acceptance ./internal/provider/...
         timeout-minutes: 10
+      - name: test us region
+        env:
+          TF_ACC: "1"
+          ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_US_ACCESS_REQUEST_FORWARD_ID }}
+          ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_US_ACCESS_REVIEW_FORWARD_ID }}
+          ENTITLE_AGENT_TOKEN_ID: ${{ secrets.ENTITLE_US_AGENT_TOKEN_ID }}
+          ENTITLE_API_KEY: ${{ secrets.ENTITLE_US_API_KEY }}
+          ENTITLE_API_KEY2: ${{ secrets.ENTITLE_US_API_KEY }}
+          ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_US_BUNDLE_ID }}
+          ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_US_BUNDLE_NAME }}
+          ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_US_DIRECTORY_GROUP_EMAIL }}
+          ENTITLE_DOMAIN: ${{ secrets.ENTITLE_US_DOMAIN }}
+          ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_US_INTEGRATION_ID }}
+          ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_US_INTEGRATION_NAME }}
+          ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_US_MANUAL_INTEGRATION_ID }}
+          ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_US_VIRTUAL_INTEGRATION_ID }}
+          ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_US_OWNER_EMAIL }}
+          ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_US_OWNER_ID }}
+          ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_US_PERMISSION_ID }}
+          ENTITLE_POLICY_ID: ${{ secrets.ENTITLE_US_POLICY_ID }}
+          ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_US_RESOURCE_ID }}
+          ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_US_ROLE_ID }}
+          ENTITLE_USER1_ID: ${{ secrets.ENTITLE_US_USER1_ID }}
+          ENTITLE_USER2_ID: ${{ secrets.ENTITLE_US_USER2_ID }}
+          ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_US_WORKFLOW_ID }}
+          ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_US_WORKFLOW_NAME }}
+          ENTITLE_WEBHOOK_ID: ${{ secrets.ENTITLE_US_WEBHOOK_ID }}
+          ENTITLE_WEBHOOK_ID_2: ${{ secrets.ENTITLE_US_WEBHOOK_ID_2 }}
+          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+        run: go test -v -cover -tags=acceptance ./internal/provider/...
+        timeout-minutes: 10
+      - name: test ca region
+        env:
+          TF_ACC: "1"
+          ENTITLE_ACCESS_REQUEST_FORWARD_ID: ${{ secrets.ENTITLE_CA_ACCESS_REQUEST_FORWARD_ID }}
+          ENTITLE_ACCESS_REVIEW_FORWARD_ID: ${{ secrets.ENTITLE_CA_ACCESS_REVIEW_FORWARD_ID }}
+          ENTITLE_AGENT_TOKEN_ID: ${{ secrets.ENTITLE_CA_AGENT_TOKEN_ID }}
+          ENTITLE_API_KEY: ${{ secrets.ENTITLE_CA_API_KEY }}
+          ENTITLE_API_KEY2: ${{ secrets.ENTITLE_CA_API_KEY }}
+          ENTITLE_BUNDLE_ID: ${{ secrets.ENTITLE_CA_BUNDLE_ID }}
+          ENTITLE_BUNDLE_NAME: ${{ secrets.ENTITLE_CA_BUNDLE_NAME }}
+          ENTITLE_DIRECTORY_GROUP_EMAIL: ${{ secrets.ENTITLE_CA_DIRECTORY_GROUP_EMAIL }}
+          ENTITLE_DOMAIN: ${{ secrets.ENTITLE_CA_DOMAIN }}
+          ENTITLE_INTEGRATION_ID: ${{ secrets.ENTITLE_CA_INTEGRATION_ID }}
+          ENTITLE_INTEGRATION_NAME: ${{ secrets.ENTITLE_CA_INTEGRATION_NAME }}
+          ENTITLE_MANUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_CA_MANUAL_INTEGRATION_ID }}
+          ENTITLE_VIRTUAL_INTEGRATION_ID: ${{ secrets.ENTITLE_CA_VIRTUAL_INTEGRATION_ID }}
+          ENTITLE_OWNER_EMAIL: ${{ secrets.ENTITLE_CA_OWNER_EMAIL }}
+          ENTITLE_OWNER_ID: ${{ secrets.ENTITLE_CA_OWNER_ID }}
+          ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_CA_PERMISSION_ID }}
+          ENTITLE_POLICY_ID: ${{ secrets.ENTITLE_CA_POLICY_ID }}
+          ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_CA_RESOURCE_ID }}
+          ENTITLE_SLACK_CHANNEL_ID: ${{ secrets.ENTITLE_SLACK_CHANNEL_ID }}
+          ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_CA_ROLE_ID }}
+          ENTITLE_USER1_ID: ${{ secrets.ENTITLE_CA_USER1_ID }}
+          ENTITLE_USER2_ID: ${{ secrets.ENTITLE_CA_USER2_ID }}
+          ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_CA_WORKFLOW_ID }}
+          ENTITLE_WORKFLOW_NAME: ${{ secrets.ENTITLE_CA_WORKFLOW_NAME }}
+          ENTITLE_WEBHOOK_ID: ${{ secrets.ENTITLE_CA_WEBHOOK_ID }}
+          ENTITLE_WEBHOOK_ID_2: ${{ secrets.ENTITLE_CA_WEBHOOK_ID_2 }}
+          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+        run: go test -v -cover -tags=acceptance ./internal/provider/...
+        timeout-minutes: 10
+      # wait some time, so api is fully synced before next run of the same tests
+      - run: sleep 30

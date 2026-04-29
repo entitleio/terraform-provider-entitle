@@ -588,6 +588,34 @@
         ]
       }
     },
+    "/public/v1/applications": {
+      "get": {
+        "operationId": "Applications_index",
+        "summary": "Get a list of applications",
+        "description": "Returns a list of applications available to the organization.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationsIndexResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Applications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/bundles": {
       "get": {
         "operationId": "Bundles_index",
@@ -3481,15 +3509,68 @@
           }
         }
       },
-      "IntegrationResourceRoleCreateBodySchema": {
+      "IntegrationResourcesCreateBodySchema": {
         "type": "object",
         "properties": {
+          "userDefinedDescription": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Optional custom description."
+          },
+          "userDefinedTags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "tag"
+            },
+            "description": "Optional custom tags.",
+            "minLength": 2,
+            "maxLength": 50
+          },
           "allowedDurations": {
             "type": "array",
             "nullable": true,
             "items": {
               "$ref": "#/components/schemas/EnumAllowedDurations"
             }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "Whether the resource is requestable."
+          },
+          "workflow": {
+            "nullable": true,
+            "description": "Workflow associated with the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "owner": {
+            "nullable": true,
+            "description": "Owner of the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserEntitySchema"
+              }
+            ]
+          },
+          "maintainers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/GroupMaintainerSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/UserMaintainerSchema"
+                }
+              ]
+            },
+            "description": "Array of maintainers with pagination metadata"
           },
           "prerequisitePermissions": {
             "type": "array",
@@ -3503,37 +3584,47 @@
                     "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
                   }
                 ]
-              }
+              },
+              "description": "Prerequisite permissions required for this resource"
             }
           },
-          "name": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 2,
-            "maxLength": 50
-          },
-          "resource": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "virtualizedRole": {
-            "$ref": "#/components/schemas/IdParamsSchema"
-          },
-          "requestable": {
-            "type": "boolean"
-          },
-          "workflow": {
-            "nullable": true,
+          "integration": {
+            "description": "Integration to attach the resource to (object with 'id' UUID).",
             "allOf": [
               {
                 "$ref": "#/components/schemas/IdParamsSchema"
               }
             ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "Display name for the resource"
+          },
+          "multirole": {
+            "type": "boolean",
+            "description": "Whether the resource includes multiple roles."
+          },
+          "type": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "Optional resource type label."
+          },
+          "roles": {
+            "description": "Initial roles to create with the resource.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationResourceRoleCreateSchema"
+            }
           }
         },
         "required": [
+          "requestable",
+          "integration",
           "name",
-          "resource",
-          "requestable"
+          "multirole"
         ]
       },
       "IntegrationResourceRoleDestroyResponseSchema": {
@@ -5135,6 +5226,12 @@
                   "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
                 },
                 {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
+                },
+                {
                   "$ref": "#/components/schemas/ApprovalEntityNullResponseSchema"
                 }
               ]
@@ -5153,6 +5250,12 @@
                 },
                 {
                   "$ref": "#/components/schemas/ApprovalEntityUserResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
                 },
                 {
                   "$ref": "#/components/schemas/NotifiedEntityNullResponseSchema"
@@ -5324,6 +5427,12 @@
                   "$ref": "#/components/schemas/ApprovalEntityUserSchema"
                 },
                 {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelSchema"
+                },
+                {
                   "$ref": "#/components/schemas/ApprovalEntityNullSchema"
                 }
               ]
@@ -5342,6 +5451,12 @@
                 },
                 {
                   "$ref": "#/components/schemas/ApprovalEntityUserSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntitySlackChannelResponseSchema"
+                },
+                {
+                  "$ref": "#/components/schemas/ApprovalEntityTeamsChannelResponseSchema"
                 },
                 {
                   "$ref": "#/components/schemas/NotifiedApprovalEntityWithoutEntitySchema"
@@ -7064,6 +7179,94 @@
           "entity"
         ]
       },
+      "SlackChannelEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Slack channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntitySlackChannelResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntitySlackChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Slack channel entity metadata without sensitive values",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlackChannelEntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntityTeamsChannel": {
+        "type": "string",
+        "enum": [
+          "TeamsChannel"
+        ],
+        "description": "Entity type"
+      },
+      "TeamsChannelEntityResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Teams channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntityTeamsChannelResponseSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntityTeamsChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Teams channel entity metadata without sensitive values",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeamsChannelEntityResponseSchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "EnumApprovalEntitySlackChannel": {
+        "type": "string",
+        "enum": [
+          "SlackChannel"
+        ],
+        "description": "Entity type"
+      },
       "EnumApprovalEntityWithoutEntity": {
         "type": "string",
         "enum": [
@@ -7159,6 +7362,80 @@
           },
           "entity": {
             "$ref": "#/components/schemas/UserEntitySchema"
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "ApprovalEntitySlackChannelSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type: SlackChannel",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntitySlackChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Slack channel entity details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlackChannelEntitySchema"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "entity"
+        ]
+      },
+      "SlackChannelEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Slack channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "TeamsChannelEntitySchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the Teams channel"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ApprovalEntityTeamsChannelSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Entity type: TeamsChannel",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnumApprovalEntityTeamsChannel"
+              }
+            ]
+          },
+          "entity": {
+            "description": "Teams channel entity details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeamsChannelEntitySchema"
+              }
+            ]
           }
         },
         "required": [
@@ -7349,6 +7626,75 @@
           "role"
         ]
       },
+      "IntegrationResourceRoleCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "allowedDurations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EnumAllowedDurations"
+            }
+          },
+          "requestable": {
+            "type": "boolean",
+            "description": "Indicates if the role is requestable"
+          },
+          "workflow": {
+            "nullable": true,
+            "description": "Workflow associated with the role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "prerequisitePermissions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PrerequisitePermissionCreateBodySchema"
+                  }
+                ]
+              }
+            },
+            "description": "Prerequisite permissions required for this role"
+          },
+          "resource": {
+            "description": "Unique identifier for the resource",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "virtualizedRole": {
+            "description": "Unique identifier for the virtualized role",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdParamsSchema"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the role",
+            "nullable": true,
+            "minLength": 2,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "requestable",
+          "resource",
+          "name"
+        ]
+      },
       "PrerequisiteRolePermissionResponseSchema": {
         "type": "object",
         "properties": {
@@ -7377,6 +7723,41 @@
         "required": [
           "default",
           "role"
+        ]
+      },
+      "ApplicationIndexResultResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "description": "Unique identifier for the application"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for the application",
+            "example": "Salesforce"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ApplicationsIndexResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "description": "List of applications",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationIndexResultResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
         ]
       }
     }

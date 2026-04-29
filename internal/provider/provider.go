@@ -5,11 +5,13 @@ import (
 	_ "embed"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accessReviewForwards"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/accounts"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/agentTokens"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/applications"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bundles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/directoryGroups"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/integrations"
@@ -70,6 +73,21 @@ func (p *EntitleProvider) Schema(
 	resp.Schema = schema.Schema{
 		MarkdownDescription: docs.ProviderMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
+			"endpoint": schema.StringAttribute{
+				MarkdownDescription: "Entitle API server address. Allowed values:\n\n" +
+					"  - https://api.entitle.io (default, Europe)\n" +
+					"  - https://api.ca.entitle.io (Canada)\n" +
+					"  - https://api.us.entitle.io (United States)\n",
+				Description: "Entitle API server address. Allowed values: https://api.entitle.io (default, Europe), https://api.ca.entitle.io (Canada), https://api.us.entitle.io (United States)",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"https://api.entitle.io",
+						"https://api.ca.entitle.io",
+						"https://api.us.entitle.io",
+					),
+				},
+			},
 			"api_key": schema.StringAttribute{
 				MarkdownDescription: "API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.",
 				Description:         "API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.",
@@ -91,10 +109,10 @@ func (p *EntitleProvider) Configure(
 	req provider.ConfigureRequest,
 	resp *provider.ConfigureResponse,
 ) {
-	var config EntitleProviderModel
+	config := new(EntitleProviderModel)
 
 	// Retrieve configuration values from the request.
-	diags := req.Config.Get(ctx, &config)
+	diags := req.Config.Get(ctx, config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -183,9 +201,10 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		accounts.NewAccountsDataSource,
-		agentTokens.NewAgentTokenDataSource,
 		accessRequestForwards.NewAccessRequestForwardDataSource,
 		accessReviewForwards.NewAccessReviewForwardDataSource,
+		agentTokens.NewAgentTokenDataSource,
+		applications.NewApplicationsDataSource,
 		bundles.NewBundleDataSource,
 		directoryGroups.NewDirectoryGroupsDataSource,
 		integrations.NewIntegrationDataSource,

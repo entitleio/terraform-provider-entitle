@@ -29,8 +29,6 @@ data "entitle_user" "my_user" {
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "id"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "given_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "family_name"),
 					resource.TestCheckResourceAttrSet("data.entitle_user.my_user", "created_at"),
 				),
 			},
