@@ -17,6 +17,8 @@ var (
 	AccountsDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_agent_token.md
 	AgentTokenDataSourceMarkdownDescription string
+	//go:embed parts/data-sources/_application.md
+	ApplicationDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_bundle.md
 	BundleDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_directory_groups.md

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -38,7 +39,7 @@ func (d *ApplicationsDataSource) Metadata(ctx context.Context, req datasource.Me
 // Schema defines the schema for the data source.
 func (d *ApplicationsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Retrieve a list of all Entitle Applications",
+		MarkdownDescription: docs.ApplicationDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"applications": schema.ListNestedAttribute{
 				Computed:            true,
