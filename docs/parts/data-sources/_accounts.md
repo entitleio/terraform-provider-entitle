@@ -1,1 +1,140 @@
-Retrieve a list of Entitle Accounts filtered by integration ID (mandatory) and optional search string.
+Retrieve a list of Entitle Accounts within a specific integration. An account represents a user's identity inside a connected application — for example, a user's Okta account, their GitHub username, or their AWS IAM user. Accounts are what Entitle grants permissions to when access is approved.
+
+Use this data source to discover accounts within an integration, search for a specific user's account by email or username, or retrieve account IDs for use in permission queries and audits.
+
+## Key Concepts
+
+- **Account**: A user's identity representation inside a connected application (distinct from an Entitle User)
+- **Integration ID**: The mandatory filter — accounts are always scoped to a specific integration
+- **EUID (External User ID)**: The application-native identifier for the account (e.g., GitHub username, AWS user ARN)
+- **Email**: The email address associated with the account in the external application
+- **Difference from Users**: An Entitle User is the organization member in Entitle; an Account is their identity in a specific external application
+
+## When to Use This Data Source
+
+- Finding a user's account ID within a specific integration for permission queries (`entitle_permissions`)
+- Discovering all accounts in an integration for auditing access
+- Searching for a specific account by email or username
+- Verifying that a user has an account in a given application before managing their permissions
+
+## Example Usage
+
+### List All Accounts for an Integration
+
+```terraform
+data "entitle_accounts" "all" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+
+output "total_accounts" {
+  value = length(data.entitle_accounts.all.accounts)
+}
+```
+
+### Search for an Account by Email
+
+```terraform
+data "entitle_accounts" "alice_account" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    search = "alice@example.com"
+  }
+}
+
+output "alice_account_id" {
+  value = data.entitle_accounts.alice_account.accounts[0].id
+}
+```
+
+### Find All Permissions for a Specific Account
+
+Combine account lookup with permission filtering:
+
+```terraform
+data "entitle_integration" "github" {
+  name = "GitHub Production"
+}
+
+data "entitle_accounts" "dev_account" {
+  integration_id = data.entitle_integration.github.id
+  filter {
+    search = "alice@example.com"
+  }
+}
+
+data "entitle_permissions" "alice_github_permissions" {
+  filter {
+    account_id = data.entitle_accounts.dev_account.accounts[0].id
+  }
+}
+
+output "alice_github_roles" {
+  value = data.entitle_permissions.alice_github_permissions.permissions[*].role.name
+}
+```
+
+### Audit All Accounts in an Integration
+
+```terraform
+data "entitle_integration" "aws" {
+  name = "AWS Production"
+}
+
+data "entitle_accounts" "aws_accounts" {
+  integration_id = data.entitle_integration.aws.id
+}
+
+output "aws_account_audit" {
+  value = [for a in data.entitle_accounts.aws_accounts.accounts : {
+    id         = a.id
+    name       = a.name
+    email      = a.email
+    euid       = a.euid
+    integration = a.integration.name
+  }]
+}
+```
+
+### Paginate Through Large Account Lists
+
+```terraform
+data "entitle_accounts" "paged" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    page     = 1
+    per_page = 100
+  }
+}
+```
+
+## Query Parameters
+
+### Required
+
+- `integration_id` (String) The unique identifier of the integration to list accounts for (UUID format). **This filter is mandatory** — accounts are always scoped to a specific integration.
+
+### Optional
+
+- `filter` (Block) Optional filters:
+    - `search` (String) Text search to filter accounts by email or username.
+    - `page` (Number) Page number to return, starting from 1.
+    - `per_page` (Number) Number of results per page.
+
+## Returned Attributes
+
+- `accounts` (Attributes List) The list of accounts matching the query:
+    - `id` (String) The account's unique identifier (UUID format).
+    - `name` (String) The account's display name.
+    - `email` (String) The email address associated with the account.
+    - `euid` (String) The external user ID — the account's native identifier in the application (e.g., GitHub username, AWS IAM ARN).
+    - `integration` (Attributes) The integration this account belongs to:
+        - `id` (String) The integration's unique identifier.
+        - `name` (String) The integration's display name.
+        - `application` (Attributes):
+            - `name` (String) The application type name.
+
+## Notes
+
+- `integration_id` is mandatory — you cannot query accounts across all integrations at once
+- Accounts are read-only in this data source; they are created/managed by Entitle based on your integration's account sync settings (`allow_creating_accounts` in `entitle_integration`)
+- Use `account_id` (from this data source) as a filter in `entitle_permissions` to see all permissions a specific account currently holds

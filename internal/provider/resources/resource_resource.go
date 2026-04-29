@@ -66,14 +66,6 @@ func (r *ResourceResource) Metadata(ctx context.Context, req resource.MetadataRe
 func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: docs.ResourceResourceMarkdownDescription,
-		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
-			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
-		Description: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
-			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

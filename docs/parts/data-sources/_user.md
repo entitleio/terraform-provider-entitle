@@ -1,1 +1,154 @@
-Defines an Entitle User, which represents organization's employee. [Read more about users](https://docs.beyondtrust.com/entitle/docs/users).
+An Entitle User represents a member of your organization who can request, approve, or hold access through Entitle. Users are identified by their email address and are synchronized from your identity provider (IdP). Each user has a profile with their given name, family name, and creation timestamp.
+
+Use this data source to look up a specific user by email address, for example to retrieve their ID for use as a resource owner, integration owner, policy approver, or approval workflow entity. [Read more about users](https://docs.beyondtrust.com/entitle/docs/types-of-users-in-entitle).
+
+## Key Concepts
+
+- **User**: An organization member who can interact with Entitle (request access, approve requests, own resources)
+- **Email**: The primary identifier for a user — used to look up their UUID
+- **ID (UUID)**: The internal identifier used when referencing users in other resources (owners, approvers, maintainers)
+- **IdP Sync**: Users are automatically synchronized from your identity provider — they cannot be created directly in Entitle
+
+## When to Use This Data Source
+
+- Retrieving a user's UUID to set as a resource owner (`entitle_resource.owner`)
+- Looking up a user's ID for use as an integration owner (`entitle_integration.owner`)
+- Finding user IDs for approval workflow entities (`entitle_workflow` approval entities)
+- Getting user IDs for access forwards (`entitle_access_request_forward`, `entitle_access_review_forward`)
+- Referencing a specific user in a bundle's prerequisite permissions or a policy configuration
+
+## Example Usage
+
+### Look Up a User by Email
+
+```terraform
+data "entitle_user" "alice" {
+  email = "alice@example.com"
+}
+
+output "alice_id" {
+  value = data.entitle_user.alice.id
+}
+```
+
+### Set a User as a Resource Owner
+
+```terraform
+data "entitle_user" "resource_owner" {
+  email = "platform-lead@example.com"
+}
+
+resource "entitle_resource" "my_resource" {
+  name        = "Production Database"
+  requestable = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = data.entitle_user.resource_owner.id
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  allowed_durations = [3600, 28800]
+}
+```
+
+### Use a User as an Integration Owner
+
+```terraform
+data "entitle_user" "integration_owner" {
+  email = "devops-lead@example.com"
+}
+
+resource "entitle_integration" "github" {
+  name            = "GitHub Production"
+  connection_json = jsonencode({ token = var.github_token, organization = var.github_org })
+
+  application = { name = "github" }
+
+  owner = {
+    id = data.entitle_user.integration_owner.id
+  }
+
+  workflow = { id = "7d080bfa-9143-11ee-b9d1-0242ac120001" }
+  allowed_durations = [28800, 86400]
+  allow_creating_accounts = true
+}
+```
+
+### Use a User as a Specific Approver in a Workflow
+
+```terraform
+data "entitle_user" "security_lead" {
+  email = "security-lead@example.com"
+}
+
+resource "entitle_workflow" "security_approval" {
+  name = "Security Lead Approval"
+
+  rules = [{
+    sort_order     = 1
+    under_duration = 7200
+    any_schedule   = true
+
+    approval_flow = {
+      steps = [{
+        sort_order = 1
+        operator   = "or"
+
+        approval_entities = [{
+          type = "User"
+          id   = data.entitle_user.security_lead.id
+        }]
+
+        notified_entities = []
+      }]
+    }
+
+    in_groups    = []
+    in_schedules = []
+  }]
+}
+```
+
+### Set Up an Access Request Forward
+
+```terraform
+data "entitle_user" "forwarder" {
+  email = "alice@example.com"
+}
+
+data "entitle_user" "delegate" {
+  email = "bob@example.com"
+}
+
+resource "entitle_access_request_forward" "vacation" {
+  forwarder = { id = data.entitle_user.forwarder.id }
+  target    = { id = data.entitle_user.delegate.id }
+}
+```
+
+## Query Parameters
+
+### Required
+
+- `email` (String) The user's email address. This is the primary identifier used to look up a user.
+
+## Returned Attributes
+
+- `id` (String) The user's unique identifier (UUID format). Use this ID when referencing the user in other resources.
+- `email` (String) The user's email address.
+- `given_name` (String) The user's first name.
+- `family_name` (String) The user's last name.
+- `created_at` (String) The timestamp when the user was created in Entitle.
+
+## Notes
+
+- Users are synchronized from your IdP — if a user doesn't appear in Entitle, verify they exist in your connected identity provider
+- Always use `id` (UUID) when referencing users in resources — email addresses can change but UUIDs remain stable
+- If you need to search for multiple users at once, use the `entitle_users` data source with a `filter`

@@ -1,4 +1,4 @@
-A workflow defines the approval process for just-in-time access requests in Entitle. Workflows specify who must approve access requests, in what order, for how long, and under what conditions.
+An Entitle Workflow defines the approval process for just-in-time (JIT) access requests. Workflows specify who must approve access requests, in what order, for how long, and under what conditions. Once defined, a workflow can be assigned to integrations, resources, roles, and bundles — making it the central building block of your organization's access control policy. [Read more about workflows](https://docs.beyondtrust.com/entitle/docs/approval-workflows).
 
 ## Key Concepts
 
@@ -90,8 +90,10 @@ resource "entitle_workflow" "manager_approval" {
 Requires sequential approvals from manager, then security team:
 
 ```terraform
-data "entitle_group" "security_team" {
-  name = "Security Team"
+data "entitle_directory_groups" "security_team" {
+  filter {
+    search = "Security Team"
+  }
 }
 
 resource "entitle_workflow" "production_access" {
@@ -123,7 +125,7 @@ resource "entitle_workflow" "production_access" {
 
           approval_entities = [{
             type = "Group"
-            id   = data.entitle_group.security_team.id
+            id   = data.entitle_directory_groups.security_team.directory_groups[0].id
           }]
 
           notified_entities = []
@@ -142,12 +144,16 @@ resource "entitle_workflow" "production_access" {
 Any member of security team OR any DevOps engineer can approve:
 
 ```terraform
-data "entitle_group" "security" {
-  name = "Security"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security"
+  }
 }
 
-data "entitle_group" "devops" {
-  name = "DevOps"
+data "entitle_directory_groups" "devops" {
+  filter {
+    search = "DevOps"
+  }
 }
 
 resource "entitle_workflow" "flexible_approval" {
@@ -166,11 +172,11 @@ resource "entitle_workflow" "flexible_approval" {
         approval_entities = [
           {
             type = "Group"
-            id   = data.entitle_group.security.id
+            id   = data.entitle_directory_groups.security.directory_groups[0].id
           },
           {
             type = "Group"
-            id   = data.entitle_group.devops.id
+            id   = data.entitle_directory_groups.devops.directory_groups[0].id
           }
         ]
 
@@ -189,12 +195,16 @@ resource "entitle_workflow" "flexible_approval" {
 Both security team AND compliance team must approve (parallel approvals):
 
 ```terraform
-data "entitle_group" "security" {
-  name = "Security"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security"
+  }
 }
 
-data "entitle_group" "compliance" {
-  name = "Compliance"
+data "entitle_directory_groups" "compliance" {
+  filter {
+    search = "Compliance"
+  }
 }
 
 resource "entitle_workflow" "dual_approval_parallel" {
@@ -214,11 +224,11 @@ resource "entitle_workflow" "dual_approval_parallel" {
         approval_entities = [
           {
             type = "Group"
-            id   = data.entitle_group.security.id
+            id   = data.entitle_directory_groups.security.directory_groups[0].id
           },
           {
             type = "Group"
-            id   = data.entitle_group.compliance.id
+            id   = data.entitle_directory_groups.compliance.directory_groups[0].id
           }
         ]
 
@@ -237,12 +247,16 @@ resource "entitle_workflow" "dual_approval_parallel" {
 Both security team AND compliance team must approve (sequential approvals):
 
 ```terraform
-data "entitle_group" "security" {
-  name = "Security"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security"
+  }
 }
 
-data "entitle_group" "compliance" {
-  name = "Compliance"
+data "entitle_directory_groups" "compliance" {
+  filter {
+    search = "Compliance"
+  }
 }
 
 resource "entitle_workflow" "dual_approval_sequential" {
@@ -262,7 +276,7 @@ resource "entitle_workflow" "dual_approval_sequential" {
 
           approval_entities = [{
             type = "Group"
-            id   = data.entitle_group.security.id
+            id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
           notified_entities = []
@@ -273,7 +287,7 @@ resource "entitle_workflow" "dual_approval_sequential" {
 
           approval_entities = [{
             type = "Group"
-            id   = data.entitle_group.compliance.id
+            id   = data.entitle_directory_groups.compliance.directory_groups[0].id
           }]
 
           notified_entities = []
@@ -292,12 +306,16 @@ resource "entitle_workflow" "dual_approval_sequential" {
 Manager approval, then (Security AND Compliance in parallel):
 
 ```terraform
-data "entitle_group" "security" {
-  name = "Security"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security"
+  }
 }
 
-data "entitle_group" "compliance" {
-  name = "Compliance"
+data "entitle_directory_groups" "compliance" {
+  filter {
+    search = "Compliance"
+  }
 }
 
 resource "entitle_workflow" "complex_approval" {
@@ -330,11 +348,11 @@ resource "entitle_workflow" "complex_approval" {
           approval_entities = [
             {
               type = "Group"
-              id   = data.entitle_group.security.id
+              id   = data.entitle_directory_groups.security.directory_groups[0].id
             },
             {
               type = "Group"
-              id   = data.entitle_group.compliance.id
+              id   = data.entitle_directory_groups.compliance.directory_groups[0].id
             }
           ]
 
@@ -354,8 +372,10 @@ resource "entitle_workflow" "complex_approval" {
 Different approval requirements based on requested access duration:
 
 ```terraform
-data "entitle_group" "security" {
-  name = "Security Team"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security Team"
+  }
 }
 
 resource "entitle_workflow" "duration_based" {
@@ -420,7 +440,7 @@ resource "entitle_workflow" "duration_based" {
 
           approval_entities = [{
             type = "Group"
-            id   = data.entitle_group.security.id
+            id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
           notified_entities = []
@@ -439,12 +459,16 @@ resource "entitle_workflow" "duration_based" {
 Different approval requirements for business hours vs after-hours:
 
 ```terraform
-data "entitle_schedule" "business_hours" {
-  name = "Business Hours (9am-5pm)"
+# Note: Schedule IDs are obtained from the Entitle UI — navigate to
+# Settings → Schedules and copy the UUID from the schedule's URL.
+locals {
+  business_hours_schedule_id = "YOUR-SCHEDULE-UUID-HERE"
 }
 
-data "entitle_group" "security" {
-  name = "Security"
+data "entitle_directory_groups" "security" {
+  filter {
+    search = "Security"
+  }
 }
 
 resource "entitle_workflow" "schedule_based" {
@@ -457,7 +481,7 @@ resource "entitle_workflow" "schedule_based" {
       under_duration = 14400  # 4 hours
       any_schedule   = false
 
-      in_schedules = [data.entitle_schedule.business_hours.id]
+      in_schedules = [local.business_hours_schedule_id]
 
       approval_flow = {
         steps = [{
@@ -487,7 +511,7 @@ resource "entitle_workflow" "schedule_based" {
 
           approval_entities = [{
             type = "Group"
-            id   = data.entitle_group.security.id
+            id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
           notified_entities = []
@@ -506,12 +530,16 @@ resource "entitle_workflow" "schedule_based" {
 Different approval requirements for different teams:
 
 ```terraform
-data "entitle_group" "developers" {
-  name = "Developers"
+data "entitle_directory_groups" "developers" {
+  filter {
+    search = "Developers"
+  }
 }
 
-data "entitle_group" "contractors" {
-  name = "Contractors"
+data "entitle_directory_groups" "contractors" {
+  filter {
+    search = "Contractors"
+  }
 }
 
 resource "entitle_workflow" "group_based" {
@@ -524,7 +552,7 @@ resource "entitle_workflow" "group_based" {
       under_duration = 7200  # 2 hours
       any_schedule   = true
 
-      in_groups = [data.entitle_group.developers.id]
+      in_groups = [data.entitle_directory_groups.developers.directory_groups[0].id]
 
       approval_flow = {
         steps = [{
@@ -547,7 +575,7 @@ resource "entitle_workflow" "group_based" {
       under_duration = 3600  # 1 hour
       any_schedule   = true
 
-      in_groups = [data.entitle_group.contractors.id]
+      in_groups = [data.entitle_directory_groups.contractors.directory_groups[0].id]
 
       approval_flow = {
         steps = [{
@@ -646,8 +674,10 @@ data "entitle_user" "ciso" {
   email = "[email protected]"
 }
 
-data "entitle_group" "security_team" {
-  name = "Security Team"
+data "entitle_directory_groups" "security_team" {
+  filter {
+    search = "Security Team"
+  }
 }
 
 resource "entitle_workflow" "with_notifications" {
@@ -675,7 +705,7 @@ resource "entitle_workflow" "with_notifications" {
           },
           {
             type = "Group"
-            id   = data.entitle_group.security_team.id
+            id   = data.entitle_directory_groups.security_team.directory_groups[0].id
           }
         ]
       }]
@@ -692,8 +722,10 @@ resource "entitle_workflow" "with_notifications" {
 Provides alternative approval paths if requester has no manager:
 
 ```terraform
-data "entitle_group" "team_leads" {
-  name = "Team Leads"
+data "entitle_directory_groups" "team_leads" {
+  filter {
+    search = "Team Leads"
+  }
 }
 
 resource "entitle_workflow" "manager_with_fallback" {
@@ -716,7 +748,7 @@ resource "entitle_workflow" "manager_with_fallback" {
           },
           {
             type = "Group"
-            id   = data.entitle_group.team_leads.id
+            id   = data.entitle_directory_groups.team_leads.directory_groups[0].id
           }
         ]
 
@@ -756,12 +788,12 @@ A rule matches an access request when **ALL** of the following conditions are tr
 
 - `in_schedules` (Required, List of Strings) List of schedule IDs during which this rule applies. Leave empty (`[]`) if `any_schedule` is `true`.
     - Schedules define time windows (e.g., "Business Hours", "Weekends")
-    - Obtain schedule IDs from `entitle_schedule` data source
+    - Schedule IDs are UUIDs — obtain them from the Entitle UI under **Settings → Schedules**, or hardcode them as `locals`
     - If multiple schedule IDs are provided, the rule applies if the current time matches ANY of the schedules (OR logic)
 
 - `in_groups` (Required, List of Strings) List of group IDs for which this rule applies. If empty (`[]`), the rule applies to all users.
     - Use this to create different approval flows for different teams
-    - Obtain group IDs from `entitle_group` data source
+    - Obtain group IDs from the `entitle_directory_groups` data source
     - **Logic**: User must be in at least ONE of the listed groups (OR logic)
 
 - `approval_flow` (Required, Object) Defines the approval process for requests matching this rule. See [Approval Flow](#approval-flow) below.
@@ -881,16 +913,25 @@ Each approval entity represents someone who can approve (or be notified about) a
 ### Approval Entity Attributes
 
 - `type` (Required, String) The type of approval entity. Valid values:
-    - `"Automatic"` - Access is automatically approved without human intervention
-    - `"Manager"` - The requester's direct manager must approve
-    - `"ResourceOwner"` - The owner of the resource being accessed must approve
-    - `"Group"` - Any member of a specific group can approve (requires `id`)
-    - `"User"` - A specific user must approve (requires `id`)
+    - `"Automatic"` — Access is automatically approved without human intervention
+    - `"Manager"` — The requester's direct manager must approve
+    - `"ResourceOwner"` — The owner of the resource being accessed must approve
+    - `"Group"` — Any member of a specific IdP group can approve (requires `id`)
+    - `"User"` — A specific named user must approve (requires `id`)
+    - `"SlackChannel"` — A Slack channel is notified and any member can approve (requires `channel.id`)
+    - `"TeamsChannel"` — A Microsoft Teams channel is notified and any member can approve (requires `channel.id`)
+    - `"Webhook"` — An external webhook handles the approval decision (requires `webhook.id`)
 
 - `id` (Optional, String) **Required when `type` is `"Group"` or `"User"`.** The unique identifier of the group or user.
-    - Obtain user IDs from `entitle_user` data source
-    - Obtain group IDs from `entitle_group` data source
-    - Must be omitted for types: `"Automatic"`, `"Manager"`, `"ResourceOwner"`
+    - Obtain user IDs from the `entitle_user` data source
+    - Obtain group IDs from the `entitle_directory_groups` data source
+    - Must be omitted for types: `"Automatic"`, `"Manager"`, `"ResourceOwner"`, `"SlackChannel"`, `"TeamsChannel"`, `"Webhook"`
+
+- `channel` (Optional, Object) **Required when `type` is `"SlackChannel"` or `"TeamsChannel"`.** The channel to notify.
+    - `id` (Required, String) The unique identifier of the Slack or Teams channel configured in Entitle.
+
+- `webhook` (Optional, Object) **Required when `type` is `"Webhook"`.** The webhook endpoint to invoke.
+    - `id` (Required, String) The unique identifier of the webhook configured in Entitle.
 
 ### Approval Entity Behavior
 
@@ -936,7 +977,7 @@ You can combine different entity types in the same step:
     },
     {
       type = "Group"
-      id   = data.entitle_group.security.id
+      id   = data.entitle_directory_groups.security.directory_groups[0].id
     },
     {
       type = "User"
@@ -953,11 +994,32 @@ This provides flexibility and ensures requests can be approved even if:
 
 ## Attributes Reference
 
-In addition to all arguments above, the following attributes are exported:
+### Arguments (Configurable)
 
-- `id` (String) The unique identifier of the workflow (UUID format).
+- `name` (Required, String) The workflow's display name. Must be between 2 and 50 characters and unique within your organization. Used to identify the workflow in the Entitle UI and when referencing it in other resources.
 
-**Note:** Workflows do not expose additional metadata fields such as `created_at`, `updated_at`, `created_by`, `is_active`, or usage statistics. These details are available only through the Entitle UI.
+- `description` (Optional, String) A human-readable description of the workflow's purpose and intended use. Shown in the Entitle UI to help administrators understand when to assign this workflow.
+
+- `rules` (Optional, Attributes List) The ordered list of conditional approval rules that define the workflow's behavior. Rules are evaluated in ascending `sort_order` order; the first matching rule determines the approval process. If no rules are defined, the workflow does not approve any access requests.
+
+  Each rule contains:
+  - `sort_order` (Required, Integer) Evaluation order — lower numbers are evaluated first.
+  - `under_duration` (Required, Integer) Maximum request duration (in seconds) for this rule to apply.
+  - `any_schedule` (Required, Boolean) If `true`, this rule applies at all times. If `false`, it only applies during the schedules listed in `in_schedules`.
+  - `in_schedules` (Required, List of Strings) Schedule UUIDs during which this rule applies. Must be `[]` when `any_schedule` is `true`.
+  - `in_groups` (Required, List of Strings) Group UUIDs for which this rule applies. Empty (`[]`) means all users.
+  - `approval_flow` (Required, Object) The approval process for requests matching this rule:
+    - `steps` (Required, Attributes List) Ordered approval steps:
+      - `sort_order` (Required, Integer) Execution order of this step.
+      - `operator` (Required, String) `"or"` (any one approver) or `"and"` (all approvers).
+      - `approval_entities` (Required, Attributes List) Entities who can approve at this step. See [Approval Entities](#approval-entities).
+      - `notified_entities` (Required, Attributes List) Entities notified but not required to approve. Same structure as `approval_entities`. Can be `[]`.
+
+### Exported (Read-Only)
+
+- `id` (String) The unique identifier of the workflow (UUID format). Assigned by Entitle on creation; use this ID when referencing the workflow in `entitle_integration`, `entitle_resource`, `entitle_role`, or `entitle_bundle`.
+
+**Note:** Workflows do not expose metadata fields such as `created_at`, `updated_at`, `created_by`, or usage statistics via Terraform. These details are available only through the Entitle UI.
 
 ## Import
 
@@ -1294,19 +1356,23 @@ Since workflows using `type = "Manager"` require users to have managers assigned
     - Create different workflows for users with and without managers:
 
    ```terraform
-   data "entitle_group" "users_with_managers" {
-     name = "Users With Managers"
+   data "entitle_directory_groups" "users_with_managers" {
+     filter {
+       search = "Users With Managers"
+     }
    }
    
-   data "entitle_group" "users_without_managers" {
-     name = "Contractors"  # Example: contractors might not have managers
+   data "entitle_directory_groups" "users_without_managers" {
+     filter {
+       search = "Contractors"  # Example: contractors might not have managers
+     }
    }
    
    resource "entitle_workflow" "standard" {
      name = "Standard Manager Approval"
      
      rules = [{
-       in_groups = [data.entitle_group.users_with_managers.id]
+       in_groups = [data.entitle_directory_groups.users_with_managers.directory_groups[0].id]
        
        approval_flow = {
          steps = [{
@@ -1320,13 +1386,13 @@ Since workflows using `type = "Manager"` require users to have managers assigned
      name = "Team Lead Approval"
      
      rules = [{
-       in_groups = [data.entitle_group.users_without_managers.id]
+       in_groups = [data.entitle_directory_groups.users_without_managers.directory_groups[0].id]
        
        approval_flow = {
          steps = [{
            approval_entities = [{
              type = "Group"
-             id   = data.entitle_group.team_leads.id
+             id   = data.entitle_directory_groups.team_leads.directory_groups[0].id
            }]
          }]
        }

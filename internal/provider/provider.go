@@ -94,11 +94,6 @@ func (p *EntitleProvider) Schema(
 				Sensitive:           true,
 				Optional:            true,
 			},
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).",
-				Description:         "The Entitle API endpoint URL. Defaults to `https://api.entitle.io` (EU region). See [Regional Endpoints](#regional-endpoints).",
-				Optional:            true,
-			},
 		},
 	}
 }
