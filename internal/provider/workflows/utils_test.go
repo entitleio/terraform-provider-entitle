@@ -59,7 +59,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -235,7 +235,7 @@ func TestReconcileEntityOrder_ReordersShuffledEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -257,7 +257,7 @@ func TestReconcileEntityOrder_ReordersShuffledEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -302,7 +302,7 @@ func TestReconcileEntityOrder_MixedEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -323,7 +323,7 @@ func TestReconcileEntityOrder_MixedEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -365,7 +365,7 @@ func TestReconcileEntityOrder_NotifiedEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -385,7 +385,7 @@ func TestReconcileEntityOrder_NotifiedEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -422,7 +422,7 @@ func TestReconcileEntityOrder_EmptyEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -438,7 +438,7 @@ func TestReconcileEntityOrder_EmptyEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -469,7 +469,7 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -486,7 +486,7 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(1)),
 			UnderDuration: types.NumberValue(big.NewFloat(7200)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -507,7 +507,7 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -524,7 +524,7 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(1)),
 			UnderDuration: types.NumberValue(big.NewFloat(7200)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -575,7 +575,7 @@ func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(1)),
 			UnderDuration: types.NumberValue(big.NewFloat(7200)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -592,7 +592,7 @@ func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -613,7 +613,7 @@ func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -630,7 +630,7 @@ func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(1)),
 			UnderDuration: types.NumberValue(big.NewFloat(7200)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -677,7 +677,7 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -699,7 +699,7 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -744,7 +744,7 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -764,7 +764,7 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -815,7 +815,7 @@ func TestReconcileEntityOrder_ExtraResultEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -836,7 +836,7 @@ func TestReconcileEntityOrder_ExtraResultEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -903,7 +903,7 @@ func TestReconcileEntityOrder_TypeCasingMismatch(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -924,7 +924,7 @@ func TestReconcileEntityOrder_TypeCasingMismatch(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -971,7 +971,7 @@ func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -993,7 +993,7 @@ func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
