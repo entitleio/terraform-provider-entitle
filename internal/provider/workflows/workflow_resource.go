@@ -249,6 +249,18 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Webhook to be invoked for notification.",
 															MarkdownDescription: "Webhook to be invoked for notification.",
 														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier (name) of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier (name) of the Slack or Teams channel.",
+																},
+															},
+															Optional:            true,
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\". [Read more about Slack Channels](https://docs.beyondtrust.com/entitle/docs/entitle-for-slack-admins)",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
+														},
 													},
 												},
 												Optional:            true,
@@ -334,6 +346,18 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Webhook to be invoked for approval.",
 															MarkdownDescription: "Webhook to be invoked for approval.",
+														},
+														"channel": schema.SingleNestedAttribute{
+															Attributes: map[string]schema.Attribute{
+																"id": schema.StringAttribute{
+																	Optional:            true,
+																	Description:         "Unique identifier of the Slack or Teams channel.",
+																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
+																},
+															},
+															Optional:            true,
+															Description:         "Slack or Teams channel for this step. Use with type = \"SlackChannel\" or \"TeamsChannel\".",
+															MarkdownDescription: "Slack or Teams channel for this step. Use with `type = \"SlackChannel\"` or `type = \"TeamsChannel\"`.",
 														},
 													},
 												},

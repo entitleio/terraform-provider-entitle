@@ -313,6 +313,240 @@ resource "entitle_workflow" "my_workflow" {
 	})
 }
 
+func TestWorkflowResourceWithSlackChannel(t *testing.T) {
+	if os.Getenv("ENTITLE_SLACK_CHANNEL_ID") == "" {
+		t.SkipNow()
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create workflow with Slack channel as approval entity
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "slack_channel_workflow" {
+	name = "Slack Channel Workflow CI"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						approval_entities = [
+							{
+								type = "SlackChannel"
+								channel = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "name", "Slack Channel Workflow CI"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.sort_order", "1"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "SlackChannel"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.channel.id", os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+					resource.TestCheckResourceAttrSet("entitle_workflow.slack_channel_workflow", "id"),
+				),
+			},
+			// Update: add notified entity with Slack channel
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+
+resource "entitle_workflow" "slack_channel_workflow" {
+	name = "Slack Channel Workflow CI Updated"
+	rules = [
+		{
+			sort_order = 1
+			approval_flow = {
+				steps = [
+					{
+						sort_order = 1
+						notified_entities = [
+							{
+								type = "SlackChannel"
+								channel = {
+									id = "%s"
+								}
+							}
+						]
+						approval_entities = [
+							{
+								type = "SlackChannel"
+								channel = {
+									id = "%s"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}
+`, os.Getenv("ENTITLE_SLACK_CHANNEL_ID"), os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "name", "Slack Channel Workflow CI Updated"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.type", "SlackChannel"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.channel.id", os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "SlackChannel"),
+					resource.TestCheckResourceAttr("entitle_workflow.slack_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.channel.id", os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+				),
+			},
+		},
+	})
+}
+
+// enable once Teams Channel supported in api
+//func TestWorkflowResourceWithTeamsChannel(t *testing.T) {
+//	resource.Test(t, resource.TestCase{
+//		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			// Create workflow with Teams channel as approval entity
+//			{
+//				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+//
+//resource "entitle_workflow" "teams_channel_workflow" {
+//	name = "Teams Channel Workflow CI"
+//	rules = [
+//		{
+//			sort_order = 1
+//			approval_flow = {
+//				steps = [
+//					{
+//						sort_order = 1
+//						approval_entities = [
+//							{
+//								type = "TeamsChannel"
+//								channel = {
+//									id = "%s"
+//								}
+//							}
+//						]
+//					}
+//				]
+//			}
+//		}
+//	]
+//}
+//`, os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//				Check: resource.ComposeAggregateTestCheckFunc(
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "name", "Teams Channel Workflow CI"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.sort_order", "1"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "TeamsChannel"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.channel.id", os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//					resource.TestCheckResourceAttrSet("entitle_workflow.teams_channel_workflow", "id"),
+//				),
+//			},
+//			// Update: add notified entity with Teams channel
+//			{
+//				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+//
+//resource "entitle_workflow" "teams_channel_workflow" {
+//	name = "Teams Channel Workflow CI Updated"
+//	rules = [
+//		{
+//			sort_order = 1
+//			approval_flow = {
+//				steps = [
+//					{
+//						sort_order = 1
+//						notified_entities = [
+//							{
+//								type = "TeamsChannel"
+//								channel = {
+//									id = "%s"
+//								}
+//							}
+//						]
+//						approval_entities = [
+//							{
+//								type = "TeamsChannel"
+//								channel = {
+//									id = "%s"
+//								}
+//							}
+//						]
+//					}
+//				]
+//			}
+//		}
+//	]
+//}
+//`, os.Getenv("ENTITLE_TEAMS_CHANNEL_ID"), os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//				Check: resource.ComposeAggregateTestCheckFunc(
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "name", "Teams Channel Workflow CI Updated"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.type", "TeamsChannel"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.notified_entities.0.channel.id", os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "TeamsChannel"),
+//					resource.TestCheckResourceAttr("entitle_workflow.teams_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.channel.id", os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//				),
+//			},
+//		},
+//	})
+//}
+//
+//func TestWorkflowResourceWithMultipleChannels(t *testing.T) {
+//	resource.Test(t, resource.TestCase{
+//		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+//
+//resource "entitle_workflow" "multi_channel_workflow" {
+//	name = "Multi Channel Workflow CI"
+//	rules = [
+//		{
+//			sort_order = 1
+//			approval_flow = {
+//				steps = [
+//					{
+//						sort_order = 1
+//						operator = "and"
+//						approval_entities = [
+//							{
+//								type = "SlackChannel"
+//								channel = {
+//									id = "%s"
+//								}
+//							},
+//							{
+//								type = "TeamsChannel"
+//								channel = {
+//									id = "%s"
+//								}
+//							}
+//						]
+//					}
+//				]
+//			}
+//		}
+//	]
+//}
+//`, os.Getenv("ENTITLE_SLACK_CHANNEL_ID"), os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//				Check: resource.ComposeAggregateTestCheckFunc(
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "name", "Multi Channel Workflow CI"),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.operator", "and"),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.#", "2"),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.type", "SlackChannel"),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.0.channel.id", os.Getenv("ENTITLE_SLACK_CHANNEL_ID")),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.type", "TeamsChannel"),
+//					resource.TestCheckResourceAttr("entitle_workflow.multi_channel_workflow", "rules.0.approval_flow.steps.0.approval_entities.1.channel.id", os.Getenv("ENTITLE_TEAMS_CHANNEL_ID")),
+//					resource.TestCheckResourceAttrSet("entitle_workflow.multi_channel_workflow", "id"),
+//				),
+//			},
+//		},
+//	})
+//}
+
 func TestWorkflowResourceChange(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
