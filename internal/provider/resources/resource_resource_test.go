@@ -176,6 +176,31 @@ func TestResourceResource(t *testing.T) {
 	})
 }
 
+func TestResourceResource_Import(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				ResourceName:      "entitle_resource.my_resource",
+				ImportState:       true,
+				ImportStateId:     os.Getenv("ENTITLE_RESOURCE_ID"),
+				ImportStateVerify: false,
+				// Config is not applied; it is only needed so the test framework
+				// can initialise the working directory with the correct resource type.
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_resource" "my_resource" {
+  name        = "placeholder"
+  requestable = true
+  integration = {
+    id = "%s"
+  }
+}
+`, os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID")),
+			},
+		},
+	})
+}
+
 func TestResourceResourceForVirtual(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,

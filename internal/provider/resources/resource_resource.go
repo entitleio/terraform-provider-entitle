@@ -52,7 +52,7 @@ type ResourceResourceModel struct {
 	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
-	Integration             utils.IdNameModel                   `tfsdk:"integration"`
+	Integration             *utils.IdNameModel                  `tfsdk:"integration"`
 	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 	Requestable             types.Bool                          `tfsdk:"requestable"`
 	Owner                   *utils.IdEmailModel                 `tfsdk:"owner"`
@@ -183,7 +183,8 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"integration": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Description:         "the integration's id",
 						MarkdownDescription: "the integration's id",
 						PlanModifiers: []planmodifier.String{
@@ -196,9 +197,10 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						MarkdownDescription: "the integration's name",
 					},
 				},
-				Required:            true,
-				Description:         "Integration the resource belongs to",
-				MarkdownDescription: "Integration the resource belongs to",
+				Optional:            true,
+				Computed:            true,
+				Description:         "Integration the resource belongs to. Required when creating a managed resource; populated automatically for synced resources.",
+				MarkdownDescription: "Integration the resource belongs to. Required when creating a managed resource; populated automatically for synced resources.",
 			},
 			"requestable": schema.BoolAttribute{
 				Required:            true,
@@ -366,6 +368,14 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 				return
 			}
 		}
+	}
+
+	if plan.Integration == nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			"integration is required to create a resource; please specify the integration block with a valid id",
+		)
+		return
 	}
 
 	var integration client.IdParamsSchema
@@ -1197,7 +1207,7 @@ func convertFullResourceResultResponseSchemaToModel(
 	}
 
 	var workflow *utils.IdNameModel
-	if data.Workflow.Id.String() != "" {
+	if data.Workflow != nil && data.Workflow.Id.String() != "" {
 		workflow = &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
@@ -1213,10 +1223,19 @@ func convertFullResourceResultResponseSchemaToModel(
 		UserDefinedTags:        userDefinedTags,
 		UserDefinedDescription: types.StringPointerValue(data.UserDefinedDescription),
 		Workflow:               workflow,
-		Integration: utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Integration.Id.String()),
-			Name: utils.TrimmedStringValue(data.Integration.Name),
-		},
+		// GET /resources/{id} returns "integration": null for synced resources.
+		// Go's JSON decoder zero-values the struct in that case (zero UUID).
+		// Detect this and store nil so the framework can handle the optional field.
+		Integration: func() *utils.IdNameModel {
+			idStr := data.Integration.Id.String()
+			if idStr == "" || idStr == "00000000-0000-0000-0000-000000000000" {
+				return nil
+			}
+			return &utils.IdNameModel{
+				ID:   utils.TrimmedStringValue(idStr),
+				Name: utils.TrimmedStringValue(data.Integration.Name),
+			}
+		}(),
 		Requestable:             types.BoolValue(data.Requestable),
 		Owner:                   owner,
 		PrerequisitePermissions: prerequisitePermissions,
