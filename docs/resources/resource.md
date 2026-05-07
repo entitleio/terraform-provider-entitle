@@ -55,13 +55,13 @@ resource "entitle_resource" "my_resource" {
 
 ### Required
 
-- `integration` (Attributes) Integration the resource belongs to (see [below for nested schema](#nestedatt--integration))
 - `name` (String) The display name for the resource. Length between 2 and 50.
 - `requestable` (Boolean) Indicates if the resource is requestable
 
 ### Optional
 
 - `allowed_durations` (Set of Number) As the admin, you can set different durations for the resource, compared to the workflow linked to it.
+- `integration` (Attributes) Integration the resource belongs to. Required when creating a managed resource; populated automatically for synced resources. (see [below for nested schema](#nestedatt--integration))
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `owner` (Attributes) Define the owner of the resource, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `prerequisite_permissions` (Attributes List) Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
@@ -77,7 +77,7 @@ resource "entitle_resource" "my_resource" {
 <a id="nestedatt--integration"></a>
 ### Nested Schema for `integration`
 
-Required:
+Optional:
 
 - `id` (String) the integration's id
 
