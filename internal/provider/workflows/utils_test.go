@@ -1078,7 +1078,7 @@ func TestGetWorkflowsRules_SlackChannelApprovalEntityID(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1125,7 +1125,7 @@ func TestGetWorkflowsRules_TeamsChannelApprovalEntityID(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1172,7 +1172,7 @@ func TestGetWorkflowsRules_SlackChannelNotifiedEntityID(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1222,7 +1222,7 @@ func TestGetWorkflowsRules_TeamsChannelNotifiedEntityID(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1274,7 +1274,7 @@ func TestGetWorkflowsRules_MixedChannelEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1367,7 +1367,7 @@ func TestReconcileEntityOrder_ChannelEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1389,7 +1389,7 @@ func TestReconcileEntityOrder_ChannelEntities(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1436,7 +1436,7 @@ func TestReconcileEntityOrder_ChannelAndGroupMixed(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
@@ -1457,7 +1457,7 @@ func TestReconcileEntityOrder_ChannelAndGroupMixed(t *testing.T) {
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
 			AnySchedule:   types.BoolValue(true),
-			ApprovalFlow: workflowRulesApprovalFlowModel{
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
 						SortOrder: types.NumberValue(big.NewFloat(0)),
