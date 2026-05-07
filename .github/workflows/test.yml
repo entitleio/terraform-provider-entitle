@@ -58,6 +58,8 @@ on:
       ENTITLE_WORKFLOW_NAME:
         required: true
       # ca region
+      ENTITLE_SLACK_CHANNEL_ID:
+        required: true
       ENTITLE_CA_ACCESS_REQUEST_FORWARD_ID:
         required: true
       ENTITLE_CA_ACCESS_REVIEW_FORWARD_ID:
@@ -181,6 +183,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -202,6 +206,8 @@ jobs:
           - '1.12.*' # Latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -234,6 +240,8 @@ jobs:
           - '1.14.*' # Latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: 'go.mod'
@@ -326,6 +334,7 @@ jobs:
           ENTITLE_PERMISSION_ID: ${{ secrets.ENTITLE_CA_PERMISSION_ID }}
           ENTITLE_POLICY_ID: ${{ secrets.ENTITLE_CA_POLICY_ID }}
           ENTITLE_RESOURCE_ID: ${{ secrets.ENTITLE_CA_RESOURCE_ID }}
+          ENTITLE_SLACK_CHANNEL_ID: ${{ secrets.ENTITLE_SLACK_CHANNEL_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_CA_ROLE_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_CA_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_CA_USER2_ID }}

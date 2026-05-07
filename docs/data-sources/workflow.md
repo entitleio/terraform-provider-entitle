@@ -71,11 +71,20 @@ Read-Only:
 
 Read-Only:
 
+- `channel` (Attributes) Slack or Teams channel details. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--channel))
 - `group` (Attributes) Approver group details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
 - `schedule` (Attributes) Approver schedule details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
 - `type` (String) Approver type
 - `user` (Attributes) Approver user details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
 - `webhook` (Attributes) Approver webhook details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--webhook))
+
+<a id="nestedatt--rules--approval_flow--steps--approval_entities--channel"></a>
+### Nested Schema for `rules.approval_flow.steps.approval_entities.channel`
+
+Read-Only:
+
+- `id` (String) Unique identifier of the Slack or Teams channel.
+
 
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
@@ -119,11 +128,20 @@ Read-Only:
 
 Read-Only:
 
+- `channel` (Attributes) Slack or Teams channel details. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--channel))
 - `group` (Attributes) Notified group details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
 - `schedule` (Attributes) Notified schedule details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
 - `type` (String) Entity type
 - `user` (Attributes) Notified user details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
 - `webhook` (Attributes) Notified webhook details (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
+
+<a id="nestedatt--rules--approval_flow--steps--notified_entities--channel"></a>
+### Nested Schema for `rules.approval_flow.steps.notified_entities.channel`
+
+Read-Only:
+
+- `id` (String) Unique identifier of the Slack or Teams channel.
+
 
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.group`

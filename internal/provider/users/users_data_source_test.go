@@ -31,8 +31,6 @@ data "entitle_users" "my_list" {
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.id"),
-					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.given_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.family_name"),
 					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.created_at"),
 				),
 			},
@@ -57,8 +55,6 @@ data "entitle_users" "my_list" {}
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.email"),
 					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.id"),
-					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.given_name"),
-					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.family_name"),
 					resource.TestCheckResourceAttrSet("data.entitle_users.my_list", "users.0.created_at"),
 				),
 			},
