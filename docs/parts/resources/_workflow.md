@@ -26,7 +26,6 @@ Simple workflow that automatically approves all requests:
 ```terraform
 resource "entitle_workflow" "auto_approve" {
   name        = "Auto-Approve Development"
-  description = "Automatically approve development environment access"
 
   rules = [{
     sort_order     = 1
@@ -59,7 +58,6 @@ Requires the requester's direct manager to approve:
 ```terraform
 resource "entitle_workflow" "manager_approval" {
   name        = "Manager Approval Required"
-  description = "Requests must be approved by the requester's manager"
 
   rules = [{
     sort_order     = 1
@@ -98,7 +96,6 @@ data "entitle_directory_groups" "security_team" {
 
 resource "entitle_workflow" "production_access" {
   name        = "Production Access - Multi-Step"
-  description = "Manager approval followed by security team approval"
 
   rules = [{
     sort_order     = 1
@@ -207,9 +204,9 @@ data "entitle_directory_groups" "compliance" {
   }
 }
 
+# Both teams must approve, but can happen in any order"
 resource "entitle_workflow" "dual_approval_parallel" {
   name        = "Security AND Compliance Approval (Parallel)"
-  description = "Both teams must approve, but can happen in any order"
 
   rules = [{
     sort_order     = 1
@@ -259,9 +256,9 @@ data "entitle_directory_groups" "compliance" {
   }
 }
 
+# Security must approve first, then compliance
 resource "entitle_workflow" "dual_approval_sequential" {
   name        = "Security THEN Compliance Approval (Sequential)"
-  description = "Security must approve first, then compliance"
 
   rules = [{
     sort_order     = 1
@@ -318,9 +315,9 @@ data "entitle_directory_groups" "compliance" {
   }
 }
 
+# Sequential manager approval followed by parallel dual approval
 resource "entitle_workflow" "complex_approval" {
   name        = "Manager, then Security AND Compliance"
-  description = "Sequential manager approval followed by parallel dual approval"
 
   rules = [{
     sort_order     = 1
@@ -378,9 +375,9 @@ data "entitle_directory_groups" "security" {
   }
 }
 
+# Short access auto-approved, long access requires security
 resource "entitle_workflow" "duration_based" {
   name        = "Duration-Based Approval"
-  description = "Short access auto-approved, long access requires security"
 
   rules = [
     {
@@ -728,9 +725,9 @@ data "entitle_directory_groups" "team_leads" {
   }
 }
 
+# Manager approves, or Team Lead if no manager assigned
 resource "entitle_workflow" "manager_with_fallback" {
   name = "Manager or Team Lead Approval"
-  description = "Manager approves, or Team Lead if no manager assigned"
 
   rules = [{
     sort_order     = 1
