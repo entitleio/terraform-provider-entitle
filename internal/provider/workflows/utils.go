@@ -71,8 +71,12 @@ func getWorkflowsRules(
 			)
 		}
 
-		steps := make([]client.ApprovalFlowSchema, 0, len(rule.ApprovalFlow.Steps))
-		for _, step := range rule.ApprovalFlow.Steps {
+		var planApprovalFlowSteps []*workflowRulesApprovalFlowStepModel
+		if rule.ApprovalFlow != nil {
+			planApprovalFlowSteps = rule.ApprovalFlow.Steps
+		}
+		steps := make([]client.ApprovalFlowSchema, 0, len(planApprovalFlowSteps))
+		for _, step := range planApprovalFlowSteps {
 			val, diagsTo := step.SortOrder.ToNumberValue(ctx)
 			if diagsTo.HasError() {
 				diags.Append(diagsTo...)
@@ -932,12 +936,20 @@ func reconcileEntityOrder(
 		resultRule.InSchedules = reorderIdNameModels(planRule.InSchedules, resultRule.InSchedules)
 
 		// Index plan steps by sort_order for lookup.
-		planStepsBySort := make(map[string]*workflowRulesApprovalFlowStepModel, len(planRule.ApprovalFlow.Steps))
-		for _, s := range planRule.ApprovalFlow.Steps {
+		var planApprovalSteps []*workflowRulesApprovalFlowStepModel
+		if planRule.ApprovalFlow != nil {
+			planApprovalSteps = planRule.ApprovalFlow.Steps
+		}
+		planStepsBySort := make(map[string]*workflowRulesApprovalFlowStepModel, len(planApprovalSteps))
+		for _, s := range planApprovalSteps {
 			planStepsBySort[sortOrderKey(s.SortOrder)] = s
 		}
 
-		for _, resultStep := range resultRule.ApprovalFlow.Steps {
+		var resultApprovalSteps []*workflowRulesApprovalFlowStepModel
+		if resultRule.ApprovalFlow != nil {
+			resultApprovalSteps = resultRule.ApprovalFlow.Steps
+		}
+		for _, resultStep := range resultApprovalSteps {
 			planStep, ok := planStepsBySort[sortOrderKey(resultStep.SortOrder)]
 			if !ok {
 				continue

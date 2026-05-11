@@ -292,6 +292,27 @@ resource "entitle_workflow" "multi_webhook_workflow" {
 	})
 }
 
+func TestWorkflowResource_Import(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				ResourceName:      "entitle_workflow.my_workflow",
+				ImportState:       true,
+				ImportStateId:     os.Getenv("ENTITLE_WORKFLOW_ID"),
+				ImportStateVerify: false,
+				// Config is not applied; it is only needed so the test framework
+				// can initialise the working directory with the correct resource type.
+				Config: testhelpers.ProviderConfig + `
+resource "entitle_workflow" "my_workflow" {
+  name = "placeholder"
+}
+`,
+			},
+		},
+	})
+}
+
 func TestWorkflowResourceWithSlackChannel(t *testing.T) {
 	if os.Getenv("ENTITLE_SLACK_CHANNEL_ID") == "" {
 		t.SkipNow()

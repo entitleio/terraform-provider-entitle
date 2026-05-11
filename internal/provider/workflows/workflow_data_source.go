@@ -518,12 +518,10 @@ func converterWorkflow(
 		rules = make([]*workflowRulesModel, 0, len(data.Rules))
 		for _, rule := range data.Rules {
 			ruleModel := &workflowRulesModel{
-				AnySchedule: types.BoolValue(rule.AnySchedule),
-				ApprovalFlow: workflowRulesApprovalFlowModel{
-					Steps: make([]*workflowRulesApprovalFlowStepModel, 0),
-				},
+				AnySchedule:   types.BoolValue(rule.AnySchedule),
 				SortOrder:     types.NumberValue(big.NewFloat(float64(rule.SortOrder))),
 				UnderDuration: types.NumberValue(big.NewFloat(float64(rule.UnderDuration))),
+				// ApprovalFlow is left nil; set below only when the API returns steps.
 			}
 
 			if len(rule.InGroups) > 0 {
@@ -549,6 +547,9 @@ func converterWorkflow(
 			}
 
 			if len(rule.ApprovalFlow.Steps) > 0 {
+				ruleModel.ApprovalFlow = &workflowRulesApprovalFlowModel{
+					Steps: make([]*workflowRulesApprovalFlowStepModel, 0),
+				}
 				for _, step := range rule.ApprovalFlow.Steps {
 					flowStep := &workflowRulesApprovalFlowStepModel{
 						ApprovalEntities: make([]*workflowRulesApprovalFlowStepApprovalNotifiedModel, 0, len(step.ApprovalEntities)),
