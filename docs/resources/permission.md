@@ -88,20 +88,6 @@ description: |-
   
   terraform import entitle_permission.specific_permission 7d080bfa-9143-11ee-b9d1-0242ac120001
   
-  Attributes Reference
-  Required
-  id (String) The unique identifier of the permission (UUID format). This must match an existing permission in Entitle.
-  Read-Only
-  
-  actor (Attributes) The user who holds this permission:
-  id (String) The actor's unique identifier.email (String) The actor's email address.
-  role (Attributes) The role that was granted:
-  id (String) The role's unique identifier.name (String) The role's display name.resource (Attributes) The resource the role belongs to:
-  id (String) The resource's unique identifier.name (String) The resource's display name.integration (Attributes) The integration the resource belongs to:
-  id (String) The integration's unique identifier.name (String) The integration's display name.application (Attributes):
-  name (String) The connected application's name.
-  path (String) The hierarchical path describing where the permission was granted.
-  types (Set of String) The categories or types of permission granted.
   Import
   Permissions must be imported using their UUID before they can be managed:
   
@@ -250,34 +236,6 @@ Then run:
 ```shell
 terraform import entitle_permission.specific_permission 7d080bfa-9143-11ee-b9d1-0242ac120001
 ```
-
-## Attributes Reference
-
-### Required
-
-- `id` (String) The unique identifier of the permission (UUID format). This must match an existing permission in Entitle.
-
-### Read-Only
-
-- `actor` (Attributes) The user who holds this permission:
-    - `id` (String) The actor's unique identifier.
-    - `email` (String) The actor's email address.
-
-- `role` (Attributes) The role that was granted:
-    - `id` (String) The role's unique identifier.
-    - `name` (String) The role's display name.
-    - `resource` (Attributes) The resource the role belongs to:
-        - `id` (String) The resource's unique identifier.
-        - `name` (String) The resource's display name.
-        - `integration` (Attributes) The integration the resource belongs to:
-            - `id` (String) The integration's unique identifier.
-            - `name` (String) The integration's display name.
-            - `application` (Attributes):
-                - `name` (String) The connected application's name.
-
-- `path` (String) The hierarchical path describing where the permission was granted.
-
-- `types` (Set of String) The categories or types of permission granted.
 
 ## Import
 

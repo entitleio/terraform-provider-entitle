@@ -209,29 +209,6 @@ description: |-
     allow_creating_accounts = false
   }
   
-  Attributes Reference
-  Required
-  name (String) The display name for the integration. Length must be between 2 and 50 characters.connection_json (String) A JSON-encoded string containing the application-specific credentials and configuration. The structure varies by application type — refer to the Entitle integrations documentation https://docs.beyondtrust.com/entitle/docs/integrations or the Entitle web UI create form https://app.entitle.io/integrations/create for the correct format per application.application (Attributes) The application type this integration connects to. See application below.owner (Attributes) The user who owns and is responsible for this integration. See owner below.workflow (Attributes) The default approval workflow for JIT access requests under this integration. See workflow below.allowed_durations (Set of Number) The access duration options (in seconds) available for this integration. Use -1 for permanent access.
-  Optional
-  agent_token (Attributes) Required for agent-based integrations that connect to private/internal systems. See agent_token below.allow_changing_account_permissions (Boolean) Whether Entitle can modify permissions of accounts in this integration. Disable to make the integration read-only from a permission-grant perspective. Default: true.allow_creating_accounts (Boolean) Whether Entitle can create new user accounts in the application when access is requested. Disable if users must already exist in the application. Default: true.auto_assign_recommended_maintainers (Boolean) Whether Entitle automatically assigns suggested maintainers based on usage patterns. Default: true.auto_assign_recommended_owners (Boolean) Whether Entitle automatically assigns suggested owners based on ownership signals. Default: true.maintainers (Attributes List) Secondary owners who assist with administrative responsibilities. Can be individual users or IdP groups. See maintainers below.notify_about_external_permission_changes (Boolean) Whether to notify the owner if permissions are changed directly in the application, bypassing Entitle. Default: true.prerequisite_permissions (Attributes List) Roles automatically granted alongside any role from this integration when access is approved. See prerequisite_permissions below.readonly (Boolean) When true, access requests for this integration create manual tickets instead of automatically granting permissions. Default: false.requestable (Boolean) Whether users can submit JIT access requests for entitlements under this integration. Default: true.requestable_by_default (Boolean) Whether resources added to this integration are visible and requestable by default. Default: true.
-  Read-Only
-  id (String) The unique identifier of the integration (UUID format).
-  application
-  name (Required, String) The application type in lowercase (e.g., "aws", "github", "slack", "postgresql"). Use the entitle_applications data source to list all supported applications.
-  owner
-  id (Required, String) The unique identifier of the user who owns this integration. Obtain from the entitle_user data source.email (Read-Only, String) The owner's email address.
-  workflow attribute
-  id (Required, String) The unique identifier of the default approval workflow for this integration. Obtain from the entitle_workflow data source.name (Read-Only, String) The workflow's name.
-  agent_token
-  name (Required, String) The name of the agent token to use for this integration. Must match the name of an existing entitle_agent_token resource.
-  maintainers
-  Each maintainer entry:
-  type (Optional, String) The maintainer type: "user" or "group". Default: "user".entity (Optional, Attributes):
-  id (Required, String) The unique identifier of the user or group.email (Read-Only, String) The email address (for user maintainers).
-  prerequisite_permissions
-  Each prerequisite permission entry:
-  role (Required, Attributes):
-  id (Required, String) The unique identifier of the prerequisite role.default (Optional, Boolean) Whether this prerequisite is automatically included without requiring user selection. Default: false.
   Import
   Existing integrations can be imported using their UUID:
   
@@ -504,70 +481,6 @@ resource "entitle_integration" "legacy_erp" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `name` (String) The display name for the integration. Length must be between 2 and 50 characters.
-- `connection_json` (String) A JSON-encoded string containing the application-specific credentials and configuration. The structure varies by application type — refer to the [Entitle integrations documentation](https://docs.beyondtrust.com/entitle/docs/integrations) or the [Entitle web UI create form](https://app.entitle.io/integrations/create) for the correct format per application.
-- `application` (Attributes) The application type this integration connects to. See [application](#application) below.
-- `owner` (Attributes) The user who owns and is responsible for this integration. See [owner](#owner) below.
-- `workflow` (Attributes) The default approval workflow for JIT access requests under this integration. See [workflow](#workflow-attribute) below.
-- `allowed_durations` (Set of Number) The access duration options (in seconds) available for this integration. Use `-1` for permanent access.
-
-### Optional
-
-- `agent_token` (Attributes) Required for agent-based integrations that connect to private/internal systems. See [agent_token](#agent_token) below.
-- `allow_changing_account_permissions` (Boolean) Whether Entitle can modify permissions of accounts in this integration. Disable to make the integration read-only from a permission-grant perspective. Default: `true`.
-- `allow_creating_accounts` (Boolean) Whether Entitle can create new user accounts in the application when access is requested. Disable if users must already exist in the application. Default: `true`.
-- `auto_assign_recommended_maintainers` (Boolean) Whether Entitle automatically assigns suggested maintainers based on usage patterns. Default: `true`.
-- `auto_assign_recommended_owners` (Boolean) Whether Entitle automatically assigns suggested owners based on ownership signals. Default: `true`.
-- `maintainers` (Attributes List) Secondary owners who assist with administrative responsibilities. Can be individual users or IdP groups. See [maintainers](#maintainers) below.
-- `notify_about_external_permission_changes` (Boolean) Whether to notify the owner if permissions are changed directly in the application, bypassing Entitle. Default: `true`.
-- `prerequisite_permissions` (Attributes List) Roles automatically granted alongside any role from this integration when access is approved. See [prerequisite_permissions](#prerequisite_permissions) below.
-- `readonly` (Boolean) When `true`, access requests for this integration create manual tickets instead of automatically granting permissions. Default: `false`.
-- `requestable` (Boolean) Whether users can submit JIT access requests for entitlements under this integration. Default: `true`.
-- `requestable_by_default` (Boolean) Whether resources added to this integration are visible and requestable by default. Default: `true`.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the integration (UUID format).
-
-### application
-
-- `name` (Required, String) The application type in lowercase (e.g., `"aws"`, `"github"`, `"slack"`, `"postgresql"`). Use the `entitle_applications` data source to list all supported applications.
-
-### owner
-
-- `id` (Required, String) The unique identifier of the user who owns this integration. Obtain from the `entitle_user` data source.
-- `email` (Read-Only, String) The owner's email address.
-
-### workflow attribute
-
-- `id` (Required, String) The unique identifier of the default approval workflow for this integration. Obtain from the `entitle_workflow` data source.
-- `name` (Read-Only, String) The workflow's name.
-
-### agent_token
-
-- `name` (Required, String) The name of the agent token to use for this integration. Must match the `name` of an existing `entitle_agent_token` resource.
-
-### maintainers
-
-Each maintainer entry:
-
-- `type` (Optional, String) The maintainer type: `"user"` or `"group"`. Default: `"user"`.
-- `entity` (Optional, Attributes):
-    - `id` (Required, String) The unique identifier of the user or group.
-    - `email` (Read-Only, String) The email address (for user maintainers).
-
-### prerequisite_permissions
-
-Each prerequisite permission entry:
-
-- `role` (Required, Attributes):
-    - `id` (Required, String) The unique identifier of the prerequisite role.
-- `default` (Optional, Boolean) Whether this prerequisite is automatically included without requiring user selection. Default: `false`.
-
 ## Import
 
 Existing integrations can be imported using their UUID:
@@ -649,7 +562,23 @@ resource "entitle_integration" "example" {
 
 ### Required
 
-- `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the integration, compared to the workflow linked to it.  
+Allowed values:
+  - 1800 - 30min
+  - 3600 - 1 hour
+  - 10800 - 3 hours
+  - 21600 - 6 hours
+  - 43200 - 12 hours
+  - 57600 - 16 hours
+  - 86400 - 24 hours
+  - 259200 - 3 days
+  - 604800 - 7 days
+  - 2628000  - ~30,4 days
+  - 7884000 - 91,25 days
+  - 15768000 - 182,5 days
+  - 31536000 - 365 days
+  - 63072000 - 730 days
+  - -1 - unlimited
 - `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
 - `connection_json` (String) You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).
 - `name` (String) The display name for the integration. Length between 2 and 50.

@@ -144,26 +144,6 @@ description: |-
     }]
   }
   
-  Attributes Reference
-  Required
-  in_groups (Attributes List) The list of IdP groups or on-call schedules that the policy applies to. Users in these groups automatically receive the defined permissions. See in_groups below.
-  Optional
-  bundles (Attributes List) A list of bundles to be assigned by the policy. Bundles are cross-application collections of permissions. See bundles below.roles (Attributes List) A list of roles that the policy assigns to users. Each role grants access to a specific resource. See roles below.sort_order (Number) The evaluation priority of this policy. Lower numbers are processed first. Use this to control which policy wins when multiple policies could assign conflicting permissions.
-  Read-Only
-  id (String) The unique identifier of the policy (UUID format).number (Number) The sequential policy number assigned by Entitle.
-  in_groups
-  Each entry in in_groups targets an IdP group or an on-call schedule:
-  
-  type (Required, String) The source type. Valid values:
-  "group" — An IdP group (e.g., from Okta, Azure AD, Google Workspace)"schedule" — An on-call schedule (e.g., from PagerDuty or Opsgenie)
-  id (Optional, String) The unique identifier of the IdP group or schedule. Obtain group IDs from the entitle_directory_groups data source.
-  name (Read-Only, String) The name of the group or schedule.
-  roles
-  Each entry in roles grants a specific role to policy members:
-  id (Optional, String) The unique identifier of the role to be granted. Obtain role IDs from the entitle_roles data source.name (Read-Only, String) The name of the role.resource (Read-Only, Attributes) The resource associated with the role, including its integration and application.
-  bundles
-  Each entry in bundles grants a bundle to policy members:
-  id (Optional, String) The unique identifier of the bundle. Obtain bundle IDs from the entitle_bundle data source.name (Read-Only, String) The name of the bundle.
   Import
   Existing policies can be imported using their UUID:
   
@@ -371,50 +351,6 @@ resource "entitle_policy" "dynamic_policy" {
   }]
 }
 ```
-
-## Attributes Reference
-
-### Required
-
-- `in_groups` (Attributes List) The list of IdP groups or on-call schedules that the policy applies to. Users in these groups automatically receive the defined permissions. See [in_groups](#in_groups) below.
-
-### Optional
-
-- `bundles` (Attributes List) A list of bundles to be assigned by the policy. Bundles are cross-application collections of permissions. See [bundles](#bundles) below.
-- `roles` (Attributes List) A list of roles that the policy assigns to users. Each role grants access to a specific resource. See [roles](#roles) below.
-- `sort_order` (Number) The evaluation priority of this policy. Lower numbers are processed first. Use this to control which policy wins when multiple policies could assign conflicting permissions.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the policy (UUID format).
-- `number` (Number) The sequential policy number assigned by Entitle.
-
-### in_groups
-
-Each entry in `in_groups` targets an IdP group or an on-call schedule:
-
-- `type` (Required, String) The source type. Valid values:
-    - `"group"` — An IdP group (e.g., from Okta, Azure AD, Google Workspace)
-    - `"schedule"` — An on-call schedule (e.g., from PagerDuty or Opsgenie)
-
-- `id` (Optional, String) The unique identifier of the IdP group or schedule. Obtain group IDs from the `entitle_directory_groups` data source.
-
-- `name` (Read-Only, String) The name of the group or schedule.
-
-### roles
-
-Each entry in `roles` grants a specific role to policy members:
-
-- `id` (Optional, String) The unique identifier of the role to be granted. Obtain role IDs from the `entitle_roles` data source.
-- `name` (Read-Only, String) The name of the role.
-- `resource` (Read-Only, Attributes) The resource associated with the role, including its integration and application.
-
-### bundles
-
-Each entry in `bundles` grants a bundle to policy members:
-
-- `id` (Optional, String) The unique identifier of the bundle. Obtain bundle IDs from the `entitle_bundle` data source.
-- `name` (Read-Only, String) The name of the bundle.
 
 ## Import
 

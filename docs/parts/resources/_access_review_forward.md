@@ -97,17 +97,6 @@ resource "entitle_access_review_forward" "conference_week" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `forwarder` (Attributes) The user who is delegating their access review responsibilities. See [forwarder / target](#forwarder--target) below.
-- `target` (Attributes) The user who will receive and handle the forwarded review tasks. See [forwarder / target](#forwarder--target) below.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the access review forward (UUID format).
-
 ### forwarder / target
 
 Both `forwarder` and `target` accept the same attributes:

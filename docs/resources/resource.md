@@ -241,27 +241,6 @@ description: |-
     allowed_durations = [3600, 14400, 28800]
   }
   
-  Attributes Reference
-  Required
-  name (String) The display name for the resource. Length must be between 2 and 50 characters.requestable (Boolean) Whether users can submit JIT access requests for roles on this resource.integration (Attributes) The parent integration this resource belongs to. See integration below.
-  Optional
-  allowed_durations (Set of Number) The access duration options (in seconds) for roles on this resource. Overrides the integration default. Use -1 for permanent access.maintainers (Attributes List) Secondary owners for administrative responsibilities. See maintainers below.owner (Attributes) The primary owner of this resource. See owner below.prerequisite_permissions (Attributes List) Roles automatically granted alongside any role approved on this resource. See prerequisite_permissions below.user_defined_description (String) A human-readable description of the resource — what it is, who uses it, and any important context.user_defined_tags (Set of String) Searchable metadata tags for discovery (e.g., "production", "critical", "hipaa").workflow (Attributes) The default approval workflow for JIT access requests to roles on this resource. Overrides the integration workflow. See workflow below.
-  Read-Only
-  id (String) The unique identifier of the resource (UUID format).tags (Set of String) System-managed tags (distinct from user_defined_tags).
-  integration attribute
-  id (Required, String) The unique identifier of the parent integration. Obtain from the entitle_integration data source.name (Read-Only, String) The integration's display name.
-  owner
-  id (Optional, String) The owner's unique identifier (UUID). Obtain from the entitle_user data source.email (Optional, String) The owner's email address. Can be used as an alternative to id.
-  workflow attribute
-  id (Optional, String) The unique identifier of the workflow. Obtain from the entitle_workflow data source.name (Read-Only, String) The workflow's name.
-  maintainers
-  Each maintainer entry:
-  type (Optional, String) "user" or "group". Default: "user".entity (Optional, Attributes):
-  id (Required, String) The unique identifier of the user or group.email (Read-Only, String) The email address (for user maintainers).
-  prerequisite_permissions
-  Each prerequisite permission entry:
-  role (Required, Attributes):
-  id (Required, String) The unique identifier of the prerequisite role.default (Optional, Boolean) Whether this prerequisite is automatically included without user selection. Default: false.
   Import
   Existing resources can be imported using their UUID:
   
@@ -656,61 +635,6 @@ resource "entitle_resource" "aws_prod_account" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `name` (String) The display name for the resource. Length must be between 2 and 50 characters.
-- `requestable` (Boolean) Whether users can submit JIT access requests for roles on this resource.
-- `integration` (Attributes) The parent integration this resource belongs to. See [integration](#integration-attribute) below.
-
-### Optional
-
-- `allowed_durations` (Set of Number) The access duration options (in seconds) for roles on this resource. Overrides the integration default. Use `-1` for permanent access.
-- `maintainers` (Attributes List) Secondary owners for administrative responsibilities. See [maintainers](#maintainers) below.
-- `owner` (Attributes) The primary owner of this resource. See [owner](#owner) below.
-- `prerequisite_permissions` (Attributes List) Roles automatically granted alongside any role approved on this resource. See [prerequisite_permissions](#prerequisite_permissions) below.
-- `user_defined_description` (String) A human-readable description of the resource — what it is, who uses it, and any important context.
-- `user_defined_tags` (Set of String) Searchable metadata tags for discovery (e.g., `"production"`, `"critical"`, `"hipaa"`).
-- `workflow` (Attributes) The default approval workflow for JIT access requests to roles on this resource. Overrides the integration workflow. See [workflow](#workflow-attribute) below.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the resource (UUID format).
-- `tags` (Set of String) System-managed tags (distinct from `user_defined_tags`).
-
-### integration attribute
-
-- `id` (Required, String) The unique identifier of the parent integration. Obtain from the `entitle_integration` data source.
-- `name` (Read-Only, String) The integration's display name.
-
-### owner
-
-- `id` (Optional, String) The owner's unique identifier (UUID). Obtain from the `entitle_user` data source.
-- `email` (Optional, String) The owner's email address. Can be used as an alternative to `id`.
-
-### workflow attribute
-
-- `id` (Optional, String) The unique identifier of the workflow. Obtain from the `entitle_workflow` data source.
-- `name` (Read-Only, String) The workflow's name.
-
-### maintainers
-
-Each maintainer entry:
-
-- `type` (Optional, String) `"user"` or `"group"`. Default: `"user"`.
-- `entity` (Optional, Attributes):
-    - `id` (Required, String) The unique identifier of the user or group.
-    - `email` (Read-Only, String) The email address (for user maintainers).
-
-### prerequisite_permissions
-
-Each prerequisite permission entry:
-
-- `role` (Required, Attributes):
-    - `id` (Required, String) The unique identifier of the prerequisite role.
-- `default` (Optional, Boolean) Whether this prerequisite is automatically included without user selection. Default: `false`.
-
 ## Import
 
 Existing resources can be imported using their UUID:
@@ -914,7 +838,23 @@ resource "entitle_resource" "my_resource" {
 
 ### Optional
 
-- `allowed_durations` (Set of Number) As the admin, you can set different durations for the resource, compared to the workflow linked to it.
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the resource, compared to the workflow linked to it.  
+Allowed values:
+  - 1800 - 30min
+  - 3600 - 1 hour
+  - 10800 - 3 hours
+  - 21600 - 6 hours
+  - 43200 - 12 hours
+  - 57600 - 16 hours
+  - 86400 - 24 hours
+  - 259200 - 3 days
+  - 604800 - 7 days
+  - 2628000  - ~30,4 days
+  - 7884000 - 91,25 days
+  - 15768000 - 182,5 days
+  - 31536000 - 365 days
+  - 63072000 - 730 days
+  - -1 - unlimited
 - `integration` (Attributes) Integration the resource belongs to. Required when creating a managed resource; populated automatically for synced resources. (see [below for nested schema](#nestedatt--integration))
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `owner` (Attributes) Define the owner of the resource, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))

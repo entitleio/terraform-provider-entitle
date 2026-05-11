@@ -8,10 +8,10 @@ description: |-
   Just-in-Time Access: Grant temporary elevated permissions for specific tasksBreak-Glass Access: Provide emergency access with proper approval and audit trailsOnboarding/Offboarding: Automate permission grants and revocations based on group membershipCompliance: Maintain audit trails and enforce approval workflowsCross-Application Access: Bundle permissions across AWS, GCP, Azure, and SaaS applications
   Authentication
   The provider requires an API key to authenticate with the Entitle API.
-  Getting Your API Key
+  Getting Your API Key - TODO: different types
   To obtain an API key:
-  Log in to your Entitle accountNavigate to Organization Settings → TokensClick Create Token or Generate New TokenProvide a name for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
-  → View detailed instructions https://docs.beyondtrust.com/entitle/docs/org-settings#view-and-manage-tokens
+  Log in to your Entitle accountNavigate to Org Settings → TokensClick AddProvide a name for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
+  → View detailed instructions https://docs.beyondtrust.com/entitle/docs/org-settings#tokens
   Important: API tokens are organization-level credentials. Treat them as sensitive secrets and never commit them to version control.
   Configuring the API Key
   The API key can be provided in two ways:
@@ -56,18 +56,18 @@ The Entitle provider allows you to manage your [Entitle](https://www.entitle.io)
 
 The provider requires an API key to authenticate with the Entitle API.
 
-### Getting Your API Key
+### Getting Your API Key - TODO: different types
 
 To obtain an API key:
 
 1. Log in to your Entitle account
-2. Navigate to **Organization Settings** → **Tokens**
-3. Click **Create Token** or **Generate New Token**
+2. Navigate to **Org Settings** → **Tokens**
+3. Click **Add**
 4. Provide a name for the token
 5. Copy the token immediately (it will only be shown once)
 6. Store it securely in your secret management system
 
-→ [View detailed instructions](https://docs.beyondtrust.com/entitle/docs/org-settings#view-and-manage-tokens)
+→ [View detailed instructions](https://docs.beyondtrust.com/entitle/docs/org-settings#tokens)
 
 **Important**: API tokens are organization-level credentials. Treat them as sensitive secrets and never commit them to version control.
 

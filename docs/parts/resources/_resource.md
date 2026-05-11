@@ -276,61 +276,6 @@ resource "entitle_resource" "aws_prod_account" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `name` (String) The display name for the resource. Length must be between 2 and 50 characters.
-- `requestable` (Boolean) Whether users can submit JIT access requests for roles on this resource.
-- `integration` (Attributes) The parent integration this resource belongs to. See [integration](#integration-attribute) below.
-
-### Optional
-
-- `allowed_durations` (Set of Number) The access duration options (in seconds) for roles on this resource. Overrides the integration default. Use `-1` for permanent access.
-- `maintainers` (Attributes List) Secondary owners for administrative responsibilities. See [maintainers](#maintainers) below.
-- `owner` (Attributes) The primary owner of this resource. See [owner](#owner) below.
-- `prerequisite_permissions` (Attributes List) Roles automatically granted alongside any role approved on this resource. See [prerequisite_permissions](#prerequisite_permissions) below.
-- `user_defined_description` (String) A human-readable description of the resource — what it is, who uses it, and any important context.
-- `user_defined_tags` (Set of String) Searchable metadata tags for discovery (e.g., `"production"`, `"critical"`, `"hipaa"`).
-- `workflow` (Attributes) The default approval workflow for JIT access requests to roles on this resource. Overrides the integration workflow. See [workflow](#workflow-attribute) below.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the resource (UUID format).
-- `tags` (Set of String) System-managed tags (distinct from `user_defined_tags`).
-
-### integration attribute
-
-- `id` (Required, String) The unique identifier of the parent integration. Obtain from the `entitle_integration` data source.
-- `name` (Read-Only, String) The integration's display name.
-
-### owner
-
-- `id` (Optional, String) The owner's unique identifier (UUID). Obtain from the `entitle_user` data source.
-- `email` (Optional, String) The owner's email address. Can be used as an alternative to `id`.
-
-### workflow attribute
-
-- `id` (Optional, String) The unique identifier of the workflow. Obtain from the `entitle_workflow` data source.
-- `name` (Read-Only, String) The workflow's name.
-
-### maintainers
-
-Each maintainer entry:
-
-- `type` (Optional, String) `"user"` or `"group"`. Default: `"user"`.
-- `entity` (Optional, Attributes):
-    - `id` (Required, String) The unique identifier of the user or group.
-    - `email` (Read-Only, String) The email address (for user maintainers).
-
-### prerequisite_permissions
-
-Each prerequisite permission entry:
-
-- `role` (Required, Attributes):
-    - `id` (Required, String) The unique identifier of the prerequisite role.
-- `default` (Optional, Boolean) Whether this prerequisite is automatically included without user selection. Default: `false`.
-
 ## Import
 
 Existing resources can be imported using their UUID:

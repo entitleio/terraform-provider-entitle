@@ -43,8 +43,8 @@ description: |-
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }
   
-    # Allow only 1h, 4h, or 8h access windows
-    allowed_durations = [3600, 14400, 28800]
+    # Allow only 1h, 3h, or 6h access windows
+    allowed_durations = [3600, 10800, 28800]
   }
   
   Non-Requestable Role (Policy-Only Access)
@@ -80,7 +80,7 @@ description: |-
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   
     prerequisite_permissions = [
       {
@@ -129,8 +129,8 @@ description: |-
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }
   
-    # Allow 1h, 8h, or permanent access
-    allowed_durations = [3600, 28800, -1]
+    # Allow 1h, 6h, or permanent access
+    allowed_durations = [3600, 21600, -1]
   }
   
   Full Example: Tiered Access Roles for a Resource
@@ -161,7 +161,7 @@ description: |-
       id = data.entitle_workflow.auto_approve.id
     }
   
-    allowed_durations = [3600, 14400, 28800]
+    allowed_durations = [3600, 10800, 21600]
   }
   
   # Write: requires manager, longer durations
@@ -177,7 +177,7 @@ description: |-
       id = data.entitle_workflow.manager_approval.id
     }
   
-    allowed_durations = [3600, 28800]
+    allowed_durations = [3600, 21600]
   
     prerequisite_permissions = [{
       default = true
@@ -203,24 +203,6 @@ description: |-
     allowed_durations = [3600, 7200]
   }
   
-  Attributes Reference
-  Required
-  name (String) The display name for the role. This is what users see when requesting access. Length must be between 2 and 50 characters.requestable (Boolean) Whether users can submit JIT access requests for this role. Set to false for roles that should only be assigned via policies (birthright access).resource (Attributes) The resource this role belongs to. See resource below.allowed_durations (Set of Number) The access durations (in seconds) available for this role. Use -1 for permanent/unlimited access. Common values:
-  3600 = 1 hour7200 = 2 hours14400 = 4 hours28800 = 8 hours86400 = 24 hours-1 = permanent (no expiry)
-  Optional
-  workflow (Attributes) The approval workflow for JIT access requests to this role. If not set, the resource or integration workflow is used as a fallback. See workflow below.prerequisite_permissions (Attributes List) Roles that are automatically granted alongside this role when a request is approved. See prerequisite_permissions below.virtualized_role (Attributes) A virtualized role mapping for dynamic permission assignment. See virtualized_role below.
-  Read-Only
-  id (String) The unique identifier of the role (UUID format).
-  resource attribute
-  id (Required, String) The unique identifier of the resource this role belongs to. Obtain resource IDs from the entitle_resource data source or from entitle_resources.name (Read-Only, String) The name of the resource.
-  workflow attribute
-  id (Required, String) The unique identifier of the workflow to use for JIT access requests to this role. Obtain workflow IDs from the entitle_workflow data source.name (Read-Only, String) The name of the assigned workflow.
-  prerequisite_permissions
-  Each prerequisite permission entry:
-  role (Required, Attributes) The role to automatically grant alongside this one:
-  id (Required, String) The unique identifier of the prerequisite role.name (Read-Only, String) The name of the prerequisite role.resource (Read-Only, Attributes) The resource associated with the prerequisite role.default (Optional, Boolean) When true, this prerequisite permission is automatically included with the role request without requiring separate user selection. Defaults to false.
-  virtualized_role
-  id (Required, String) The unique identifier of the virtualized role to map to.name (Read-Only, String) The name of the virtualized role.
   Import
   Existing roles can be imported using their UUID:
   
@@ -315,8 +297,8 @@ resource "entitle_role" "prod_admin" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  # Allow only 1h, 4h, or 8h access windows
-  allowed_durations = [3600, 14400, 28800]
+  # Allow only 1h, 3h, or 6h access windows
+  allowed_durations = [3600, 10800, 28800]
 }
 ```
 
@@ -358,7 +340,7 @@ resource "entitle_role" "db_write" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 
   prerequisite_permissions = [
     {
@@ -413,8 +395,8 @@ resource "entitle_role" "flexible_access" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  # Allow 1h, 8h, or permanent access
-  allowed_durations = [3600, 28800, -1]
+  # Allow 1h, 6h, or permanent access
+  allowed_durations = [3600, 21600, -1]
 }
 ```
 
@@ -448,7 +430,7 @@ resource "entitle_role" "app_read" {
     id = data.entitle_workflow.auto_approve.id
   }
 
-  allowed_durations = [3600, 14400, 28800]
+  allowed_durations = [3600, 10800, 21600]
 }
 
 # Write: requires manager, longer durations
@@ -464,7 +446,7 @@ resource "entitle_role" "app_write" {
     id = data.entitle_workflow.manager_approval.id
   }
 
-  allowed_durations = [3600, 28800]
+  allowed_durations = [3600, 21600]
 
   prerequisite_permissions = [{
     default = true
@@ -490,56 +472,6 @@ resource "entitle_role" "app_admin" {
   allowed_durations = [3600, 7200]
 }
 ```
-
-## Attributes Reference
-
-### Required
-
-- `name` (String) The display name for the role. This is what users see when requesting access. Length must be between 2 and 50 characters.
-- `requestable` (Boolean) Whether users can submit JIT access requests for this role. Set to `false` for roles that should only be assigned via policies (birthright access).
-- `resource` (Attributes) The resource this role belongs to. See [resource](#resource-attribute) below.
-- `allowed_durations` (Set of Number) The access durations (in seconds) available for this role. Use `-1` for permanent/unlimited access. Common values:
-    - `3600` = 1 hour
-    - `7200` = 2 hours
-    - `14400` = 4 hours
-    - `28800` = 8 hours
-    - `86400` = 24 hours
-    - `-1` = permanent (no expiry)
-
-### Optional
-
-- `workflow` (Attributes) The approval workflow for JIT access requests to this role. If not set, the resource or integration workflow is used as a fallback. See [workflow](#workflow-attribute) below.
-- `prerequisite_permissions` (Attributes List) Roles that are automatically granted alongside this role when a request is approved. See [prerequisite_permissions](#prerequisite_permissions) below.
-- `virtualized_role` (Attributes) A virtualized role mapping for dynamic permission assignment. See [virtualized_role](#virtualized_role) below.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the role (UUID format).
-
-### resource attribute
-
-- `id` (Required, String) The unique identifier of the resource this role belongs to. Obtain resource IDs from the `entitle_resource` data source or from `entitle_resources`.
-- `name` (Read-Only, String) The name of the resource.
-
-### workflow attribute
-
-- `id` (Required, String) The unique identifier of the workflow to use for JIT access requests to this role. Obtain workflow IDs from the `entitle_workflow` data source.
-- `name` (Read-Only, String) The name of the assigned workflow.
-
-### prerequisite_permissions
-
-Each prerequisite permission entry:
-
-- `role` (Required, Attributes) The role to automatically grant alongside this one:
-    - `id` (Required, String) The unique identifier of the prerequisite role.
-    - `name` (Read-Only, String) The name of the prerequisite role.
-    - `resource` (Read-Only, Attributes) The resource associated with the prerequisite role.
-- `default` (Optional, Boolean) When `true`, this prerequisite permission is automatically included with the role request without requiring separate user selection. Defaults to `false`.
-
-### virtualized_role
-
-- `id` (Required, String) The unique identifier of the virtualized role to map to.
-- `name` (Read-Only, String) The name of the virtualized role.
 
 ## Import
 
@@ -618,7 +550,23 @@ resource "entitle_role" "example" {
 
 ### Required
 
-- `allowed_durations` (Set of Number) As the admin, you can set different durations for the role, compared to the workflow linked to it.
+- `allowed_durations` (Set of Number) As the admin, you can set different durations for the role, compared to the workflow linked to it. 
+Allowed values:
+  - 1800 - 30min
+  - 3600 - 1 hour
+  - 10800 - 3 hours
+  - 21600 - 6 hours
+  - 43200 - 12 hours
+  - 57600 - 16 hours
+  - 86400 - 24 hours
+  - 259200 - 3 days
+  - 604800 - 7 days
+  - 2628000  - ~30,4 days
+  - 7884000 - 91,25 days
+  - 15768000 - 182,5 days
+  - 31536000 - 365 days
+  - 63072000 - 730 days
+  - -1 - unlimited
 - `name` (String) The display name for Entitle Role.
 - `requestable` (Boolean) Indicates if the role is requestable (default: true)
 - `resource` (Attributes) In this field, you can assign an existing resource to the new role. (see [below for nested schema](#nestedatt--resource))

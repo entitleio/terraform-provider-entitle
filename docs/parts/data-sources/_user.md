@@ -54,7 +54,7 @@ resource "entitle_resource" "my_resource" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations = [3600, 28800]
+  allowed_durations = [3600, 21600]
 }
 ```
 
@@ -76,7 +76,7 @@ resource "entitle_integration" "github" {
   }
 
   workflow = { id = "7d080bfa-9143-11ee-b9d1-0242ac120001" }
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
   allow_creating_accounts = true
 }
 ```

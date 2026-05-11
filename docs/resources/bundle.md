@@ -162,19 +162,6 @@ description: |-
     allowed_durations = [28800, 86400]
   }
   
-  Attributes Reference
-  Required
-  name (String) The display name of the bundle. This is what users see in the access request catalog. Length must be between 2 and 50 characters.description (String) An extended description of the bundle explaining what access it grants and who it's for. For example: "Permissions bundle for junior accountants".workflow (Attributes) The approval workflow triggered when a user requests this bundle. See workflow below.roles (Attributes List) The roles included in this bundle. See roles below.allowed_durations (Set of Number) The access duration options (in seconds) available when requesting this bundle. Use -1 for permanent access. Overrides the organization default. Common values:
-  3600 = 1 hour28800 = 8 hours86400 = 24 hours (1 day)604800 = 7 days-1 = permanent
-  Optional
-  category (String) An organizational category for this bundle. Typically describes a department or team (e.g., "Marketing", "Engineering", "Finance"). Can be a new value to create a new category.tags (Set of String) Searchable metadata tags for this bundle (e.g., "accounting", "ATL_Marketing", "Production_Line_14"). Helps users find the bundle in the request catalog.
-  Read-Only
-  id (String) The unique identifier of the bundle (UUID format).
-  workflow attribute
-  id (Required, String) The unique identifier of the workflow for this bundle. Obtain from the entitle_workflow data source.name (Read-Only, String) The name of the workflow.
-  roles attribute
-  Each role entry in the bundle:
-  id (Optional, String) The unique identifier of the role to include. Obtain role IDs from the entitle_roles data source.name (Read-Only, String) The name of the role.resource (Read-Only, Attributes) The resource and integration associated with this role.
   Import
   Existing bundles can be imported using their UUID:
   
@@ -400,43 +387,6 @@ resource "entitle_bundle" "dynamic_bundle" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `name` (String) The display name of the bundle. This is what users see in the access request catalog. Length must be between 2 and 50 characters.
-- `description` (String) An extended description of the bundle explaining what access it grants and who it's for. For example: `"Permissions bundle for junior accountants"`.
-- `workflow` (Attributes) The approval workflow triggered when a user requests this bundle. See [workflow](#workflow-attribute) below.
-- `roles` (Attributes List) The roles included in this bundle. See [roles](#roles-attribute) below.
-- `allowed_durations` (Set of Number) The access duration options (in seconds) available when requesting this bundle. Use `-1` for permanent access. Overrides the organization default. Common values:
-    - `3600` = 1 hour
-    - `28800` = 8 hours
-    - `86400` = 24 hours (1 day)
-    - `604800` = 7 days
-    - `-1` = permanent
-
-### Optional
-
-- `category` (String) An organizational category for this bundle. Typically describes a department or team (e.g., `"Marketing"`, `"Engineering"`, `"Finance"`). Can be a new value to create a new category.
-- `tags` (Set of String) Searchable metadata tags for this bundle (e.g., `"accounting"`, `"ATL_Marketing"`, `"Production_Line_14"`). Helps users find the bundle in the request catalog.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the bundle (UUID format).
-
-### workflow attribute
-
-- `id` (Required, String) The unique identifier of the workflow for this bundle. Obtain from the `entitle_workflow` data source.
-- `name` (Read-Only, String) The name of the workflow.
-
-### roles attribute
-
-Each role entry in the bundle:
-
-- `id` (Optional, String) The unique identifier of the role to include. Obtain role IDs from the `entitle_roles` data source.
-- `name` (Read-Only, String) The name of the role.
-- `resource` (Read-Only, Attributes) The resource and integration associated with this role.
-
 ## Import
 
 Existing bundles can be imported using their UUID:
@@ -516,7 +466,23 @@ resource "entitle_bundle" "example" {
 
 ### Required
 
-- `allowed_durations` (Set of Number) You can override your organization’s default duration on each bundle
+- `allowed_durations` (Set of Number) You can override your organization’s default duration on each bundle. 
+Allowed values:
+  - 1800 - 30min
+  - 3600 - 1 hour
+  - 10800 - 3 hours
+  - 21600 - 6 hours
+  - 43200 - 12 hours
+  - 57600 - 16 hours
+  - 86400 - 24 hours
+  - 259200 - 3 days
+  - 604800 - 7 days
+  - 2628000  - ~30,4 days
+  - 7884000 - 91,25 days
+  - 15768000 - 182,5 days
+  - 31536000 - 365 days
+  - 63072000 - 730 days
+  - -1 - unlimited
 - `description` (String) The bundle’s extended description, for example, “Permissions bundle for junior accountants” or “factory floor worker permissions bundle”.
 - `name` (String) The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.
 - `roles` (Attributes List) List of roles included in the bundle. (see [below for nested schema](#nestedatt--roles))

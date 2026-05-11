@@ -96,17 +96,6 @@ resource "entitle_access_request_forward" "team_vacation" {
 }
 ```
 
-## Attributes Reference
-
-### Required
-
-- `forwarder` (Attributes) The user who is delegating their access request responsibilities. See [forwarder / target](#forwarder--target) below.
-- `target` (Attributes) The user who will receive and handle the forwarded tasks. See [forwarder / target](#forwarder--target) below.
-
-### Read-Only
-
-- `id` (String) The unique identifier of the access request forward (UUID format).
-
 ### forwarder / target
 
 Both `forwarder` and `target` accept the same attributes:

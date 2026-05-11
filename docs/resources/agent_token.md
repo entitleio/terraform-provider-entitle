@@ -104,11 +104,6 @@ description: |-
     allow_creating_accounts = false
   }
   
-  Attributes Reference
-  Required
-  name (String) A descriptive display name for the agent token. Use a name that identifies the agent's purpose or environment (e.g., "production-datacenter-agent", "kubernetes-cluster-agent").
-  Read-Only
-  id (String) The unique identifier of the agent token (UUID format).token (String, Sensitive) The authentication token value. This value is only available at creation time. After the initial terraform apply, it cannot be retrieved again. Store it securely immediately — for example, in a secrets manager like AWS Secrets Manager, HashiCorp Vault, or Azure Key Vault.
   Import
   Existing agent tokens can be imported using their UUID:
   
@@ -259,17 +254,6 @@ resource "entitle_integration" "internal_postgres" {
   allow_creating_accounts = false
 }
 ```
-
-## Attributes Reference
-
-### Required
-
-- `name` (String) A descriptive display name for the agent token. Use a name that identifies the agent's purpose or environment (e.g., `"production-datacenter-agent"`, `"kubernetes-cluster-agent"`).
-
-### Read-Only
-
-- `id` (String) The unique identifier of the agent token (UUID format).
-- `token` (String, **Sensitive**) The authentication token value. **This value is only available at creation time.** After the initial `terraform apply`, it cannot be retrieved again. Store it securely immediately — for example, in a secrets manager like AWS Secrets Manager, HashiCorp Vault, or Azure Key Vault.
 
 ## Import
 
