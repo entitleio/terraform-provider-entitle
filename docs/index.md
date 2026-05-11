@@ -10,7 +10,7 @@ description: |-
   The provider requires an API key to authenticate with the Entitle API.
   Getting Your API Key
   To obtain an API key:
-  Log in to your Entitle accountNavigate to Organization Settings → TokensClick Create Token or Generate New TokenProvide a name/description for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
+  Log in to your Entitle accountNavigate to Organization Settings → TokensClick Create Token or Generate New TokenProvide a name for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
   → View detailed instructions https://docs.beyondtrust.com/entitle/docs/org-settings#view-and-manage-tokens
   Important: API tokens are organization-level credentials. Treat them as sensitive secrets and never commit them to version control.
   Configuring the API Key
@@ -27,17 +27,18 @@ description: |-
   
   Regional Endpoints
   Entitle provides different API endpoints based on your organization's region:
-  | Region | Endpoint URL | Usage |
-  |--------|--------------|-------|
-  | **EU (Default)** | `https://api.entitle.io` | European region (default) |
-  | **US** | `https://api.us.entitle.io` | United States region |
+  | Region           | Endpoint URL                | Usage                     |
+  |------------------|-----------------------------|---------------------------|
+  | **EU (Default)** | `https://api.entitle.io`    | European region (default) |
+  | **US**           | `https://api.us.entitle.io` | United States region      |
+  | **CA**           | `https://api.ca.entitle.io` | Canada region             |
   How to determine your region:
   Check your Entitle login URL or contact your Entitle administratorYour organization's region is determined during initial setupIf unsure, the default EU endpoint is https://api.entitle.io
   The following environment variables can be used as an alternative to provider configuration:
   | Environment Variable | Description |
   |---------------------|-------------|
   | `ENTITLE_API_KEY` | API key for authentication |
-  | `ENTITLE_ENDPOINT` | API endpoint URL |
+  | `ENTITLE_API_ENDPOINT` | API endpoint URL |
 ---
 
 # entitle Provider
@@ -62,7 +63,7 @@ To obtain an API key:
 1. Log in to your Entitle account
 2. Navigate to **Organization Settings** → **Tokens**
 3. Click **Create Token** or **Generate New Token**
-4. Provide a name/description for the token
+4. Provide a name for the token
 5. Copy the token immediately (it will only be shown once)
 6. Store it securely in your secret management system
 
@@ -90,10 +91,11 @@ export ENTITLE_API_KEY="your-api-key-here"
 
 Entitle provides different API endpoints based on your organization's region:
 
-| Region | Endpoint URL | Usage |
-|--------|--------------|-------|
-| **EU (Default)** | `https://api.entitle.io` | European region (default) |
-| **US** | `https://api.us.entitle.io` | United States region |
+| Region           | Endpoint URL                | Usage                     |
+|------------------|-----------------------------|---------------------------|
+| **EU (Default)** | `https://api.entitle.io`    | European region (default) |
+| **US**           | `https://api.us.entitle.io` | United States region      |
+| **CA**           | `https://api.ca.entitle.io` | Canada region             |
 
 **How to determine your region:**
 - Check your Entitle login URL or contact your Entitle administrator
@@ -105,7 +107,7 @@ The following environment variables can be used as an alternative to provider co
 | Environment Variable | Description |
 |---------------------|-------------|
 | `ENTITLE_API_KEY` | API key for authentication |
-| `ENTITLE_ENDPOINT` | API endpoint URL |
+| `ENTITLE_API_ENDPOINT` | API endpoint URL |
 
 ## Example Usage
 

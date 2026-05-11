@@ -98,4 +98,4 @@ Always use the `entitle_applications` data source to confirm available applicati
 
 - Application names are case-sensitive and must be lowercase when used in `entitle_integration.application.name`
 - This data source returns all applications enabled for your Entitle tenant — contact Entitle support to enable additional integrations
-- Refer to the [Entitle integrations documentation](https://docs.beyondtrust.com/entitle/docs/integrations) for the full list of supported applications and their `connection_json` formats
+- Refer to the [Entitle integrations documentation](https://docs.beyondtrust.com/entitle/docs/about-entitle-integrations) for the full list of supported applications and their `connection_json` formats

@@ -2,7 +2,6 @@ package workflows
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math/big"

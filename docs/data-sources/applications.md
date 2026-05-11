@@ -65,7 +65,7 @@ description: |-
   "aws" — Amazon Web Services"github" — GitHub"slack" — Slack"okta" — Okta"google" — Google Workspace"postgresql" — PostgreSQL"mongodb" — MongoDB"pagerduty" — PagerDuty"opsgenie" — Opsgenie
   Always use the entitle_applications data source to confirm available applications in your specific Entitle environment — the list may vary based on your organization's setup.
   Notes
-  Application names are case-sensitive and must be lowercase when used in entitle_integration.application.nameThis data source returns all applications enabled for your Entitle tenant — contact Entitle support to enable additional integrationsRefer to the Entitle integrations documentation https://docs.beyondtrust.com/entitle/docs/integrations for the full list of supported applications and their connection_json formats
+  Application names are case-sensitive and must be lowercase when used in entitle_integration.application.nameThis data source returns all applications enabled for your Entitle tenant — contact Entitle support to enable additional integrationsRefer to the Entitle integrations documentation https://docs.beyondtrust.com/entitle/docs/about-entitle-integrations for the full list of supported applications and their connection_json formats
 ---
 
 # entitle_applications (Data Source)
@@ -170,7 +170,7 @@ Always use the `entitle_applications` data source to confirm available applicati
 
 - Application names are case-sensitive and must be lowercase when used in `entitle_integration.application.name`
 - This data source returns all applications enabled for your Entitle tenant — contact Entitle support to enable additional integrations
-- Refer to the [Entitle integrations documentation](https://docs.beyondtrust.com/entitle/docs/integrations) for the full list of supported applications and their `connection_json` formats
+- Refer to the [Entitle integrations documentation](https://docs.beyondtrust.com/entitle/docs/about-entitle-integrations) for the full list of supported applications and their `connection_json` formats
 
 
 

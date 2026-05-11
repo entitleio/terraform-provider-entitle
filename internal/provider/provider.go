@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	_ "embed"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"

@@ -30,7 +30,7 @@ resource "entitle_workflow" "auto_approve" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 14400  # 4 hours
+    under_duration = 10800  # 3 hours
     any_schedule   = true
 
     approval_flow = {
@@ -63,7 +63,7 @@ resource "entitle_workflow" "manager_approval" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 28800  # 8 hours
+    under_duration = 21600  # 6 hours
     any_schedule   = true
 
     approval_flow = {
@@ -102,7 +102,7 @@ resource "entitle_workflow" "production_access" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200  # 2 hours
+    under_duration = 3600  # 1 hour
     any_schedule   = true
 
     approval_flow = {
@@ -406,9 +406,9 @@ resource "entitle_workflow" "duration_based" {
       in_schedules = []
     },
     {
-      # Rule 2: Longer duration (1-8 hours) - requires manager
+      # Rule 2: Longer duration (1-6 hours) - requires manager
       sort_order     = 2
-      under_duration = 28800  # 8 hours
+      under_duration = 21600  # 6 hours
       any_schedule   = true
 
       approval_flow = {
@@ -428,9 +428,9 @@ resource "entitle_workflow" "duration_based" {
       in_schedules = []
     },
     {
-      # Rule 3: Very long duration (over 8 hours) - requires security
+      # Rule 3: Very long duration (over 6 hours) - requires security
       sort_order     = 3
-      under_duration = 86400  # 24 hours (catches everything above 8 hours)
+      under_duration = -1  # catches everything above 6 hours
       any_schedule   = true
 
       approval_flow = {
@@ -478,7 +478,7 @@ resource "entitle_workflow" "schedule_based" {
     {
       # Rule 1: During business hours - auto approve short access
       sort_order     = 1
-      under_duration = 14400  # 4 hours
+      under_duration = 3600  # 1 hour
       any_schedule   = false
 
       in_schedules = [local.business_hours_schedule_id]
@@ -501,7 +501,7 @@ resource "entitle_workflow" "schedule_based" {
     {
       # Rule 2: After hours - requires security approval
       sort_order     = 2
-      under_duration = 7200  # 2 hours
+      under_duration = 3600  # 1 hour
       any_schedule   = true  # Applies when business hours schedule doesn't match
 
       approval_flow = {
@@ -549,7 +549,7 @@ resource "entitle_workflow" "group_based" {
     {
       # Rule 1: Developers get auto-approval
       sort_order     = 1
-      under_duration = 7200  # 2 hours
+      under_duration = 10800  # 3 hours
       any_schedule   = true
 
       in_groups = [data.entitle_directory_groups.developers.directory_groups[0].id]
@@ -606,7 +606,7 @@ resource "entitle_workflow" "resource_owner" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200  # 2 hours
+    under_duration = 10800  # 3 hours
     any_schedule   = true
 
     approval_flow = {
@@ -734,7 +734,7 @@ resource "entitle_workflow" "manager_with_fallback" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200
+    under_duration = 10800
     any_schedule   = true
 
     approval_flow = {
@@ -777,7 +777,7 @@ A rule matches an access request when **ALL** of the following conditions are tr
 ### Rule Attributes
 
 - `sort_order` (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
-
+TODO:
 - `under_duration` (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
     - Example: `3600` = 1 hour, `7200` = 2 hours, `86400` = 24 hours
     - Use a high value (e.g., `999999999`) for a catch-all rule
@@ -992,35 +992,6 @@ This provides flexibility and ensures requests can be approved even if:
 - The manager is unavailable (Security or CISO can approve)
 - Multiple approval paths exist for faster processing
 
-## Attributes Reference
-
-### Arguments (Configurable)
-
-- `name` (Required, String) The workflow's display name. Must be between 2 and 50 characters and unique within your organization. Used to identify the workflow in the Entitle UI and when referencing it in other resources.
-
-- `description` (Optional, String) A human-readable description of the workflow's purpose and intended use. Shown in the Entitle UI to help administrators understand when to assign this workflow.
-
-- `rules` (Optional, Attributes List) The ordered list of conditional approval rules that define the workflow's behavior. Rules are evaluated in ascending `sort_order` order; the first matching rule determines the approval process. If no rules are defined, the workflow does not approve any access requests.
-
-  Each rule contains:
-  - `sort_order` (Required, Integer) Evaluation order — lower numbers are evaluated first.
-  - `under_duration` (Required, Integer) Maximum request duration (in seconds) for this rule to apply.
-  - `any_schedule` (Required, Boolean) If `true`, this rule applies at all times. If `false`, it only applies during the schedules listed in `in_schedules`.
-  - `in_schedules` (Required, List of Strings) Schedule UUIDs during which this rule applies. Must be `[]` when `any_schedule` is `true`.
-  - `in_groups` (Required, List of Strings) Group UUIDs for which this rule applies. Empty (`[]`) means all users.
-  - `approval_flow` (Required, Object) The approval process for requests matching this rule:
-    - `steps` (Required, Attributes List) Ordered approval steps:
-      - `sort_order` (Required, Integer) Execution order of this step.
-      - `operator` (Required, String) `"or"` (any one approver) or `"and"` (all approvers).
-      - `approval_entities` (Required, Attributes List) Entities who can approve at this step. See [Approval Entities](#approval-entities).
-      - `notified_entities` (Required, Attributes List) Entities notified but not required to approve. Same structure as `approval_entities`. Can be `[]`.
-
-### Exported (Read-Only)
-
-- `id` (String) The unique identifier of the workflow (UUID format). Assigned by Entitle on creation; use this ID when referencing the workflow in `entitle_integration`, `entitle_resource`, `entitle_role`, or `entitle_bundle`.
-
-**Note:** Workflows do not expose metadata fields such as `created_at`, `updated_at`, `created_by`, or usage statistics via Terraform. These details are available only through the Entitle UI.
-
 ## Import
 
 Workflows can be imported using their UUID:
@@ -1078,7 +1049,7 @@ rules = [
   },
   {
     sort_order = 3
-    under_duration = 999999999 # Catch-all for longer durations
+    under_duration = -1 # Catch-all for longer durations
     # ... long duration approval ...
   }
 ]
@@ -1087,14 +1058,23 @@ rules = [
 ### Duration Best Practices
 
 - Use seconds for `under_duration`:
+    - 30 minutes = `1800`
     - 1 hour = `3600`
-    - 2 hours = `7200`
-    - 4 hours = `14400`
-    - 8 hours = `28800`
-    - 24 hours = `86400`
+    - 3 hours = `10800`
+    - 4 hours = `21600`
+    - 6 hours = `43200`
+    - 16 hours = `57600`
+    - 1 day = `86400`
+    - 3 days = `259200`
     - 7 days = `604800`
+    - ~30,4 days = `2628000`
+    - 91,25 days = `7884000`
+    - 182,5 days = `15768000`
+    - 365 days = `31536000`
+    - 730 days = `63072000`
+    - all = `-1`
 
-- Create a final catch-all rule with a very large `under_duration` (e.g., `999999999`) to handle any duration
+- Create a final catch-all rule with `under_duration` `-1` to handle any duration
 
 - Order rules from shortest to longest duration for logical flow
 
@@ -1207,14 +1187,14 @@ rules = [
   },
   {
     sort_order = 2
-    under_duration = 14400  # 1-4h: Manager
+    under_duration = 10800  # 1-3h: Manager
     approval_flow = {
       steps = [{ operator = "or", approval_entities = [{ type = "Manager" }] }]
     }
   },
   {
     sort_order = 3
-    under_duration = 999999999  # >4h: Manager + Security (sequential)
+    under_duration = -1  # >3h: Manager + Security (sequential)
     approval_flow = {
       steps = [
         { sort_order = 1, operator = "or", approval_entities = [{ type = "Manager" }] },
