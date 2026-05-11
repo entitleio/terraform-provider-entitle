@@ -7,12 +7,12 @@ import (
 )
 
 type workflowRulesModel struct {
-	SortOrder     types.Number                   `tfsdk:"sort_order" json:"sortOrder"`
-	UnderDuration types.Number                   `tfsdk:"under_duration" json:"underDuration"`
-	ApprovalFlow  workflowRulesApprovalFlowModel `tfsdk:"approval_flow" json:"approvalFlow"`
-	InGroups      []*utils.IdNameModel           `tfsdk:"in_groups" json:"inGroups"`
-	InSchedules   []*utils.IdNameModel           `tfsdk:"in_schedules" json:"inSchedules"`
-	AnySchedule   types.Bool                     `tfsdk:"any_schedule" json:"anySchedule"`
+	SortOrder     types.Number                    `tfsdk:"sort_order" json:"sortOrder"`
+	UnderDuration types.Number                    `tfsdk:"under_duration" json:"underDuration"`
+	ApprovalFlow  *workflowRulesApprovalFlowModel `tfsdk:"approval_flow" json:"approvalFlow"`
+	InGroups      []*utils.IdNameModel            `tfsdk:"in_groups" json:"inGroups"`
+	InSchedules   []*utils.IdNameModel            `tfsdk:"in_schedules" json:"inSchedules"`
+	AnySchedule   types.Bool                      `tfsdk:"any_schedule" json:"anySchedule"`
 }
 
 type workflowRulesApprovalFlowModel struct {

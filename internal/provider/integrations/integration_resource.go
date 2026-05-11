@@ -935,6 +935,8 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		Owner:                                &client.UserEntitySchema{Id: data.Owner.Id.ValueString()},
 		Workflow:                             &workflow,
 		PrerequisitePermissions:              prerequisitePermissions,
+		Requestable:                          data.Requestable.ValueBoolPointer(),
+		RequestableByDefault:                 data.RequestableByDefault.ValueBoolPointer(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
