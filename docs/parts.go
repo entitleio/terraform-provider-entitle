@@ -7,7 +7,7 @@ var (
 	ProviderMarkdownDescription string
 )
 
-// data sources
+// List of data sources.
 var (
 	//go:embed parts/data-sources/_access_request_forward.md
 	AccessRequestForwardDataSourceMarkdownDescription string
@@ -45,7 +45,7 @@ var (
 	WorkflowDataSourceMarkdownDescription string
 )
 
-// resources
+// List of resources.
 var (
 	//go:embed parts/resources/_access_request_forward.md
 	AccessRequestForwardResourceMarkdownDescription string
