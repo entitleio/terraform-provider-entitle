@@ -11,7 +11,7 @@ The Entitle provider allows you to manage your [Entitle](https://www.entitle.io)
 
 The provider requires an API key to authenticate with the Entitle API.
 
-### Getting Your API Key - TODO: different types
+### Getting Your API Key
 
 To obtain an API key:
 
