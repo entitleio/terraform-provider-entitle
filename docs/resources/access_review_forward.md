@@ -3,12 +3,261 @@
 page_title: "entitle_access_review_forward Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle Access Review Forward allows delegating access review responsibilities to another user. This enables review tasks to be reassigned when the original reviewer is unavailable. Read more about access reviews https://docs.beyondtrust.com/entitle/docs/access-review.
+  An Entitle Access Review Forward delegates access review responsibilities from one user to another. During periodic access review campaigns, reviewers are assigned to certify that the people they manage still require their current access. When a reviewer is unavailable — due to vacation, leave, or organizational changes — their review tasks can be forwarded to a designated colleague.
+  This ensures access reviews are not blocked or missed due to individual unavailability, maintaining compliance and audit continuity. Read more about access reviews https://docs.beyondtrust.com/entitle/docs/access-review.
+  Key Concepts
+  Access Review: A periodic campaign where managers and resource owners certify that users' access is still appropriate and necessaryReviewer: The user assigned to review and certify access for their direct reports or assigned resourcesForwarder: The reviewer who is delegating their review responsibilities to someone elseTarget: The user who will take over the forwarded review tasksScope: All access review tasks assigned to the forwarder are redirected to the target
+  When to Use Access Review Forwards
+  A manager going on vacation while an access review campaign is activeA reviewer changing roles mid-campaign and needing their tasks reassignedA compliance requirement to ensure no review tasks remain unaddressed during absencesPre-configuring delegation for known planned absences before a review campaign begins
+  Example Usage
+  Basic Access Review Forward
+  Delegate all of Alice's review tasks to Bob:
+  
+  resource "entitle_access_review_forward" "alice_to_bob" {
+    forwarder = {
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # Alice's user ID
+    }
+    target = {
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"  # Bob's user ID
+    }
+  }
+  
+  Using Email Instead of ID
+  Reference users by email address rather than UUID:
+  
+  resource "entitle_access_review_forward" "vacation_cover" {
+    forwarder = {
+      email = "alice@example.com"
+    }
+    target = {
+      email = "bob@example.com"
+    }
+  }
+  
+  Data-Driven Forward Using Data Sources
+  Look up users dynamically and create a forward:
+  
+  data "entitle_user" "reviewer" {
+    email = "alice@example.com"
+  }
+  
+  data "entitle_user" "backup_reviewer" {
+    email = "bob@example.com"
+  }
+  
+  resource "entitle_access_review_forward" "review_delegation" {
+    forwarder = {
+      id = data.entitle_user.reviewer.id
+    }
+    target = {
+      id = data.entitle_user.backup_reviewer.id
+    }
+  }
+  
+  Team-Wide Delegation
+  Pre-configure forwards for multiple reviewers during a planned company event:
+  
+  locals {
+    review_delegates = {
+      "manager1@example.com" = "deputy1@example.com"
+      "manager2@example.com" = "deputy2@example.com"
+      "manager3@example.com" = "deputy3@example.com"
+    }
+  }
+  
+  resource "entitle_access_review_forward" "conference_week" {
+    for_each = local.review_delegates
+  
+    forwarder = {
+      email = each.key
+    }
+    target = {
+      email = each.value
+    }
+  }
+  
+  forwarder / target
+  Both forwarder and target accept the same attributes:
+  id (Optional, String) The user's unique identifier (UUID format). Obtain from the entitle_user data source.email (Optional, String) The user's email address. Can be used as an alternative to id.
+  Note: At least one of id or email should be provided. If both are provided, id takes precedence.
+  Import
+  Existing access review forwards can be imported using their UUID:
+  
+  terraform import entitle_access_review_forward.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  
+  Finding the Forward ID
+  Access Review Forward IDs can be retrieved via the entitle_access_review_forward data source:
+  
+  data "entitle_access_review_forward" "existing" {
+    id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  }
+  
+  Notes and Best Practices
+  Lifecycle Management
+  Access review forwards persist until the Terraform resource is destroyedRemove the forward after the planned absence ends to restore the original reviewer's responsibilitiesUse Terraform workspaces or separate state files if you manage forwards as short-lived configuration
+  Forward Behavior
+  All access review tasks assigned to the forwarder are redirected to the target while the forward is activeThe forward takes effect immediately upon creationMultiple forwards can exist simultaneously (e.g., multiple reviewers delegating to a single backup, or one reviewer delegating to multiple targets)
+  Compliance Considerations
+  Ensure the target user has appropriate context and authority to make review decisions on behalf of the forwarderAccess review forwards should be used sparingly and audited — excessive or long-running forwards may raise compliance concernsSome compliance frameworks require documentation of delegation decisions; record the business justification outside of Terraform
+  Difference from Access Request Forward
+  Access Review Forward (entitle_access_review_forward): Delegates periodic review responsibilities — certifying that existing access is still appropriate during a review campaignAccess Request Forward (entitle_access_request_forward): Delegates real-time request responsibilities — approving or managing incoming JIT access requests
+  Use the correct resource type based on what kind of tasks need to be forwarded.
 ---
 
 # entitle_access_review_forward (Resource)
 
-Entitle Access Review Forward allows delegating access review responsibilities to another user. This enables review tasks to be reassigned when the original reviewer is unavailable. [Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).
+An Entitle Access Review Forward delegates access review responsibilities from one user to another. During periodic access review campaigns, reviewers are assigned to certify that the people they manage still require their current access. When a reviewer is unavailable — due to vacation, leave, or organizational changes — their review tasks can be forwarded to a designated colleague.
+
+This ensures access reviews are not blocked or missed due to individual unavailability, maintaining compliance and audit continuity. [Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).
+
+## Key Concepts
+
+- **Access Review**: A periodic campaign where managers and resource owners certify that users' access is still appropriate and necessary
+- **Reviewer**: The user assigned to review and certify access for their direct reports or assigned resources
+- **Forwarder**: The reviewer who is delegating their review responsibilities to someone else
+- **Target**: The user who will take over the forwarded review tasks
+- **Scope**: All access review tasks assigned to the forwarder are redirected to the target
+
+## When to Use Access Review Forwards
+
+- A manager going on vacation while an access review campaign is active
+- A reviewer changing roles mid-campaign and needing their tasks reassigned
+- A compliance requirement to ensure no review tasks remain unaddressed during absences
+- Pre-configuring delegation for known planned absences before a review campaign begins
+
+## Example Usage
+
+### Basic Access Review Forward
+
+Delegate all of Alice's review tasks to Bob:
+
+```terraform
+resource "entitle_access_review_forward" "alice_to_bob" {
+  forwarder = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # Alice's user ID
+  }
+  target = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"  # Bob's user ID
+  }
+}
+```
+
+### Using Email Instead of ID
+
+Reference users by email address rather than UUID:
+
+```terraform
+resource "entitle_access_review_forward" "vacation_cover" {
+  forwarder = {
+    email = "alice@example.com"
+  }
+  target = {
+    email = "bob@example.com"
+  }
+}
+```
+
+### Data-Driven Forward Using Data Sources
+
+Look up users dynamically and create a forward:
+
+```terraform
+data "entitle_user" "reviewer" {
+  email = "alice@example.com"
+}
+
+data "entitle_user" "backup_reviewer" {
+  email = "bob@example.com"
+}
+
+resource "entitle_access_review_forward" "review_delegation" {
+  forwarder = {
+    id = data.entitle_user.reviewer.id
+  }
+  target = {
+    id = data.entitle_user.backup_reviewer.id
+  }
+}
+```
+
+### Team-Wide Delegation
+
+Pre-configure forwards for multiple reviewers during a planned company event:
+
+```terraform
+locals {
+  review_delegates = {
+    "manager1@example.com" = "deputy1@example.com"
+    "manager2@example.com" = "deputy2@example.com"
+    "manager3@example.com" = "deputy3@example.com"
+  }
+}
+
+resource "entitle_access_review_forward" "conference_week" {
+  for_each = local.review_delegates
+
+  forwarder = {
+    email = each.key
+  }
+  target = {
+    email = each.value
+  }
+}
+```
+
+### forwarder / target
+
+Both `forwarder` and `target` accept the same attributes:
+
+- `id` (Optional, String) The user's unique identifier (UUID format). Obtain from the `entitle_user` data source.
+- `email` (Optional, String) The user's email address. Can be used as an alternative to `id`.
+
+**Note:** At least one of `id` or `email` should be provided. If both are provided, `id` takes precedence.
+
+## Import
+
+Existing access review forwards can be imported using their UUID:
+
+```shell
+terraform import entitle_access_review_forward.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### Finding the Forward ID
+
+Access Review Forward IDs can be retrieved via the `entitle_access_review_forward` data source:
+
+```terraform
+data "entitle_access_review_forward" "existing" {
+  id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+## Notes and Best Practices
+
+### Lifecycle Management
+
+- Access review forwards persist until the Terraform resource is destroyed
+- Remove the forward after the planned absence ends to restore the original reviewer's responsibilities
+- Use Terraform workspaces or separate state files if you manage forwards as short-lived configuration
+
+### Forward Behavior
+
+- All access review tasks assigned to the forwarder are redirected to the target while the forward is active
+- The forward takes effect immediately upon creation
+- Multiple forwards can exist simultaneously (e.g., multiple reviewers delegating to a single backup, or one reviewer delegating to multiple targets)
+
+### Compliance Considerations
+
+- Ensure the target user has appropriate context and authority to make review decisions on behalf of the forwarder
+- Access review forwards should be used sparingly and audited — excessive or long-running forwards may raise compliance concerns
+- Some compliance frameworks require documentation of delegation decisions; record the business justification outside of Terraform
+
+### Difference from Access Request Forward
+
+- **Access Review Forward** (`entitle_access_review_forward`): Delegates *periodic review* responsibilities — certifying that existing access is still appropriate during a review campaign
+- **Access Request Forward** (`entitle_access_request_forward`): Delegates *real-time request* responsibilities — approving or managing incoming JIT access requests
+
+Use the correct resource type based on what kind of tasks need to be forwarded.
 
 ## Example Usage
 

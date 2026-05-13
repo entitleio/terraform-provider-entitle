@@ -3,12 +3,238 @@
 page_title: "entitle_users Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle Users with optional filters. Read more about users https://docs.beyondtrust.com/entitle/docs/users.
+  Retrieve a list of Entitle Users — the organization members who can request, approve, and hold access through Entitle. Users are synchronized from your identity provider (IdP) and identified by email address.
+  Use this data source to search for users by email or name, list users for auditing, or dynamically discover user IDs for use in resource owners, workflows, or access forwards. Read more about users https://docs.beyondtrust.com/entitle/docs/types-of-users-in-entitle.
+  Key Concepts
+  Users: Organization members synchronized from your identity providersearch: Optional free-text filter matching email address or full namePagination: Use page and per_page to navigate large result setsDifference from entitle_user: Use entitle_users (plural) to search and list; use entitle_user (singular) to look up a specific user by email
+  When to Use This Data Source
+  Finding user IDs when you know part of their name or emailListing all users for auditing purposesDiscovering user UUIDs for use in bulk configurations (e.g., creating forwards for multiple users)Searching for users without knowing their exact email
+  Example Usage
+  Get All Users
+  
+  data "entitle_users" "all" {}
+  
+  output "total_users" {
+    value = length(data.entitle_users.all.users)
+  }
+  
+  Search Users by Email or Name
+  
+  data "entitle_users" "alice_search" {
+    filter {
+      search = "alice@example.com"
+    }
+  }
+  
+  output "alice_id" {
+    value = data.entitle_users.alice_search.users[0].id
+  }
+  
+  Search Users by Name
+  
+  data "entitle_users" "engineering_leads" {
+    filter {
+      search = "engineering"
+    }
+  }
+  
+  output "engineering_user_emails" {
+    value = data.entitle_users.engineering_leads.users[*].email
+  }
+  
+  Paginate Through Large User Lists
+  
+  data "entitle_users" "page_one" {
+    filter {
+      page     = 1
+      per_page = 100
+    }
+  }
+  
+  List All Users and Their Details
+  
+  data "entitle_users" "all" {}
+  
+  output "user_directory" {
+    value = [for u in data.entitle_users.all.users : {
+      id         = u.id
+      email      = u.email
+      given_name = u.given_name
+      family_name = u.family_name
+      created_at = u.created_at
+    }]
+  }
+  
+  Bulk Access Forwards Using User Search
+  Find a group of users and create access forwards for all of them:
+  
+  data "entitle_users" "team_leads" {
+    filter {
+      search = "lead"
+    }
+  }
+  
+  data "entitle_user" "backup_approver" {
+    email = "backup@example.com"
+  }
+  
+  resource "entitle_access_request_forward" "team_lead_forwards" {
+    for_each = {
+      for u in data.entitle_users.team_leads.users :
+      u.id => u
+    }
+  
+    forwarder = { id = each.value.id }
+    target    = { id = data.entitle_user.backup_approver.id }
+  }
+  
+  Query Parameters
+  Optional
+  filter (Block) Optional filters:
+  search (String) Free-text search matching the user's email address or full name.page (Number) Page number to return, starting from 1.per_page (Number) Number of results per page.
+  Returned Attributes
+  users (Attributes List) The list of users matching the query:
+  id (String) The user's unique identifier (UUID format).email (String) The user's email address.given_name (String) The user's first name.family_name (String) The user's last name.created_at (String) The timestamp when the user was created in Entitle.
+  Notes
+  An empty filter (or omitting filter) returns all users — this can be a large result set in big organizations; use pagination accordinglysearch matches both email and full name — useful when you only know part of a user's identityFor a single known user, prefer entitle_user (singular) with email — it's simpler and faster than searching
 ---
 
 # entitle_users (Data Source)
 
-Retrieve a list of Entitle Users with optional filters. [Read more about users](https://docs.beyondtrust.com/entitle/docs/users).
+Retrieve a list of Entitle Users — the organization members who can request, approve, and hold access through Entitle. Users are synchronized from your identity provider (IdP) and identified by email address.
+
+Use this data source to search for users by email or name, list users for auditing, or dynamically discover user IDs for use in resource owners, workflows, or access forwards. [Read more about users](https://docs.beyondtrust.com/entitle/docs/types-of-users-in-entitle).
+
+## Key Concepts
+
+- **Users**: Organization members synchronized from your identity provider
+- **search**: Optional free-text filter matching email address or full name
+- **Pagination**: Use `page` and `per_page` to navigate large result sets
+- **Difference from entitle_user**: Use `entitle_users` (plural) to search and list; use `entitle_user` (singular) to look up a specific user by email
+
+## When to Use This Data Source
+
+- Finding user IDs when you know part of their name or email
+- Listing all users for auditing purposes
+- Discovering user UUIDs for use in bulk configurations (e.g., creating forwards for multiple users)
+- Searching for users without knowing their exact email
+
+## Example Usage
+
+### Get All Users
+
+```terraform
+data "entitle_users" "all" {}
+
+output "total_users" {
+  value = length(data.entitle_users.all.users)
+}
+```
+
+### Search Users by Email or Name
+
+```terraform
+data "entitle_users" "alice_search" {
+  filter {
+    search = "alice@example.com"
+  }
+}
+
+output "alice_id" {
+  value = data.entitle_users.alice_search.users[0].id
+}
+```
+
+### Search Users by Name
+
+```terraform
+data "entitle_users" "engineering_leads" {
+  filter {
+    search = "engineering"
+  }
+}
+
+output "engineering_user_emails" {
+  value = data.entitle_users.engineering_leads.users[*].email
+}
+```
+
+### Paginate Through Large User Lists
+
+```terraform
+data "entitle_users" "page_one" {
+  filter {
+    page     = 1
+    per_page = 100
+  }
+}
+```
+
+### List All Users and Their Details
+
+```terraform
+data "entitle_users" "all" {}
+
+output "user_directory" {
+  value = [for u in data.entitle_users.all.users : {
+    id         = u.id
+    email      = u.email
+    given_name = u.given_name
+    family_name = u.family_name
+    created_at = u.created_at
+  }]
+}
+```
+
+### Bulk Access Forwards Using User Search
+
+Find a group of users and create access forwards for all of them:
+
+```terraform
+data "entitle_users" "team_leads" {
+  filter {
+    search = "lead"
+  }
+}
+
+data "entitle_user" "backup_approver" {
+  email = "backup@example.com"
+}
+
+resource "entitle_access_request_forward" "team_lead_forwards" {
+  for_each = {
+    for u in data.entitle_users.team_leads.users :
+    u.id => u
+  }
+
+  forwarder = { id = each.value.id }
+  target    = { id = data.entitle_user.backup_approver.id }
+}
+```
+
+## Query Parameters
+
+### Optional
+
+- `filter` (Block) Optional filters:
+    - `search` (String) Free-text search matching the user's email address or full name.
+    - `page` (Number) Page number to return, starting from 1.
+    - `per_page` (Number) Number of results per page.
+
+## Returned Attributes
+
+- `users` (Attributes List) The list of users matching the query:
+    - `id` (String) The user's unique identifier (UUID format).
+    - `email` (String) The user's email address.
+    - `given_name` (String) The user's first name.
+    - `family_name` (String) The user's last name.
+    - `created_at` (String) The timestamp when the user was created in Entitle.
+
+## Notes
+
+- An empty filter (or omitting `filter`) returns all users — this can be a large result set in big organizations; use pagination accordingly
+- `search` matches both email and full name — useful when you only know part of a user's identity
+- For a single known user, prefer `entitle_user` (singular) with `email` — it's simpler and faster than searching
 
 ## Example Usage
 

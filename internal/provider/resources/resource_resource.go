@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -64,14 +65,7 @@ func (r *ResourceResource) Metadata(ctx context.Context, req resource.MetadataRe
 
 func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
-			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
-		Description: "Defines an Entitle Resource, which represents a target system or asset that can be accessed " +
-			"or governed through Entitle. The schema includes metadata, ownership, integration, workflow, and access " +
-			"management configuration. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles). " +
-			fmt.Sprintf("Due to API limitations it will create unrequestable role called '%s'", tmpDefaultRoleName),
+		MarkdownDescription: docs.ResourceResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -93,12 +87,10 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				},
 			},
 			"allowed_durations": schema.SetAttribute{
-				ElementType: types.NumberType,
-				Optional:    true,
-				Description: "As the admin, you can set different durations for the resource, " +
-					"compared to the workflow linked to it.",
-				MarkdownDescription: "As the admin, you can set different durations for the resource, " +
-					"compared to the workflow linked to it.",
+				ElementType:         types.NumberType,
+				Optional:            true,
+				Description:         "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
+				MarkdownDescription: "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
 					validators.NewSetMinLength(1),
 				},

@@ -3,12 +3,232 @@
 page_title: "entitle_roles Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle Roles filtered by resource ID (mandatory) and optional search string.
+  Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+  Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
+  Key Concepts
+  resource_id: The mandatory filter — roles are always scoped to a specific resourcesearch: Optional text filter to narrow results by role namePagination: Use page and per_page to page through large result sets
+  When to Use This Data Source
+  Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resource
+  Example Usage
+  List All Roles for a Resource
+  
+  data "entitle_roles" "all" {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+  
+  output "all_role_ids" {
+    value = data.entitle_roles.all.roles[*].id
+  }
+  
+  Search for a Specific Role by Name
+  
+  data "entitle_roles" "admin_role" {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      search = "admin"
+    }
+  }
+  
+  output "admin_role_id" {
+    value = data.entitle_roles.admin_role.roles[0].id
+  }
+  
+  Use Roles in a Bundle
+  Find and reference roles dynamically when building a bundle:
+  
+  data "entitle_integration" "github" {
+    name = "GitHub Production"
+  }
+  
+  data "entitle_resources" "backend_repo" {
+    integration_id = data.entitle_integration.github.id
+    filter { search = "backend-api" }
+  }
+  
+  data "entitle_roles" "read_roles" {
+    resource_id = data.entitle_resources.backend_repo.resources[0].id
+    filter { search = "read" }
+  }
+  
+  resource "entitle_bundle" "github_read_bundle" {
+    name        = "GitHub Backend Read"
+    description = "Read access to the backend API repository"
+  
+    workflow = {
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    }
+  
+    roles = [{
+      id = data.entitle_roles.read_roles.roles[0].id
+    }]
+  
+    allowed_durations = [28800, 86400]
+  }
+  
+  Paginate Through Large Role Lists
+  
+  data "entitle_roles" "page_one" {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      page     = 1
+      per_page = 50
+    }
+  }
+  
+  Output All Role Details
+  
+  data "entitle_roles" "all_roles" {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+  
+  output "roles" {
+    value = data.entitle_roles.all_roles.roles
+  }
+  
+  Query Parameters
+  Required
+  resource_id (String) The unique identifier of the resource to list roles for (UUID format). This filter is mandatory — roles are always scoped to a specific resource.
+  Optional
+  filter (Block) Optional filters for the role list:
+  search (String) Text search to filter roles by name.page (Number) Page number to return, starting from 1. Use with per_page for pagination.per_page (Number) Number of results per page. Defaults to the API's configured page size.
+  Returned Attributes
+  roles (Attributes List) The list of roles matching the query:
+  id (String) The role's unique identifier.name (String) The role's display name.
+  Notes
+  Use entitle_role (singular) to retrieve full details for a specific role by ID — entitle_roles returns only id and name per roleresource_id is mandatory — you cannot query roles across all resources at once; always scope to a specific resourceIf search matches many results, use pagination to retrieve all matches
 ---
 
 # entitle_roles (Data Source)
 
-Retrieve a list of Entitle Roles filtered by resource ID (mandatory) and optional search string.
+Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+
+Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. [Read more about roles](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
+
+## Key Concepts
+
+- **resource_id**: The mandatory filter — roles are always scoped to a specific resource
+- **search**: Optional text filter to narrow results by role name
+- **Pagination**: Use `page` and `per_page` to page through large result sets
+
+## When to Use This Data Source
+
+- Discovering all roles available within a resource before referencing them
+- Searching for a role by name within a known resource (e.g., finding the "admin" role)
+- Dynamically referencing roles in bundles, policies, or prerequisite permissions
+- Auditing which roles exist on a resource
+
+## Example Usage
+
+### List All Roles for a Resource
+
+```terraform
+data "entitle_roles" "all" {
+  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+
+output "all_role_ids" {
+  value = data.entitle_roles.all.roles[*].id
+}
+```
+
+### Search for a Specific Role by Name
+
+```terraform
+data "entitle_roles" "admin_role" {
+  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    search = "admin"
+  }
+}
+
+output "admin_role_id" {
+  value = data.entitle_roles.admin_role.roles[0].id
+}
+```
+
+### Use Roles in a Bundle
+
+Find and reference roles dynamically when building a bundle:
+
+```terraform
+data "entitle_integration" "github" {
+  name = "GitHub Production"
+}
+
+data "entitle_resources" "backend_repo" {
+  integration_id = data.entitle_integration.github.id
+  filter { search = "backend-api" }
+}
+
+data "entitle_roles" "read_roles" {
+  resource_id = data.entitle_resources.backend_repo.resources[0].id
+  filter { search = "read" }
+}
+
+resource "entitle_bundle" "github_read_bundle" {
+  name        = "GitHub Backend Read"
+  description = "Read access to the backend API repository"
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  roles = [{
+    id = data.entitle_roles.read_roles.roles[0].id
+  }]
+
+  allowed_durations = [28800, 86400]
+}
+```
+
+### Paginate Through Large Role Lists
+
+```terraform
+data "entitle_roles" "page_one" {
+  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    page     = 1
+    per_page = 50
+  }
+}
+```
+
+### Output All Role Details
+
+```terraform
+data "entitle_roles" "all_roles" {
+  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+
+output "roles" {
+  value = data.entitle_roles.all_roles.roles
+}
+```
+
+## Query Parameters
+
+### Required
+
+- `resource_id` (String) The unique identifier of the resource to list roles for (UUID format). **This filter is mandatory** — roles are always scoped to a specific resource.
+
+### Optional
+
+- `filter` (Block) Optional filters for the role list:
+    - `search` (String) Text search to filter roles by name.
+    - `page` (Number) Page number to return, starting from 1. Use with `per_page` for pagination.
+    - `per_page` (Number) Number of results per page. Defaults to the API's configured page size.
+
+## Returned Attributes
+
+- `roles` (Attributes List) The list of roles matching the query:
+    - `id` (String) The role's unique identifier.
+    - `name` (String) The role's display name.
+
+## Notes
+
+- Use `entitle_role` (singular) to retrieve full details for a specific role by ID — `entitle_roles` returns only `id` and `name` per role
+- `resource_id` is mandatory — you cannot query roles across all resources at once; always scope to a specific resource
+- If `search` matches many results, use pagination to retrieve all matches
 
 ## Example Usage
 

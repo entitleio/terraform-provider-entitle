@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 
 	"github.com/google/uuid"
@@ -44,12 +45,7 @@ func (d *AccessReviewForwardDataSource) Metadata(ctx context.Context, req dataso
 // Schema defines the expected structure of the data source.
 func (d *AccessReviewForwardDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Access Review Forward allows delegating access review responsibilities to another user. " +
-			"This enables review tasks to be reassigned when the original reviewer is unavailable. " +
-			"[Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).",
-		Description: "Entitle Access Review Forward allows delegating access review responsibilities to another user. " +
-			"This enables review tasks to be reassigned when the original reviewer is unavailable. " +
-			"[Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).",
+		MarkdownDescription: docs.AccessReviewForwardDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,

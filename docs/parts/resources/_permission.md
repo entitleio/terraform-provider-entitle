@@ -1,0 +1,172 @@
+An Entitle Permission represents an active, granted entitlement — the record of a user (actor) having a specific role on a resource within an integration. Permissions are the result of access being granted, either through a JIT request approval or via a birthright policy.
+
+> ⚠️ **This is an import-only resource.** Terraform does not create permissions directly. Permissions are created by Entitle when access is granted through the normal request and approval flow. Use this resource to bring existing permissions under Terraform management for tracking, auditing, or bulk lifecycle operations.
+
+## Key Concepts
+
+- **Permission**: An active grant of a specific role to a specific user (actor) on a resource
+- **Actor**: The user who holds the permission
+- **Role**: The specific access level that was granted
+- **Path**: The hierarchical path describing where the permission was granted (integration → resource → role)
+- **Types**: The categories of permission (e.g., the access type granted)
+- **Import-Only**: Permissions cannot be created by Terraform — they must already exist in Entitle before being imported
+
+## When to Use the Permission Resource
+
+- **Bulk management**: Import and manage a set of existing permissions via Terraform for auditing purposes
+- **Lifecycle tracking**: Track permission state in Terraform state for change detection
+- **Automated revocation**: Use Terraform to plan and apply bulk permission removals by managing imported permissions and then removing them from config
+- **Combining with data sources**: Use `entitle_permissions` to discover existing permissions and import them dynamically
+
+## Example Usage
+
+### Import Existing Permissions via Data Source
+
+Discover permissions for a role and import them all into Terraform management:
+
+```terraform
+data "entitle_permissions" "role_permissions" {
+  filter {
+    role_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+}
+
+resource "entitle_permission" "managed_role_permissions" {
+  for_each = {
+    for p in data.entitle_permissions.role_permissions.permissions :
+    p.id => p
+  }
+
+  id = each.value.id
+}
+```
+
+### Import Permissions for a Specific Account
+
+Manage all permissions granted to a particular user account:
+
+```terraform
+data "entitle_permissions" "account_permissions" {
+  filter {
+    account_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+}
+
+resource "entitle_permission" "account_permissions" {
+  for_each = {
+    for p in data.entitle_permissions.account_permissions.permissions :
+    p.id => p
+  }
+
+  id = each.value.id
+}
+```
+
+### Import Permissions for an Integration
+
+Bring all permissions for an entire integration under Terraform management:
+
+```terraform
+data "entitle_permissions" "integration_permissions" {
+  filter {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+}
+
+resource "entitle_permission" "integration_permissions" {
+  for_each = {
+    for p in data.entitle_permissions.integration_permissions.permissions :
+    p.id => p
+  }
+
+  id = each.value.id
+}
+
+# Output all managed permissions for audit review
+output "managed_permissions" {
+  value = {
+    for k, v in entitle_permission.integration_permissions :
+    k => {
+      actor = v.actor
+      role  = v.role
+      path  = v.path
+      types = v.types
+    }
+  }
+}
+```
+
+### Import a Single Known Permission
+
+Import a specific permission by its UUID:
+
+```terraform
+resource "entitle_permission" "specific_permission" {
+  id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+```
+
+Then run:
+
+```shell
+terraform import entitle_permission.specific_permission 7d080bfa-9143-11ee-b9d1-0242ac120001
+```
+
+## Import
+
+Permissions must be imported using their UUID before they can be managed:
+
+```shell
+terraform import entitle_permission.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### Finding Permission IDs
+
+Use the `entitle_permissions` data source to discover permission IDs:
+
+```terraform
+# Find permissions for a specific role
+data "entitle_permissions" "by_role" {
+  filter {
+    role_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+}
+
+output "permission_ids" {
+  value = data.entitle_permissions.by_role.permissions[*].id
+}
+```
+
+Filter options available in the data source:
+- `role_id` — permissions for a specific role
+- `account_id` — permissions held by a specific account/user
+- `integration_id` — all permissions under an integration
+- `resource_id` — permissions for a specific resource
+- `search` — free-text search across permissions
+
+## Notes and Best Practices
+
+### Import-Only Behavior
+
+- Terraform **cannot create** permissions — the `id` field must refer to an existing permission
+- Attempting to create a permission without importing first will fail
+- Use the `entitle_permissions` data source to discover IDs, then import using `terraform import` or `for_each` patterns
+
+### Bulk Import Pattern
+
+The recommended pattern for managing existing permissions is:
+
+1. Use `entitle_permissions` data source to query permissions by filter
+2. Use `for_each` to create `entitle_permission` resources for all results
+3. Run `terraform plan` to verify all permissions are recognized
+4. Use `terraform state` to verify imported state
+
+### Permissions vs Roles
+
+- A **role** is the definition of an access level (e.g., "read-only access to production DB")
+- A **permission** is a live instance of a role granted to a specific user
+
+### Removing Permissions
+
+- Removing an `entitle_permission` resource from Terraform configuration and running `terraform apply` will revoke the permission in Entitle
+- Use this pattern carefully for bulk revocation operations — always run `terraform plan` first to review what will be revoked

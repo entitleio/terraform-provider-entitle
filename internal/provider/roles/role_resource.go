@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -57,8 +58,7 @@ func (r *RoleResource) Metadata(ctx context.Context, req resource.MetadataReques
 // Schema sets the schema for the resource.
 func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Defines the schema for an Entitle Role resource.",
-		Description:         "Defines the schema for an Entitle Role resource.",
+		MarkdownDescription: docs.RoleResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -97,12 +97,10 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "In this field, you can assign an existing resource to the new role.",
 			},
 			"allowed_durations": schema.SetAttribute{
-				ElementType: types.NumberType,
-				Required:    true,
-				Description: "As the admin, you can set different durations for the role, " +
-					"compared to the workflow linked to it.",
-				MarkdownDescription: "As the admin, you can set different durations for the role, " +
-					"compared to the workflow linked to it.",
+				ElementType:         types.NumberType,
+				Required:            true,
+				Description:         "As the admin, you can set different durations for the role, compared to the workflow linked to it. \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
+				MarkdownDescription: "As the admin, you can set different durations for the role, compared to the workflow linked to it. \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
 					validators.NewSetMinLength(1),
 				},

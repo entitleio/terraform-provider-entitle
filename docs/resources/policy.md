@@ -3,12 +3,417 @@
 page_title: "entitle_policy Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. Read more about policies https://docs.beyondtrust.com/entitle/docs/birthright-policies.
+  An Entitle Policy is a birthright rule that automatically manages users' permissions based on their group membership. When a user joins the group — for example, upon joining the organization — they are automatically granted the permissions defined in the policy. When they leave the group — for example, upon leaving the organization — those permissions are automatically revoked.
+  Policies connect identity provider (IdP) groups to sets of entitlements (roles or bundles), enabling zero-touch provisioning and de-provisioning of access across all your integrated applications. Read more about policies https://docs.beyondtrust.com/entitle/docs/birthright-policies.
+  Key Concepts
+  Policy: A rule that automatically maps IdP group membership to a set of permissionsin_groups: The IdP groups that trigger the policy — users in these groups receive the defined entitlementsroles: Individual role permissions automatically granted to group membersbundles: Collections of permissions (cross-application) automatically granted to group memberssort_order: The priority of the policy — lower numbers are evaluated first when resolving conflicts
+  When to Use Policies
+  Policies are the right tool for:
+  Employee onboarding: Automatically grant new hires the tools they need based on their team groupDepartment-based access: All engineers get dev tool access, all finance gets accounting system accessContractor management: Grant contractors limited access that auto-revokes when they leave the IdP groupRole-based access control: Mirror your IdP group structure into system permissionsOff-boarding automation: Automatically revoke all permissions when a user is removed from a group
+  Example Usage
+  Basic Policy — Role Assignment
+  Automatically grant a role to all members of an IdP group:
+  
+  resource "entitle_policy" "dev_tools" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      type = "group"
+    }]
+  
+    roles = [{
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+    }]
+  }
+  
+  Policy with a Bundle
+  Assign a bundle (cross-application set of permissions) to a group:
+  
+  resource "entitle_policy" "engineering_bundle_policy" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      type = "group"
+    }]
+  
+    bundles = [{
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+    }]
+  }
+  
+  Policy with Multiple Roles
+  Grant multiple roles to a group — for example, read and write access across several services:
+  
+  resource "entitle_policy" "backend_team" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      type = "group"
+    }]
+  
+    roles = [
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # AWS dev read
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" },  # GitHub write
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }   # Datadog viewer
+    ]
+  }
+  
+  Policy with Both Roles and Bundles
+  Combine individual roles and bundles in a single policy:
+  
+  resource "entitle_policy" "full_stack_team" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      type = "group"
+    }]
+  
+    roles = [{
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"  # Extra standalone role
+    }]
+  
+    bundles = [{
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Full-stack dev bundle
+    }]
+  }
+  
+  Policy with Sort Order (Priority)
+  When multiple policies might assign conflicting permissions, use sort_order to control priority. Lower numbers take precedence:
+  
+  # Higher priority policy (processed first)
+  resource "entitle_policy" "senior_engineers" {
+    sort_order = 1
+  
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # Senior Engineers group
+      type = "group"
+    }]
+  
+    roles = [
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # Production write access
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }   # Admin panel access
+    ]
+  }
+  
+  # Lower priority policy (processed after)
+  resource "entitle_policy" "all_engineers" {
+    sort_order = 2
+  
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # All Engineers group
+      type = "group"
+    }]
+  
+    roles = [
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120005" },  # Dev read access
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120006" }   # Staging write access
+    ]
+  }
+  
+  On-Call Schedule Policy
+  Grant elevated permissions to the on-call team during their schedule:
+  
+  resource "entitle_policy" "oncall_access" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # On-Call Schedule ID (PagerDuty / Opsgenie)
+      type = "schedule"
+    }]
+  
+    roles = [
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # Production read access
+      { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }   # Incident response tooling
+    ]
+  }
+  
+  Data-Driven Policy via Data Sources
+  Reference existing groups and roles by looking them up dynamically:
+  
+  data "entitle_users" "alice" {
+    filter { search = "alice@example.com" }
+  }
+  
+  data "entitle_roles" "dev_read" {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter { search = "dev-read" }
+  }
+  
+  resource "entitle_policy" "dynamic_policy" {
+    in_groups = [{
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+      type = "group"
+    }]
+  
+    roles = [{
+      id = data.entitle_roles.dev_read.roles[0].id
+    }]
+  }
+  
+  Import
+  Existing policies can be imported using their UUID:
+  
+  terraform import entitle_policy.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  
+  Finding the Policy ID
+  To find the UUID of an existing policy:
+  Log in to the Entitle UINavigate to the Policies sectionClick on the policy you want to importThe policy ID (UUID) will be visible in the browser URL
+  Example: https://app.entitle.io/policies/a1b2c3d4-e5f6-7890-abcd-ef1234567890Copy the UUID from the URL
+  After Import
+  After importing, run terraform plan to verify the imported configuration matches your Terraform code. You may need to adjust your .tf files to align sort_order, roles, and bundles with the existing policy.
+  Notes and Best Practices
+  Policy Application Timing
+  Policies are re-evaluated once a day, but the following changes are applied immediately:
+  Creating, editing, or deleting a policyReordering policies (changing sort_order)Changes to on-call groupsChanges in the IdP groups
+  Sort Order and Conflict Resolution
+  Lower sort_order values take precedenceIf two policies grant conflicting roles, the policy with the lower sort_order winsUse sort_order deliberately when managing overlapping group policies (e.g., a "Senior Engineers" policy at order 1 and "All Engineers" policy at order 2)Policies can be reordered via the Entitle UI drag-and-drop as well
+  Roles vs Bundles
+  Use roles when:
+  You want to grant a single, specific permission to a resourceThe permission is application-specific and doesn't need to be grouped
+  Use bundles when:
+  You need to grant access across multiple applications at onceYou want to manage a logical "package" of permissions (e.g., "junior accountant access")The same set of permissions is referenced in multiple policies
+  Group Management
+  Ensure all referenced groups exist in your IdP before applying the policyIf a user belongs to multiple groups covered by multiple policies, they receive permissions from all matching policiesRemoving a user from an IdP group triggers automatic permission revocation at the next sync (or immediately for real-time sync environments)
+  On-Call Schedules
+  Use type = "schedule" to grant elevated permissions to whoever is currently on-callSchedule-based policies are ideal for incident response tooling, production access, and break-glass scenariosThe on-call rotation is read from your connected PagerDuty or Opsgenie integration
 ---
 
 # entitle_policy (Resource)
 
-Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. [Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).
+An Entitle Policy is a birthright rule that automatically manages users' permissions based on their group membership. When a user joins the group — for example, upon joining the organization — they are automatically granted the permissions defined in the policy. When they leave the group — for example, upon leaving the organization — those permissions are automatically revoked.
+
+Policies connect identity provider (IdP) groups to sets of entitlements (roles or bundles), enabling zero-touch provisioning and de-provisioning of access across all your integrated applications. [Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).
+
+## Key Concepts
+
+- **Policy**: A rule that automatically maps IdP group membership to a set of permissions
+- **in_groups**: The IdP groups that trigger the policy — users in these groups receive the defined entitlements
+- **roles**: Individual role permissions automatically granted to group members
+- **bundles**: Collections of permissions (cross-application) automatically granted to group members
+- **sort_order**: The priority of the policy — lower numbers are evaluated first when resolving conflicts
+
+## When to Use Policies
+
+Policies are the right tool for:
+
+- **Employee onboarding**: Automatically grant new hires the tools they need based on their team group
+- **Department-based access**: All engineers get dev tool access, all finance gets accounting system access
+- **Contractor management**: Grant contractors limited access that auto-revokes when they leave the IdP group
+- **Role-based access control**: Mirror your IdP group structure into system permissions
+- **Off-boarding automation**: Automatically revoke all permissions when a user is removed from a group
+
+## Example Usage
+
+### Basic Policy — Role Assignment
+
+Automatically grant a role to all members of an IdP group:
+
+```terraform
+resource "entitle_policy" "dev_tools" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    type = "group"
+  }]
+
+  roles = [{
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }]
+}
+```
+
+### Policy with a Bundle
+
+Assign a bundle (cross-application set of permissions) to a group:
+
+```terraform
+resource "entitle_policy" "engineering_bundle_policy" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    type = "group"
+  }]
+
+  bundles = [{
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }]
+}
+```
+
+### Policy with Multiple Roles
+
+Grant multiple roles to a group — for example, read and write access across several services:
+
+```terraform
+resource "entitle_policy" "backend_team" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    type = "group"
+  }]
+
+  roles = [
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # AWS dev read
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" },  # GitHub write
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }   # Datadog viewer
+  ]
+}
+```
+
+### Policy with Both Roles and Bundles
+
+Combine individual roles and bundles in a single policy:
+
+```terraform
+resource "entitle_policy" "full_stack_team" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    type = "group"
+  }]
+
+  roles = [{
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"  # Extra standalone role
+  }]
+
+  bundles = [{
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Full-stack dev bundle
+  }]
+}
+```
+
+### Policy with Sort Order (Priority)
+
+When multiple policies might assign conflicting permissions, use `sort_order` to control priority. Lower numbers take precedence:
+
+```terraform
+# Higher priority policy (processed first)
+resource "entitle_policy" "senior_engineers" {
+  sort_order = 1
+
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # Senior Engineers group
+    type = "group"
+  }]
+
+  roles = [
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # Production write access
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }   # Admin panel access
+  ]
+}
+
+# Lower priority policy (processed after)
+resource "entitle_policy" "all_engineers" {
+  sort_order = 2
+
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # All Engineers group
+    type = "group"
+  }]
+
+  roles = [
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120005" },  # Dev read access
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120006" }   # Staging write access
+  ]
+}
+```
+
+### On-Call Schedule Policy
+
+Grant elevated permissions to the on-call team during their schedule:
+
+```terraform
+resource "entitle_policy" "oncall_access" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # On-Call Schedule ID (PagerDuty / Opsgenie)
+    type = "schedule"
+  }]
+
+  roles = [
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" },  # Production read access
+    { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }   # Incident response tooling
+  ]
+}
+```
+
+### Data-Driven Policy via Data Sources
+
+Reference existing groups and roles by looking them up dynamically:
+
+```terraform
+data "entitle_users" "alice" {
+  filter { search = "alice@example.com" }
+}
+
+data "entitle_roles" "dev_read" {
+  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter { search = "dev-read" }
+}
+
+resource "entitle_policy" "dynamic_policy" {
+  in_groups = [{
+    id   = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+    type = "group"
+  }]
+
+  roles = [{
+    id = data.entitle_roles.dev_read.roles[0].id
+  }]
+}
+```
+
+## Import
+
+Existing policies can be imported using their UUID:
+
+```shell
+terraform import entitle_policy.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### Finding the Policy ID
+
+To find the UUID of an existing policy:
+
+1. Log in to the Entitle UI
+2. Navigate to the **Policies** section
+3. Click on the policy you want to import
+4. The policy ID (UUID) will be visible in the browser URL
+    - Example: `https://app.entitle.io/policies/a1b2c3d4-e5f6-7890-abcd-ef1234567890`
+5. Copy the UUID from the URL
+
+### After Import
+
+After importing, run `terraform plan` to verify the imported configuration matches your Terraform code. You may need to adjust your `.tf` files to align `sort_order`, `roles`, and `bundles` with the existing policy.
+
+## Notes and Best Practices
+
+### Policy Application Timing
+
+Policies are re-evaluated once a day, but the following changes are applied immediately:
+- Creating, editing, or deleting a policy
+- Reordering policies (changing `sort_order`)
+- Changes to on-call groups
+- Changes in the IdP groups
+
+### Sort Order and Conflict Resolution
+
+- Lower `sort_order` values take precedence
+- If two policies grant conflicting roles, the policy with the lower `sort_order` wins
+- Use `sort_order` deliberately when managing overlapping group policies (e.g., a "Senior Engineers" policy at order 1 and "All Engineers" policy at order 2)
+- Policies can be reordered via the Entitle UI drag-and-drop as well
+
+### Roles vs Bundles
+
+**Use `roles` when:**
+- You want to grant a single, specific permission to a resource
+- The permission is application-specific and doesn't need to be grouped
+
+**Use `bundles` when:**
+- You need to grant access across multiple applications at once
+- You want to manage a logical "package" of permissions (e.g., "junior accountant access")
+- The same set of permissions is referenced in multiple policies
+
+### Group Management
+
+- Ensure all referenced groups exist in your IdP before applying the policy
+- If a user belongs to multiple groups covered by multiple policies, they receive permissions from all matching policies
+- Removing a user from an IdP group triggers automatic permission revocation at the next sync (or immediately for real-time sync environments)
+
+### On-Call Schedules
+
+- Use `type = "schedule"` to grant elevated permissions to whoever is currently on-call
+- Schedule-based policies are ideal for incident response tooling, production access, and break-glass scenarios
+- The on-call rotation is read from your connected PagerDuty or Opsgenie integration
 
 ## Example Usage
 

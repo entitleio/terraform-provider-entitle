@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -46,12 +47,7 @@ func (r *AccessReviewForwardResource) Metadata(ctx context.Context, req resource
 
 func (r *AccessReviewForwardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Access Review Forward allows delegating access review responsibilities to another user. " +
-			"This enables review tasks to be reassigned when the original reviewer is unavailable. " +
-			"[Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).",
-		Description: "Entitle Access Review Forward allows delegating access review responsibilities to another user. " +
-			"This enables review tasks to be reassigned when the original reviewer is unavailable. " +
-			"[Read more about access reviews](https://docs.beyondtrust.com/entitle/docs/access-review).",
+		MarkdownDescription: docs.AccessReviewForwardResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

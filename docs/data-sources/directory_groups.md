@@ -3,12 +3,288 @@
 page_title: "entitle_directory_groups Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle DirectoryGroups filtered by optional search string.
+  Retrieve a list of Entitle Directory Groups — the IdP (identity provider) groups synchronized into Entitle from your connected directory service (e.g., Okta, Azure AD, Google Workspace). Directory groups are used in policies to automatically grant birthright permissions to group members, and in workflows to define group-based approval rules.
+  Use this data source to search for group IDs by name, list all available groups, or look up specific groups to reference in policies and workflows.
+  Key Concepts
+  Directory Group: An IdP group synchronized from your organization's identity provider (Okta, Azure AD, Google Workspace, etc.)Origin: The source IdP the group came from (e.g., "okta", "azuread", "google")Email: The group's email address (when available from the IdP)Usage: Groups are referenced in entitle_policy (via in_groups) and in entitle_workflow (via in_groups in rules)
+  When to Use This Data Source
+  Finding group IDs to use in an entitle_policy (in_groups field)Looking up group IDs for approval workflow rules (entitle_workflow in_groups)Searching for groups by name before referencing them in other resourcesAuditing what groups are synchronized into Entitle
+  Example Usage
+  List All Directory Groups
+  
+  data "entitle_directory_groups" "all" {}
+  
+  output "all_groups" {
+    value = data.entitle_directory_groups.all.directory_groups[*].name
+  }
+  
+  Search for a Group by Name
+  
+  data "entitle_directory_groups" "engineering" {
+    filter {
+      search = "engineering"
+    }
+  }
+  
+  output "engineering_group_id" {
+    value = data.entitle_directory_groups.engineering.directory_groups[0].id
+  }
+  
+  Use a Group in a Policy
+  Find a group and use it in a birthright policy:
+  
+  data "entitle_directory_groups" "all_engineers" {
+    filter {
+      search = "All Engineers"
+    }
+  }
+  
+  resource "entitle_policy" "engineer_access" {
+    in_groups = [{
+      id   = data.entitle_directory_groups.all_engineers.directory_groups[0].id
+      type = "group"
+    }]
+  
+    bundles = [{
+      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    }]
+  }
+  
+  Use a Group in an Approval Workflow
+  Reference a group as an approval entity in a workflow:
+  
+  data "entitle_directory_groups" "security_team" {
+    filter {
+      search = "Security Team"
+    }
+  }
+  
+  resource "entitle_workflow" "security_approval" {
+    name = "Security Team Approval"
+  
+    rules = [{
+      sort_order     = 1
+      under_duration = 28800
+      any_schedule   = true
+  
+      approval_flow = {
+        steps = [{
+          sort_order = 1
+          operator   = "or"
+  
+          approval_entities = [{
+            type = "Group"
+            id   = data.entitle_directory_groups.security_team.directory_groups[0].id
+          }]
+  
+          notified_entities = []
+        }]
+      }
+  
+      in_groups    = []
+      in_schedules = []
+    }]
+  }
+  
+  Search with Pagination
+  
+  data "entitle_directory_groups" "paged" {
+    filter {
+      search   = "team"
+      page     = 1
+      per_page = 50
+    }
+  }
+  
+  Inspect Group Details
+  
+  data "entitle_directory_groups" "search" {
+    filter {
+      search = "DevOps"
+    }
+  }
+  
+  output "group_details" {
+    value = [for g in data.entitle_directory_groups.search.directory_groups : {
+      id     = g.id
+      name   = g.name
+      email  = g.email
+      origin = g.origin
+    }]
+  }
+  
+  Query Parameters
+  Optional
+  filter (Block) All filter fields are optional. Omitting the filter returns all directory groups:
+  search (String) Text search to filter groups by name.page (Number) Page number to return, starting from 1.per_page (Number) Number of results per page.
+  Returned Attributes
+  directory_groups (Attributes List) The list of groups matching the query:
+  id (String) The group's unique identifier (UUID format).name (String) The group's display name.email (String) The group's email address (when available from the IdP).origin (String) The source identity provider (e.g., "okta", "azuread", "google").
+  Notes
+  Groups are read-only in Entitle — they are synchronized from your IdP and cannot be created or modified via TerraformIf a group doesn't appear, verify it is synchronized from your connected IdP in the Entitle UI under Org Settings → Integrations (IdP)In workflows, groups are referenced using type = "Group" with the group's id — the entitle_directory_groups data source provides those IDs
 ---
 
 # entitle_directory_groups (Data Source)
 
-Retrieve a list of Entitle DirectoryGroups filtered by optional search string.
+Retrieve a list of Entitle Directory Groups — the IdP (identity provider) groups synchronized into Entitle from your connected directory service (e.g., Okta, Azure AD, Google Workspace). Directory groups are used in policies to automatically grant birthright permissions to group members, and in workflows to define group-based approval rules.
+
+Use this data source to search for group IDs by name, list all available groups, or look up specific groups to reference in policies and workflows.
+
+## Key Concepts
+
+- **Directory Group**: An IdP group synchronized from your organization's identity provider (Okta, Azure AD, Google Workspace, etc.)
+- **Origin**: The source IdP the group came from (e.g., `"okta"`, `"azuread"`, `"google"`)
+- **Email**: The group's email address (when available from the IdP)
+- **Usage**: Groups are referenced in `entitle_policy` (via `in_groups`) and in `entitle_workflow` (via `in_groups` in rules)
+
+## When to Use This Data Source
+
+- Finding group IDs to use in an `entitle_policy` (`in_groups` field)
+- Looking up group IDs for approval workflow rules (`entitle_workflow` `in_groups`)
+- Searching for groups by name before referencing them in other resources
+- Auditing what groups are synchronized into Entitle
+
+## Example Usage
+
+### List All Directory Groups
+
+```terraform
+data "entitle_directory_groups" "all" {}
+
+output "all_groups" {
+  value = data.entitle_directory_groups.all.directory_groups[*].name
+}
+```
+
+### Search for a Group by Name
+
+```terraform
+data "entitle_directory_groups" "engineering" {
+  filter {
+    search = "engineering"
+  }
+}
+
+output "engineering_group_id" {
+  value = data.entitle_directory_groups.engineering.directory_groups[0].id
+}
+```
+
+### Use a Group in a Policy
+
+Find a group and use it in a birthright policy:
+
+```terraform
+data "entitle_directory_groups" "all_engineers" {
+  filter {
+    search = "All Engineers"
+  }
+}
+
+resource "entitle_policy" "engineer_access" {
+  in_groups = [{
+    id   = data.entitle_directory_groups.all_engineers.directory_groups[0].id
+    type = "group"
+  }]
+
+  bundles = [{
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }]
+}
+```
+
+### Use a Group in an Approval Workflow
+
+Reference a group as an approval entity in a workflow:
+
+```terraform
+data "entitle_directory_groups" "security_team" {
+  filter {
+    search = "Security Team"
+  }
+}
+
+resource "entitle_workflow" "security_approval" {
+  name = "Security Team Approval"
+
+  rules = [{
+    sort_order     = 1
+    under_duration = 28800
+    any_schedule   = true
+
+    approval_flow = {
+      steps = [{
+        sort_order = 1
+        operator   = "or"
+
+        approval_entities = [{
+          type = "Group"
+          id   = data.entitle_directory_groups.security_team.directory_groups[0].id
+        }]
+
+        notified_entities = []
+      }]
+    }
+
+    in_groups    = []
+    in_schedules = []
+  }]
+}
+```
+
+### Search with Pagination
+
+```terraform
+data "entitle_directory_groups" "paged" {
+  filter {
+    search   = "team"
+    page     = 1
+    per_page = 50
+  }
+}
+```
+
+### Inspect Group Details
+
+```terraform
+data "entitle_directory_groups" "search" {
+  filter {
+    search = "DevOps"
+  }
+}
+
+output "group_details" {
+  value = [for g in data.entitle_directory_groups.search.directory_groups : {
+    id     = g.id
+    name   = g.name
+    email  = g.email
+    origin = g.origin
+  }]
+}
+```
+
+## Query Parameters
+
+### Optional
+
+- `filter` (Block) All filter fields are optional. Omitting the filter returns all directory groups:
+    - `search` (String) Text search to filter groups by name.
+    - `page` (Number) Page number to return, starting from 1.
+    - `per_page` (Number) Number of results per page.
+
+## Returned Attributes
+
+- `directory_groups` (Attributes List) The list of groups matching the query:
+    - `id` (String) The group's unique identifier (UUID format).
+    - `name` (String) The group's display name.
+    - `email` (String) The group's email address (when available from the IdP).
+    - `origin` (String) The source identity provider (e.g., `"okta"`, `"azuread"`, `"google"`).
+
+## Notes
+
+- Groups are read-only in Entitle — they are synchronized from your IdP and cannot be created or modified via Terraform
+- If a group doesn't appear, verify it is synchronized from your connected IdP in the Entitle UI under **Org Settings** → **Integrations** (IdP)
+- In workflows, groups are referenced using `type = "Group"` with the group's `id` — the `entitle_directory_groups` data source provides those IDs
 
 ## Example Usage
 

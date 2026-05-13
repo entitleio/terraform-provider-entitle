@@ -1,0 +1,430 @@
+An Entitle Resource represents a specific asset, system, or sub-system within an integration that can be accessed and governed through Entitle. Resources are the middle tier of the Entitle access model (Integration → Resource → Role) — they group related roles together and provide a shared ownership, workflow, and policy configuration for all roles beneath them.
+
+For example, in an AWS integration, a resource might represent a specific AWS account or an S3 bucket. In a GitHub integration, a resource could be a specific repository. Each resource belongs to one integration and can contain multiple roles representing different access levels. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
+
+> ⚠️ **Note:** Due to API limitations, creating a resource also creates an unrequestable role named `'default'` on the resource automatically.
+
+## Key Concepts
+
+- **Resource**: A named, governable asset within an integration (e.g., a specific AWS account, GitHub repo, or database)
+- **Integration**: The parent application connection this resource belongs to
+- **Owner**: The user responsible for this resource, used in approval workflows and notifications
+- **Workflow**: The default approval process for JIT access requests to roles on this resource (overrides the integration workflow)
+- **Requestable**: Whether users can request access to roles on this resource
+- **Allowed Durations**: Time limits for access to roles on this resource
+- **Maintainers**: Secondary owners who assist with administrative responsibilities
+- **Prerequisite Permissions**: Roles automatically granted when any role on this resource is approved
+- **Tags**: Searchable metadata for discovery and organization
+
+## When to Use Resources
+
+- Representing fine-grained assets within an integration (e.g., individual repositories, database schemas, AWS accounts)
+- Applying resource-specific ownership and approval workflows
+- Grouping related roles under a meaningful business entity
+- Setting resource-level access policies that differ from the integration defaults
+
+## Example Usage
+
+### Basic Resource
+
+Create a resource within an integration with an owner and workflow:
+
+```terraform
+resource "entitle_resource" "aws_dev_account" {
+  name        = "AWS Development Account"
+  requestable = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+
+  allowed_durations = [-1]
+}
+```
+
+### Resource with Description and Tags
+
+Add metadata to make the resource discoverable and self-documenting:
+
+```terraform
+resource "entitle_resource" "github_backend_repo" {
+  name                     = "GitHub - backend-api"
+  user_defined_description = "The main backend API repository. Contains production code for the REST API service."
+  requestable              = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+
+  user_defined_tags = ["backend", "api", "production", "critical"]
+  allowed_durations = [3600, 28800, 86400]
+}
+```
+
+### Resource with Maintainers
+
+Add secondary owners (maintainers) alongside the primary owner:
+
+```terraform
+resource "entitle_resource" "postgres_production" {
+  name        = "PostgreSQL Production DB"
+  requestable = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+
+  maintainers = [
+    {
+      type = "user"
+      entity = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DBA lead
+      }
+    },
+    {
+      type = "group"
+      entity = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120005"  # Platform team group
+      }
+    }
+  ]
+
+  allowed_durations = [3600, 7200]
+}
+```
+
+### Non-Requestable Resource
+
+A resource that exists for organizational purposes but cannot be requested via JIT:
+
+```terraform
+resource "entitle_resource" "internal_billing_system" {
+  name        = "Internal Billing System"
+  requestable = false  # Cannot be requested; managed via policies only
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+
+  allowed_durations = [-1]
+}
+```
+
+### Resource with Prerequisite Permissions
+
+Automatically grant a companion role when any role on this resource is approved:
+
+```terraform
+resource "entitle_resource" "kubernetes_cluster" {
+  name        = "Production Kubernetes Cluster"
+  requestable = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120003"
+  }
+
+  prerequisite_permissions = [
+    {
+      default = true  # Automatically included with every role request on this resource
+      role = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # kubectl read-only access
+      }
+    }
+  ]
+
+  allowed_durations = [3600, 28800]
+}
+```
+
+### Managing Synced Resources
+
+Many integrations (GCP, AWS, GitHub, Okta, etc.) automatically discover and sync their resources into Entitle on a periodic schedule. These resources already exist in Entitle before you write any Terraform — and they **cannot be deleted via the Entitle API**. The correct approach is to import them into Terraform state for configuration management, while ensuring Terraform never attempts to issue a DELETE.
+
+See the [Synced Resources](#synced-resources) section below for a full explanation of the pattern and DELETE behavior.
+
+```terraform
+# Step 1: Declare the import block (Terraform 1.5+)
+# The ID is the resource's UUID from the Entitle UI or the entitle_resources data source.
+import {
+  to = entitle_resource.gcp_data_platform
+  id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+
+data "entitle_integration" "gcp" {
+  name = "GCP Production"
+}
+
+data "entitle_user" "platform_lead" {
+  email = "platform-lead@example.com"
+}
+
+data "entitle_workflow" "manager_approval" {
+  name = "Manager Approval"
+}
+
+resource "entitle_resource" "gcp_data_platform" {
+  name        = "GCP - data-platform-prod"
+  requestable = true
+
+  integration = {
+    id = data.entitle_integration.gcp.id
+  }
+
+  owner = {
+    id = data.entitle_user.platform_lead.id
+  }
+
+  workflow = {
+    id = data.entitle_workflow.manager_approval.id
+  }
+
+  allowed_durations = [3600, 28800, 86400]
+
+  lifecycle {
+    # Synced resources are owned by the upstream application (GCP).
+    # Entitle's API will reject any DELETE request — prevent_destroy ensures
+    # Terraform never attempts one.
+    prevent_destroy = true
+  }
+}
+```
+
+### Full Example: Resource with All Options
+
+```terraform
+data "entitle_integration" "aws" {
+  name = "AWS Production"
+}
+
+data "entitle_user" "resource_owner" {
+  email = "platform-lead@example.com"
+}
+
+data "entitle_workflow" "manager_approval" {
+  name = "Manager Approval"
+}
+
+resource "entitle_resource" "aws_prod_account" {
+  name                     = "AWS Production Account 123456789"
+  user_defined_description = "Primary production AWS account. Contains all production workloads. Treat with care."
+  requestable              = true
+
+  integration = {
+    id = data.entitle_integration.aws.id
+  }
+
+  owner = {
+    id    = data.entitle_user.resource_owner.id
+    email = data.entitle_user.resource_owner.email
+  }
+
+  workflow = {
+    id = data.entitle_workflow.manager_approval.id
+  }
+
+  maintainers = [
+    {
+      type = "group"
+      entity = {
+        id = "7d080bfa-9143-11ee-b9d1-0242ac120001"  # SRE team
+      }
+    }
+  ]
+
+  user_defined_tags = ["aws", "production", "critical", "hipaa"]
+  allowed_durations = [3600, 14400, 28800]
+}
+```
+
+## Import
+
+Existing resources can be imported using their UUID:
+
+```shell
+terraform import entitle_resource.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### Finding the Resource ID
+
+Use the `entitle_resources` data source to find a resource ID by integration:
+
+```terraform
+data "entitle_resources" "my_resources" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter { search = "production" }
+}
+
+output "resource_ids" {
+  value = data.entitle_resources.my_resources.resources[*].id
+}
+```
+
+Alternatively, navigate to **Integrations** → select your integration → **Resources** in the Entitle UI, then click the resource to see its UUID in the URL.
+
+## Synced Resources
+
+### Synced vs. Manual Resources
+
+Resources in Entitle are either **synced** (auto-discovered from the upstream application via periodic sync) or **manual/virtual** (created directly in Entitle for adapterless integrations):
+
+| | Synced Resource | Manual / Virtual Resource |
+|---|---|---|
+| Source of truth | Upstream app (GCP, AWS, GitHub…) | Entitle |
+| Created by | Integration sync | `entitle_resource` Terraform resource or Entitle UI |
+| Deletable via Entitle API | No — `DELETE` is blocked by design | Yes |
+| How to delete | Delete in the upstream app; Entitle's daily sync removes it automatically | `terraform destroy` or remove in UI |
+| Terraform lifecycle | Always use `prevent_destroy = true` | Standard Terraform lifecycle |
+
+### Why DELETE is Blocked for Synced Resources
+
+For synced integrations, Entitle is not the source of truth — the upstream application is. Attempting `DELETE /resources/{id}` on a synced resource will always fail:
+
+- **404** — The resource no longer exists in Entitle (already cleaned up by a previous sync after the upstream deletion).
+- **400** — The resource still exists in Entitle but is owned by the integration sync (upstream deletion hasn't propagated yet, or the resource still exists upstream).
+
+Both responses are intentional. The correct deletion flow is to remove the resource in the upstream application (e.g., delete the GCP project) and let Entitle's daily sync clean it up automatically. Your Terraform configuration should never issue a DELETE against Entitle for synced resources.
+
+### Recommended Pattern: Import Block
+
+Use Terraform's `import {}` block (Terraform 1.5+) to bring synced resources under Terraform management so you can configure their Entitle settings (owner, workflow, tags, etc.) without recreating them. Always pair this with `lifecycle { prevent_destroy = true }`.
+
+```terraform
+import {
+  to = entitle_resource.gcp_data_platform
+  id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+}
+
+resource "entitle_resource" "gcp_data_platform" {
+  name        = "GCP - data-platform-prod"
+  requestable = true
+
+  integration = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  owner    = { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }
+  workflow = { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }
+
+  allowed_durations = [3600, 28800, 86400]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+Running `terraform apply` will import the existing resource into state and apply any configuration changes (owner, workflow, etc.) via a non-destructive update. The resource is not recreated.
+
+### Importing Many Synced Resources
+
+When an integration has many synced resources, use the `entitle_resources` data source to discover their IDs, then generate `import` blocks programmatically using `for_each`:
+
+```terraform
+data "entitle_resources" "gcp_all" {
+  integration_id = data.entitle_integration.gcp.id
+}
+
+import {
+  for_each = { for r in data.entitle_resources.gcp_all.resources : r.name => r.id }
+  to       = entitle_resource.gcp[each.key]
+  id       = each.value
+}
+
+resource "entitle_resource" "gcp" {
+  for_each    = { for r in data.entitle_resources.gcp_all.resources : r.name => r }
+  name        = each.value.name
+  requestable = true
+
+  integration = { id = data.entitle_integration.gcp.id }
+  owner       = { id = data.entitle_user.platform_lead.id }
+  workflow    = { id = data.entitle_workflow.manager_approval.id }
+
+  allowed_durations = [3600, 28800, 86400]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+### Removing a Synced Resource from Terraform State
+
+When an upstream resource is deleted and Entitle's sync has removed it, you need to drop the corresponding Terraform resource from state **without** issuing a DELETE call. Use the `removed {}` block (Terraform 1.7+):
+
+```terraform
+removed {
+  from = entitle_resource.gcp_data_platform
+
+  lifecycle {
+    destroy = false  # Remove from state only — do not call the Entitle DELETE API
+  }
+}
+```
+
+Run `terraform apply`. Terraform will remove the resource from state without making any API call to Entitle.
+
+For Terraform versions below 1.7, use the CLI directly:
+
+```shell
+terraform state rm entitle_resource.gcp_data_platform
+```
+
+> ⚠️ Do not use `terraform destroy` or remove the resource block from your config without a `removed {}` block — Terraform will attempt a DELETE and receive a `400` or `404` error from Entitle.
+
+## Notes and Best Practices
+
+### Workflow Hierarchy
+
+- Resource workflow overrides the integration-level workflow
+- Role workflow overrides the resource-level workflow
+- If no workflow is set at the resource level, the integration's workflow applies
+
+### Naming Convention
+
+- Use consistent naming to make resources easily identifiable (e.g., include the environment: `"AWS Production Account"`, `"GitHub - backend-api [prod]"`)
+- Include the integration name or type in the resource name when managing many integrations
+
+### Default Role
+
+- Creating a resource automatically creates a non-requestable role named `default` — this is an API limitation and is expected behavior
+- Do not delete this role; it is managed by the Entitle API

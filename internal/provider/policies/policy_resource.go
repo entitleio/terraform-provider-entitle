@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -50,16 +51,7 @@ func (r *PolicyResource) Metadata(ctx context.Context, req resource.MetadataRequ
 
 func (r *PolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle policy is a rule which manages users birthright permissions automatically, " +
-			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
-			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. " +
-			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
-		Description: "Entitle policy is a rule which manages users birthright permissions automatically, " +
-			"a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining " +
-			"the organization, he will be granted with the permissions defined for the group automatically, and " +
-			"upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically. " +
-			"[Read more about policies](https://docs.beyondtrust.com/entitle/docs/birthright-policies).",
+		MarkdownDescription: docs.PolicyResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

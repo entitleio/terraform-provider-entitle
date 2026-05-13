@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
@@ -59,8 +60,7 @@ func (d *IntegrationDataSource) Metadata(ctx context.Context, req datasource.Met
 // Schema defines the data source schema.
 func (d *IntegrationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
-		Description:         "Entitle Integration represents a connection to an external system that can be managed through Entitle. It includes configuration for permissions, maintainers, workflows, and access policies. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).",
+		MarkdownDescription: docs.IntegrationDataSourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Optional:            true,
