@@ -8,7 +8,7 @@ description: |-
   Just-in-Time Access: Grant temporary elevated permissions for specific tasksBreak-Glass Access: Provide emergency access with proper approval and audit trailsOnboarding/Offboarding: Automate permission grants and revocations based on group membershipCompliance: Maintain audit trails and enforce approval workflowsCross-Application Access: Bundle permissions across AWS, GCP, Azure, and SaaS applications
   Authentication
   The provider requires an API key to authenticate with the Entitle API.
-  Getting Your API Key - TODO: different types
+  Getting Your API Key
   To obtain an API key:
   Log in to your Entitle accountNavigate to Org Settings → TokensClick AddProvide a name for the tokenCopy the token immediately (it will only be shown once)Store it securely in your secret management system
   → View detailed instructions https://docs.beyondtrust.com/entitle/docs/org-settings#tokens
@@ -56,7 +56,7 @@ The Entitle provider allows you to manage your [Entitle](https://www.entitle.io)
 
 The provider requires an API key to authenticate with the Entitle API.
 
-### Getting Your API Key - TODO: different types
+### Getting Your API Key
 
 To obtain an API key:
 
