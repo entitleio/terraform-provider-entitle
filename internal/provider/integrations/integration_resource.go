@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -103,6 +104,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
 							Computed:            true,
 							Default:             stringdefault.StaticString("user"),
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -166,12 +170,14 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n",
 			},
 			"allow_changing_account_permissions": schema.BoolAttribute{
-				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Description:         "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
 				MarkdownDescription: "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"allow_creating_accounts": schema.BoolAttribute{
 				Optional:            true,
@@ -179,6 +185,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
 				MarkdownDescription: "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"readonly": schema.BoolAttribute{
 				Optional: true,
@@ -188,6 +197,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "If turned on, any request opened by a user will not be automatically granted, " +
 					"instead a ticket will be opened for manual resolution. (default: false)",
 				Default: booldefault.StaticBool(defaultIntegrationReadonly),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"requestable": schema.BoolAttribute{
 				Optional: true,
@@ -197,6 +209,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Controls whether a user can create requests for entitlements for resources " +
 					"under the integration. (default: true)",
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"requestable_by_default": schema.BoolAttribute{
 				Optional: true,
@@ -206,6 +221,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "Controls whether resources that are added to the integration could be shown " +
 					"to the user. (default: true)",
 				Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"auto_assign_recommended_maintainers": schema.BoolAttribute{
 				Optional:            true,
@@ -213,14 +231,19 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
 				MarkdownDescription: "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedMaintainers),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"auto_assign_recommended_owners": schema.BoolAttribute{
-				Required:            false,
 				Optional:            true,
 				Computed:            true,
 				Description:         "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
 				MarkdownDescription: "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedOwners),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"notify_about_external_permission_changes": schema.BoolAttribute{
 				Optional:            true,
@@ -228,6 +251,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
 				MarkdownDescription: "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
 				Default:             booldefault.StaticBool(defaultIntegrationNotifyAboutExternalPermissionChanges),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"connection_json": schema.StringAttribute{
 				Required:            true,
@@ -246,6 +272,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Default:             booldefault.StaticBool(false),
 							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
 							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"role": schema.SingleNestedAttribute{
 							Required: true,

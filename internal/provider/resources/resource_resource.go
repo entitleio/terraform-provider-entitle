@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -104,6 +105,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
 							Computed:            true,
 							Default:             stringdefault.StaticString("user"),
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -235,6 +239,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 							Default:             booldefault.StaticBool(false),
 							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
 							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"role": schema.SingleNestedAttribute{
 							Required: true,
