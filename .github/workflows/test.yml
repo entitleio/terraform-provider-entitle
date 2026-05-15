@@ -203,7 +203,7 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.4.*' # Intermediate
-          - '1.12.*' # Latest
+          - '1.15.*' # Latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -237,7 +237,7 @@ jobs:
         # list whatever Terraform versions here you would like to support
         terraform:
           - '1.6.*' # Intermediate
-          - '1.14.*' # Latest
+          - '1.15.*' # Latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
