@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/entitleio/terraform-provider-entitle/docs"
@@ -84,6 +86,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Default:             booldefault.StaticBool(true),
 							Description:         "Indicates whether the rule applies at any schedule. Defaults to true.",
 							MarkdownDescription: "Indicates whether the rule applies at any schedule. Defaults to true.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"sort_order": schema.NumberAttribute{
 							Computed:            true,
@@ -91,6 +96,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Description:         "Determines the evaluation priority of the rule.",
 							MarkdownDescription: "Determines the evaluation priority of the rule.",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(0)),
+							PlanModifiers: []planmodifier.Number{
+								numberplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"under_duration": schema.NumberAttribute{
 							Computed:            true,
@@ -98,6 +106,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Description:         "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
 							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(3600)),
+							PlanModifiers: []planmodifier.Number{
+								numberplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
@@ -154,6 +165,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												Description:         "Logical operator for combining approval entities.",
 												MarkdownDescription: "Logical operator for combining approval entities.",
 												Default:             stringdefault.StaticString("and"),
+												PlanModifiers: []planmodifier.String{
+													stringplanmodifier.UseStateForUnknown(),
+												},
 											},
 											"sort_order": schema.NumberAttribute{
 												Computed:            true,
@@ -161,6 +175,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												Description:         "Order of the step within the approval flow. Lower numbers indicate earlier steps.",
 												MarkdownDescription: "Order of the step within the approval flow. Lower numbers indicate earlier steps.",
 												Default:             numberdefault.StaticBigFloat(big.NewFloat(0)),
+												PlanModifiers: []planmodifier.Number{
+													numberplanmodifier.UseStateForUnknown(),
+												},
 											},
 											"notified_entities": schema.ListNestedAttribute{
 												NestedObject: schema.NestedAttributeObject{
