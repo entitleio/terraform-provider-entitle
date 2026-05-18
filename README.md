@@ -15,18 +15,44 @@
 />
 
 <h1>Entitle Terraform Provider</h1>
-<h5>In Development</h5>
 </div>
 
 The Terraform Provider for Entitle allows you to manage resources and data sources related to Entitle, a platform that provides a seamless way to grant employees granular and just-in-time access within cloud infrastructures and SaaS applications.
 
 ### Supported Resources
-* **Workflow** - A workflow in Entitle is a generic description of Just-In-Time permissions approval process, which is triggered after the permissions were requested by a user. Who should approve by approval order, to whom, and for how long. After the workflow is defined, it can be assigned to multiple entities which are part of the Just-In-Time permissions approval process: integrations, resources, roles and bundles.
-* **Integration** -A specific instance or integration with an "Application". Integration includes the configuration needed to connect Entitle including credentials, as well as all the users permissions information.
-* **Bundle** - Entitle bundle is a set of entitlements that can be requested, approved, or revoked by users in a single action, and set in a policy by the admin. Each entitlement can provide the user with access to a resource, which can be as fine-grained as a MongoDB table for example, usually by the use of a “Role”. Thus, one can think of a bundle as a cross-application super role.
-* **Policy** -  Entitle policy is a rule which manages users birthright permissions automatically, a group of users is entitled to a set of permissions. When a user joins the group, e.g. upon joining the organization, he will be granted with the permissions defined for the group automatically, and upon leaving the group, e.g. leaving the organization, the permissions will be revoked automatically.
-* **Agent Token** - On-prem agent token.
-* **Resource** - An entity within an "Integration" to which a user can gain access via an "Entitlement", e.g. DB table, group of users.
+* **Workflow** (`entitle_workflow`) — A Just-In-Time approval process: who approves, in what order, for how long. Assignable to integrations, resources, roles, and bundles.
+* **Integration** (`entitle_integration`) — A configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub org, or Slack workspace), including credentials and access settings.
+* **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group).
+* **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions.
+* **Bundle** (`entitle_bundle`) — A cross-application package of roles that can be requested or revoked as a single action — effectively a "super role" spanning multiple integrations.
+* **Policy** (`entitle_policy`) — A rule that automatically grants birthright permissions to users in a group, and revokes them on group leave.
+* **Agent Token** (`entitle_agent_token`) — Credential used by the on-prem Entitle Agent to authenticate with the platform when connecting private/internal systems.
+* **Permission** (`entitle_permission`) — **Import-only.** Represents an active granted entitlement; created by Entitle through the request/approval flow. Use this to bring existing permissions under Terraform management for tracking or bulk revocation.
+* **Access Request Forward** (`entitle_access_request_forward`) — Delegates a user's pending access request responsibilities to a colleague (vacation, leave, role change).
+* **Access Review Forward** (`entitle_access_review_forward`) — Delegates a user's access review responsibilities during periodic review campaigns.
+
+### Supported Data Sources
+
+The provider also exposes 17 data sources for looking up existing Entitle objects (use these instead of hardcoding UUIDs in your configuration):
+
+| Singular (lookup one)              | Plural (list / filter)      |
+|------------------------------------|-----------------------------|
+| `entitle_user`                     | `entitle_users`             |
+| `entitle_role`                     | `entitle_roles`             |
+| `entitle_resource`                 | `entitle_resources`         |
+| `entitle_workflow`                 | —                           |
+| `entitle_bundle`                   | —                           |
+| `entitle_policy`                   | —                           |
+| `entitle_integration`              | —                           |
+| `entitle_agent_token`              | —                           |
+| `entitle_access_request_forward`   | —                           |
+| `entitle_access_review_forward`    | —                           |
+| —                                  | `entitle_accounts`          |
+| —                                  | `entitle_applications`      |
+| —                                  | `entitle_directory_groups`  |
+| —                                  | `entitle_permissions`       |
+
+See the [Terraform Registry documentation](https://registry.terraform.io/providers/entitleio/entitle/latest/docs) for full schemas.
 
 ## Prerequisites
 
@@ -74,7 +100,7 @@ before starting you need to overide the configuration for the terraform provider
 provider_installation {
 
   dev_overrides {
-      "entitleio/entitle" = `$GOPATH/bin`
+      "entitleio/entitle" = "/absolute/path/to/your/GOPATH/bin"  # e.g. "/Users/you/go/bin" — Terraform does not expand $GOPATH; the path must be literal
   }
 
   # For all other providers, install them directly from their origin provider
