@@ -303,7 +303,7 @@ output "first_rule_steps" {
 ### Optional
 
 - `id` (String) Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.
-- `name` (String) The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.
+- `name` (String) The Workflow's name.
 
 ### Read-Only
 

@@ -72,8 +72,8 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
-				Description:         "The Workflow's name. When querying by name, the provider must paginate through all entities until a match is found. For organizations with hundreds or thousands of entities, this operation may take longer than ID-based queries. For performance-critical automation, prefer using id when possible.",
+				MarkdownDescription: "The Workflow's name.",
+				Description:         "The Workflow's name.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("id"),
