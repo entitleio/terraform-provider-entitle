@@ -863,6 +863,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "externalId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1080,6 +1088,14 @@
           },
           {
             "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "externalId",
             "required": false,
             "in": "query",
             "schema": {
