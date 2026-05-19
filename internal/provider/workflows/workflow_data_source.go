@@ -456,32 +456,31 @@ func (d *WorkflowDataSource) Read(ctx context.Context, req datasource.ReadReques
 }
 
 func (d *WorkflowDataSource) getWorkflowIDByName(ctx context.Context, name string) (*openapi_types.UUID, error) {
-	fetch := func(ctx context.Context, page int) ([]client.WorkflowIndexResultResponseSchema, int, error) {
-		params := client.WorkflowsIndexParams{
-			PerPage: utils.Float32Pointer(100),
-			Page:    utils.Float32Pointer(float32(page)),
-		}
-
-		resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
-		if err != nil {
-			return nil, 0, fmt.Errorf("failed to list workflows: %w", err)
-		}
-
-		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
-			return nil, 0, fmt.Errorf("API returned status %d while listing workflows (page %d)",
-				resp.HTTPResponse.StatusCode, page)
-		}
-
-		if resp.JSON200 == nil || resp.JSON200.Result == nil {
-			return nil, 0, fmt.Errorf("received invalid workflow response structure (page %d)", page)
-		}
-
-		items := resp.JSON200.Result
-		total := int(resp.JSON200.Pagination.TotalPages)
-		return items, total, nil
+	params := client.WorkflowsIndexParams{
+		PerPage: utils.Float32Pointer(1),
+		Search:  utils.StringPointer(name),
 	}
 
-	return utils.FindIDByName(ctx, name, fetch)
+	resp, err := d.client.WorkflowsIndexWithResponse(ctx, &params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list workflows: %w", err)
+	}
+
+	if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("API returned status %d while listing workflows",
+			resp.HTTPResponse.StatusCode)
+	}
+
+	if resp.JSON200 == nil || resp.JSON200.Result == nil {
+		return nil, fmt.Errorf("received invalid workflow response structure")
+	}
+
+	total := int(resp.JSON200.Pagination.TotalPages)
+	if total == 0 {
+		return nil, fmt.Errorf("item with name %q not found", name)
+	}
+
+	return &resp.JSON200.Result[0].Id, nil
 }
 
 func converterWorkflow(

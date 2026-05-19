@@ -2758,6 +2758,7 @@ type UsersAccountsIndexParams struct {
 type WorkflowsIndexParams struct {
 	Page    *float32 `form:"page,omitempty" json:"page,omitempty"`
 	PerPage *float32 `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Search  *string  `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // AccessRequestForwardsCreateJSONRequestBody defines body for AccessRequestForwardsCreate for application/json ContentType.
@@ -8356,6 +8357,22 @@ func NewWorkflowsIndexRequest(server string, params *WorkflowsIndexParams) (*htt
 		if params.PerPage != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
