@@ -1,8 +1,11 @@
 package integrations
 
 import (
+	"maps"
+
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -27,10 +30,40 @@ const (
 	defaultIntegrationNotifyAboutExternalPermissionChanges = true
 )
 
+type applicationName string
+
 const (
-	integrationGitlab  = "gitlab"
-	integrationVirtual = "virtual application"
+	applicationGitlab  applicationName = "gitlab"
+	applicationVirtual applicationName = "virtual application"
 )
+
+func (a applicationName) String() string {
+	return string(a)
+}
+
+func (i applicationName) canCreateActors() *bool {
+	var v bool
+	switch i {
+	case applicationGitlab:
+		v = false
+	default:
+		return nil
+	}
+
+	return &v
+}
+
+func (i applicationName) canEditPermissions() *bool {
+	var v bool
+	switch i {
+	case applicationGitlab:
+		v = true
+	default:
+		return nil
+	}
+
+	return &v
+}
 
 // BaseIntegrationResourceModel describes the base resource model.
 type BaseIntegrationResourceModel struct {
@@ -130,26 +163,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Optional:            true,
 		Description:         "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
 		MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n",
-	},
-	"allow_changing_account_permissions": schema.BoolAttribute{
-		Optional:            true,
-		Computed:            true,
-		Description:         "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
-		MarkdownDescription: "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
-		PlanModifiers: []planmodifier.Bool{
-			boolplanmodifier.UseStateForUnknown(),
-		},
-	},
-	"allow_creating_accounts": schema.BoolAttribute{
-		Optional:            true,
-		Computed:            true,
-		Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
-		MarkdownDescription: "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
-		PlanModifiers: []planmodifier.Bool{
-			boolplanmodifier.UseStateForUnknown(),
-		},
 	},
 	"readonly": schema.BoolAttribute{
 		Optional: true,
@@ -338,4 +351,56 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "The default approval workflow for entitlements for the integration " +
 			"(can be overwritten on resource/role level).",
 	},
+	"allow_changing_account_permissions": schema.BoolAttribute{
+		Optional:            true,
+		Computed:            true,
+		Description:         "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
+		MarkdownDescription: "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
+		Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
+		PlanModifiers: []planmodifier.Bool{
+			boolplanmodifier.UseStateForUnknown(),
+			boolplanmodifier.RequiresReplace(),
+		},
+	},
+	"allow_creating_accounts": schema.BoolAttribute{
+		Optional:            true,
+		Computed:            true,
+		Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
+		MarkdownDescription: "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
+		Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
+		PlanModifiers: []planmodifier.Bool{
+			boolplanmodifier.UseStateForUnknown(),
+			boolplanmodifier.RequiresReplace(),
+		},
+	},
+}
+
+func GetBaseIntegrationResourceAttributes(appName applicationName) map[string]schema.Attribute {
+	m := maps.Clone(BaseIntegrationResourceAttributes)
+
+	if canCreateActors := appName.canCreateActors(); canCreateActors != nil {
+		v := *canCreateActors
+		allowCreatingAccounts := m["allow_creating_accounts"].(schema.BoolAttribute)
+
+		allowCreatingAccounts.Validators = []validator.Bool{
+			boolvalidator.Equals(v),
+		}
+		allowCreatingAccounts.Default = booldefault.StaticBool(v)
+
+		m["allow_creating_accounts"] = allowCreatingAccounts
+	}
+
+	if canEditPermissions := appName.canEditPermissions(); canEditPermissions != nil {
+		v := *canEditPermissions
+		allowChangingAccountPermissions := m["allow_changing_account_permissions"].(schema.BoolAttribute)
+
+		allowChangingAccountPermissions.Validators = []validator.Bool{
+			boolvalidator.Equals(v),
+		}
+		allowChangingAccountPermissions.Default = booldefault.StaticBool(v)
+
+		m["allow_changing_account_permissions"] = allowChangingAccountPermissions
+	}
+
+	return m
 }

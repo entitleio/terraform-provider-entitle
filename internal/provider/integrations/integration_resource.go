@@ -116,13 +116,13 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	parsedConnectionJson, diags := ParseConnectionJson(plan.ConnectionJson)
+	parsedConnectionJson, diags := ParseConnectionJson(plan.ConnectionJson.ValueString())
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	newBase, diags := CreateIntegration(ctx, r.client, plan.BaseIntegrationResourceModel, plan.Application.Name.ValueString(), parsedConnectionJson)
+	newBase, diags := CreateIntegration(ctx, r.client, plan.BaseIntegrationResourceModel, applicationName(plan.Application.Name.ValueString()), parsedConnectionJson)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -158,7 +158,9 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationResourceModel{
 		BaseIntegrationResourceModel: newBase,
-		ConnectionJson:               data.ConnectionJson,
+		ConnectionJson:               data.ConnectionJson, Application: &utils.NameModel{
+			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name.ValueString())),
+		},
 	})...)
 }
 
@@ -175,13 +177,13 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	parsedConnectionJson, diags := ParseConnectionJson(data.ConnectionJson)
+	parsedConnectionJson, diags := ParseConnectionJson(data.ConnectionJson.ValueString())
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	newBase, diags := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, parsedConnectionJson)
+	newBase, diags := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), parsedConnectionJson)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

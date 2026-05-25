@@ -91,7 +91,6 @@ resource "entitle_integration" "my_gitlab" {
 			// Update testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-
 resource "entitle_integration" "my_gitlab" {
   	name                               = "My Gitlab Integration UPDATED"
     requestable                     = true
@@ -103,11 +102,11 @@ resource "entitle_integration" "my_gitlab" {
     auto_assign_recommended_maintainers      = false
     auto_assign_recommended_owners           = false
     allow_creating_accounts           = false
-    connection_json                          = jsonencode({
+    connection_json = jsonencode({
 		domain                   = "https://gitlab.com"
 		private_token            = "%s"
 		configurationSchemaName = "Configuration "
-	  })
+	})
     notify_about_external_permission_changes = true
     owner = {
       id    = "%s"

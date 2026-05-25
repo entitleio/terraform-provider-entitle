@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,12 +20,12 @@ func CreateIntegration(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
-	applicationName string,
-	parsedConnectionJson *map[string]interface{},
+	appName applicationName,
+	parsedConnectionJson map[string]interface{},
 ) (BaseIntegrationResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	body, diags := BuildCreateBodyFromPlan(ctx, base, applicationName, parsedConnectionJson)
+	body, diags := BuildCreateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
 	}
@@ -72,7 +71,8 @@ func UpdateIntegration(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
-	parsedConnectionJson *map[string]interface{},
+	appName applicationName,
+	parsedConnectionJson map[string]interface{},
 ) (BaseIntegrationResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -85,7 +85,7 @@ func UpdateIntegration(
 		return BaseIntegrationResourceModel{}, diags
 	}
 
-	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, parsedConnectionJson)
+	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
 	diags.Append(bDiags...)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
@@ -209,9 +209,15 @@ func DeleteIntegration(ctx context.Context, cli *client.ClientWithResponses, dat
 func BuildUpdateBodyFromPlan(
 	ctx context.Context,
 	data BaseIntegrationResourceModel,
+	applicationName applicationName,
 	parsedConnectionJson *map[string]interface{},
 ) (client.IntegrationsUpdateBodySchema, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	if vDiags := ValidateVirtualApplicationConstraints(data, applicationName); vDiags.HasError() {
+		diags.Append(vDiags...)
+		return client.IntegrationsUpdateBodySchema{}, diags
+	}
 
 	var allowedDurations *[]client.EnumAllowedDurations
 	aDurations, aDiags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
@@ -267,12 +273,12 @@ func BuildUpdateBodyFromPlan(
 func BuildCreateBodyFromPlan(
 	ctx context.Context,
 	plan BaseIntegrationResourceModel,
-	applicationName string,
+	appName applicationName,
 	parsedConnectionJson *map[string]interface{},
 ) (client.IntegrationCreateBodySchema, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if vDiags := ValidateVirtualApplicationConstraints(plan, applicationName); vDiags.HasError() {
+	if vDiags := ValidateVirtualApplicationConstraints(plan, appName); vDiags.HasError() {
 		diags.Append(vDiags...)
 		return client.IntegrationCreateBodySchema{}, diags
 	}
@@ -311,7 +317,7 @@ func BuildCreateBodyFromPlan(
 		Requestable:                          plan.Requestable.ValueBoolPointer(),
 		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
 		AllowedDurations:                     allowedDurations,
-		Application:                          client.NameSchema{Name: utils.TrimPrefixSuffix(applicationName)},
+		Application:                          client.NameSchema{Name: appName.String()},
 		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
 		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
 		ConnectionJson:                       parsedConnectionJson,
@@ -422,33 +428,39 @@ func ConvertBaseIntegrationResultToBaseModel(
 	}, diags
 }
 
+func ValidateApplicationConstraints(baseData BaseIntegrationResourceModel, appName applicationName) diag.Diagnostics {
+	diags := ValidateVirtualApplicationConstraints(baseData, appName)
+
+	return diags
+}
+
 // ValidateVirtualApplicationConstraints checks that virtual application integrations do not
 // have settings that are incompatible with their type. Returns diagnostics with errors if any
 // constraint is violated. Call this in Create (virtual apps cannot be created from Terraform
 // with connection_json, and several flags must hold specific values).
-func ValidateVirtualApplicationConstraints(plan BaseIntegrationResourceModel, applicationName string) diag.Diagnostics {
+func ValidateVirtualApplicationConstraints(baseData BaseIntegrationResourceModel, appName applicationName) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if strings.ToLower(applicationName) != integrationVirtual {
+	if appName != applicationVirtual {
 		return diags
 	}
 
-	if plan.NotifyAboutExternalPermissionChanges.ValueBool() {
+	if baseData.NotifyAboutExternalPermissionChanges.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set notifyAboutExternalPermissions to true")
 	}
-	if plan.AutoAssignRecommendedMaintainers.ValueBool() {
+	if baseData.AutoAssignRecommendedMaintainers.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceMaintainers to true")
 	}
-	if plan.AutoAssignRecommendedOwners.ValueBool() {
+	if baseData.AutoAssignRecommendedOwners.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceOwner to true")
 	}
-	if plan.Readonly.ValueBool() {
+	if baseData.Readonly.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set readonly to true")
 	}
-	if !plan.Requestable.ValueBool() {
+	if !baseData.Requestable.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestable to false")
 	}
-	if !plan.RequestableByDefault.ValueBool() {
+	if !baseData.RequestableByDefault.ValueBool() {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestableByDefault to false")
 	}
 
@@ -641,24 +653,24 @@ func extractMaintainerEntityID(maintainer *utils.MaintainerModel, diags *diag.Di
 
 // ParseConnectionJson validates and parses a connection_json string into the typed map form
 // expected by the API. Returns nil and error diagnostics if the value is absent or not valid JSON.
-func ParseConnectionJson(v types.String) (*map[string]interface{}, diag.Diagnostics) {
+func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if v.IsNull() || v.IsUnknown() || v.ValueString() == "" {
+	if v == "" {
 		diags.AddError("Client Error", "Missing the connection_json variable for entitle integration")
 		return nil, diags
 	}
 
 	var data map[string]interface{}
-	if err := json.Unmarshal([]byte(v.ValueString()), &data); err != nil {
+	if err := json.Unmarshal([]byte(v), &data); err != nil {
 		diags.AddError(
 			"Client Error",
-			fmt.Sprintf("Failed to parse given connection json to json, %s, error: %v", v.ValueString(), err),
+			fmt.Sprintf("Failed to parse given connection json to json, %s, error: %v", v, err),
 		)
 		return nil, diags
 	}
 
-	return &data, diags
+	return data, diags
 }
 
 // ConnectionJsonParser is a zero-argument closure that parses whatever connection_json
