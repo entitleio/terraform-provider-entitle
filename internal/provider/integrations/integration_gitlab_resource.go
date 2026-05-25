@@ -57,8 +57,11 @@ func (r *IntegrationGitlabResource) Schema(ctx context.Context, req resource.Sch
 			m := GetBaseIntegrationResourceAttributes(applicationGitlab)
 
 			m["connection_data"] = schema.SingleNestedAttribute{
+				Description: "GitLab connection credentials and SSL settings.",
 				Attributes: map[string]schema.Attribute{
 					"domain": schema.StringAttribute{
+						Description: "The GitLab instance URL. Defaults to \"https://gitlab.com\" for GitLab SaaS. " +
+							"For self-hosted GitLab, provide your own domain (e.g. \"https://gitlab.example.com\").",
 						Optional: true,
 						Default:  stringdefault.StaticString(GitlabDefaultDomain),
 						Computed: true,
@@ -67,9 +70,15 @@ func (r *IntegrationGitlabResource) Schema(ctx context.Context, req resource.Sch
 						},
 					},
 					"private_token": schema.StringAttribute{
-						Required: true,
+						Description: "A GitLab Personal Access Token with the `api` scope. " +
+							"Create one in GitLab under Edit Profile → Access Tokens.",
+						Required:  true,
+						Sensitive: true,
 					},
 					"ssl_verify": schema.BoolAttribute{
+						Description: "Whether to verify the GitLab server's SSL certificate. " +
+							"Defaults to true. Set to false only when connecting to a self-hosted instance " +
+							"without providing a custom CA certificate.",
 						Optional: true,
 						Default:  booldefault.StaticBool(true),
 						Computed: true,
@@ -78,6 +87,10 @@ func (r *IntegrationGitlabResource) Schema(ctx context.Context, req resource.Sch
 						},
 					},
 					"ssl_ca_cert": schema.StringAttribute{
+						Description: "Path to a custom CA certificate file in PEM format, used when connecting " +
+							"to a self-hosted GitLab instance with a self-signed certificate " +
+							"(e.g. \"/etc/ssl/certs/gitlab_ca.pem\"). The Entitle agent must have read access to this path. " +
+							"Not required for public certificates or when ssl_verify is false.",
 						Optional: true,
 					},
 				},
@@ -201,7 +214,7 @@ func parseGitlabConnectionJson(m GitlabConnectionModel) map[string]interface{} {
 	return jsonSchema
 }
 
-// Delete this function is responsible for deleting an existing resource of type
+// Delete this function is responsible for deleting an existing resource of type Entitle GitLab Integration.
 //
 // It reads the resource's data from Terraform state, extracts the unique identifier,
 // and sends a request to delete the resource using API requests.
