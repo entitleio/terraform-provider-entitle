@@ -380,7 +380,7 @@ func GetBaseIntegrationResourceAttributes(appName applicationName) map[string]sc
 
 	if canCreateActors := appName.canCreateActors(); canCreateActors != nil {
 		v := *canCreateActors
-		allowCreatingAccounts := m["allow_creating_accounts"].(schema.BoolAttribute)
+		allowCreatingAccounts, _ := m["allow_creating_accounts"].(schema.BoolAttribute)
 
 		allowCreatingAccounts.Validators = []validator.Bool{
 			boolvalidator.Equals(v),
@@ -392,7 +392,7 @@ func GetBaseIntegrationResourceAttributes(appName applicationName) map[string]sc
 
 	if canEditPermissions := appName.canEditPermissions(); canEditPermissions != nil {
 		v := *canEditPermissions
-		allowChangingAccountPermissions := m["allow_changing_account_permissions"].(schema.BoolAttribute)
+		allowChangingAccountPermissions, _ := m["allow_changing_account_permissions"].(schema.BoolAttribute)
 
 		allowChangingAccountPermissions.Validators = []validator.Bool{
 			boolvalidator.Equals(v),
