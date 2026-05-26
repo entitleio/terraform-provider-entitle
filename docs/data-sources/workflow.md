@@ -303,7 +303,7 @@ output "first_rule_steps" {
 ### Optional
 
 - `id` (String) Entitle Workflow identifier in uuid format. If not provided then name will be used to get entity.
-- `name` (String) The Workflow's name.
+- `name` (String) The Workflow's name. Querying by name is case sensitive.
 
 ### Read-Only
 

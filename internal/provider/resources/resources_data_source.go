@@ -62,7 +62,7 @@ func (d *ResourcesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 					},
 					"external_id": schema.StringAttribute{
 						Optional:            true,
-						MarkdownDescription: "External Id to filter resources.",
+						MarkdownDescription: "External ID to filter resources.",
 					},
 					"page": schema.Int64Attribute{
 						Optional:            true,

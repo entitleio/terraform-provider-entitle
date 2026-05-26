@@ -72,8 +72,8 @@ func (d *WorkflowDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "The Workflow's name.",
-				Description:         "The Workflow's name.",
+				MarkdownDescription: "The Workflow's name. Querying by name is case sensitive.",
+				Description:         "The Workflow's name. Querying by name is case sensitive.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("id"),

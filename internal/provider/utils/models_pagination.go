@@ -31,7 +31,7 @@ type PaginationWithSearchAndExternalIdModel struct {
 	Search     types.String `tfsdk:"search"`
 	Page       types.Int64  `tfsdk:"page"`
 	PerPage    types.Int64  `tfsdk:"per_page"`
-	ExternalId types.String `tfsdk:"external_id"`
+	ExternalID types.String `tfsdk:"external_id"`
 }
 
 func (m PaginationWithSearchAndExternalIdModel) GetValues() (search *string, page, perPage *int, externalId *string) {
@@ -50,7 +50,7 @@ func (m PaginationWithSearchAndExternalIdModel) GetValues() (search *string, pag
 		perPage = &pp
 	}
 
-	eId := m.ExternalId.ValueString()
+	eId := m.ExternalID.ValueString()
 	if eId != "" {
 		externalId = &eId
 	}
