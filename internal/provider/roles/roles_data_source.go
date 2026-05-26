@@ -30,9 +30,9 @@ func NewRolesDataSource() datasource.DataSource {
 
 // RolesDataSourceModel describes the data source model.
 type RolesDataSourceModel struct {
-	ResourceID types.String                     `tfsdk:"resource_id"`
-	Filter     *utils.PaginationWithSearchModel `tfsdk:"filter"`
-	Roles      []RoleListItem                   `tfsdk:"roles"`
+	ResourceID types.String                                  `tfsdk:"resource_id"`
+	Filter     *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
+	Roles      []RoleListItem                                `tfsdk:"roles"`
 }
 
 // RoleListItem represents a single role in the list.
@@ -57,6 +57,10 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter roles.",
+					},
+					"external_id": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "External ID to filter roles.",
 					},
 					"page": schema.Int64Attribute{
 						Optional:            true,
@@ -129,7 +133,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	if data.Filter != nil {
-		params.Search, params.Page, params.PerPage = data.Filter.GetValues()
+		params.Search, params.Page, params.PerPage, params.ExternalId = data.Filter.GetValues()
 	}
 
 	apiResp, err := d.client.RolesIndexWithResponse(ctx, &params)
