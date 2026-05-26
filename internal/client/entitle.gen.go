@@ -2728,6 +2728,7 @@ type ResourcesIndexParams struct {
 	Page          *int    `form:"page,omitempty" json:"page,omitempty"`
 	PerPage       *int    `form:"perPage,omitempty" json:"perPage,omitempty"`
 	Search        *string `form:"search,omitempty" json:"search,omitempty"`
+	ExternalId    *string `form:"externalId,omitempty" json:"externalId,omitempty"`
 	IntegrationId string  `form:"integrationId" json:"integrationId"`
 }
 
@@ -2737,6 +2738,7 @@ type RolesIndexParams struct {
 	PerPage    *int               `form:"perPage,omitempty" json:"perPage,omitempty"`
 	ResourceId openapi_types.UUID `form:"resourceId" json:"resourceId"`
 	Search     *string            `form:"search,omitempty" json:"search,omitempty"`
+	ExternalId *string            `form:"externalId,omitempty" json:"externalId,omitempty"`
 }
 
 // UsersIndexParams defines parameters for UsersIndex.
@@ -2758,6 +2760,7 @@ type UsersAccountsIndexParams struct {
 type WorkflowsIndexParams struct {
 	Page    *float32 `form:"page,omitempty" json:"page,omitempty"`
 	PerPage *float32 `form:"perPage,omitempty" json:"perPage,omitempty"`
+	Search  *string  `form:"search,omitempty" json:"search,omitempty"`
 }
 
 // AccessRequestForwardsCreateJSONRequestBody defines body for AccessRequestForwardsCreate for application/json ContentType.
@@ -7637,6 +7640,22 @@ func NewResourcesIndexRequest(server string, params *ResourcesIndexParams) (*htt
 
 		}
 
+		if params.ExternalId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "externalId", runtime.ParamLocationQuery, *params.ExternalId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, params.IntegrationId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -7884,6 +7903,22 @@ func NewRolesIndexRequest(server string, params *RolesIndexParams) (*http.Reques
 		if params.Search != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExternalId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "externalId", runtime.ParamLocationQuery, *params.ExternalId); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -8356,6 +8391,22 @@ func NewWorkflowsIndexRequest(server string, params *WorkflowsIndexParams) (*htt
 		if params.PerPage != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "perPage", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Search != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "search", runtime.ParamLocationQuery, *params.Search); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

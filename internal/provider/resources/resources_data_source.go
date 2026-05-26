@@ -31,16 +31,9 @@ func NewResourcesDataSource() datasource.DataSource {
 
 // ResourcesDataSourceModel describes the data source model.
 type ResourcesDataSourceModel struct {
-	IntegrationID types.String            `tfsdk:"integration_id"`
-	Filter        *ResourcesFilterModel   `tfsdk:"filter"`
-	Resources     []ResourceListItemModel `tfsdk:"resources"`
-}
-
-// ResourcesFilterModel defines filter attributes.
-type ResourcesFilterModel struct {
-	Search  types.String `tfsdk:"search"`
-	Page    types.Int64  `tfsdk:"page"`
-	PerPage types.Int64  `tfsdk:"per_page"`
+	IntegrationID types.String                                  `tfsdk:"integration_id"`
+	Filter        *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
+	Resources     []ResourceListItemModel                       `tfsdk:"resources"`
 }
 
 // ResourceListItemModel represents a single resource in the list.
@@ -66,6 +59,10 @@ func (d *ResourcesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 					"search": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "Search string to filter resources.",
+					},
+					"external_id": schema.StringAttribute{
+						Optional:            true,
+						MarkdownDescription: "External ID to filter resources.",
 					},
 					"page": schema.Int64Attribute{
 						Optional:            true,
@@ -143,20 +140,7 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 
 	if data.Filter != nil {
-		s := data.Filter.Search.ValueString()
-		if s != "" {
-			params.Search = &s
-		}
-
-		page := int(data.Filter.Page.ValueInt64())
-		if page > 0 {
-			params.Page = &page
-		}
-
-		perPage := int(data.Filter.PerPage.ValueInt64())
-		if perPage > 0 {
-			params.PerPage = &perPage
-		}
+		params.Search, params.Page, params.PerPage, params.ExternalId = data.Filter.GetValues()
 	}
 
 	apiResp, err := d.client.ResourcesIndexWithResponse(ctx, &params)
@@ -199,6 +183,7 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		"search":         params.Search,
 		"page":           params.Page,
 		"per_page":       params.PerPage,
+		"external_id":    params.ExternalId,
 	})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
