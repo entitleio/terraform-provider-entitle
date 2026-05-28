@@ -743,6 +743,11 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -1043,11 +1048,6 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
-		if errors.Is(err, utils.ErrNotFound) {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

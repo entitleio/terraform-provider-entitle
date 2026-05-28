@@ -396,7 +396,7 @@ func (r *AccessReviewForwardResource) Delete(
 		return
 	}
 
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
