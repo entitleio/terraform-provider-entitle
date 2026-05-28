@@ -289,6 +289,11 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

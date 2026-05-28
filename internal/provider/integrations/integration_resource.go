@@ -981,6 +981,11 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

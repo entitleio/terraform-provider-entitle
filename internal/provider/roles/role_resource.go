@@ -556,6 +556,11 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
