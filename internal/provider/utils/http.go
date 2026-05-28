@@ -48,7 +48,7 @@ func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) e
 				return nil
 			}
 
-			return ErrResourceNotFound
+			return ErrNotFound
 		}
 
 		if options.ignoreOnlyManualOrVirtual && strings.Contains(errBody.GetMessage(), "Only manual or virtual") {

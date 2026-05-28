@@ -285,7 +285,7 @@ func (r *AccessRequestForwardResource) Read(
 
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

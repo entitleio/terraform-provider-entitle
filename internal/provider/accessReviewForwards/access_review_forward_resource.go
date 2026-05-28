@@ -274,7 +274,7 @@ func (r *AccessReviewForwardResource) Read(
 	// Call Entitle API to get the resource by ID
 	apiResp, err := r.client.AccessReviewForwardsShowWithResponse(ctx, uid)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

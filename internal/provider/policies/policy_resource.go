@@ -345,7 +345,7 @@ func (r *PolicyResource) Read(
 
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

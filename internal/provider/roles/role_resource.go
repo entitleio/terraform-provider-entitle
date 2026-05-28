@@ -431,7 +431,7 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

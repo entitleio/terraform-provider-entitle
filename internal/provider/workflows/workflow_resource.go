@@ -524,7 +524,7 @@ func (r *WorkflowResource) Read(
 
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

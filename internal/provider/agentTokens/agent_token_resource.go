@@ -206,7 +206,7 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

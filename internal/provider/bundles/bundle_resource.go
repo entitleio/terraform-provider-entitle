@@ -434,7 +434,7 @@ func (r *BundleResource) Read(
 
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
-		if errors.Is(err, utils.ErrResourceNotFound) {
+		if errors.Is(err, utils.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}
