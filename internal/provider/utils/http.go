@@ -24,6 +24,11 @@ func WithIgnorePending() HTTPErrorOption {
 		opt.ignorePending = true
 	}
 }
+func WithIgnoreOnlyManualOrVirtual() HTTPErrorOption {
+	return func(opt *httpErrorOptions) {
+		opt.ignoreOnlyManualOrVirtual = true
+	}
+}
 
 func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) error {
 	// Apply options
