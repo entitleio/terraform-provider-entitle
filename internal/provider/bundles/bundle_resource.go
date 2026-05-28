@@ -2,6 +2,7 @@ package bundles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -433,6 +434,11 @@ func (r *BundleResource) Read(
 
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrResourceNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

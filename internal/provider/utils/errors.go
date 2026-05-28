@@ -9,6 +9,7 @@ import (
 var (
 	ErrApiConnection     = errors.New("API Connection Error")
 	ErrApiResponse       = errors.New("API Response Error")
+	ErrResourceNotFound  = errors.New("resource not found")
 	errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
 )
 

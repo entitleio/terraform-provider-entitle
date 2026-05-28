@@ -4,6 +4,7 @@ package roles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -430,6 +431,11 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrResourceNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

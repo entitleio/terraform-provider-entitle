@@ -2,6 +2,7 @@ package accessReviewForwards
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -273,6 +274,11 @@ func (r *AccessReviewForwardResource) Read(
 	// Call Entitle API to get the resource by ID
 	apiResp, err := r.client.AccessReviewForwardsShowWithResponse(ctx, uid)
 	if err != nil {
+		if errors.Is(err, utils.ErrResourceNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the access review forward by the id (%s), got error: %s", uid.String(), err),

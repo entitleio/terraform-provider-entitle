@@ -7,8 +7,9 @@ import (
 )
 
 type httpErrorOptions struct {
-	ignoreNotFound bool
-	ignorePending  bool
+	ignoreNotFound            bool
+	ignorePending             bool
+	ignoreOnlyManualOrVirtual bool
 }
 
 type HTTPErrorOption func(*httpErrorOptions)
@@ -42,7 +43,15 @@ func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) e
 			return errUnauthorizedToken
 		}
 
-		if options.ignoreNotFound && errBody.ID == "resource.notFound" {
+		if errBody.ID == "resource.notFound" {
+			if options.ignoreNotFound {
+				return nil
+			}
+
+			return ErrResourceNotFound
+		}
+
+		if options.ignoreOnlyManualOrVirtual && strings.Contains(errBody.GetMessage(), "Only manual or virtual") {
 			return nil
 		}
 

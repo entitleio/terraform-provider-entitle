@@ -2,6 +2,7 @@ package accessRequestForwards
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -284,6 +285,11 @@ func (r *AccessRequestForwardResource) Read(
 
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrResourceNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
