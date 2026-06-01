@@ -629,6 +629,11 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
+		if errors.Is(err, utils.ErrOnlyManualOrVirtual) {
+			resp.Diagnostics.AddWarning("Remote deletion not supported", "The resource was removed from Terraform state only. It may still exist in Entitle because only Virtual or Manual Integration entities can be deleted through the API.")
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Unable to delete role, id: (%s), %s", data.ID.String(), err.Error()),
