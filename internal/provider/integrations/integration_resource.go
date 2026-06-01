@@ -744,6 +744,8 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -982,6 +984,8 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}

@@ -24,11 +24,6 @@ func WithIgnorePending() HTTPErrorOption {
 		opt.ignorePending = true
 	}
 }
-func WithIgnoreOnlyManualOrVirtual() HTTPErrorOption {
-	return func(opt *httpErrorOptions) {
-		opt.ignoreOnlyManualOrVirtual = true
-	}
-}
 
 func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) error {
 	// Apply options
@@ -56,8 +51,8 @@ func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) e
 			return ErrNotFound
 		}
 
-		if options.ignoreOnlyManualOrVirtual && strings.Contains(errBody.GetMessage(), "Only manual or virtual") {
-			return nil
+		if strings.Contains(errBody.GetMessage(), "manual or virtual") {
+			return ErrOnlyManualOrVirtual
 		}
 
 		if options.ignorePending && strings.Contains(errBody.Message, "is pending") {

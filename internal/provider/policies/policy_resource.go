@@ -346,6 +346,8 @@ func (r *PolicyResource) Read(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -439,6 +441,8 @@ func (r *PolicyResource) Update(
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}

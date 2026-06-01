@@ -432,6 +432,8 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -557,6 +559,8 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
 			resp.State.RemoveResource(ctx)
 			return
 		}
