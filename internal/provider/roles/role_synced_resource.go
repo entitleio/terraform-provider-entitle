@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -124,12 +126,18 @@ func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Computed:            true,
 				Description:         "In this field, you can assign an existing workflow to the new role.",
 				MarkdownDescription: "In this field, you can assign an existing workflow to the new role.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"prerequisite_permissions": schema.ListNestedAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "Users granted any role from this role through a request will automatically receive the permissions to the roles selected below.",
 				MarkdownDescription: "Users granted any role from this role through a request will automatically receive the permissions to the roles selected below.",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"default": schema.BoolAttribute{
@@ -235,9 +243,8 @@ func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"requestable": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "Indicates if the role is requestable (default: true)",
-				Description:         "Indicates if the role is requestable (default: true)",
-				Default:             booldefault.StaticBool(true),
+				MarkdownDescription: "Indicates if the role is requestable.",
+				Description:         "Indicates if the role is requestable.",
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.UseStateForUnknown(),
 				},
@@ -273,11 +280,22 @@ func (r *RoleSyncedResource) Configure(ctx context.Context, req resource.Configu
 // sends a request to the Entitle API to create the resource, and saves the
 // resource's data into Terraform state.
 func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Create an instance of the RoleSyncedResourceModel to store the resource data.
-	var plan RoleResourceModel
+	// Use a plan-read struct that absorbs unknown values for computed fields,
+	// since on first apply there is no prior state to resolve them from.
+	var createPlan struct {
+		Name     types.String       `tfsdk:"name"`
+		Resource *utils.IdNameModel `tfsdk:"resource"`
+		// Remaining fields declared with framework types to accept unknown values.
+		ID                      types.String `tfsdk:"id"`
+		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
+		Workflow                types.Object `tfsdk:"workflow"`
+		PrerequisitePermissions types.List   `tfsdk:"prerequisite_permissions"`
+		VirtualizedRole         types.Object `tfsdk:"virtualized_role"`
+		Requestable             types.Bool   `tfsdk:"requestable"`
+	}
 
 	// Read Terraform plan data into the model.
-	diags := req.Plan.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &createPlan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -285,8 +303,8 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 
 	var err error
 
-	name := plan.Name.ValueString()
-	resourceID := plan.Resource.ID.ValueString()
+	name := createPlan.Name.ValueString()
+	resourceID := createPlan.Resource.ID.ValueString()
 	roleID, err := r.getRoleIDByName(ctx, uuid.MustParse(resourceID), name)
 	if err != nil {
 		resp.Diagnostics.AddError("Role not found", fmt.Sprintf(
@@ -307,6 +325,14 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			fmt.Sprintf("Got resource created manually, use entitle_role resource instead."),
+		)
+		return
+	}
+
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -319,14 +345,14 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	plan, diags = IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx, apiResp.JSON200.Result)
+	state, diags := IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx, apiResp.JSON200.Result)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
 	// Save the data into Terraform state.
-	diags = resp.State.Set(ctx, &plan)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -428,13 +454,13 @@ func (r *RoleSyncedResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	var allowedDurations *[]client.EnumAllowedDurations
-	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
+		aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
 
-	if aDurations != nil {
 		allowedDurations = &aDurations
 	}
 
@@ -468,7 +494,7 @@ func (r *RoleSyncedResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	var workflow *client.IdParamsSchema
-	if data.Workflow != nil {
+	if data.Workflow != nil && !data.Workflow.ID.IsNull() && !data.Workflow.ID.IsUnknown() {
 		workflow = new(client.IdParamsSchema)
 		workflow.Id, err = uuid.Parse(data.Workflow.ID.String())
 		if err != nil {
