@@ -581,7 +581,6 @@ func (r *RoleSyncedResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// No action needed
-	return
 }
 
 // ImportState is used to import an existing resource's state into Terraform.
