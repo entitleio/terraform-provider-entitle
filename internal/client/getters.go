@@ -22,3 +22,10 @@ func (i IntegrationBaseResponseSchema) GetID() uuid.UUID {
 func (i IntegrationBaseResponseSchema) GetName() string {
 	return i.Name
 }
+
+func (i IntegrationResourceRoleListItemResponseSchema) GetID() uuid.UUID {
+	return i.Id
+}
+func (i IntegrationResourceRoleListItemResponseSchema) GetName() string {
+	return i.Name
+}

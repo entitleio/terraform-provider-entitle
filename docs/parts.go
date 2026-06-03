@@ -65,6 +65,8 @@ var (
 	ResourceResourceMarkdownDescription string
 	//go:embed parts/resources/_role.md
 	RoleResourceMarkdownDescription string
+	//go:embed parts/resources/_role_synced.md
+	RoleSyncedResourceMarkdownDescription string
 	//go:embed parts/resources/_workflow.md
 	WorkflowResourceMarkdownDescription string
 )
