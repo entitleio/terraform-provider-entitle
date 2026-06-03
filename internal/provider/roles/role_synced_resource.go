@@ -328,7 +328,7 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
-			fmt.Sprintf("Got resource created manually, use entitle_role resource instead."),
+			"Got resource created manually, use entitle_role resource instead.",
 		)
 		return
 	}
@@ -397,7 +397,7 @@ func (r *RoleSyncedResource) Read(ctx context.Context, req resource.ReadRequest,
 	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
-			fmt.Sprintf("Got resource created manually, use entitle_role resource instead."),
+			"Got resource created manually, use entitle_role resource instead.",
 		)
 		return
 	}
