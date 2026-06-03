@@ -7,9 +7,8 @@ import (
 )
 
 type httpErrorOptions struct {
-	ignoreNotFound            bool
-	ignorePending             bool
-	ignoreOnlyManualOrVirtual bool
+	ignoreNotFound bool
+	ignorePending  bool
 }
 
 type HTTPErrorOption func(*httpErrorOptions)
