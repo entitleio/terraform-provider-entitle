@@ -308,7 +308,7 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 	roleID, err := r.getRoleIDByName(ctx, uuid.MustParse(resourceID), name)
 	if err != nil {
 		resp.Diagnostics.AddError("Role not found", fmt.Sprintf(
-			"Failed to get the Role by the name (%s) and reource (%s), %s",
+			"Failed to get the Role by the name (%s) and resource (%s), %s",
 			name, resourceID,
 			err.Error(),
 		))
@@ -390,6 +390,14 @@ func (r *RoleSyncedResource) Read(ctx context.Context, req resource.ReadRequest,
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the role by the id (%s), got error: %s", uid.String(), err),
+		)
+		return
+	}
+
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			fmt.Sprintf("Got resource created manually, use entitle_role resource instead."),
 		)
 		return
 	}
