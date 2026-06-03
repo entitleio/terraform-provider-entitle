@@ -658,6 +658,14 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
+	if utils.IsApplicationWithSyncedResources(resourceResp.JSON200.Result.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"The matched resource was created by third party. Use entitle_resource_synced instead.",
+		)
+		return
+	}
+
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
@@ -763,79 +771,10 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
-	var maintainers []client.IntegrationResourcesUpdateBodySchema_Maintainers_Item
-	if len(data.Maintainers) > 0 {
-		maintainers = make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(data.Maintainers))
-		for _, maintainer := range data.Maintainers {
-			if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
-				continue
-			}
-
-			idAttr := maintainer.Entity.Attributes()["id"]
-			strVal, ok := idAttr.(basetypes.StringValue)
-			if !ok {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Missing data for entity maintainer id",
-				)
-				return
-			}
-			entityID := strVal.ValueString()
-
-			if maintainer.Entity.IsNull() {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Missing data for entity maintainer",
-				)
-				return
-			}
-
-			switch maintainer.Type.ValueString() {
-			case utils.MaintainerTypeUser:
-
-				maintainerUser := client.UserMaintainerSchema{
-					Type: client.EnumMaintainerTypeUserUser,
-					User: client.UserEntitySchema{
-						Id: entityID,
-					},
-				}
-
-				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
-				err := item.MergeUserMaintainerSchema(maintainerUser)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			case utils.MaintainerTypeGroup:
-				maintainerGroup := client.GroupMaintainerSchema{
-					Type: client.EnumMaintainerTypeGroupGroup,
-					Group: client.GroupEntitySchema{
-						Id: entityID,
-					},
-				}
-
-				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
-				err = item.MergeGroupMaintainerSchema(maintainerGroup)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("Failed to merge group maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			default:
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Failed invalid maintainer type only support user and group",
-				)
-				return
-			}
-		}
+	maintainers, buildErr := buildUpdateMaintainers(ctx, data.Maintainers)
+	if buildErr != nil {
+		resp.Diagnostics.AddError("Client Error", buildErr.Error())
+		return
 	}
 
 	var prerequisitePermissions *[][]client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item
@@ -1262,4 +1201,49 @@ func convertFullResourceResultResponseSchemaToModel(
 
 	// Create the Terraform resource model using the extracted data
 	return model, diags
+}
+
+// buildUpdateMaintainers converts the maintainer list from the resource model into the
+// API update body format. Extracted here to keep Update readable.
+func buildUpdateMaintainers(_ context.Context, maintainers []*utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
+	result := make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(maintainers))
+	for _, m := range maintainers {
+		if m.Type.IsNull() || m.Type.IsUnknown() {
+			continue
+		}
+		if m.Entity.IsNull() {
+			return nil, fmt.Errorf("missing entity for maintainer")
+		}
+
+		idAttr := m.Entity.Attributes()["id"]
+		sv, ok := idAttr.(types.String)
+		if !ok {
+			return nil, fmt.Errorf("missing id for maintainer entity")
+		}
+		entityID := sv.ValueString()
+
+		switch m.Type.ValueString() {
+		case utils.MaintainerTypeUser:
+			item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
+			if err := item.MergeUserMaintainerSchema(client.UserMaintainerSchema{
+				Type: client.EnumMaintainerTypeUserUser,
+				User: client.UserEntitySchema{Id: entityID},
+			}); err != nil {
+				return nil, fmt.Errorf("failed to merge user maintainer: %w", err)
+			}
+			result = append(result, item)
+		case utils.MaintainerTypeGroup:
+			item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
+			if err := item.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
+				Type:  client.EnumMaintainerTypeGroupGroup,
+				Group: client.GroupEntitySchema{Id: entityID},
+			}); err != nil {
+				return nil, fmt.Errorf("failed to merge group maintainer: %w", err)
+			}
+			result = append(result, item)
+		default:
+			return nil, fmt.Errorf("invalid maintainer type %q: only 'user' and 'group' are supported", m.Type.ValueString())
+		}
+	}
+	return result, nil
 }
