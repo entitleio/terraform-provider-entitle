@@ -9,7 +9,7 @@ description: |-
   Role: The atomic permission unit — a named access level within a specific resourceResource: The target system the role provides access to (e.g., a specific AWS account)Workflow: The approval flow triggered when a user requests this roleAllowed Durations: The time limits for which access can be granted (overrides integration/workflow defaults)Requestable: Whether users can submit JIT access requests for this rolePrerequisite Permissions: Roles automatically granted alongside this role when access is approvedVirtualized Role: An abstract role that maps to different real roles depending on the resource
   entitle_role vs entitle_role_synced
   Use entitle_role for:
-  Manual integrations — where Entitle directly manages the resource and role lifecycleVirtual applications — roles created and owned by EntitleEntitle-managed entities — any role that Terraform should create, update, and delete
+  Manual integrations — where Entitle directly manages the resource and role lifecycleVirtual applications — roles created and owned by Entitle
   Use entitle_role_synced role_synced.md for integrations where roles are synchronized from an external system and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing role by lookup rather than creating it.
   When to Use Roles
   Define granular access levels within a resource (e.g., readonly, contributor, admin)Attach different approval workflows to different access levels (e.g., read is auto-approved, write requires manager)Control the maximum duration for which a specific permission level can be heldSet up prerequisite permissions that must always accompany a role (e.g., read access must come with a viewer role)
@@ -260,7 +260,6 @@ Use `entitle_role` for:
 
 - **Manual integrations** — where Entitle directly manages the resource and role lifecycle
 - **Virtual applications** — roles created and owned by Entitle
-- **Entitle-managed entities** — any role that Terraform should create, update, and delete
 
 Use [`entitle_role_synced`](role_synced.md) for integrations where roles are **synchronized from an external system** and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing role by lookup rather than creating it.
 
