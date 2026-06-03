@@ -2,6 +2,7 @@ package accessRequestForwards
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -284,6 +285,13 @@ func (r *AccessRequestForwardResource) Read(
 
 	err = utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -392,7 +400,7 @@ func (r *AccessRequestForwardResource) Delete(
 		return
 	}
 
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body)
+	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),

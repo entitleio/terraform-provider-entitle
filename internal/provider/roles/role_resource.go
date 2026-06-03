@@ -4,6 +4,7 @@ package roles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -430,6 +431,13 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -550,6 +558,13 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -614,6 +629,11 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
+		if errors.Is(err, utils.ErrOnlyManualOrVirtual) {
+			resp.Diagnostics.AddWarning("Remote deletion not supported", "The resource was removed from Terraform state only. It may still exist in Entitle because only Virtual or Manual Integration entities can be deleted through the API.")
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Unable to delete role, id: (%s), %s", data.ID.String(), err.Error()),
