@@ -261,6 +261,13 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
+      - name: Debug secret presence
+        env:
+          ENTITLE_RESOURCE_SYNCED_NAME: ${{ secrets.ENTITLE_RESOURCE_SYNCED_NAME }}
+          ENTITLE_ROLE_SYNCED_NAME: ${{ secrets.ENTITLE_ROLE_SYNCED_NAME }}
+        run: |
+          echo "ENTITLE_RESOURCE_SYNCED_NAME length: ${#ENTITLE_RESOURCE_SYNCED_NAME}"
+          echo "ENTITLE_ROLE_SYNCED_NAME length: ${#ENTITLE_ROLE_SYNCED_NAME}"
       - name: test eu region
         env:
           TF_ACC: "1"
