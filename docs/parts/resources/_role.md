@@ -18,7 +18,6 @@ Use `entitle_role` for:
 
 - **Manual integrations** — where Entitle directly manages the resource and role lifecycle
 - **Virtual applications** — roles created and owned by Entitle
-- **Entitle-managed entities** — any role that Terraform should create, update, and delete
 
 Use [`entitle_role_synced`](role_synced.md) for integrations where roles are **synchronized from an external system** and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing role by lookup rather than creating it.
 
