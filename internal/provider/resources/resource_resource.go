@@ -658,14 +658,6 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	if utils.IsApplicationWithSyncedResources(resourceResp.JSON200.Result.Integration.Application.Name) {
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			"The matched resource was created by third party. Use entitle_resource_synced instead.",
-		)
-		return
-	}
-
 	err = utils.HTTPResponseToError(resourceResp.HTTPResponse.StatusCode, resourceResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
@@ -684,6 +676,14 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 			),
 		)
 
+		return
+	}
+
+	if utils.IsApplicationWithSyncedResources(resourceResp.JSON200.Result.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"The matched resource was created by third party. Use entitle_resource_synced instead.",
+		)
 		return
 	}
 
@@ -923,11 +923,6 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
-		if errors.Is(err, utils.ErrOnlyManualOrVirtual) {
-			resp.Diagnostics.AddWarning("Remote deletion not supported", "The resource was removed from Terraform state only. It may still exist in Entitle because only Virtual or Manual Integration entities can be deleted through the API.")
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

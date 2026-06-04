@@ -79,6 +79,9 @@ func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequ
 						Required:            true,
 						Description:         "The unique ID of the resource assigned to the role.",
 						MarkdownDescription: "The unique ID of the resource assigned to the role.",
+						Validators: []validator.String{
+							validators.UUID{},
+						},
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -325,14 +328,6 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			"Got resource created manually, use entitle_role resource instead.",
-		)
-		return
-	}
-
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -341,6 +336,14 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 				"Failed to get the role: %s",
 				err.Error(),
 			),
+		)
+		return
+	}
+
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"Got resource created manually, use entitle_role resource instead.",
 		)
 		return
 	}
@@ -394,14 +397,6 @@ func (r *RoleSyncedResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			"Got resource created manually, use entitle_role resource instead.",
-		)
-		return
-	}
-
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
@@ -418,6 +413,14 @@ func (r *RoleSyncedResource) Read(ctx context.Context, req resource.ReadRequest,
 				uid.String(),
 				err.Error(),
 			),
+		)
+		return
+	}
+
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"Got resource created manually, use entitle_role resource instead.",
 		)
 		return
 	}
@@ -591,7 +594,7 @@ func (r *RoleSyncedResource) ImportState(ctx context.Context, req resource.Impor
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// findBundleByID searches the role list for the given name.
+// getRoleIDByName searches the role list for the given name.
 func (r *RoleSyncedResource) getRoleIDByName(ctx context.Context, resourceID openapi_types.UUID, name string) (*openapi_types.UUID, error) {
 	fetch := func(ctx context.Context, page int) ([]client.IntegrationResourceRoleListItemResponseSchema, int, error) {
 		params := client.RolesIndexParams{

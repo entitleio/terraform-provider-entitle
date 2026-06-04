@@ -429,14 +429,6 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	if utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			"Got resource created by third party, use entitle_role_synced resource instead.",
-		)
-		return
-	}
-
 	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
@@ -453,6 +445,14 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 				uid.String(),
 				err.Error(),
 			),
+		)
+		return
+	}
+
+	if utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"Got resource created by third party, use entitle_role_synced resource instead.",
 		)
 		return
 	}
@@ -637,11 +637,6 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
-		if errors.Is(err, utils.ErrOnlyManualOrVirtual) {
-			resp.Diagnostics.AddWarning("Remote deletion not supported", "The resource was removed from Terraform state only. It may still exist in Entitle because only Virtual or Manual Integration entities can be deleted through the API.")
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Unable to delete role, id: (%s), %s", data.ID.String(), err.Error()),
