@@ -576,6 +576,8 @@ func (r *ResourceSyncedResource) Update(ctx context.Context, req resource.Update
 					"Client Error",
 					fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", mergeErr),
 				)
+
+				return
 			}
 
 			ppData = append(ppData, []client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item{item})
