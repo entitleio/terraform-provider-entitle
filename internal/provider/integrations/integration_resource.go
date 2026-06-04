@@ -146,7 +146,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						MarkdownDescription: "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						Validators: []validator.String{
 							stringvalidator.LengthBetween(2, 50),
-							stringvalidator.OneOfCaseInsensitive(),
 							validators.Lowercase{},
 						},
 						PlanModifiers: []planmodifier.String{
