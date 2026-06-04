@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -74,7 +75,7 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "The display name for Entitle Role.",
 				Description:         "The display name for Entitle Role.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),

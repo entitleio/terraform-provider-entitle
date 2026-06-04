@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -66,7 +67,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				MarkdownDescription: "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Description:         "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -235,7 +236,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Optional: true,
 				Computed: true,
 				Validators: []validator.String{
-					validators.NewName(2, 2048),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

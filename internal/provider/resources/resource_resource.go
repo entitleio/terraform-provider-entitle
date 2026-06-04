@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -82,7 +83,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				MarkdownDescription: "The display name for the resource. Length between 2 and 50.",
 				Description:         "The display name for the resource. Length between 2 and 50.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -157,7 +158,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"user_defined_description": schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
-					validators.NewName(2, 2048),
+					stringvalidator.LengthBetween(2, 2048),
 				},
 			},
 			"workflow": schema.SingleNestedAttribute{
