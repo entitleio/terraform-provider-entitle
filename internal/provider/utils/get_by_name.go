@@ -23,6 +23,7 @@ type fetchPageFn[T NameableID] func(ctx context.Context, page int) (items []T, t
 func FindIDByName[T NameableID](ctx context.Context, name string, fetch fetchPageFn[T]) (*uuid.UUID, error) {
 	page := 1
 
+	var id *uuid.UUID
 	for {
 		items, totalPages, err := fetch(ctx, page)
 		if err != nil {
@@ -31,8 +32,12 @@ func FindIDByName[T NameableID](ctx context.Context, name string, fetch fetchPag
 
 		for _, item := range items {
 			if item.GetName() == name {
-				id := item.GetID()
-				return &id, nil
+				if id != nil {
+					return nil, fmt.Errorf("found multiple IDs for %s", name)
+				}
+
+				itemID := item.GetID()
+				id = &itemID
 			}
 		}
 
@@ -40,6 +45,10 @@ func FindIDByName[T NameableID](ctx context.Context, name string, fetch fetchPag
 			break
 		}
 		page++
+	}
+
+	if id != nil {
+		return id, nil
 	}
 
 	return nil, fmt.Errorf("item with name %q not found", name)

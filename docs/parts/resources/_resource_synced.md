@@ -6,6 +6,7 @@ On first apply, Terraform performs a lookup by `name` and `integration.id`, vali
 
 - **Synced Resource**: A resource originating from an external integration — its existence is managed by the integration, not by Terraform
 - **Name + Integration lookup**: Terraform finds the resource by matching `name` and `integration.id`; the resource must already exist and must be a synced entity
+- **Name + External ID lookup**: Terraform finds the resource by matching `external_id` and `integration.id`; the resource must already exist and must be a synced entity
 - **Synced validation**: If the matched resource belongs to a manual or virtual integration, the provider returns an error — use `entitle_resource` for those
 - **No-op delete**: Destroying this resource removes it from Terraform state only; no DELETE request is sent to Entitle
 - **Computed fields**: `workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, and `prerequisite_permissions` are all optional — if not specified they are read from the existing resource and tracked in state
@@ -156,7 +157,7 @@ terraform import entitle_resource_synced.example a1b2c3d4-e5f6-7890-abcd-ef12345
 
 ### Resource Must Exist and Be Synced Before Apply
 
-The resource identified by `name` + `integration.id` must already exist in Entitle **and** must belong to a synced integration (not manual or virtual). If the resource doesn't exist, or belongs to a manual/virtual integration, the provider returns an error. Use `entitle_resource` if you need Terraform to create the resource.
+The resource identified by `name` + `integration.id`  or `external_id` + `integration_id` must already exist in Entitle **and** must belong to a synced integration (not manual or virtual). If the resource doesn't exist, or belongs to a manual/virtual integration, the provider returns an error. Use `entitle_resource` if you need Terraform to create the resource.
 
 ### Destroy Does Not Delete the Resource
 
@@ -168,4 +169,4 @@ Fields not specified in your configuration (`workflow`, `allowed_durations`, `re
 
 ### Name Must Be Unique Within an Integration
 
-The lookup is performed by exact `name` match within the given `integration.id`. If multiple resources share the same name under one integration, the provider returns the first match. Ensure resource names are unique within an integration to avoid ambiguity.
+The lookup is performed by exact `name` or `external_id` match within the given `integration.id`. If multiple resources share the same name under one integration, the provider returns the first match. Ensure resource names are unique within an integration or use external id.

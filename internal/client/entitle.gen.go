@@ -1942,6 +1942,7 @@ type IntegrationResourceDestroyResponseSchema struct {
 
 // IntegrationResourceListItemResponseSchema defines model for IntegrationResourceListItemResponseSchema.
 type IntegrationResourceListItemResponseSchema struct {
+	ExternalId  *string                       `json:"externalId,omitempty"`
 	Id          openapi_types.UUID            `json:"id"`
 	Integration IntegrationBaseResponseSchema `json:"integration"`
 	Name        string                        `json:"name"`
@@ -1956,6 +1957,7 @@ type IntegrationResourceResponseSchema struct {
 type IntegrationResourceResultSchema struct {
 	AllowedDurations        []EnumAllowedDurations                                            `json:"allowedDurations"`
 	Description             *string                                                           `json:"description"`
+	ExternalId              *string                                                           `json:"externalId,omitempty"`
 	Id                      openapi_types.UUID                                                `json:"id"`
 	Integration             IntegrationBaseResponseSchema                                     `json:"integration"`
 	Maintainers             []IntegrationResourceResultSchema_Maintainers_Item                `json:"maintainers"`

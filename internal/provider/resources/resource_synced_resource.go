@@ -62,14 +62,37 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"external_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The external ID of the resource as assigned by the upstream integration.  Used together with integration.id to look up the existing synced resource.",
+				MarkdownDescription: "The external ID of the resource as assigned by the upstream integration.  Used together with integration.id to look up the existing synced resource.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
 			"name": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				MarkdownDescription: "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Description:         "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
 				},
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -366,6 +389,7 @@ func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.Create
 		Integration *utils.IdNameModel `tfsdk:"integration"`
 		// Remaining computed/optional fields accept unknown values via framework types.
 		ID                      types.String `tfsdk:"id"`
+		ExternalID              types.String `tfsdk:"external_id"`
 		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
 		Workflow                types.Object `tfsdk:"workflow"`
 		Requestable             types.Bool   `tfsdk:"requestable"`
@@ -383,14 +407,15 @@ func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	name := createPlan.Name.ValueString()
 	integrationID := createPlan.Integration.ID.ValueString()
+	name := createPlan.Name.ValueStringPointer()
+	externalID := createPlan.ExternalID.ValueStringPointer()
 
-	resourceID, err := r.getResourceIDByName(ctx, integrationID, name)
+	resourceID, err := r.getResourceID(ctx, integrationID, externalID, name)
 	if err != nil {
 		resp.Diagnostics.AddError("Resource not found", fmt.Sprintf(
-			"Failed to get the Resource by name (%s) and integration (%s): %s",
-			name, integrationID, err.Error(),
+			"Failed to get the Resource by name (%s) or external id (%s) and integration (%s): %s",
+			createPlan.Name.ValueString(), createPlan.ExternalID.ValueString(), integrationID, err.Error(),
 		))
 		return
 	}
@@ -669,46 +694,43 @@ func (r *ResourceSyncedResource) ImportState(ctx context.Context, req resource.I
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// getResourceIDByName paginates through ResourcesIndex to find a resource by exact name
+// getResourceID paginates through ResourcesIndex to find a resource by exact name
 // within the given integrationId.
-//
-// IntegrationResourceListItemResponseSchema does not implement the NameableID interface
-// (no GetName/GetID methods), so we cannot use the generic FindIDByName helper here.
-func (r *ResourceSyncedResource) getResourceIDByName(ctx context.Context, integrationID string, name string) (*uuid.UUID, error) {
-	page := 1
-	for {
+func (r *ResourceSyncedResource) getResourceID(ctx context.Context, integrationID string, externalID, name *string) (*uuid.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.IntegrationResourceListItemResponseSchema, int, error) {
 		params := client.ResourcesIndexParams{
 			PerPage:       utils.IntPointer(100),
 			Page:          utils.IntPointer(page),
-			Search:        utils.StringPointer(name),
+			Search:        name,
 			IntegrationId: integrationID,
+			ExternalId:    externalID,
 		}
 
 		resp, err := r.client.ResourcesIndexWithResponse(ctx, &params)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list resources: %w", err)
+			return nil, 0, fmt.Errorf("failed to list resources: %w", err)
 		}
 
 		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
-			return nil, fmt.Errorf("API returned status %d while listing resources (page %d)", resp.HTTPResponse.StatusCode, page)
+			return nil, 0, fmt.Errorf("API returned status %d while listing resources (page %d)",
+				resp.HTTPResponse.StatusCode, page)
 		}
 
 		if resp.JSON200 == nil || resp.JSON200.Result == nil {
-			return nil, fmt.Errorf("received invalid response structure (page %d)", page)
+			return nil, 0, fmt.Errorf("received invalid resource response structure (page %d)", page)
 		}
 
-		for _, item := range resp.JSON200.Result {
-			if item.Name == name {
-				id := item.Id
-				return &id, nil
-			}
-		}
-
-		if page >= int(resp.JSON200.Pagination.TotalPages) {
-			break
-		}
-		page++
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
 	}
 
-	return nil, fmt.Errorf("resource with name %q not found in integration %s", name, integrationID)
+	if externalID != nil && *externalID != "" {
+		return utils.FindIDByExternalID(ctx, *externalID, fetch)
+	}
+	if name != nil && *name != "" {
+		return utils.FindIDByName(ctx, *name, fetch)
+	}
+
+	return nil, fmt.Errorf("name or externalId must be set")
 }

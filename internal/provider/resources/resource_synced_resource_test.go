@@ -5,6 +5,7 @@ package resources_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -16,7 +17,7 @@ func TestResourceSyncedResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing - null set
+			// Create and Read testing
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 			
@@ -34,6 +35,7 @@ func TestResourceSyncedResource(t *testing.T) {
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "id"),
+					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "external_id"),
 
 					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "requestable"),
 				),
@@ -58,6 +60,7 @@ func TestResourceSyncedResource(t *testing.T) {
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "id"),
+					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "external_id"),
 				),
 			},
 			{
@@ -80,6 +83,59 @@ func TestResourceSyncedResource(t *testing.T) {
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "id"),
 				),
+			},
+		},
+	})
+}
+
+func TestResourceSyncedResourceByExternalID(t *testing.T) {
+	if os.Getenv("ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID") == "" {
+		t.SkipNow()
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+			resource "entitle_resource_synced" "my_resource" {
+			 	external_id                               = "%s"
+				integration = {
+				  id = "%s"
+				}
+			}
+			`, os.Getenv("ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID"), os.Getenv("ENTITLE_INTEGRATION_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("entitle_resource_synced.my_resource", "external_id", os.Getenv("ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID")),
+					resource.TestCheckResourceAttr("entitle_resource_synced.my_resource", "integration.id", os.Getenv("ENTITLE_INTEGRATION_ID")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "id"),
+					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "name"),
+
+					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "requestable"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceSyncedResourceMissingParam(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+			resource "entitle_resource_synced" "my_resource" {
+				integration = {
+				  id = "%s"
+				}
+			}
+			`, os.Getenv("ENTITLE_INTEGRATION_ID")),
+				ExpectError: regexp.MustCompile("No attribute specified "),
 			},
 		},
 	})

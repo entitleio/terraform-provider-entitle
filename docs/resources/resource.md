@@ -840,6 +840,7 @@ Allowed values:
 
 ### Read-Only
 
+- `external_id` (String) The external ID of the resource
 - `id` (String) Entitle Resource identifier in uuid format
 - `tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 

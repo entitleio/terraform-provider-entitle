@@ -49,6 +49,7 @@ type ResourceResource struct {
 // ResourceResourceModel describes the resource data model.
 type ResourceResourceModel struct {
 	ID                      types.String                        `tfsdk:"id"`
+	ExternalID              types.String                        `tfsdk:"external_id"`
 	Name                    types.String                        `tfsdk:"name"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
 	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
@@ -77,6 +78,11 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"external_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The external ID of the resource",
+				MarkdownDescription: "The external ID of the resource",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
@@ -1168,8 +1174,14 @@ func convertFullResourceResultResponseSchemaToModel(
 		}
 	}
 
+	var externalID string
+	if data.ExternalId != nil {
+		externalID = *data.ExternalId
+	}
+
 	model := ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
+		ExternalID:             utils.TrimmedStringValue(externalID),
 		Name:                   utils.TrimmedStringValue(data.Name),
 		AllowedDurations:       allowedDurations,
 		Maintainers:            maintainers,
