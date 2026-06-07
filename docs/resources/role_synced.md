@@ -6,7 +6,7 @@ description: |-
   An Entitle Synced Role allows Terraform to manage the settings of a role that is synchronized from an external integration — one whose lifecycle is controlled by the integration, not by Entitle or Terraform. Unlike entitle_role role.md, this resource does not create or delete the underlying role; it only reads and updates its configuration.
   On first apply, Terraform performs a lookup by name and resource.id, validates that the role is a synced entity (not an Entitle-created role), and imports it into state. All other fields (workflow, allowed_durations, requestable, prerequisite_permissions) are read from the API and stored in state. You can then override any of them in subsequent applies. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  Synced Role: A role originating from an external integration — its existence is managed by the integration, not by TerraformName + Resource lookup: Terraform finds the role by matching name and resource.id; the role must already exist and must be a synced entitySynced validation: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use entitle_role for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleComputed fields: workflow, allowed_durations, requestable, and prerequisite_permissions are all optional — if not specified they are read from the existing role and tracked in state
+  Synced Role: A role originating from an external integration — its existence is managed by the integration, not by TerraformName/External ID + Resource lookup: Terraform finds the role by matching name/external_id and resource.id; the role must already exist and must be a synced entitySynced validation: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use entitle_role for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleComputed fields: workflow, allowed_durations, requestable, and prerequisite_permissions are all optional — if not specified they are read from the existing role and tracked in state
   entitle_role_synced vs entitle_role
   | | `entitle_role` | `entitle_role_synced` |
   |---|---|---|
@@ -123,7 +123,7 @@ description: |-
   Computed Fields Track API State
   Fields not specified in your configuration (workflow, allowed_durations, requestable, prerequisite_permissions) are populated from the API on first apply and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), terraform plan will show a diff and the next apply will restore the Terraform-managed values.
   Name Must Be Unique Within a Resource
-  The lookup is performed by exact name match within the given resource.id. If multiple roles share the same name under one resource, the provider returns the first match. Ensure role names are unique within a resource to avoid ambiguity.
+  The lookup is performed by exact name/external_id match within the given resource.id. Ensure role name is unique within an integration or use external id.
 ---
 
 # entitle_role_synced (Resource)
@@ -135,7 +135,7 @@ On first apply, Terraform performs a lookup by `name` and `resource.id`, validat
 ## Key Concepts
 
 - **Synced Role**: A role originating from an external integration — its existence is managed by the integration, not by Terraform
-- **Name + Resource lookup**: Terraform finds the role by matching `name` and `resource.id`; the role must already exist and must be a synced entity
+- **Name/External ID + Resource lookup**: Terraform finds the role by matching `name`/`external_id` and `resource.id`; the role must already exist and must be a synced entity
 - **Synced validation**: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use `entitle_role` for those
 - **No-op delete**: Destroying this resource removes it from Terraform state only; no DELETE request is sent to Entitle
 - **Computed fields**: `workflow`, `allowed_durations`, `requestable`, and `prerequisite_permissions` are all optional — if not specified they are read from the existing role and tracked in state
@@ -285,7 +285,7 @@ Fields not specified in your configuration (`workflow`, `allowed_durations`, `re
 
 ### Name Must Be Unique Within a Resource
 
-The lookup is performed by exact `name` match within the given `resource.id`. If multiple roles share the same name under one resource, the provider returns the first match. Ensure role names are unique within a resource to avoid ambiguity.
+The lookup is performed by exact `name`/`external_id` match within the given `resource.id`. Ensure role name is unique within an integration or use external id.
 
 
 
