@@ -68,7 +68,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Description:         "The external ID of the resource as assigned by the upstream integration.  Used together with integration.id to look up the existing synced resource.",
 				MarkdownDescription: "The external ID of the resource as assigned by the upstream integration.  Used together with integration.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.LengthBetween(2, 255),
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("external_id"),
 						path.MatchRoot("name"),
@@ -85,7 +85,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				MarkdownDescription: "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Description:         "The display name of the resource. Used together with integration.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.LengthBetween(2, 255),
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("external_id"),
 						path.MatchRoot("name"),
