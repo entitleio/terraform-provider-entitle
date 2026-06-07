@@ -385,11 +385,11 @@ func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.Create
 	// Use a plan-read struct with framework types for optional+computed fields so that
 	// unknown values on the first apply do not cause a conversion error.
 	var createPlan struct {
+		ExternalID  types.String       `tfsdk:"external_id"`
 		Name        types.String       `tfsdk:"name"`
 		Integration *utils.IdNameModel `tfsdk:"integration"`
 		// Remaining computed/optional fields accept unknown values via framework types.
 		ID                      types.String `tfsdk:"id"`
-		ExternalID              types.String `tfsdk:"external_id"`
 		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
 		Workflow                types.Object `tfsdk:"workflow"`
 		Requestable             types.Bool   `tfsdk:"requestable"`

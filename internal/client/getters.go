@@ -29,6 +29,13 @@ func (i IntegrationResourceRoleListItemResponseSchema) GetID() uuid.UUID {
 func (i IntegrationResourceRoleListItemResponseSchema) GetName() string {
 	return i.Name
 }
+func (i IntegrationResourceRoleListItemResponseSchema) GetExternalID() string {
+	if i.ExternalId == nil {
+		return ""
+	}
+
+	return *i.ExternalId
+}
 
 func (i IntegrationResourceListItemResponseSchema) GetID() uuid.UUID {
 	return i.Id

@@ -8,6 +8,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -23,12 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	openapi_types "github.com/oapi-codegen/runtime/types"
-
-	"github.com/entitleio/terraform-provider-entitle/docs"
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
-	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -63,14 +61,37 @@ func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequ
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The display name for Entitle Role.",
-				Description:         "The display name for Entitle Role.",
+			"external_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The external ID of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				MarkdownDescription: "The external ID of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.LengthBetween(2, 255),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
 				},
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				MarkdownDescription: "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -287,8 +308,9 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 	// Use a plan-read struct that absorbs unknown values for computed fields,
 	// since on first apply there is no prior state to resolve them from.
 	var createPlan struct {
-		Name     types.String       `tfsdk:"name"`
-		Resource *utils.IdNameModel `tfsdk:"resource"`
+		Name       types.String       `tfsdk:"name"`
+		ExternalID types.String       `tfsdk:"external_id"`
+		Resource   *utils.IdNameModel `tfsdk:"resource"`
 		// Remaining fields declared with framework types to accept unknown values.
 		ID                      types.String `tfsdk:"id"`
 		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
@@ -307,13 +329,14 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 
 	var err error
 
-	name := createPlan.Name.ValueString()
+	name := createPlan.Name.ValueStringPointer()
+	externalID := createPlan.ExternalID.ValueStringPointer()
 	resourceID := createPlan.Resource.ID.ValueString()
-	roleID, err := r.getRoleIDByName(ctx, uuid.MustParse(resourceID), name)
+	roleID, err := r.getRoleID(ctx, uuid.MustParse(resourceID), externalID, name)
 	if err != nil {
 		resp.Diagnostics.AddError("Role not found", fmt.Sprintf(
-			"Failed to get the Role by the name (%s) and resource (%s), %s",
-			name, resourceID,
+			"Failed to get the Role by the name (%s) or external id (%s) and resource (%s), %s",
+			createPlan.Name.ValueString(), createPlan.ExternalID.ValueString(), resourceID,
 			err.Error(),
 		))
 
@@ -595,14 +618,16 @@ func (r *RoleSyncedResource) ImportState(ctx context.Context, req resource.Impor
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// getRoleIDByName searches the role list for the given name.
-func (r *RoleSyncedResource) getRoleIDByName(ctx context.Context, resourceID openapi_types.UUID, name string) (*openapi_types.UUID, error) {
+// getRoleID paginates through IntegrationResourceListItemResponseSchema to find a role by exact name or external id
+// within the given integrationId.
+func (r *RoleSyncedResource) getRoleID(ctx context.Context, resourceID uuid.UUID, externalID, name *string) (*uuid.UUID, error) {
 	fetch := func(ctx context.Context, page int) ([]client.IntegrationResourceRoleListItemResponseSchema, int, error) {
 		params := client.RolesIndexParams{
 			PerPage:    utils.IntPointer(100),
 			Page:       utils.IntPointer(page),
-			Search:     utils.StringPointer(name),
+			Search:     name,
 			ResourceId: resourceID,
+			ExternalId: externalID,
 		}
 
 		resp, err := r.client.RolesIndexWithResponse(ctx, &params)
@@ -624,5 +649,12 @@ func (r *RoleSyncedResource) getRoleIDByName(ctx context.Context, resourceID ope
 		return items, total, nil
 	}
 
-	return utils.FindIDByName(ctx, name, fetch)
+	if externalID != nil && *externalID != "" {
+		return utils.FindIDByExternalID(ctx, *externalID, fetch)
+	}
+	if name != nil && *name != "" {
+		return utils.FindIDByName(ctx, *name, fetch)
+	}
+
+	return nil, fmt.Errorf("name or externalId must be set")
 }

@@ -294,7 +294,6 @@ The lookup is performed by exact `name` match within the given `resource.id`. If
 
 ### Required
 
-- `name` (String) The display name for Entitle Role.
 - `resource` (Attributes) In this field, you can assign an existing resource to the new role. (see [below for nested schema](#nestedatt--resource))
 
 ### Optional
@@ -316,6 +315,8 @@ Allowed values:
   - 31536000 - 365 days
   - 63072000 - 730 days
   - -1 - unlimited
+- `external_id` (String) The external ID of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.
+- `name` (String) The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.
 - `prerequisite_permissions` (Attributes List) Users granted any role from this role through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `requestable` (Boolean) Indicates if the role is requestable.
 - `virtualized_role` (Attributes) In this field, you can assign an existing virtualized role to the new role. (see [below for nested schema](#nestedatt--virtualized_role))

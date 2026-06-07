@@ -5,7 +5,7 @@ On first apply, Terraform performs a lookup by `name` and `resource.id`, validat
 ## Key Concepts
 
 - **Synced Role**: A role originating from an external integration — its existence is managed by the integration, not by Terraform
-- **Name + Resource lookup**: Terraform finds the role by matching `name` and `resource.id`; the role must already exist and must be a synced entity
+- **Name/External ID + Resource lookup**: Terraform finds the role by matching `name`/`external_id` and `resource.id`; the role must already exist and must be a synced entity
 - **Synced validation**: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use `entitle_role` for those
 - **No-op delete**: Destroying this resource removes it from Terraform state only; no DELETE request is sent to Entitle
 - **Computed fields**: `workflow`, `allowed_durations`, `requestable`, and `prerequisite_permissions` are all optional — if not specified they are read from the existing role and tracked in state
@@ -155,4 +155,4 @@ Fields not specified in your configuration (`workflow`, `allowed_durations`, `re
 
 ### Name Must Be Unique Within a Resource
 
-The lookup is performed by exact `name` match within the given `resource.id`. If multiple roles share the same name under one resource, the provider returns the first match. Ensure role names are unique within a resource to avoid ambiguity.
+The lookup is performed by exact `name`/`external_id` match within the given `resource.id`. Ensure role name is unique within an integration or use external id.

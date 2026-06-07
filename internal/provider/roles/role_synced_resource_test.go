@@ -5,6 +5,7 @@ package roles_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -80,6 +81,59 @@ resource "entitle_role_synced" "my_role" {
 					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "id"),
 					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "resource.name"),
 				),
+			},
+		},
+	})
+}
+
+func TestRoleSyncedResourceByExternalID(t *testing.T) {
+	if os.Getenv("ENTITLE_ROLE_SYNCED_EXTERNAL_ID") == "" {
+		t.SkipNow()
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_role_synced" "my_role" {
+	external_id = "%s"
+	resource = {
+		id = "%s"
+	}
+}
+`, os.Getenv("ENTITLE_ROLE_SYNCED_EXTERNAL_ID"), os.Getenv("ENTITLE_RESOURCE_SYNCED_ID")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Verify
+					resource.TestCheckResourceAttr("entitle_role_synced.my_role", "external_id", os.Getenv("ENTITLE_ROLE_SYNCED_EXTERNAL_ID")),
+					resource.TestCheckResourceAttr("entitle_role_synced.my_role", "resource.id", os.Getenv("ENTITLE_RESOURCE_SYNCED_ID")),
+
+					// Verify dynamic values have any value set in the state.
+					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "id"),
+					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "name"),
+					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "requestable"),
+					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "resource.name"),
+				),
+			},
+		},
+	})
+}
+
+func TestRoleSyncedResourceMissingParam(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_role_synced" "my_role" {
+	resource = {
+		id = "%s"
+	}
+}
+`, os.Getenv("ENTITLE_RESOURCE_SYNCED_ID")),
+				ExpectError: regexp.MustCompile("No attribute specified "),
 			},
 		},
 	})

@@ -53,6 +53,8 @@ on:
         required: true
       ENTITLE_ROLE_SYNCED_NAME:
         required: true
+      ENTITLE_ROLE_SYNCED_EXTERNAL_ID:
+        required: true
       ENTITLE_USER1_ID:
         required: true
       ENTITLE_USER2_ID:
@@ -289,6 +291,7 @@ jobs:
           ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID: ${{ secrets.ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_ROLE_ID }}
           ENTITLE_ROLE_SYNCED_NAME: ${{ secrets.ENTITLE_ROLE_SYNCED_NAME }}
+          ENTITLE_ROLE_SYNCED_EXTERNAL_ID: ${{ secrets.ENTITLE_ROLE_SYNCED_EXTERNAL_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_WORKFLOW_ID }}
@@ -324,6 +327,7 @@ jobs:
           ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID: ${{ secrets.ENTITLE_RESOURCE_SYNCED_EXTERNAL_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_US_ROLE_ID }}
           ENTITLE_ROLE_SYNCED_NAME: ${{ secrets.ENTITLE_ROLE_SYNCED_NAME }}
+          ENTITLE_ROLE_SYNCED_EXTERNAL_ID: ${{ secrets.ENTITLE_ROLE_SYNCED_EXTERNAL_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_US_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_US_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_US_WORKFLOW_ID }}
@@ -360,6 +364,7 @@ jobs:
           ENTITLE_SLACK_CHANNEL_ID: ${{ secrets.ENTITLE_SLACK_CHANNEL_ID }}
           ENTITLE_ROLE_ID: ${{ secrets.ENTITLE_CA_ROLE_ID }}
           ENTITLE_ROLE_SYNCED_NAME: ${{ secrets.ENTITLE_ROLE_SYNCED_NAME }}
+          ENTITLE_ROLE_SYNCED_EXTERNAL_ID: ${{ secrets.ENTITLE_ROLE_SYNCED_EXTERNAL_ID }}
           ENTITLE_USER1_ID: ${{ secrets.ENTITLE_CA_USER1_ID }}
           ENTITLE_USER2_ID: ${{ secrets.ENTITLE_CA_USER2_ID }}
           ENTITLE_WORKFLOW_ID: ${{ secrets.ENTITLE_CA_WORKFLOW_ID }}
