@@ -578,6 +578,7 @@ Allowed values:
 
 ### Read-Only
 
+- `external_id` (String) The external ID of the role as assigned by the upstream integration.
 - `id` (String) Entitle Role identifier in UUID format
 
 <a id="nestedatt--resource"></a>
