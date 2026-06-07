@@ -82,6 +82,11 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"external_id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The external ID of the role as assigned by the upstream integration.",
+				Description:         "The external ID of the role as assigned by the upstream integration.",
+			},
 			"resource": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
