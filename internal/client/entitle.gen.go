@@ -1942,6 +1942,7 @@ type IntegrationResourceDestroyResponseSchema struct {
 
 // IntegrationResourceListItemResponseSchema defines model for IntegrationResourceListItemResponseSchema.
 type IntegrationResourceListItemResponseSchema struct {
+	ExternalId  *string                       `json:"externalId,omitempty"`
 	Id          openapi_types.UUID            `json:"id"`
 	Integration IntegrationBaseResponseSchema `json:"integration"`
 	Name        string                        `json:"name"`
@@ -1956,6 +1957,7 @@ type IntegrationResourceResponseSchema struct {
 type IntegrationResourceResultSchema struct {
 	AllowedDurations        []EnumAllowedDurations                                            `json:"allowedDurations"`
 	Description             *string                                                           `json:"description"`
+	ExternalId              *string                                                           `json:"externalId,omitempty"`
 	Id                      openapi_types.UUID                                                `json:"id"`
 	Integration             IntegrationBaseResponseSchema                                     `json:"integration"`
 	Maintainers             []IntegrationResourceResultSchema_Maintainers_Item                `json:"maintainers"`
@@ -2038,9 +2040,10 @@ type IntegrationResourceRoleDestroyResponseSchema struct {
 
 // IntegrationResourceRoleListItemResponseSchema defines model for IntegrationResourceRoleListItemResponseSchema.
 type IntegrationResourceRoleListItemResponseSchema struct {
-	Id       openapi_types.UUID                        `json:"id"`
-	Name     string                                    `json:"name"`
-	Resource IntegrationResourceListItemResponseSchema `json:"resource"`
+	ExternalId *string                                   `json:"externalId,omitempty"`
+	Id         openapi_types.UUID                        `json:"id"`
+	Name       string                                    `json:"name"`
+	Resource   IntegrationResourceListItemResponseSchema `json:"resource"`
 }
 
 // IntegrationResourceRoleResponseSchema defines model for IntegrationResourceRoleResponseSchema.
@@ -2051,6 +2054,7 @@ type IntegrationResourceRoleResponseSchema struct {
 // IntegrationResourceRoleResultSchema defines model for IntegrationResourceRoleResultSchema.
 type IntegrationResourceRoleResultSchema struct {
 	AllowedDurations        []EnumAllowedDurations                                              `json:"allowedDurations"`
+	ExternalId              *string                                                             `json:"externalId,omitempty"`
 	Id                      openapi_types.UUID                                                  `json:"id"`
 	Name                    string                                                              `json:"name"`
 	PrerequisitePermissions *[]IntegrationResourceRoleResultSchema_PrerequisitePermissions_Item `json:"prerequisitePermissions,omitempty"`

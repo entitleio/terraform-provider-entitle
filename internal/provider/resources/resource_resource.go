@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -48,6 +49,7 @@ type ResourceResource struct {
 // ResourceResourceModel describes the resource data model.
 type ResourceResourceModel struct {
 	ID                      types.String                        `tfsdk:"id"`
+	ExternalID              types.String                        `tfsdk:"external_id"`
 	Name                    types.String                        `tfsdk:"name"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
 	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
@@ -77,12 +79,17 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"external_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The external ID of the resource",
+				MarkdownDescription: "The external ID of the resource",
+			},
 			"name": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "The display name for the resource. Length between 2 and 50.",
 				Description:         "The display name for the resource. Length between 2 and 50.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -157,7 +164,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 			"user_defined_description": schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
-					validators.NewName(2, 2048),
+					stringvalidator.LengthBetween(2, 2048),
 				},
 			},
 			"workflow": schema.SingleNestedAttribute{
@@ -679,6 +686,14 @@ func (r *ResourceResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
+	if utils.IsApplicationWithSyncedResources(resourceResp.JSON200.Result.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"The matched resource was created by third party. Use entitle_resource_synced instead.",
+		)
+		return
+	}
+
 	data, diags = convertFullResourceResultResponseSchemaToModel(
 		ctx,
 		&resourceResp.JSON200.Result,
@@ -763,79 +778,10 @@ func (r *ResourceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
-	var maintainers []client.IntegrationResourcesUpdateBodySchema_Maintainers_Item
-	if len(data.Maintainers) > 0 {
-		maintainers = make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(data.Maintainers))
-		for _, maintainer := range data.Maintainers {
-			if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
-				continue
-			}
-
-			idAttr := maintainer.Entity.Attributes()["id"]
-			strVal, ok := idAttr.(basetypes.StringValue)
-			if !ok {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Missing data for entity maintainer id",
-				)
-				return
-			}
-			entityID := strVal.ValueString()
-
-			if maintainer.Entity.IsNull() {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Missing data for entity maintainer",
-				)
-				return
-			}
-
-			switch maintainer.Type.ValueString() {
-			case utils.MaintainerTypeUser:
-
-				maintainerUser := client.UserMaintainerSchema{
-					Type: client.EnumMaintainerTypeUserUser,
-					User: client.UserEntitySchema{
-						Id: entityID,
-					},
-				}
-
-				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
-				err := item.MergeUserMaintainerSchema(maintainerUser)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("Failed to merge user maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			case utils.MaintainerTypeGroup:
-				maintainerGroup := client.GroupMaintainerSchema{
-					Type: client.EnumMaintainerTypeGroupGroup,
-					Group: client.GroupEntitySchema{
-						Id: entityID,
-					},
-				}
-
-				item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
-				err = item.MergeGroupMaintainerSchema(maintainerGroup)
-				if err != nil {
-					resp.Diagnostics.AddError(
-						"Client Error",
-						fmt.Sprintf("Failed to merge group maintainer data, error: %v", err),
-					)
-				}
-
-				maintainers = append(maintainers, item)
-			default:
-				resp.Diagnostics.AddError(
-					"Client Error",
-					"Failed invalid maintainer type only support user and group",
-				)
-				return
-			}
-		}
+	maintainers, buildErr := buildUpdateMaintainers(ctx, data.Maintainers)
+	if buildErr != nil {
+		resp.Diagnostics.AddError("Client Error", buildErr.Error())
+		return
 	}
 
 	var prerequisitePermissions *[][]client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item
@@ -984,11 +930,6 @@ func (r *ResourceResource) Delete(ctx context.Context, req resource.DeleteReques
 
 	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
 	if err != nil {
-		if errors.Is(err, utils.ErrOnlyManualOrVirtual) {
-			resp.Diagnostics.AddWarning("Remote deletion not supported", "The resource was removed from Terraform state only. It may still exist in Entitle because only Virtual or Manual Integration entities can be deleted through the API.")
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -1233,8 +1174,14 @@ func convertFullResourceResultResponseSchemaToModel(
 		}
 	}
 
+	var externalID string
+	if data.ExternalId != nil {
+		externalID = *data.ExternalId
+	}
+
 	model := ResourceResourceModel{
 		ID:                     utils.TrimmedStringValue(data.Id.String()),
+		ExternalID:             utils.TrimmedStringValue(externalID),
 		Name:                   utils.TrimmedStringValue(data.Name),
 		AllowedDurations:       allowedDurations,
 		Maintainers:            maintainers,
@@ -1262,4 +1209,49 @@ func convertFullResourceResultResponseSchemaToModel(
 
 	// Create the Terraform resource model using the extracted data
 	return model, diags
+}
+
+// buildUpdateMaintainers converts the maintainer list from the resource model into the
+// API update body format. Extracted here to keep Update readable.
+func buildUpdateMaintainers(_ context.Context, maintainers []*utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
+	result := make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(maintainers))
+	for _, m := range maintainers {
+		if m.Type.IsNull() || m.Type.IsUnknown() {
+			continue
+		}
+		if m.Entity.IsNull() {
+			return nil, fmt.Errorf("missing entity for maintainer")
+		}
+
+		idAttr := m.Entity.Attributes()["id"]
+		sv, ok := idAttr.(types.String)
+		if !ok {
+			return nil, fmt.Errorf("missing id for maintainer entity")
+		}
+		entityID := sv.ValueString()
+
+		switch m.Type.ValueString() {
+		case utils.MaintainerTypeUser:
+			item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
+			if err := item.MergeUserMaintainerSchema(client.UserMaintainerSchema{
+				Type: client.EnumMaintainerTypeUserUser,
+				User: client.UserEntitySchema{Id: entityID},
+			}); err != nil {
+				return nil, fmt.Errorf("failed to merge user maintainer: %w", err)
+			}
+			result = append(result, item)
+		case utils.MaintainerTypeGroup:
+			item := client.IntegrationResourcesUpdateBodySchema_Maintainers_Item{}
+			if err := item.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
+				Type:  client.EnumMaintainerTypeGroupGroup,
+				Group: client.GroupEntitySchema{Id: entityID},
+			}); err != nil {
+				return nil, fmt.Errorf("failed to merge group maintainer: %w", err)
+			}
+			result = append(result, item)
+		default:
+			return nil, fmt.Errorf("invalid maintainer type %q: only 'user' and 'group' are supported", m.Type.ValueString())
+		}
+	}
+	return result, nil
 }

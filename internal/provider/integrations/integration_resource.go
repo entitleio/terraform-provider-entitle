@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -84,7 +85,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: "The display name for the integration. Length between 2 and 50.",
 				Description:         "The display name for the integration. Length between 2 and 50.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 			},
 			"allowed_durations": schema.SetAttribute{
@@ -144,7 +145,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description:         "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						MarkdownDescription: "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						Validators: []validator.String{
-							validators.NewName(2, 50),
+							stringvalidator.LengthBetween(2, 50),
 							validators.Lowercase{},
 						},
 						PlanModifiers: []planmodifier.String{

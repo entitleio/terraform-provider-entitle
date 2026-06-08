@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -75,7 +76,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				MarkdownDescription: "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
 				Description:         "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 			},
 			"rules": schema.ListNestedAttribute{

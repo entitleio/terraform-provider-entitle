@@ -16,6 +16,15 @@ For example, in an AWS integration, a resource might represent a specific AWS ac
 - **Prerequisite Permissions**: Roles automatically granted when any role on this resource is approved
 - **Tags**: Searchable metadata for discovery and organization
 
+## entitle_resource vs entitle_resource_synced
+
+Use `entitle_resource` for:
+
+- **Manual integrations** — where Entitle directly manages the resource lifecycle
+- **Virtual applications** — resources created and owned by Entitle
+
+Use [`entitle_resource_synced`](resource_synced.md) for integrations where resources are **synchronized from an external system** (GCP, AWS, GitHub, Okta, etc.) and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing resource by lookup rather than creating it.
+
 ## When to Use Resources
 
 - Representing fine-grained assets within an integration (e.g., individual repositories, database schemas, AWS accounts)

@@ -22,8 +22,10 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 ### Supported Resources
 * **Workflow** (`entitle_workflow`) — A Just-In-Time approval process: who approves, in what order, for how long. Assignable to integrations, resources, roles, and bundles.
 * **Integration** (`entitle_integration`) — A configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub org, or Slack workspace), including credentials and access settings.
-* **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group).
-* **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions.
+* **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group). Use this for manual/virtual integrations where Entitle manages the resource lifecycle.
+* **Resource Synced** (`entitle_resource_synced`) — Adopts an existing resource that is automatically synchronized from an external integration (GCP, AWS, GitHub, Okta, etc.). Terraform manages its Entitle settings (owner, workflow, durations) without creating or deleting the underlying resource.
+* **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions. Use this for manual/virtual integrations where Entitle manages the role lifecycle.
+* **Role Synced** (`entitle_role_synced`) — Adopts an existing role that is automatically synchronized from an external integration. Terraform manages its Entitle settings without creating or deleting the underlying role.
 * **Bundle** (`entitle_bundle`) — A cross-application package of roles that can be requested or revoked as a single action — effectively a "super role" spanning multiple integrations.
 * **Policy** (`entitle_policy`) — A rule that automatically grants birthright permissions to users in a group, and revokes them on group leave.
 * **Agent Token** (`entitle_agent_token`) — Credential used by the on-prem Entitle Agent to authenticate with the platform when connecting private/internal systems.

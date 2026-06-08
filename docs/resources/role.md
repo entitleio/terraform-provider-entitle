@@ -7,6 +7,10 @@ description: |-
   Each role belongs to exactly one resource, and can be linked to a workflow to define the approval process for access requests. Roles can be grouped into bundles for cross-application access packages, or assigned directly through policies for birthright access. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
   Role: The atomic permission unit — a named access level within a specific resourceResource: The target system the role provides access to (e.g., a specific AWS account)Workflow: The approval flow triggered when a user requests this roleAllowed Durations: The time limits for which access can be granted (overrides integration/workflow defaults)Requestable: Whether users can submit JIT access requests for this rolePrerequisite Permissions: Roles automatically granted alongside this role when access is approvedVirtualized Role: An abstract role that maps to different real roles depending on the resource
+  entitle_role vs entitle_role_synced
+  Use entitle_role for:
+  Manual integrations — where Entitle directly manages the resource and role lifecycleVirtual applications — roles created and owned by Entitle
+  Use entitle_role_synced role_synced.md for integrations where roles are synchronized from an external system and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing role by lookup rather than creating it.
   When to Use Roles
   Define granular access levels within a resource (e.g., readonly, contributor, admin)Attach different approval workflows to different access levels (e.g., read is auto-approved, write requires manager)Control the maximum duration for which a specific permission level can be heldSet up prerequisite permissions that must always accompany a role (e.g., read access must come with a viewer role)
   Example Usage
@@ -43,7 +47,7 @@ description: |-
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }
   
-    # Allow only 1h, 3h, or 6h access windows
+    # Allow only 1h, 3h, or 8h access windows
     allowed_durations = [3600, 10800, 28800]
   }
   
@@ -84,7 +88,7 @@ description: |-
   
     prerequisite_permissions = [
       {
-        default = true  # Automatically granted as part of the request
+        default = true  # Automatically granted alongside this role
         role = {
           id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # db_read role
         }
@@ -164,7 +168,7 @@ description: |-
     allowed_durations = [3600, 10800, 21600]
   }
   
-  # Write: requires manager, longer durations
+  # Write: requires manager approval, longer durations
   resource "entitle_role" "app_write" {
     name        = "App Write"
     requestable = true
@@ -187,7 +191,7 @@ description: |-
     }]
   }
   
-  # Admin: requires security team, short durations only
+  # Admin: requires security team approval, short durations only
   resource "entitle_role" "app_admin" {
     name        = "App Admin"
     requestable = true
@@ -250,6 +254,15 @@ Each role belongs to exactly one resource, and can be linked to a workflow to de
 - **Prerequisite Permissions**: Roles automatically granted alongside this role when access is approved
 - **Virtualized Role**: An abstract role that maps to different real roles depending on the resource
 
+## entitle_role vs entitle_role_synced
+
+Use `entitle_role` for:
+
+- **Manual integrations** — where Entitle directly manages the resource and role lifecycle
+- **Virtual applications** — roles created and owned by Entitle
+
+Use [`entitle_role_synced`](role_synced.md) for integrations where roles are **synchronized from an external system** and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing role by lookup rather than creating it.
+
 ## When to Use Roles
 
 - Define granular access levels within a resource (e.g., `readonly`, `contributor`, `admin`)
@@ -297,7 +310,7 @@ resource "entitle_role" "prod_admin" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  # Allow only 1h, 3h, or 6h access windows
+  # Allow only 1h, 3h, or 8h access windows
   allowed_durations = [3600, 10800, 28800]
 }
 ```
@@ -344,7 +357,7 @@ resource "entitle_role" "db_write" {
 
   prerequisite_permissions = [
     {
-      default = true  # Automatically granted as part of the request
+      default = true  # Automatically granted alongside this role
       role = {
         id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # db_read role
       }
@@ -433,7 +446,7 @@ resource "entitle_role" "app_read" {
   allowed_durations = [3600, 10800, 21600]
 }
 
-# Write: requires manager, longer durations
+# Write: requires manager approval, longer durations
 resource "entitle_role" "app_write" {
   name        = "App Write"
   requestable = true
@@ -456,7 +469,7 @@ resource "entitle_role" "app_write" {
   }]
 }
 
-# Admin: requires security team, short durations only
+# Admin: requires security team approval, short durations only
 resource "entitle_role" "app_admin" {
   name        = "App Admin"
   requestable = true
@@ -565,6 +578,7 @@ Allowed values:
 
 ### Read-Only
 
+- `external_id` (String) The external ID of the role as assigned by the upstream integration.
 - `id` (String) Entitle Role identifier in UUID format
 
 <a id="nestedatt--resource"></a>
