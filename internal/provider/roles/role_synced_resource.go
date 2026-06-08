@@ -84,7 +84,7 @@ func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
 				MarkdownDescription: "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.LengthBetween(2, 255),
 					stringvalidator.ExactlyOneOf(
 						path.MatchRoot("external_id"),
 						path.MatchRoot("name"),
