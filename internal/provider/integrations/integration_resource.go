@@ -2,7 +2,6 @@ package integrations
 
 import (
 	"context"
-	"fmt"
 	"maps"
 	"strings"
 
@@ -83,24 +82,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *IntegrationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	r.client = c
+func (r *IntegrationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	configureIntegrationResource(req.ProviderData, &r.client, &resp.Diagnostics)
 }
 
 // Create this function is responsible for creating a new resource of type Entitle Integration.

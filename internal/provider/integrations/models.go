@@ -162,7 +162,7 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		},
 		Optional:            true,
 		Description:         "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
-		MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n",
+		MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
 	},
 	"readonly": schema.BoolAttribute{
 		Optional: true,
@@ -380,7 +380,10 @@ func GetBaseIntegrationResourceAttributes(appName applicationName) map[string]sc
 
 	if canCreateActors := appName.canCreateActors(); canCreateActors != nil {
 		v := *canCreateActors
-		allowCreatingAccounts, _ := m["allow_creating_accounts"].(schema.BoolAttribute)
+		allowCreatingAccounts, ok := m["allow_creating_accounts"].(schema.BoolAttribute)
+		if !ok {
+			panic("GetBaseIntegrationResourceAttributes: \"allow_creating_accounts\" is missing or not a schema.BoolAttribute")
+		}
 
 		allowCreatingAccounts.Validators = []validator.Bool{
 			boolvalidator.Equals(v),
@@ -392,7 +395,10 @@ func GetBaseIntegrationResourceAttributes(appName applicationName) map[string]sc
 
 	if canEditPermissions := appName.canEditPermissions(); canEditPermissions != nil {
 		v := *canEditPermissions
-		allowChangingAccountPermissions, _ := m["allow_changing_account_permissions"].(schema.BoolAttribute)
+		allowChangingAccountPermissions, ok := m["allow_changing_account_permissions"].(schema.BoolAttribute)
+		if !ok {
+			panic("GetBaseIntegrationResourceAttributes: \"allow_changing_account_permissions\" is missing or not a schema.BoolAttribute")
+		}
 
 		allowChangingAccountPermissions.Validators = []validator.Bool{
 			boolvalidator.Equals(v),

@@ -471,12 +471,21 @@ func ValidateVirtualApplicationConstraints(baseData BaseIntegrationResourceModel
 	return diags
 }
 
-// BuildCreateMaintainersFromPlan converts plan maintainer models into the API create body items.
-func BuildCreateMaintainersFromPlan(
-	plan []*utils.MaintainerModel,
-) ([]client.IntegrationCreateBodySchema_Maintainers_Item, diag.Diagnostics) {
+// maintainerItemPtr is the pointer constraint used by buildMaintainersFromPlan. It requires
+// that *T exposes the two Merge methods that all generated maintainer union types share.
+type maintainerItemPtr[T any] interface {
+	*T
+	MergeUserMaintainerSchema(client.UserMaintainerSchema) error
+	MergeGroupMaintainerSchema(client.GroupMaintainerSchema) error
+}
+
+// buildMaintainersFromPlan is the shared generic core for BuildCreateMaintainersFromPlan
+// and BuildUpdateMaintainersFromPlan. T is the value type (e.g.
+// IntegrationCreateBodySchema_Maintainers_Item); PT is its pointer (*T), which carries
+// the Merge methods.
+func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](plan []*utils.MaintainerModel) ([]T, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	maintainers := make([]client.IntegrationCreateBodySchema_Maintainers_Item, 0)
+	maintainers := make([]T, 0)
 
 	for _, maintainer := range plan {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
@@ -493,90 +502,97 @@ func BuildCreateMaintainersFromPlan(
 			return nil, diags
 		}
 
+		var item T
+		pt := PT(&item)
 		switch maintainer.Type.ValueString() {
 		case utils.MaintainerTypeUser:
-			item := client.IntegrationCreateBodySchema_Maintainers_Item{}
-			if err := item.MergeUserMaintainerSchema(client.UserMaintainerSchema{
+			if err := pt.MergeUserMaintainerSchema(client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
 				User: client.UserEntitySchema{Id: entityID},
 			}); err != nil {
 				diags.AddError("Client Error", fmt.Sprintf("Failed to merge user maintainer data, error: %v", err))
 				return nil, diags
 			}
-			maintainers = append(maintainers, item)
 
 		case utils.MaintainerTypeGroup:
-			item := client.IntegrationCreateBodySchema_Maintainers_Item{}
-			if err := item.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
+			if err := pt.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
 				Type:  client.EnumMaintainerTypeGroupGroup,
 				Group: client.GroupEntitySchema{Id: entityID},
 			}); err != nil {
 				diags.AddError("Client Error", "Failed to merge group maintainer")
 				return nil, diags
 			}
-			maintainers = append(maintainers, item)
 
 		default:
 			diags.AddError("Client Error", "Invalid maintainer type only support user and group")
 			return nil, diags
 		}
+
+		maintainers = append(maintainers, item)
 	}
 
 	return maintainers, diags
+}
+
+// BuildCreateMaintainersFromPlan converts plan maintainer models into the API create body items.
+func BuildCreateMaintainersFromPlan(
+	plan []*utils.MaintainerModel,
+) ([]client.IntegrationCreateBodySchema_Maintainers_Item, diag.Diagnostics) {
+	return buildMaintainersFromPlan[
+		client.IntegrationCreateBodySchema_Maintainers_Item,
+		*client.IntegrationCreateBodySchema_Maintainers_Item,
+	](plan)
 }
 
 // BuildUpdateMaintainersFromPlan converts plan maintainer models into the API update body items.
 func BuildUpdateMaintainersFromPlan(
 	plan []*utils.MaintainerModel,
 ) ([]client.IntegrationsUpdateBodySchema_Maintainers_Item, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	maintainers := make([]client.IntegrationsUpdateBodySchema_Maintainers_Item, 0)
+	return buildMaintainersFromPlan[
+		client.IntegrationsUpdateBodySchema_Maintainers_Item,
+		*client.IntegrationsUpdateBodySchema_Maintainers_Item,
+	](plan)
+}
 
-	for _, maintainer := range plan {
-		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
+// prereqPermItemPtr is the pointer constraint used by buildPrerequisitePermissionsFromPlan.
+// It requires that *T exposes MergePrerequisitePermissionCreateBodySchema, which all
+// generated prerequisite-permission union types share.
+type prereqPermItemPtr[T any] interface {
+	*T
+	MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema) error
+}
+
+// buildPrerequisitePermissionsFromPlan is the shared generic core for
+// BuildCreatePrerequisitePermissionsFromPlan and BuildUpdatePrerequisitePermissionsFromPlan.
+// T is the value type; PT is its pointer (*T), which carries the Merge method.
+func buildPrerequisitePermissionsFromPlan[T any, PT prereqPermItemPtr[T]](
+	plan []utils.PrerequisitePermissionModel,
+) (*[][]T, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if len(plan) == 0 {
+		return nil, diags
+	}
+
+	ppData := make([][]T, 0, len(plan))
+	for _, pp := range plan {
+		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
 			continue
 		}
 
-		if maintainer.Entity.IsNull() {
-			diags.AddError("Client Error", "Missing data for entity maintainer")
+		var item T
+		if err := PT(&item).MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+			Default: pp.Default.ValueBool(),
+			Role:    map[string]interface{}{"id": pp.Role.ID.ValueString()},
+		}); err != nil {
+			diags.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err))
 			return nil, diags
 		}
 
-		entityID, ok := extractMaintainerEntityID(maintainer, &diags)
-		if !ok {
-			return nil, diags
-		}
-
-		switch maintainer.Type.ValueString() {
-		case utils.MaintainerTypeUser:
-			item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
-			if err := item.MergeUserMaintainerSchema(client.UserMaintainerSchema{
-				Type: client.EnumMaintainerTypeUserUser,
-				User: client.UserEntitySchema{Id: entityID},
-			}); err != nil {
-				diags.AddError("Client Error", fmt.Sprintf("Failed to merge user maintainer data, error: %v", err))
-				return nil, diags
-			}
-			maintainers = append(maintainers, item)
-
-		case utils.MaintainerTypeGroup:
-			item := client.IntegrationsUpdateBodySchema_Maintainers_Item{}
-			if err := item.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
-				Type:  client.EnumMaintainerTypeGroupGroup,
-				Group: client.GroupEntitySchema{Id: entityID},
-			}); err != nil {
-				diags.AddError("Client Error", "Failed to merge group maintainer")
-				return nil, diags
-			}
-			maintainers = append(maintainers, item)
-
-		default:
-			diags.AddError("Client Error", "Invalid maintainer type only support user and group")
-			return nil, diags
-		}
+		ppData = append(ppData, []T{item})
 	}
 
-	return maintainers, diags
+	return &ppData, diags
 }
 
 // BuildCreatePrerequisitePermissionsFromPlan converts plan prerequisite permissions into API create body items.
@@ -584,31 +600,10 @@ func BuildUpdateMaintainersFromPlan(
 func BuildCreatePrerequisitePermissionsFromPlan(
 	plan []utils.PrerequisitePermissionModel,
 ) (*[][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if len(plan) == 0 {
-		return nil, diags
-	}
-
-	ppData := make([][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item, 0, len(plan))
-	for _, pp := range plan {
-		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
-			continue
-		}
-
-		item := client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{}
-		if err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
-			Default: pp.Default.ValueBool(),
-			Role:    map[string]interface{}{"id": pp.Role.ID.ValueString()},
-		}); err != nil {
-			diags.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err))
-			return nil, diags
-		}
-
-		ppData = append(ppData, []client.IntegrationCreateBodySchema_PrerequisitePermissions_Item{item})
-	}
-
-	return &ppData, diags
+	return buildPrerequisitePermissionsFromPlan[
+		client.IntegrationCreateBodySchema_PrerequisitePermissions_Item,
+		*client.IntegrationCreateBodySchema_PrerequisitePermissions_Item,
+	](plan)
 }
 
 // BuildUpdatePrerequisitePermissionsFromPlan converts plan prerequisite permissions into API update body items.
@@ -616,31 +611,10 @@ func BuildCreatePrerequisitePermissionsFromPlan(
 func BuildUpdatePrerequisitePermissionsFromPlan(
 	plan []utils.PrerequisitePermissionModel,
 ) (*[][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if len(plan) == 0 {
-		return nil, diags
-	}
-
-	ppData := make([][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item, 0, len(plan))
-	for _, pp := range plan {
-		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
-			continue
-		}
-
-		item := client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{}
-		if err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
-			Default: pp.Default.ValueBool(),
-			Role:    map[string]interface{}{"id": pp.Role.ID.ValueString()},
-		}); err != nil {
-			diags.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err))
-			return nil, diags
-		}
-
-		ppData = append(ppData, []client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item{item})
-	}
-
-	return &ppData, diags
+	return buildPrerequisitePermissionsFromPlan[
+		client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item,
+		*client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item,
+	](plan)
 }
 
 // extractMaintainerEntityID pulls the "id" string out of a MaintainerModel's entity object.
@@ -668,10 +642,34 @@ func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
 	if err := json.Unmarshal([]byte(v), &data); err != nil {
 		diags.AddError(
 			"Client Error",
-			fmt.Sprintf("Failed to parse given connection json to json, %s, error: %v", v, err),
+			fmt.Sprintf("Failed to parse connection_json as JSON, error: %v", err),
 		)
 		return nil, diags
 	}
 
 	return data, diags
+}
+
+// configureIntegrationResource is the shared Configure implementation for all integration
+// resource types. It asserts that ProviderData is a *client.ClientWithResponses and assigns
+// it to the given pointer, or adds an error diagnostic if the type is unexpected.
+func configureIntegrationResource(
+	providerData any,
+	target **client.ClientWithResponses,
+	diagsOut *diag.Diagnostics,
+) {
+	if providerData == nil {
+		return
+	}
+
+	c, ok := providerData.(*client.ClientWithResponses)
+	if !ok {
+		diagsOut.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *client.ClientWithResponses, got: %T. Please report this issue to the provider developers.", providerData),
+		)
+		return
+	}
+
+	*target = c
 }
