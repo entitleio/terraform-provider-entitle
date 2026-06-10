@@ -2,6 +2,7 @@ package policies
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -344,6 +345,13 @@ func (r *PolicyResource) Read(
 
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -432,6 +440,13 @@ func (r *PolicyResource) Update(
 
 	err = utils.HTTPResponseToError(policyResp.HTTPResponse.StatusCode, policyResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

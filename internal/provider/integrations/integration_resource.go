@@ -5,8 +5,11 @@ import (
 	"maps"
 	"strings"
 
+	"github.com/entitleio/terraform-provider-entitle/docs"
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -14,9 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
-	"github.com/entitleio/terraform-provider-entitle/docs"
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -62,7 +62,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description:         "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						MarkdownDescription: "The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).",
 						Validators: []validator.String{
-							validators.NewName(2, 50),
+							stringvalidator.LengthBetween(2, 50),
 							validators.Lowercase{},
 						},
 						PlanModifiers: []planmodifier.String{

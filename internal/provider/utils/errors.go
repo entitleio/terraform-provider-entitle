@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	ErrApiConnection     = errors.New("API Connection Error")
-	ErrApiResponse       = errors.New("API Response Error")
-	errUnauthorizedToken = errors.New("unauthorized token: update the entitle token and retry please")
+	ErrApiConnection       = errors.New("API Connection Error")
+	ErrApiResponse         = errors.New("API Response Error")
+	ErrNotFound            = errors.New("results not found")
+	ErrOnlyManualOrVirtual = errors.New("only manual or virtual integration's entity can be deleted")
+	errUnauthorizedToken   = errors.New("unauthorized token: update the entitle token and retry please")
 )
 
 type ErrorBody struct {

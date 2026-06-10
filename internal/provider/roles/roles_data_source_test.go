@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/testhelpers"
@@ -49,7 +50,7 @@ data "entitle_roles" "my_list" {
 	resource_id = "%s"
 }
 `, "00000000-0000-0000-0000-000000000000"),
-				ExpectError: regexp.MustCompile("status code: 404"),
+				ExpectError: regexp.MustCompile(utils.ErrNotFound.Error()),
 			},
 		},
 	})

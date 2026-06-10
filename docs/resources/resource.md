@@ -8,6 +8,10 @@ description: |-
   ⚠️ **Note:** Due to API limitations, creating a resource also creates an unrequestable role named `'default'` on the resource automatically.
   Key Concepts
   Resource: A named, governable asset within an integration (e.g., a specific AWS account, GitHub repo, or database)Integration: The parent application connection this resource belongs toOwner: The user responsible for this resource, used in approval workflows and notificationsWorkflow: The default approval process for JIT access requests to roles on this resource (overrides the integration workflow)Requestable: Whether users can request access to roles on this resourceAllowed Durations: Time limits for access to roles on this resourceMaintainers: Secondary owners who assist with administrative responsibilitiesPrerequisite Permissions: Roles automatically granted when any role on this resource is approvedTags: Searchable metadata for discovery and organization
+  entitle_resource vs entitle_resource_synced
+  Use entitle_resource for:
+  Manual integrations — where Entitle directly manages the resource lifecycleVirtual applications — resources created and owned by Entitle
+  Use entitle_resource_synced resource_synced.md for integrations where resources are synchronized from an external system (GCP, AWS, GitHub, Okta, etc.) and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing resource by lookup rather than creating it.
   When to Use Resources
   Representing fine-grained assets within an integration (e.g., individual repositories, database schemas, AWS accounts)Applying resource-specific ownership and approval workflowsGrouping related roles under a meaningful business entitySetting resource-level access policies that differ from the integration defaults
   Example Usage
@@ -374,6 +378,15 @@ For example, in an AWS integration, a resource might represent a specific AWS ac
 - **Maintainers**: Secondary owners who assist with administrative responsibilities
 - **Prerequisite Permissions**: Roles automatically granted when any role on this resource is approved
 - **Tags**: Searchable metadata for discovery and organization
+
+## entitle_resource vs entitle_resource_synced
+
+Use `entitle_resource` for:
+
+- **Manual integrations** — where Entitle directly manages the resource lifecycle
+- **Virtual applications** — resources created and owned by Entitle
+
+Use [`entitle_resource_synced`](resource_synced.md) for integrations where resources are **synchronized from an external system** (GCP, AWS, GitHub, Okta, etc.) and cannot be created or deleted through Entitle. With synced resources, Terraform adopts the existing resource by lookup rather than creating it.
 
 ## When to Use Resources
 
@@ -827,6 +840,7 @@ Allowed values:
 
 ### Read-Only
 
+- `external_id` (String) The external ID of the resource
 - `id` (String) Entitle Resource identifier in uuid format
 - `tags` (Set of String) Any meta-data searchable tags should be added here, like “accounting”, “ATL_Marketing” or “Production_Line_14”.
 

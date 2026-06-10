@@ -187,7 +187,9 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		permissions.NewPermissionResource,
 		policies.NewPolicyResource,
 		resources.NewResourceResource,
+		resources.NewResourceSyncedResource,
 		roles.NewRoleResource,
+		roles.NewRoleSyncedResource,
 		workflows.NewWorkflowResource,
 	}
 }

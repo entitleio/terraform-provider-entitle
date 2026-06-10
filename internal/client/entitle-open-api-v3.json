@@ -3355,6 +3355,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "externalId": {
+            "type": "string"
           }
         },
         "required": [
@@ -3369,6 +3372,10 @@
           "id": {
             "type": "string",
             "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "externalId": {
+            "type": "string",
             "example": "00000000-0000-0000-0000-000000000000"
           },
           "resource": {
@@ -3425,6 +3432,10 @@
           "id": {
             "type": "string",
             "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "externalId": {
+            "type": "string",
             "example": "00000000-0000-0000-0000-000000000000"
           },
           "resource": {
@@ -3676,6 +3687,10 @@
           "id": {
             "type": "string",
             "format": "uuid",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "externalId": {
+            "type": "string",
             "example": "00000000-0000-0000-0000-000000000000"
           },
           "integration": {

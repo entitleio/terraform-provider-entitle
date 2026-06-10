@@ -6,6 +6,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -99,7 +100,7 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "The display name for the integration. Length between 2 and 50.",
 		Description:         "The display name for the integration. Length between 2 and 50.",
 		Validators: []validator.String{
-			validators.NewName(2, 50),
+			stringvalidator.LengthBetween(2, 50),
 		},
 	},
 	"allowed_durations": schema.SetAttribute{

@@ -6,62 +6,52 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"net/http"
 
 	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
+	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &RoleResource{}
-var _ resource.ResourceWithImportState = &RoleResource{}
+var _ resource.Resource = &RoleSyncedResource{}
+var _ resource.ResourceWithImportState = &RoleSyncedResource{}
 
-// NewRoleResource creates a new instance of the RoleResource.
-func NewRoleResource() resource.Resource {
-	return &RoleResource{}
+// NewRoleSyncedResource creates a new instance of the RoleSyncedResource.
+func NewRoleSyncedResource() resource.Resource {
+	return &RoleSyncedResource{}
 }
 
-// RoleResource defines the resource implementation.
-type RoleResource struct {
+// RoleSyncedResource defines the resource implementation.
+type RoleSyncedResource struct {
 	client *client.ClientWithResponses
 }
 
-// RoleResourceModel describes the resource data model.
-type RoleResourceModel struct {
-	ID                      types.String                        `tfsdk:"id"`
-	Name                    types.String                        `tfsdk:"name"`
-	ExternalID              types.String                        `tfsdk:"external_id"`
-	Resource                *utils.IdNameModel                  `tfsdk:"resource" json:"resource"`
-	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
-	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
-	PrerequisitePermissions []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
-	VirtualizedRole         *utils.IdNameModel                  `tfsdk:"virtualized_role"`
-	Requestable             types.Bool                          `tfsdk:"requestable"`
-}
-
 // Metadata sets the metadata for the resource.
-func (r *RoleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_role"
+func (r *RoleSyncedResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_role_synced"
 }
 
 // Schema sets the schema for the resource.
-func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *RoleSyncedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: docs.RoleResourceMarkdownDescription,
+		MarkdownDescription: docs.RoleSyncedResourceMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -71,21 +61,39 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The display name for Entitle Role.",
-				Description:         "The display name for Entitle Role.",
+			"external_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The external ID of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				MarkdownDescription: "The external ID of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(2, 50),
+					stringvalidator.LengthBetween(2, 255),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
 				},
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"external_id": schema.StringAttribute{
+			"name": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				MarkdownDescription: "The external ID of the role as assigned by the upstream integration.",
-				Description:         "The external ID of the role as assigned by the upstream integration.",
+				Description:         "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				MarkdownDescription: "The name of the role as assigned by the upstream integration. Used together with resource.id to look up the existing synced resource.",
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(2, 255),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("external_id"),
+						path.MatchRoot("name"),
+					),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"resource": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -93,6 +101,9 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Required:            true,
 						Description:         "The unique ID of the resource assigned to the role.",
 						MarkdownDescription: "The unique ID of the resource assigned to the role.",
+						Validators: []validator.String{
+							validators.UUID{},
+						},
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -106,20 +117,28 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"allowed_durations": schema.SetAttribute{
 				ElementType:         types.NumberType,
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Description:         "As the admin, you can set different durations for the role, compared to the workflow linked to it. \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				MarkdownDescription: "As the admin, you can set different durations for the role, compared to the workflow linked to it. \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
 					validators.NewSetMinLength(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"workflow": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					// Attribute: workflow id
 					"id": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Description:         "The unique ID of the workflow assigned to the role.",
 						MarkdownDescription: "The unique ID of the workflow assigned to the role.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					// Attribute: workflow name
 					"name": schema.StringAttribute{
@@ -129,13 +148,21 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					},
 				},
 				Optional:            true,
+				Computed:            true,
 				Description:         "In this field, you can assign an existing workflow to the new role.",
 				MarkdownDescription: "In this field, you can assign an existing workflow to the new role.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"prerequisite_permissions": schema.ListNestedAttribute{
 				Optional:            true,
+				Computed:            true,
 				Description:         "Users granted any role from this role through a request will automatically receive the permissions to the roles selected below.",
 				MarkdownDescription: "Users granted any role from this role through a request will automatically receive the permissions to the roles selected below.",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"default": schema.BoolAttribute{
@@ -144,14 +171,22 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							Default:             booldefault.StaticBool(false),
 							Description:         "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
 							MarkdownDescription: "Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"role": schema.SingleNestedAttribute{
-							Required: true,
+							Optional: true,
+							Computed: true,
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Required:            true,
+									Optional:            true,
+									Computed:            true,
 									Description:         "The identifier of the role to be granted.",
 									MarkdownDescription: "The identifier of the role to be granted.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"name": schema.StringAttribute{
 									Computed:            true,
@@ -212,9 +247,13 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"virtualized_role": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Description:         "The unique ID of the virtualized role assigned to the role.",
 						MarkdownDescription: "The unique ID of the virtualized role assigned to the role.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					"name": schema.StringAttribute{
 						Computed:            true,
@@ -227,16 +266,20 @@ func (r *RoleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "In this field, you can assign an existing virtualized role to the new role.",
 			},
 			"requestable": schema.BoolAttribute{
-				Required:            true,
-				MarkdownDescription: "Indicates if the role is requestable (default: true)",
-				Description:         "Indicates if the role is requestable (default: true)",
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Indicates if the role is requestable.",
+				Description:         "Indicates if the role is requestable.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
 }
 
 // Configure configures the resource with the provided client.
-func (r *RoleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *RoleSyncedResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -258,15 +301,27 @@ func (r *RoleResource) Configure(ctx context.Context, req resource.ConfigureRequ
 
 // Create handles the creation of a new resource of type Entitle Role.
 //
-// It reads the Terraform plan data, maps it to the RoleResourceModel,
+// It reads the Terraform plan data, maps it to the RoleSyncedResourceModel,
 // sends a request to the Entitle API to create the resource, and saves the
 // resource's data into Terraform state.
-func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Create an instance of the RoleResourceModel to store the resource data.
-	var plan RoleResourceModel
+func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	// Use a plan-read struct that absorbs unknown values for computed fields,
+	// since on first apply there is no prior state to resolve them from.
+	var createPlan struct {
+		Name       types.String       `tfsdk:"name"`
+		ExternalID types.String       `tfsdk:"external_id"`
+		Resource   *utils.IdNameModel `tfsdk:"resource"`
+		// Remaining fields declared with framework types to accept unknown values.
+		ID                      types.String `tfsdk:"id"`
+		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
+		Workflow                types.Object `tfsdk:"workflow"`
+		PrerequisitePermissions types.List   `tfsdk:"prerequisite_permissions"`
+		VirtualizedRole         types.Object `tfsdk:"virtualized_role"`
+		Requestable             types.Bool   `tfsdk:"requestable"`
+	}
 
 	// Read Terraform plan data into the model.
-	diags := req.Plan.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &createPlan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -274,100 +329,25 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	var err error
 
-	var virtualizedRole *client.IdParamsSchema
-	if plan.VirtualizedRole != nil {
-		virtualizedRole = new(client.IdParamsSchema)
-		virtualizedRole.Id, err = uuid.Parse(plan.VirtualizedRole.ID.String())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				fmt.Sprintf("Failed to parse the virtualized role id (%s) to UUID, got error: %s", plan.VirtualizedRole.ID.String(), err),
-			)
-			return
-		}
-	}
-
-	var allowedDurations *[]client.EnumAllowedDurations
-	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-
-	if aDurations != nil {
-		allowedDurations = &aDurations
-	}
-
-	var prerequisitePermissions *[][]client.IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item
-	if len(plan.PrerequisitePermissions) > 0 {
-		ppData := make([][]client.IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item, 0, len(plan.PrerequisitePermissions))
-		for _, pp := range plan.PrerequisitePermissions {
-			if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
-				continue
-			}
-
-			item := client.IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item{}
-			err := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
-				Default: pp.Default.ValueBool(),
-				Role: map[string]interface{}{
-					"id": pp.Role.ID.ValueString(),
-				},
-			})
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Client Error",
-					fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err),
-				)
-				return
-			}
-
-			ppData = append(ppData, []client.IntegrationResourceRoleCreateBodySchema_PrerequisitePermissions_Item{
-				item,
-			})
-		}
-		prerequisitePermissions = &ppData
-	}
-
-	request := client.RolesCreateJSONRequestBody{
-		AllowedDurations:        allowedDurations,
-		Name:                    plan.Name.ValueStringPointer(),
-		PrerequisitePermissions: prerequisitePermissions,
-		Requestable:             plan.Requestable.ValueBool(),
-	}
-
-	if virtualizedRole != nil {
-		request.VirtualizedRole = virtualizedRole
-	}
-
-	request.Resource.Id, err = uuid.Parse(plan.Resource.ID.String())
+	name := createPlan.Name.ValueStringPointer()
+	externalID := createPlan.ExternalID.ValueStringPointer()
+	resourceID := createPlan.Resource.ID.ValueString()
+	roleID, err := r.getRoleID(ctx, uuid.MustParse(resourceID), externalID, name)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", plan.Resource.ID.String(), err),
-		)
+		resp.Diagnostics.AddError("Role not found", fmt.Sprintf(
+			"Failed to get the Role by the name (%s) or external id (%s) and resource (%s), %s",
+			createPlan.Name.ValueString(), createPlan.ExternalID.ValueString(), resourceID,
+			err.Error(),
+		))
+
 		return
 	}
 
-	if plan.Workflow != nil {
-		workflow := new(client.IdParamsSchema)
-		workflow.Id, err = uuid.Parse(plan.Workflow.ID.String())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Client Error",
-				fmt.Sprintf("Failed to parse the workflow id (%s) to UUID, got error: %s", plan.Workflow.ID.String(), err),
-			)
-			return
-		}
-
-		request.Workflow = workflow
-	}
-
-	// Send a request to the Entitle API to create the role.
-	apiResp, err := r.client.RolesCreateWithResponse(ctx, request)
+	apiResp, err := r.client.RolesShowWithResponse(ctx, *roleID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
-			fmt.Sprintf("Unable to create the role, got error: %v", err),
+			fmt.Sprintf("Unable to get the role. If you want to create new then use entitle_role. Got error: %v", err),
 		)
 		return
 	}
@@ -377,24 +357,29 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
-				"Failed to create the role: %s",
+				"Failed to get the role: %s",
 				err.Error(),
 			),
 		)
 		return
 	}
 
-	// Write logs using the tflog package.
-	tflog.Trace(ctx, "created an Entitle role resource")
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"Got resource created manually, use entitle_role resource instead.",
+		)
+		return
+	}
 
-	plan, diags = IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx, apiResp.JSON200.Result)
+	state, diags := IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx, apiResp.JSON200.Result)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
 	// Save the data into Terraform state.
-	diags = resp.State.Set(ctx, &plan)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -404,9 +389,9 @@ func (r *RoleResource) Create(ctx context.Context, req resource.CreateRequest, r
 // Read retrieves an existing resource of type Entitle Role.
 //
 // It retrieves the resource's data from the provider API requests,
-// maps it to the RoleResourceModel, and saves the data to Terraform state.
-func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	// Create an instance of the RoleResourceModel to store the resource data.
+// maps it to the RoleSyncedResourceModel, and saves the data to Terraform state.
+func (r *RoleSyncedResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	// Create an instance of the RoleSyncedResourceModel to store the resource data.
 	var data RoleResourceModel
 
 	// Read Terraform prior state data into the model.
@@ -456,10 +441,10 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	if utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
+	if !utils.IsApplicationWithSyncedResources(apiResp.JSON200.Result.Resource.Integration.Application.Name) {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
-			"Got resource created by third party, use entitle_role_synced resource instead.",
+			"Got resource created manually, use entitle_role resource instead.",
 		)
 		return
 	}
@@ -482,8 +467,8 @@ func (r *RoleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 //
 // It reads the updated Terraform plan data, sends a request to the Entitle API
 // to update the resource, and saves the updated resource data into Terraform state.
-func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// Create an instance of the RoleResourceModel to store the resource data.
+func (r *RoleSyncedResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	// Create an instance of the RoleSyncedResourceModel to store the resource data.
 	var data RoleResourceModel
 
 	// Read Terraform plan data into the model.
@@ -504,13 +489,13 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	var allowedDurations *[]client.EnumAllowedDurations
-	aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
+	if !data.AllowedDurations.IsNull() && !data.AllowedDurations.IsUnknown() {
+		aDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, data.AllowedDurations)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
 
-	if aDurations != nil {
 		allowedDurations = &aDurations
 	}
 
@@ -544,7 +529,7 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	var workflow *client.IdParamsSchema
-	if data.Workflow != nil {
+	if data.Workflow != nil && !data.Workflow.ID.IsNull() && !data.Workflow.ID.IsUnknown() {
 		workflow = new(client.IdParamsSchema)
 		workflow.Id, err = uuid.Parse(data.Workflow.ID.String())
 		if err != nil {
@@ -610,8 +595,8 @@ func (r *RoleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 // It reads the resource's data from Terraform state, extracts the unique identifier,
 // and sends a request to delete the resource using API requests. If the deletion
 // is successful, it removes the resource from Terraform state.
-func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Create an instance of the RoleResourceModel to store the resource data.
+func (r *RoleSyncedResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Create an instance of the RoleSyncedResourceModel to store the resource data.
 	var data RoleResourceModel
 
 	// Read Terraform prior state data into the model.
@@ -622,113 +607,54 @@ func (r *RoleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	// Parse the unique identifier from the resource data.
-	uid, err := uuid.Parse(data.ID.String())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Failed to parse the given id to UUID format, got error: %v", err),
-		)
-		return
-	}
-
-	// Send a request to the Entitle API to delete the role.
-	httpResp, err := r.client.RoleDeleteWithResponse(ctx, uid)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			utils.ErrApiConnection.Error(),
-			fmt.Sprintf("Unable to delete role, id: (%s), got error: %v", data.ID.String(), err),
-		)
-		return
-	}
-
-	err = utils.HTTPResponseToError(httpResp.HTTPResponse.StatusCode, httpResp.Body, utils.WithIgnoreNotFound())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			fmt.Sprintf("Unable to delete role, id: (%s), %s", data.ID.String(), err.Error()),
-		)
-		return
-	}
+	// No action needed
 }
 
 // ImportState is used to import an existing resource's state into Terraform.
 //
 // It extracts the resource's identifier from the import request and sets
 // it in Terraform state using resource.ImportStatePassthroughID.
-func (r *RoleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *RoleSyncedResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx context.Context, data client.IntegrationResourceRoleResultSchema) (RoleResourceModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	var workflow *utils.IdNameModel
-	if data.Workflow != nil {
-		workflow = &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
-			Name: utils.TrimmedStringValue(data.Workflow.Name),
+// getRoleID paginates through IntegrationResourceListItemResponseSchema to find a role by exact name or external id
+// within the given integrationId.
+func (r *RoleSyncedResource) getRoleID(ctx context.Context, resourceID uuid.UUID, externalID, name *string) (*uuid.UUID, error) {
+	fetch := func(ctx context.Context, page int) ([]client.IntegrationResourceRoleListItemResponseSchema, int, error) {
+		params := client.RolesIndexParams{
+			PerPage:    utils.IntPointer(100),
+			Page:       utils.IntPointer(page),
+			Search:     name,
+			ResourceId: resourceID,
+			ExternalId: externalID,
 		}
-	}
 
-	var prerequisitePermissions []utils.PrerequisitePermissionModel
-	if data.PrerequisitePermissions != nil {
-		for _, item := range *data.PrerequisitePermissions {
-			v, err := item.AsPrerequisiteRolePermissionResponseSchema()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to unmarshal the prerequisite permissions data, err: %s", err.Error()),
-				)
-				return RoleResourceModel{}, diags
-			}
-
-			roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
-			if diagsGetRoles.HasError() {
-				diags.Append(diagsGetRoles...)
-				return RoleResourceModel{}, diags
-			}
-
-			prerequisitePermissions = append(prerequisitePermissions,
-				utils.PrerequisitePermissionModel{
-					Default: types.BoolValue(v.Default),
-					Role:    roleModel,
-				},
-			)
+		resp, err := r.client.RolesIndexWithResponse(ctx, &params)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list roles: %w", err)
 		}
-	}
 
-	// Extract and convert allowed durations from the API response
-	allowedDurationsValues, advDiags := utils.GetNumberSetFromAllowedDurations(data.AllowedDurations)
-	if advDiags.HasError() {
-		diags.Append(advDiags...)
-		return RoleResourceModel{}, diags
-	}
-
-	var virtualizedRole *utils.IdNameModel
-	if data.VirtualizedRole != nil {
-		virtualizedRole = &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.VirtualizedRole.Id.String()),
-			Name: utils.TrimmedStringValue(data.VirtualizedRole.Name),
+		if resp.HTTPResponse.StatusCode >= http.StatusBadRequest {
+			return nil, 0, fmt.Errorf("API returned status %d while listing roles (page %d)",
+				resp.HTTPResponse.StatusCode, page)
 		}
+
+		if resp.JSON200 == nil || resp.JSON200.Result == nil {
+			return nil, 0, fmt.Errorf("received invalid role response structure (page %d)", page)
+		}
+
+		items := resp.JSON200.Result
+		total := int(resp.JSON200.Pagination.TotalPages)
+		return items, total, nil
 	}
 
-	var externalID string
-	if data.ExternalId != nil {
-		externalID = *data.ExternalId
+	if externalID != nil && *externalID != "" {
+		return utils.FindIDByExternalID(ctx, *externalID, fetch)
+	}
+	if name != nil && *name != "" {
+		return utils.FindIDByName(ctx, *name, fetch)
 	}
 
-	return RoleResourceModel{
-		ID:         utils.TrimmedStringValue(data.Id.String()),
-		Name:       utils.TrimmedStringValue(data.Name),
-		ExternalID: utils.TrimmedStringValue(externalID),
-		Resource: &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Resource.Id.String()),
-			Name: utils.TrimmedStringValue(data.Resource.Name),
-		},
-		AllowedDurations:        allowedDurationsValues,
-		Workflow:                workflow,
-		PrerequisitePermissions: prerequisitePermissions,
-		VirtualizedRole:         virtualizedRole,
-		Requestable:             types.BoolValue(data.Requestable),
-	}, diags
+	return nil, fmt.Errorf("name or externalId must be set")
 }

@@ -65,8 +65,12 @@ var (
 	PolicyResourceMarkdownDescription string
 	//go:embed parts/resources/_resource.md
 	ResourceResourceMarkdownDescription string
+	//go:embed parts/resources/_resource_synced.md
+	ResourceSyncedResourceMarkdownDescription string
 	//go:embed parts/resources/_role.md
 	RoleResourceMarkdownDescription string
+	//go:embed parts/resources/_role_synced.md
+	RoleSyncedResourceMarkdownDescription string
 	//go:embed parts/resources/_workflow.md
 	WorkflowResourceMarkdownDescription string
 )

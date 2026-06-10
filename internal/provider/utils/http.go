@@ -42,8 +42,16 @@ func HTTPResponseToError(statusCode int, body []byte, opts ...HTTPErrorOption) e
 			return errUnauthorizedToken
 		}
 
-		if options.ignoreNotFound && errBody.ID == "resource.notFound" {
-			return nil
+		if errBody.ID == "resource.notFound" {
+			if options.ignoreNotFound {
+				return nil
+			}
+
+			return ErrNotFound
+		}
+
+		if strings.Contains(errBody.GetMessage(), "manual or virtual") {
+			return ErrOnlyManualOrVirtual
 		}
 
 		if options.ignorePending && strings.Contains(errBody.Message, "is pending") {

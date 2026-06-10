@@ -2,10 +2,12 @@ package bundles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -88,7 +90,7 @@ func (r *BundleResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				MarkdownDescription: "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
 				Description:         "The name of the bundle. This is what users will reference when requesting access. Length must be between 2 and 50 characters.",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -433,6 +435,13 @@ func (r *BundleResource) Read(
 
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -567,6 +576,13 @@ func (r *BundleResource) Update(
 
 	err = utils.HTTPResponseToError(bundleResp.HTTPResponse.StatusCode, bundleResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(

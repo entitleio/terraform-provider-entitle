@@ -11,17 +11,17 @@ type PaginationWithSearchModel struct {
 func (m PaginationWithSearchModel) GetValues() (search *string, page, perPage *int) {
 	s := m.Search.ValueString()
 	if s != "" {
-		search = &s
+		search = new(s)
 	}
 
 	p := int(m.Page.ValueInt64())
 	if p > 0 {
-		page = &p
+		page = new(p)
 	}
 
 	pp := int(m.PerPage.ValueInt64())
 	if pp > 0 {
-		perPage = &pp
+		perPage = new(pp)
 	}
 
 	return
@@ -37,17 +37,17 @@ type PaginationWithSearchAndExternalIdModel struct {
 func (m PaginationWithSearchAndExternalIdModel) GetValues() (search *string, page, perPage *int, externalId *string) {
 	s := m.Search.ValueString()
 	if s != "" {
-		search = &s
+		search = new(s)
 	}
 
 	p := int(m.Page.ValueInt64())
 	if p > 0 {
-		page = &p
+		page = new(p)
 	}
 
 	pp := int(m.PerPage.ValueInt64())
 	if pp > 0 {
-		perPage = &pp
+		perPage = new(pp)
 	}
 
 	eId := m.ExternalID.ValueString()

@@ -2,9 +2,11 @@ package workflows
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -74,7 +76,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				MarkdownDescription: "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
 				Description:         "The human-readable name of the workflow. Must be between 2 and 50 characters. Must be unique within your Entitle organization",
 				Validators: []validator.String{
-					validators.NewName(2, 50),
+					stringvalidator.LengthBetween(2, 50),
 				},
 			},
 			"rules": schema.ListNestedAttribute{
@@ -523,6 +525,13 @@ func (r *WorkflowResource) Read(
 
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
@@ -595,6 +604,13 @@ func (r *WorkflowResource) Update(
 
 	err = utils.HTTPResponseToError(workflowResp.HTTPResponse.StatusCode, workflowResp.Body)
 	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
