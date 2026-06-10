@@ -309,6 +309,13 @@ func BuildCreateBodyFromPlan(
 		return client.IntegrationCreateBodySchema{}, diags
 	}
 
+	workflowID, err := uuid.Parse(plan.Workflow.ID.ValueString())
+	if err != nil {
+		diags.AddError("Client Error", fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err))
+
+		return client.IntegrationCreateBodySchema{}, diags
+	}
+
 	return client.IntegrationCreateBodySchema{
 		AgentToken:                           agentToken,
 		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
@@ -325,7 +332,7 @@ func BuildCreateBodyFromPlan(
 		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
 		Owner:                                client.UserEntitySchema{Id: utils.TrimPrefixSuffix(plan.Owner.Id.ValueString())},
 		Readonly:                             plan.Readonly.ValueBool(),
-		Workflow:                             client.IdParamsSchema{Id: uuid.MustParse(plan.Workflow.ID.ValueString())},
+		Workflow:                             client.IdParamsSchema{Id: workflowID},
 		PrerequisitePermissions:              prereqs,
 	}, diags
 }
