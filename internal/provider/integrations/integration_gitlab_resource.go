@@ -43,7 +43,7 @@ type GitlabConnectionModel struct {
 // IntegrationGitlabResourceModel describes the resource data model.
 type IntegrationGitlabResourceModel struct {
 	BaseIntegrationResourceModel
-	Connection GitlabConnectionModel `tfsdk:"connection_data"`
+	Connection *GitlabConnectionModel `tfsdk:"connection_data"`
 }
 
 func (r *IntegrationGitlabResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -162,7 +162,7 @@ func (r *IntegrationGitlabResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	newBase, diags := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel)
+	newBase, _, diags := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -200,14 +200,19 @@ func (r *IntegrationGitlabResource) Update(ctx context.Context, req resource.Upd
 	})...)
 }
 
-func parseGitlabConnectionJson(m GitlabConnectionModel) map[string]interface{} {
+func parseGitlabConnectionJson(m *GitlabConnectionModel) map[string]interface{} {
+	var connectionModel GitlabConnectionModel
+	if m != nil {
+		connectionModel = *m
+	}
+
 	jsonSchema := map[string]interface{}{
 		"configurationSchemaName": "Configuration ",
-		"domain":                  m.Domain.ValueString(),
-		"private_token":           m.PrivateToken.ValueString(),
+		"domain":                  connectionModel.Domain.ValueString(),
+		"private_token":           connectionModel.PrivateToken.ValueString(),
 		"ssl": map[string]interface{}{
-			"verify":  m.SSLVerify.ValueBool(),
-			"ca_cert": m.SSLCaCert.ValueStringPointer(),
+			"verify":  connectionModel.SSLVerify.ValueBool(),
+			"ca_cert": connectionModel.SSLCaCert.ValueStringPointer(),
 		},
 	}
 

@@ -9393,7 +9393,6 @@ type IntegrationsCreateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *IntegrationResponseSchema
-	JSON201      *map[string]interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -11421,13 +11420,6 @@ func ParseIntegrationsCreateResponse(rsp *http.Response) (*IntegrationsCreateRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
 
 	}
 

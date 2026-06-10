@@ -150,7 +150,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	newBase, diags := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel)
+	newBase, appName, diags := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -158,8 +158,9 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationResourceModel{
 		BaseIntegrationResourceModel: newBase,
-		ConnectionJson:               data.ConnectionJson, Application: &utils.NameModel{
-			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name.ValueString())),
+		ConnectionJson:               data.ConnectionJson,
+		Application: &utils.NameModel{
+			Name: utils.TrimmedStringValue(strings.ToLower(appName)),
 		},
 	})...)
 }

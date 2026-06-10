@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -57,7 +58,7 @@ func CreateIntegration(
 		agentTokenName = base.AgentToken.Name.ValueString()
 	}
 
-	result, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
 	diags.Append(rDiags...)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
@@ -118,7 +119,7 @@ func UpdateIntegration(
 		agentTokenName = base.AgentToken.Name.ValueString()
 	}
 
-	result, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
 	diags.Append(rDiags...)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
@@ -131,7 +132,7 @@ func ReadIntegration(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
-) (BaseIntegrationResourceModel, diag.Diagnostics) {
+) (BaseIntegrationResourceModel, string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	uid, err := uuid.Parse(base.ID.String())
@@ -140,7 +141,7 @@ func ReadIntegration(
 			"Client Error",
 			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", base.ID.String(), err),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	integrationResp, err := cli.IntegrationsShowWithResponse(ctx, uid)
@@ -149,7 +150,7 @@ func ReadIntegration(
 			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the integration by the id (%s), got error: %s", uid.String(), err),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	if err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body); err != nil {
@@ -162,7 +163,7 @@ func ReadIntegration(
 				err.Error(),
 			),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	agentTokenName := ""
@@ -204,8 +205,6 @@ func DeleteIntegration(ctx context.Context, cli *client.ClientWithResponses, dat
 }
 
 // BuildUpdateBodyFromPlan constructs the full IntegrationsUpdateBodySchema from the base plan.
-// parseConnectionJson is called with connectionJson and the result is set on the returned body,
-// so the caller only needs a single call to obtain a ready-to-send body.
 func BuildUpdateBodyFromPlan(
 	ctx context.Context,
 	data BaseIntegrationResourceModel,
@@ -338,30 +337,30 @@ func ConvertBaseIntegrationResultToBaseModel(
 	ctx context.Context,
 	data *client.IntegrationResultSchema,
 	agentTokenName string,
-) (BaseIntegrationResourceModel, diag.Diagnostics) {
+) (BaseIntegrationResourceModel, string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if data == nil {
 		diags.AddError("No data", "Failed: the given schema data is nil")
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	allowedDurationsValues, advDiags := utils.GetNumberSetFromAllowedDurations(data.AllowedDurations)
 	if advDiags.HasError() {
 		diags.Append(advDiags...)
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	marshalJSON, err := data.Owner.Email.MarshalJSON()
 	if err != nil {
 		diags.AddError("No data", fmt.Sprintf("failed to marshal owner email, error: %v", err))
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	maintainers, maintainerDiags := utils.GetMaintainers(ctx, data.Maintainers)
 	if maintainerDiags.HasError() {
 		diags.Append(maintainerDiags...)
-		return BaseIntegrationResourceModel{}, diags
+		return BaseIntegrationResourceModel{}, "", diags
 	}
 
 	var agentToken *utils.NameModel
@@ -379,13 +378,13 @@ func ConvertBaseIntegrationResultToBaseModel(
 						"No data",
 						fmt.Sprintf("failed to unmarshal the prerequisite permissions data, err: %s", err.Error()),
 					)
-					return BaseIntegrationResourceModel{}, diags
+					return BaseIntegrationResourceModel{}, "", diags
 				}
 
 				roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
 				if diagsGetRoles.HasError() {
 					diags.Append(diagsGetRoles...)
-					return BaseIntegrationResourceModel{}, diags
+					return BaseIntegrationResourceModel{}, "", diags
 				}
 
 				prerequisitePermissions = append(prerequisitePermissions,
@@ -425,13 +424,7 @@ func ConvertBaseIntegrationResultToBaseModel(
 		},
 		Maintainers:             maintainers,
 		PrerequisitePermissions: prerequisitePermissions,
-	}, diags
-}
-
-func ValidateApplicationConstraints(baseData BaseIntegrationResourceModel, appName applicationName) diag.Diagnostics {
-	diags := ValidateVirtualApplicationConstraints(baseData, appName)
-
-	return diags
+	}, strings.ToLower(data.Application.Name), diags
 }
 
 // ValidateVirtualApplicationConstraints checks that virtual application integrations do not
@@ -657,7 +650,6 @@ func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v == "" {
-		diags.AddError("Client Error", "Missing the connection_json variable for entitle integration")
 		return nil, diags
 	}
 
@@ -672,8 +664,3 @@ func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
 
 	return data, diags
 }
-
-// ConnectionJsonParser is a zero-argument closure that parses whatever connection_json
-// representation the calling resource type uses. The caller binds the input value when
-// constructing the closure, so the build functions stay decoupled from the concrete type.
-type ConnectionJsonParser func() (*map[string]interface{}, diag.Diagnostics)
