@@ -175,8 +175,12 @@ func ReadIntegration(
 }
 
 func DeleteIntegration(ctx context.Context, cli *client.ClientWithResponses, data BaseIntegrationResourceModel, resp *resource.DeleteResponse) {
-	parsedUUID, err := uuid.Parse(data.ID.String())
+	parsedUUID, err := uuid.Parse(data.ID.ValueString())
 	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %v; the integration was NOT deleted", data.ID.String(), err),
+		)
 		return
 	}
 
