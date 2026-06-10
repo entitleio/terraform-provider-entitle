@@ -145,9 +145,8 @@ func (r *IntegrationGitlabResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	newBase, _, diags := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	newBase, _, ok := ReadIntegration(ctx, r.client, data.BaseIntegrationResourceModel, resp)
+	if !ok {
 		return
 	}
 
@@ -171,14 +170,13 @@ func (r *IntegrationGitlabResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	parsedConnectionJson := parseGitlabConnectionJson(data.Connection)
-	newBase, diags := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationGitlab, parsedConnectionJson)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationGitlab, parsedConnectionJson, resp)
+	if newBase == nil {
 		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationGitlabResourceModel{
-		BaseIntegrationResourceModel: newBase,
+		BaseIntegrationResourceModel: *newBase,
 		Connection:                   data.Connection,
 	})...)
 }

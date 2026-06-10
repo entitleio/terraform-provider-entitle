@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -74,35 +75,39 @@ func UpdateIntegration(
 	base BaseIntegrationResourceModel,
 	appName applicationName,
 	parsedConnectionJson map[string]interface{},
-) (BaseIntegrationResourceModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+	resp *resource.UpdateResponse,
+) *BaseIntegrationResourceModel {
 	uid, err := uuid.Parse(base.ID.String())
 	if err != nil {
-		diags.AddError(
+		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Failed to parse the given id to UUID format, got error: %v", err),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return nil
 	}
 
 	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
-	diags.Append(bDiags...)
-	if diags.HasError() {
-		return BaseIntegrationResourceModel{}, diags
+	resp.Diagnostics.Append(bDiags...)
+	if resp.Diagnostics.HasError() {
+		return nil
 	}
 
 	integrationResp, err := cli.IntegrationsUpdateWithResponse(ctx, uid, body)
 	if err != nil {
-		diags.AddError(
+		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to update the integration by the id (%s), got error: %s", uid.String(), err),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return nil
 	}
 
 	if err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body); err != nil {
-		diags.AddError(
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+			resp.State.RemoveResource(ctx)
+			return nil
+		}
+		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to update the Integration by the id (%s), status code: %d, %s",
@@ -111,7 +116,7 @@ func UpdateIntegration(
 				err.Error(),
 			),
 		)
-		return BaseIntegrationResourceModel{}, diags
+		return nil
 	}
 
 	agentTokenName := ""
@@ -120,41 +125,45 @@ func UpdateIntegration(
 	}
 
 	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
-	diags.Append(rDiags...)
-	if diags.HasError() {
-		return BaseIntegrationResourceModel{}, diags
+	resp.Diagnostics.Append(rDiags...)
+	if resp.Diagnostics.HasError() {
+		return nil
 	}
 
-	return result, diags
+	return &result
 }
 
 func ReadIntegration(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
-) (BaseIntegrationResourceModel, string, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
+	resp *resource.ReadResponse,
+) (BaseIntegrationResourceModel, string, bool) {
 	uid, err := uuid.Parse(base.ID.String())
 	if err != nil {
-		diags.AddError(
+		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", base.ID.String(), err),
 		)
-		return BaseIntegrationResourceModel{}, "", diags
+		return BaseIntegrationResourceModel{}, "", false
 	}
 
 	integrationResp, err := cli.IntegrationsShowWithResponse(ctx, uid)
 	if err != nil {
-		diags.AddError(
+		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
 			fmt.Sprintf("Unable to get the integration by the id (%s), got error: %s", uid.String(), err),
 		)
-		return BaseIntegrationResourceModel{}, "", diags
+		return BaseIntegrationResourceModel{}, "", false
 	}
 
 	if err = utils.HTTPResponseToError(integrationResp.HTTPResponse.StatusCode, integrationResp.Body); err != nil {
-		diags.AddError(
+		if errors.Is(err, utils.ErrNotFound) {
+			tflog.Debug(ctx, "Resource no longer exists, removing from state")
+			resp.State.RemoveResource(ctx)
+			return BaseIntegrationResourceModel{}, "", false
+		}
+		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to get the Integration by the id (%s), status code: %d, %s",
@@ -163,7 +172,7 @@ func ReadIntegration(
 				err.Error(),
 			),
 		)
-		return BaseIntegrationResourceModel{}, "", diags
+		return BaseIntegrationResourceModel{}, "", false
 	}
 
 	agentTokenName := ""
@@ -171,7 +180,13 @@ func ReadIntegration(
 		agentTokenName = base.AgentToken.Name.ValueString()
 	}
 
-	return ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, appName, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	resp.Diagnostics.Append(rDiags...)
+	if resp.Diagnostics.HasError() {
+		return BaseIntegrationResourceModel{}, "", false
+	}
+
+	return result, appName, true
 }
 
 func DeleteIntegration(ctx context.Context, cli *client.ClientWithResponses, data BaseIntegrationResourceModel, resp *resource.DeleteResponse) {
