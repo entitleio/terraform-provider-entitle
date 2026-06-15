@@ -4,9 +4,9 @@ page_title: "entitle_resource_synced Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
   An Entitle Synced Resource allows Terraform to manage the settings of a resource that is synchronized from an external integration — one whose lifecycle is controlled by the integration, not by Entitle or Terraform. Unlike entitle_resource resource.md, this resource does not create or delete the underlying resource; it only reads and updates its configuration.
-  On first apply, Terraform performs a lookup by name and integration.id, validates that the resource is a synced entity (not an Entitle-created resource), and imports it into state. All other fields (workflow, allowed_durations, requestable, owner, maintainers, prerequisite_permissions, etc.) are read from the API and stored in state. You can then override any of them in subsequent applies. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
+  On first apply, Terraform performs a lookup by name and integration.id, validates that the resource is a synced entity (not an Entitle-created resource), imports it into state, and immediately applies any fields specified in the configuration (e.g. workflow, allowed_durations, requestable, owner, maintainers, prerequisite_permissions). Fields not specified in the configuration are read from the API and stored as-is. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  Synced Resource: A resource originating from an external integration — its existence is managed by the integration, not by TerraformName + Integration lookup: Terraform finds the resource by matching name and integration.id; the resource must already exist and must be a synced entityName + External ID lookup: Terraform finds the resource by matching external_id and integration.id; the resource must already exist and must be a synced entitySynced validation: If the matched resource belongs to a manual or virtual integration, the provider returns an error — use entitle_resource for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleComputed fields: workflow, allowed_durations, requestable, owner, maintainers, and prerequisite_permissions are all optional — if not specified they are read from the existing resource and tracked in state
+  Synced Resource: A resource originating from an external integration — its existence is managed by the integration, not by TerraformName + Integration lookup: Terraform finds the resource by matching name and integration.id; the resource must already exist and must be a synced entityName + External ID lookup: Terraform finds the resource by matching external_id and integration.id; the resource must already exist and must be a synced entitySynced validation: If the matched resource belongs to a manual or virtual integration, the provider returns an error — use entitle_resource for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleImmediate configuration apply: On first apply, any fields specified in the configuration are compared against the existing resource and updated if different — no need for a second applyComputed fields: workflow, allowed_durations, requestable, owner, maintainers, and prerequisite_permissions are all optional — if not specified they are read from the existing resource and tracked in state
   entitle_resource_synced vs entitle_resource
   | | `entitle_resource` | `entitle_resource_synced` |
   |---|---|---|
@@ -133,8 +133,9 @@ description: |-
   The resource identified by name + integration.id  or external_id + integration_id must already exist in Entitle and must belong to a synced integration (not manual or virtual). If the resource doesn't exist, or belongs to a manual/virtual integration, the provider returns an error. Use entitle_resource if you need Terraform to create the resource.
   Destroy Does Not Delete the Resource
   Running terraform destroy (or removing this resource from your configuration) only removes it from Terraform state. The underlying resource in Entitle is left untouched. This is intentional — connector-synced resources are managed by the integration, not by Terraform.
-  Computed Fields Track API State
-  Fields not specified in your configuration (workflow, allowed_durations, requestable, owner, maintainers, prerequisite_permissions) are populated from the API on first apply and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), terraform plan will show a diff and the next apply will restore the Terraform-managed values.
+  Configuration Is Applied on First Apply
+  On first apply, the provider looks up the existing resource, imports it into state, and immediately applies any fields you specified in the configuration — comparing them against the current API values and updating only where there is a diff. A second apply is not required to push your settings.
+  Fields not specified in your configuration (workflow, allowed_durations, requestable, owner, maintainers, prerequisite_permissions) are populated from the API as-is and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), terraform plan will show a diff and the next apply will restore the Terraform-managed values.
   Name Must Be Unique Within an Integration
   The lookup is performed by exact name or external_id match within the given integration.id. If multiple resources share the same name under one integration, the provider returns the first match. Ensure resource names are unique within an integration or use external id.
 ---
@@ -143,7 +144,7 @@ description: |-
 
 An Entitle Synced Resource allows Terraform to manage the settings of a resource that is **synchronized from an external integration** — one whose lifecycle is controlled by the integration, not by Entitle or Terraform. Unlike [`entitle_resource`](resource.md), this resource does **not** create or delete the underlying resource; it only reads and updates its configuration.
 
-On first apply, Terraform performs a lookup by `name` and `integration.id`, validates that the resource is a synced entity (not an Entitle-created resource), and imports it into state. All other fields (`workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, `prerequisite_permissions`, etc.) are read from the API and stored in state. You can then override any of them in subsequent applies. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
+On first apply, Terraform performs a lookup by `name` and `integration.id`, validates that the resource is a synced entity (not an Entitle-created resource), imports it into state, and immediately applies any fields specified in the configuration (e.g. `workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, `prerequisite_permissions`). Fields not specified in the configuration are read from the API and stored as-is. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 ## Key Concepts
 
@@ -152,6 +153,7 @@ On first apply, Terraform performs a lookup by `name` and `integration.id`, vali
 - **Name + External ID lookup**: Terraform finds the resource by matching `external_id` and `integration.id`; the resource must already exist and must be a synced entity
 - **Synced validation**: If the matched resource belongs to a manual or virtual integration, the provider returns an error — use `entitle_resource` for those
 - **No-op delete**: Destroying this resource removes it from Terraform state only; no DELETE request is sent to Entitle
+- **Immediate configuration apply**: On first apply, any fields specified in the configuration are compared against the existing resource and updated if different — no need for a second apply
 - **Computed fields**: `workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, and `prerequisite_permissions` are all optional — if not specified they are read from the existing resource and tracked in state
 
 ## entitle_resource_synced vs entitle_resource
@@ -306,9 +308,11 @@ The resource identified by `name` + `integration.id`  or `external_id` + `integr
 
 Running `terraform destroy` (or removing this resource from your configuration) only removes it from Terraform state. The underlying resource in Entitle is left untouched. This is intentional — connector-synced resources are managed by the integration, not by Terraform.
 
-### Computed Fields Track API State
+### Configuration Is Applied on First Apply
 
-Fields not specified in your configuration (`workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, `prerequisite_permissions`) are populated from the API on first apply and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), `terraform plan` will show a diff and the next `apply` will restore the Terraform-managed values.
+On first apply, the provider looks up the existing resource, imports it into state, and immediately applies any fields you specified in the configuration — comparing them against the current API values and updating only where there is a diff. A second apply is not required to push your settings.
+
+Fields not specified in your configuration (`workflow`, `allowed_durations`, `requestable`, `owner`, `maintainers`, `prerequisite_permissions`) are populated from the API as-is and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), `terraform plan` will show a diff and the next `apply` will restore the Terraform-managed values.
 
 ### Name Must Be Unique Within an Integration
 

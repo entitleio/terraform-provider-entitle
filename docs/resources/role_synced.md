@@ -4,9 +4,9 @@ page_title: "entitle_role_synced Resource - terraform-provider-entitle"
 subcategory: ""
 description: |-
   An Entitle Synced Role allows Terraform to manage the settings of a role that is synchronized from an external integration — one whose lifecycle is controlled by the integration, not by Entitle or Terraform. Unlike entitle_role role.md, this resource does not create or delete the underlying role; it only reads and updates its configuration.
-  On first apply, Terraform performs a lookup by name and resource.id, validates that the role is a synced entity (not an Entitle-created role), and imports it into state. All other fields (workflow, allowed_durations, requestable, prerequisite_permissions) are read from the API and stored in state. You can then override any of them in subsequent applies. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
+  On first apply, Terraform performs a lookup by name and resource.id, validates that the role is a synced entity (not an Entitle-created role), imports it into state, and immediately applies any fields specified in the configuration (e.g. workflow, allowed_durations, requestable, prerequisite_permissions). Fields not specified in the configuration are read from the API and stored as-is. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  Synced Role: A role originating from an external integration — its existence is managed by the integration, not by TerraformName/External ID + Resource lookup: Terraform finds the role by matching name/external_id and resource.id; the role must already exist and must be a synced entitySynced validation: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use entitle_role for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleComputed fields: workflow, allowed_durations, requestable, and prerequisite_permissions are all optional — if not specified they are read from the existing role and tracked in state
+  Synced Role: A role originating from an external integration — its existence is managed by the integration, not by TerraformName/External ID + Resource lookup: Terraform finds the role by matching name/external_id and resource.id; the role must already exist and must be a synced entitySynced validation: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use entitle_role for thoseNo-op delete: Destroying this resource removes it from Terraform state only; no DELETE request is sent to EntitleImmediate configuration apply: On first apply, any fields specified in the configuration are compared against the existing role and updated if different — no need for a second applyComputed fields: workflow, allowed_durations, requestable, and prerequisite_permissions are all optional — if not specified they are read from the existing role and tracked in state
   entitle_role_synced vs entitle_role
   | | `entitle_role` | `entitle_role_synced` |
   |---|---|---|
@@ -120,8 +120,9 @@ description: |-
   The role identified by name + resource.id must already exist in Entitle and must be a role synchronized from an external integration. If the role doesn't exist, or if it was created directly in Entitle (not synced), the provider returns an error. Use entitle_role if you need Terraform to create the role, or if you're working with manual integrations or virtual applications.
   Destroy Does Not Delete the Role
   Running terraform destroy (or removing this resource from your configuration) only removes it from Terraform state. The underlying role in Entitle is left untouched. This is intentional — connector-synced roles are managed by the integration, not by Terraform.
-  Computed Fields Track API State
-  Fields not specified in your configuration (workflow, allowed_durations, requestable, prerequisite_permissions) are populated from the API on first apply and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), terraform plan will show a diff and the next apply will restore the Terraform-managed values.
+  Configuration Is Applied on First Apply
+  On first apply, the provider looks up the existing role, imports it into state, and immediately applies any fields you specified in the configuration — comparing them against the current API values and updating only where there is a diff. A second apply is not required to push your settings.
+  Fields not specified in your configuration (workflow, allowed_durations, requestable, prerequisite_permissions) are populated from the API as-is and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), terraform plan will show a diff and the next apply will restore the Terraform-managed values.
   Name Must Be Unique Within a Resource
   The lookup is performed by exact name/external_id match within the given resource.id. Ensure role name is unique within an integration or use external id.
 ---
@@ -130,7 +131,7 @@ description: |-
 
 An Entitle Synced Role allows Terraform to manage the settings of a role that is **synchronized from an external integration** — one whose lifecycle is controlled by the integration, not by Entitle or Terraform. Unlike [`entitle_role`](role.md), this resource does **not** create or delete the underlying role; it only reads and updates its configuration.
 
-On first apply, Terraform performs a lookup by `name` and `resource.id`, validates that the role is a synced entity (not an Entitle-created role), and imports it into state. All other fields (`workflow`, `allowed_durations`, `requestable`, `prerequisite_permissions`) are read from the API and stored in state. You can then override any of them in subsequent applies. [Read more about roles](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
+On first apply, Terraform performs a lookup by `name` and `resource.id`, validates that the role is a synced entity (not an Entitle-created role), imports it into state, and immediately applies any fields specified in the configuration (e.g. `workflow`, `allowed_durations`, `requestable`, `prerequisite_permissions`). Fields not specified in the configuration are read from the API and stored as-is. [Read more about roles](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 ## Key Concepts
 
@@ -138,6 +139,7 @@ On first apply, Terraform performs a lookup by `name` and `resource.id`, validat
 - **Name/External ID + Resource lookup**: Terraform finds the role by matching `name`/`external_id` and `resource.id`; the role must already exist and must be a synced entity
 - **Synced validation**: If the matched role is Entitle-managed (not synced from an external system), the provider returns an error — use `entitle_role` for those
 - **No-op delete**: Destroying this resource removes it from Terraform state only; no DELETE request is sent to Entitle
+- **Immediate configuration apply**: On first apply, any fields specified in the configuration are compared against the existing role and updated if different — no need for a second apply
 - **Computed fields**: `workflow`, `allowed_durations`, `requestable`, and `prerequisite_permissions` are all optional — if not specified they are read from the existing role and tracked in state
 
 ## entitle_role_synced vs entitle_role
@@ -279,9 +281,11 @@ The role identified by `name` + `resource.id` must already exist in Entitle **an
 
 Running `terraform destroy` (or removing this resource from your configuration) only removes it from Terraform state. The underlying role in Entitle is left untouched. This is intentional — connector-synced roles are managed by the integration, not by Terraform.
 
-### Computed Fields Track API State
+### Configuration Is Applied on First Apply
 
-Fields not specified in your configuration (`workflow`, `allowed_durations`, `requestable`, `prerequisite_permissions`) are populated from the API on first apply and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), `terraform plan` will show a diff and the next `apply` will restore the Terraform-managed values.
+On first apply, the provider looks up the existing role, imports it into state, and immediately applies any fields you specified in the configuration — comparing them against the current API values and updating only where there is a diff. A second apply is not required to push your settings.
+
+Fields not specified in your configuration (`workflow`, `allowed_durations`, `requestable`, `prerequisite_permissions`) are populated from the API as-is and tracked in state. If they change outside Terraform (e.g., someone edits them in the UI), `terraform plan` will show a diff and the next `apply` will restore the Terraform-managed values.
 
 ### Name Must Be Unique Within a Resource
 
