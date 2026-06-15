@@ -31,3 +31,21 @@ func TrimPrefixSuffix(s string) string {
 func TrimmedStringValue(s string) types.String {
 	return types.StringValue(TrimPrefixSuffix(s))
 }
+
+// StringSlicesEqualUnordered reports whether two string slices contain the same values (order-independent).
+func StringSlicesEqualUnordered(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[string]int, len(a))
+	for _, v := range a {
+		counts[v]++
+	}
+	for _, v := range b {
+		counts[v]--
+		if counts[v] < 0 {
+			return false
+		}
+	}
+	return true
+}

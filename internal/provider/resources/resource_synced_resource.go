@@ -44,6 +44,23 @@ type ResourceSyncedResource struct {
 	client *client.ClientWithResponses
 }
 
+type createPlan struct {
+	ExternalID  types.String       `tfsdk:"external_id"`
+	Name        types.String       `tfsdk:"name"`
+	Integration *utils.IdNameModel `tfsdk:"integration"`
+	// Remaining computed/optional fields accept unknown values via framework types.
+	ID                      types.String `tfsdk:"id"`
+	AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
+	Workflow                types.Object `tfsdk:"workflow"`
+	Requestable             types.Bool   `tfsdk:"requestable"`
+	Owner                   types.Object `tfsdk:"owner"`
+	Maintainers             types.List   `tfsdk:"maintainers"`
+	Tags                    types.Set    `tfsdk:"tags"`
+	UserDefinedTags         types.Set    `tfsdk:"user_defined_tags"`
+	UserDefinedDescription  types.String `tfsdk:"user_defined_description"`
+	PrerequisitePermissions types.List   `tfsdk:"prerequisite_permissions"`
+}
+
 // Metadata sets the metadata for the resource.
 func (r *ResourceSyncedResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_resource_synced"
@@ -382,22 +399,22 @@ func (r *ResourceSyncedResource) Configure(ctx context.Context, req resource.Con
 // this operation looks up the resource by name + integration.id and imports it into state.
 // No resource is created; no DELETE will be sent on destroy.
 func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var createPlan ResourceResourceModel
-	diags := req.Plan.Get(ctx, &createPlan)
+	var plan createPlan
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	integrationID := createPlan.Integration.ID.ValueString()
-	name := createPlan.Name.ValueStringPointer()
-	externalID := createPlan.ExternalID.ValueStringPointer()
+	integrationID := plan.Integration.ID.ValueString()
+	name := plan.Name.ValueStringPointer()
+	externalID := plan.ExternalID.ValueStringPointer()
 
 	resourceID, err := r.getResourceID(ctx, integrationID, externalID, name)
 	if err != nil {
 		resp.Diagnostics.AddError("Resource not found", fmt.Sprintf(
 			"Failed to get the Resource by name (%s) or external id (%s) and integration (%s): %s",
-			createPlan.Name.ValueString(), createPlan.ExternalID.ValueString(), integrationID, err.Error(),
+			plan.Name.ValueString(), plan.ExternalID.ValueString(), integrationID, err.Error(),
 		))
 		return
 	}
@@ -432,43 +449,187 @@ func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.Create
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-
-	r.compareAndUpdate()
-
 	diags = resp.State.Set(ctx, &state)
+
+	r.compareAndUpdate(ctx, plan, apiResp.JSON200.Result, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, createPlan ResourceResourceModel, result client.IntegrationResourceResultSchema, resp *resource.CreateResponse) {
+func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, plan createPlan, result client.IntegrationResourceResultSchema, resp *resource.CreateResponse) {
 	var updateRequest client.ResourcesUpdateJSONRequestBody
-
 	diff := false
-	if !createPlan.Requestable.IsUnknown() {
-		if createPlan.Requestable.ValueBool() != result.Requestable {
+
+	// Requestable
+	if !plan.Requestable.IsNull() && !plan.Requestable.IsUnknown() {
+		if plan.Requestable.ValueBool() != result.Requestable {
 			diff = true
-			updateRequest.Requestable = createPlan.Requestable.ValueBoolPointer()
+			updateRequest.Requestable = plan.Requestable.ValueBoolPointer()
 		}
 	}
 
-	if diff {
-		apiResp, err := r.client.ResourcesUpdateWithResponse(ctx, result.Id, updateRequest)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				utils.ErrApiConnection.Error(),
-				fmt.Sprintf("Unable to update the resource. Got error: %v", err),
-			)
+	// AllowedDurations
+	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
+		planDurations, diags := utils.ConvertTerraformSetToAllowedDurations(ctx, plan.AllowedDurations)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
 			return
 		}
-
-		err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				utils.ErrApiResponse.Error(),
-				fmt.Sprintf("Failed to update the resource: %s", err.Error()),
-			)
-			return
+		if !utils.AllowedDurationsEqual(planDurations, result.AllowedDurations) {
+			diff = true
+			updateRequest.AllowedDurations = &planDurations
 		}
 	}
+
+	// Workflow
+	if !plan.Workflow.IsNull() && !plan.Workflow.IsUnknown() {
+		if idAttr, ok := plan.Workflow.Attributes()["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() {
+			planWorkflowID := idAttr.ValueString()
+			if result.Workflow == nil || result.Workflow.Id.String() != planWorkflowID {
+				diff = true
+				wfID, err := uuid.Parse(planWorkflowID)
+				if err != nil {
+					resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to parse workflow id to UUID: %v", err))
+					return
+				}
+				updateRequest.Workflow = &client.IdParamsSchema{Id: wfID}
+			}
+		}
+	}
+
+	// Owner
+	if !plan.Owner.IsNull() && !plan.Owner.IsUnknown() {
+		attrs := plan.Owner.Attributes()
+		planOwnerID := ""
+		if idAttr, ok := attrs["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() && idAttr.ValueString() != "" {
+			planOwnerID = utils.TrimPrefixSuffix(idAttr.ValueString())
+		} else if emailAttr, ok := attrs["email"].(types.String); ok && !emailAttr.IsNull() && !emailAttr.IsUnknown() && emailAttr.ValueString() != "" {
+			planOwnerID = utils.TrimPrefixSuffix(emailAttr.ValueString())
+		}
+		if planOwnerID != "" {
+			apiOwnerID := ""
+			if result.Owner != nil {
+				apiOwnerID = result.Owner.Id.String()
+			}
+			if planOwnerID != apiOwnerID {
+				diff = true
+				updateRequest.Owner = &client.UserEntitySchema{Id: planOwnerID}
+			}
+		}
+	}
+
+	// UserDefinedDescription
+	if !plan.UserDefinedDescription.IsNull() && !plan.UserDefinedDescription.IsUnknown() {
+		planDesc := plan.UserDefinedDescription.ValueString()
+		apiDesc := ""
+		if result.UserDefinedDescription != nil {
+			apiDesc = *result.UserDefinedDescription
+		}
+		if planDesc != apiDesc {
+			diff = true
+			updateRequest.UserDefinedDescription = &planDesc
+		}
+	}
+
+	// UserDefinedTags
+	if !plan.UserDefinedTags.IsNull() && !plan.UserDefinedTags.IsUnknown() {
+		var planTags []string
+		for _, tag := range plan.UserDefinedTags.Elements() {
+			if sv, ok := tag.(types.String); ok {
+				planTags = append(planTags, sv.ValueString())
+			}
+		}
+		apiTags := []string{}
+		if result.UserDefinedTags != nil {
+			apiTags = *result.UserDefinedTags
+		}
+		if !utils.StringSlicesEqualUnordered(planTags, apiTags) {
+			diff = true
+			updateRequest.UserDefinedTags = &planTags
+		}
+	}
+
+	// Maintainers — include if set in plan (opaque union types prevent deep comparison)
+	if !plan.Maintainers.IsNull() && !plan.Maintainers.IsUnknown() && len(plan.Maintainers.Elements()) > 0 {
+		var maintainerModels []*utils.MaintainerModel
+		if diags := plan.Maintainers.ElementsAs(ctx, &maintainerModels, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		maintainers, buildErr := buildUpdateMaintainers(ctx, maintainerModels)
+		if buildErr != nil {
+			resp.Diagnostics.AddError("Client Error", buildErr.Error())
+			return
+		}
+		if len(maintainers) > 0 {
+			diff = true
+			updateRequest.Maintainers = &maintainers
+		}
+	}
+
+	// PrerequisitePermissions — include if set in plan
+	if !plan.PrerequisitePermissions.IsNull() && !plan.PrerequisitePermissions.IsUnknown() && len(plan.PrerequisitePermissions.Elements()) > 0 {
+		var ppModels []utils.PrerequisitePermissionModel
+		if diags := plan.PrerequisitePermissions.ElementsAs(ctx, &ppModels, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		ppData := make([][]client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item, 0, len(ppModels))
+		for _, pp := range ppModels {
+			if pp.Role == nil || pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+			item := client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item{}
+			mergeErr := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if mergeErr != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", mergeErr))
+				return
+			}
+			ppData = append(ppData, []client.IntegrationResourcesUpdateBodySchema_PrerequisitePermissions_Item{item})
+		}
+		if len(ppData) > 0 {
+			diff = true
+			updateRequest.PrerequisitePermissions = &ppData
+		}
+	}
+
+	if !diff {
+		return
+	}
+
+	apiResp, err := r.client.ResourcesUpdateWithResponse(ctx, result.Id, updateRequest)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiConnection.Error(),
+			fmt.Sprintf("Unable to update the resource. Got error: %v", err),
+		)
+		return
+	}
+
+	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			fmt.Sprintf("Failed to update the resource: %s", err.Error()),
+		)
+		return
+	}
+
+	state, diags := convertFullResourceResultResponseSchemaToModel(ctx, &apiResp.JSON200.Result)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags = resp.State.Set(ctx, &state)
 }
 
 // Read retrieves the current state of an entitle_resource_synced resource.
