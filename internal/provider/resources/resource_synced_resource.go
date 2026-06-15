@@ -382,25 +382,7 @@ func (r *ResourceSyncedResource) Configure(ctx context.Context, req resource.Con
 // this operation looks up the resource by name + integration.id and imports it into state.
 // No resource is created; no DELETE will be sent on destroy.
 func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Use a plan-read struct with framework types for optional+computed fields so that
-	// unknown values on the first apply do not cause a conversion error.
-	var createPlan struct {
-		ExternalID  types.String       `tfsdk:"external_id"`
-		Name        types.String       `tfsdk:"name"`
-		Integration *utils.IdNameModel `tfsdk:"integration"`
-		// Remaining computed/optional fields accept unknown values via framework types.
-		ID                      types.String `tfsdk:"id"`
-		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
-		Workflow                types.Object `tfsdk:"workflow"`
-		Requestable             types.Bool   `tfsdk:"requestable"`
-		Owner                   types.Object `tfsdk:"owner"`
-		Maintainers             types.List   `tfsdk:"maintainers"`
-		Tags                    types.Set    `tfsdk:"tags"`
-		UserDefinedTags         types.Set    `tfsdk:"user_defined_tags"`
-		UserDefinedDescription  types.String `tfsdk:"user_defined_description"`
-		PrerequisitePermissions types.List   `tfsdk:"prerequisite_permissions"`
-	}
-
+	var createPlan ResourceResourceModel
 	diags := req.Plan.Get(ctx, &createPlan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -445,15 +427,48 @@ func (r *ResourceSyncedResource) Create(ctx context.Context, req resource.Create
 		)
 		return
 	}
-
 	state, diags := convertFullResourceResultResponseSchemaToModel(ctx, &apiResp.JSON200.Result)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
+	r.compareAndUpdate()
+
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
+}
+
+func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, createPlan ResourceResourceModel, result client.IntegrationResourceResultSchema, resp *resource.CreateResponse) {
+	var updateRequest client.ResourcesUpdateJSONRequestBody
+
+	diff := false
+	if !createPlan.Requestable.IsUnknown() {
+		if createPlan.Requestable.ValueBool() != result.Requestable {
+			diff = true
+			updateRequest.Requestable = createPlan.Requestable.ValueBoolPointer()
+		}
+	}
+
+	if diff {
+		apiResp, err := r.client.ResourcesUpdateWithResponse(ctx, result.Id, updateRequest)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				utils.ErrApiConnection.Error(),
+				fmt.Sprintf("Unable to update the resource. Got error: %v", err),
+			)
+			return
+		}
+
+		err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				utils.ErrApiResponse.Error(),
+				fmt.Sprintf("Failed to update the resource: %s", err.Error()),
+			)
+			return
+		}
+	}
 }
 
 // Read retrieves the current state of an entitle_resource_synced resource.
