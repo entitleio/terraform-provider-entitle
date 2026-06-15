@@ -630,6 +630,7 @@ func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, plan crea
 	}
 
 	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
 }
 
 // Read retrieves the current state of an entitle_resource_synced resource.
