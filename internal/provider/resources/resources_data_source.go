@@ -39,6 +39,7 @@ type ResourcesDataSourceModel struct {
 // ResourceListItemModel represents a single resource in the list.
 type ResourceListItemModel struct {
 	ID          types.String       `tfsdk:"id"`
+	ExternalID  types.String       `tfsdk:"external_id"`
 	Name        types.String       `tfsdk:"name"`
 	Integration *utils.IdNameModel `tfsdk:"integration"`
 }
@@ -88,7 +89,12 @@ func (d *ResourcesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 				MarkdownDescription: "List of resources matching the filter.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id":   schema.StringAttribute{Computed: true},
+						"id": schema.StringAttribute{Computed: true},
+						"external_id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The external ID of the resource as assigned by the upstream integration.",
+							MarkdownDescription: "The external ID of the resource as assigned by the upstream integration.",
+						},
 						"name": schema.StringAttribute{Computed: true},
 						"integration": schema.SingleNestedAttribute{
 							Computed: true,
@@ -169,8 +175,14 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			}
 		}
 
+		var externalID string
+		if r.ExternalId != nil {
+			externalID = *r.ExternalId
+		}
+
 		resources[i] = ResourceListItemModel{
 			ID:          types.StringValue(r.Id.String()),
+			ExternalID:  types.StringValue(externalID),
 			Name:        types.StringValue(r.Name),
 			Integration: integration,
 		}

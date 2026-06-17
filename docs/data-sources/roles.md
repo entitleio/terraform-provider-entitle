@@ -263,5 +263,6 @@ Optional:
 
 Read-Only:
 
+- `external_id` (String)
 - `id` (String)
 - `name` (String)
