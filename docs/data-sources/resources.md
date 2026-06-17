@@ -276,6 +276,7 @@ Optional:
 
 Read-Only:
 
+- `external_id` (String) The external ID of the resource as assigned by the upstream integration.
 - `id` (String)
 - `integration` (Attributes) (see [below for nested schema](#nestedatt--resources--integration))
 - `name` (String)

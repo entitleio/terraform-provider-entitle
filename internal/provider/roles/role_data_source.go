@@ -35,6 +35,7 @@ func NewRoleDataSource() datasource.DataSource {
 // RoleDataSourceModel describes the data source data model.
 type RoleDataSourceModel struct {
 	ID                      types.String                        `tfsdk:"id"`
+	ExternalID              types.String                        `tfsdk:"external_id"`
 	Name                    types.String                        `tfsdk:"name"`
 	Resource                *utils.IdNameModel                  `tfsdk:"resource" json:"resource"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
@@ -61,6 +62,11 @@ func (d *RoleDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Validators: []validator.String{
 					validators.UUID{},
 				},
+			},
+			"external_id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The external ID of the role as assigned by the upstream integration.",
+				Description:         "The external ID of the role as assigned by the upstream integration.",
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
@@ -338,10 +344,16 @@ func (d *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	var externalID string
+	if apiResp.JSON200.Result.ExternalId != nil {
+		externalID = *apiResp.JSON200.Result.ExternalId
+	}
+
 	// Populate the data model with details from the API response
 	data = RoleDataSourceModel{
-		ID:   utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String()),
-		Name: utils.TrimmedStringValue(apiResp.JSON200.Result.Name),
+		ID:         utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String()),
+		ExternalID: utils.TrimmedStringValue(externalID),
+		Name:       utils.TrimmedStringValue(apiResp.JSON200.Result.Name),
 		Resource: &utils.IdNameModel{
 			ID:   utils.TrimmedStringValue(apiResp.JSON200.Result.Resource.Id.String()),
 			Name: utils.TrimmedStringValue(apiResp.JSON200.Result.Resource.Name),

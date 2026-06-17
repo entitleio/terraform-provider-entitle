@@ -37,8 +37,9 @@ type RolesDataSourceModel struct {
 
 // RoleListItem represents a single role in the list.
 type RoleListItem struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID         types.String `tfsdk:"id"`
+	ExternalID types.String `tfsdk:"external_id"`
+	Name       types.String `tfsdk:"name"`
 }
 
 // Metadata sets the metadata for the data source.
@@ -83,8 +84,9 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 				MarkdownDescription: "List of roles matching the filter.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id":   schema.StringAttribute{Computed: true},
-						"name": schema.StringAttribute{Computed: true},
+						"id":          schema.StringAttribute{Computed: true},
+						"name":        schema.StringAttribute{Computed: true},
+						"external_id": schema.StringAttribute{Computed: true},
 					},
 				},
 			},
@@ -154,8 +156,9 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	roles := make([]RoleListItem, len(apiResp.JSON200.Result))
 	for i, r := range apiResp.JSON200.Result {
 		roles[i] = RoleListItem{
-			ID:   types.StringValue(r.Id.String()),
-			Name: types.StringValue(r.Name),
+			ID:         types.StringValue(r.Id.String()),
+			Name:       types.StringValue(r.Name),
+			ExternalID: types.StringValue(r.GetExternalID()),
 		}
 	}
 

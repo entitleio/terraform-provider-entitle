@@ -229,6 +229,7 @@ data "entitle_resource" "dev_account" {
 
 - `allowed_durations` (Set of Number) Set of allowed access durations
 - `description` (String) Resource description
+- `external_id` (String) The external ID of the resource as assigned by the upstream integration.
 - `integration` (Attributes) Integration the resource belongs to (see [below for nested schema](#nestedatt--integration))
 - `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) Entitle Resource name
