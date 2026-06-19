@@ -1131,7 +1131,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		if err != nil {
 			diags.AddError(
 				"No data",
-				"failed to unmarshal the maintainer data",
+				fmt.Sprintf("Failed to unmarshal the maintainer data (%s), error: %s", dataBytes, err.Error()),
 			)
 
 			return IntegrationResourceModel{}, diags
@@ -1143,7 +1143,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to convert response schema to user response schema, error: %v", err),
+					fmt.Sprintf("Failed to convert response schema to user response schema, error: %v", err),
 				)
 
 				return IntegrationResourceModel{}, diags
@@ -1153,7 +1153,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to get maintainer user email bytes, error: %v", err),
+					fmt.Sprintf("Failed to get maintainer user email bytes, error: %v", err),
 				)
 
 				return IntegrationResourceModel{}, diags
@@ -1181,7 +1181,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to convert response schema to group response schema, error: %v", err),
+					fmt.Sprintf("Failed to convert response schema to group response schema, error: %v", err),
 				)
 
 				return IntegrationResourceModel{}, diags
@@ -1191,7 +1191,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			if err != nil {
 				diags.AddError(
 					"No data",
-					fmt.Sprintf("failed to get maintainer group email bytes, error: %v", err),
+					fmt.Sprintf("Failed to get maintainer group email bytes, error: %v", err),
 				)
 
 				return IntegrationResourceModel{}, diags
@@ -1215,7 +1215,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 
 			maintainers = append(maintainers, maintainerGroup)
 		default:
-			diags.AddError("failed invalid type for maintainer", body.Type)
+			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return IntegrationResourceModel{}, diags
 		}
 	}
@@ -1235,7 +1235,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				if err != nil {
 					diags.AddError(
 						"No data",
-						fmt.Sprintf("failed to unmarshal the prerequisite permissions data, err: %s", err.Error()),
+						fmt.Sprintf("Failed to unmarshal the prerequisite permissions data, err: %s", err.Error()),
 					)
 					return IntegrationResourceModel{}, diags
 				}
