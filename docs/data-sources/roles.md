@@ -3,10 +3,8 @@
 page_title: "entitle_roles Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+  Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
   Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
-  Key Concepts
-  resource_id: The mandatory filter — roles are always scoped to a specific resourcesearch: Optional text filter to narrow results by role namePagination: Use page and per_page to page through large result sets
   When to Use This Data Source
   Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resource
   Example Usage
@@ -65,10 +63,20 @@ description: |-
     allowed_durations = [28800, 86400]
   }
   
-  Paginate Through Large Role Lists
+  Paginate Through Large Resource Role Lists
   
   data "entitle_roles" "page_one" {
     resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      page     = 1
+      per_page = 50
+    }
+  }
+  
+  Paginate Through Large Integration Role Lists
+  
+  data "entitle_roles" "page_one" {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
     filter {
       page     = 1
       per_page = 50
@@ -84,31 +92,13 @@ description: |-
   output "roles" {
     value = data.entitle_roles.all_roles.roles
   }
-  
-  Query Parameters
-  Required
-  resource_id (String) The unique identifier of the resource to list roles for (UUID format). This filter is mandatory — roles are always scoped to a specific resource.
-  Optional
-  filter (Block) Optional filters for the role list:
-  search (String) Text search to filter roles by name.page (Number) Page number to return, starting from 1. Use with per_page for pagination.per_page (Number) Number of results per page. Defaults to the API's configured page size.
-  Returned Attributes
-  roles (Attributes List) The list of roles matching the query:
-  id (String) The role's unique identifier.name (String) The role's display name.
-  Notes
-  Use entitle_role (singular) to retrieve full details for a specific role by ID — entitle_roles returns only id and name per roleresource_id is mandatory — you cannot query roles across all resources at once; always scope to a specific resourceIf search matches many results, use pagination to retrieve all matches
 ---
 
 # entitle_roles (Data Source)
 
-Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
 
 Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. [Read more about roles](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
-
-## Key Concepts
-
-- **resource_id**: The mandatory filter — roles are always scoped to a specific resource
-- **search**: Optional text filter to narrow results by role name
-- **Pagination**: Use `page` and `per_page` to page through large result sets
 
 ## When to Use This Data Source
 
@@ -181,11 +171,23 @@ resource "entitle_bundle" "github_read_bundle" {
 }
 ```
 
-### Paginate Through Large Role Lists
+### Paginate Through Large Resource Role Lists
 
 ```terraform
 data "entitle_roles" "page_one" {
   resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    page     = 1
+    per_page = 50
+  }
+}
+```
+
+### Paginate Through Large Integration Role Lists
+
+```terraform
+data "entitle_roles" "page_one" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   filter {
     page     = 1
     per_page = 50
@@ -205,31 +207,6 @@ output "roles" {
 }
 ```
 
-## Query Parameters
-
-### Required
-
-- `resource_id` (String) The unique identifier of the resource to list roles for (UUID format). **This filter is mandatory** — roles are always scoped to a specific resource.
-
-### Optional
-
-- `filter` (Block) Optional filters for the role list:
-    - `search` (String) Text search to filter roles by name.
-    - `page` (Number) Page number to return, starting from 1. Use with `per_page` for pagination.
-    - `per_page` (Number) Number of results per page. Defaults to the API's configured page size.
-
-## Returned Attributes
-
-- `roles` (Attributes List) The list of roles matching the query:
-    - `id` (String) The role's unique identifier.
-    - `name` (String) The role's display name.
-
-## Notes
-
-- Use `entitle_role` (singular) to retrieve full details for a specific role by ID — `entitle_roles` returns only `id` and `name` per role
-- `resource_id` is mandatory — you cannot query roles across all resources at once; always scope to a specific resource
-- If `search` matches many results, use pagination to retrieve all matches
-
 
 
 <!-- schema generated by tfplugindocs -->
@@ -237,7 +214,7 @@ output "roles" {
 
 ### Optional
 
-- `filter` (Block, Optional) Filter roles by resource ID (mandatory) and optional search term. (see [below for nested schema](#nestedblock--filter))
+- `filter` (Block, Optional) Pagination and filter roles by optional search term. (see [below for nested schema](#nestedblock--filter))
 - `integration_id` (String) Filter roles assigned to a specific integration ID.
 - `resource_id` (String) Filter roles assigned to a specific resource ID.
 

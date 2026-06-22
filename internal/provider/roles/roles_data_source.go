@@ -60,7 +60,7 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		MarkdownDescription: docs.RolesDataSourceMarkdownDescription,
 		Blocks: map[string]schema.Block{
 			"filter": schema.SingleNestedBlock{
-				MarkdownDescription: "Filter roles by resource ID (mandatory) and optional search term.",
+				MarkdownDescription: "Pagination and filter roles by optional search term.",
 				Attributes: map[string]schema.Attribute{
 					"search": schema.StringAttribute{
 						Optional:            true,
@@ -169,7 +169,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Invalid Resource ID",
-				fmt.Sprintf("Failed to parse filter.resource_id (%s) as UUID: %s", resourceID, err),
+				fmt.Sprintf("Failed to parse resource_id (%s) as UUID: %s", resourceID, err),
 			)
 			return
 		}
@@ -183,7 +183,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Invalid Integration ID",
-				fmt.Sprintf("Failed to parse filter.integration_id (%s) as UUID: %s", integrationID, err),
+				fmt.Sprintf("Failed to parse integration_id (%s) as UUID: %s", integrationID, err),
 			)
 			return
 		}
