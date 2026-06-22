@@ -598,7 +598,7 @@ func (r *ResourceResource) MakeUnrequestableDefaultRole(ctx context.Context, res
 	params := client.RolesIndexParams{
 		Page:       nil,
 		PerPage:    nil,
-		ResourceId: resourceID,
+		ResourceId: &resourceID,
 		Search:     &search,
 	}
 

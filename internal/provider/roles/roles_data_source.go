@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -30,9 +34,10 @@ func NewRolesDataSource() datasource.DataSource {
 
 // RolesDataSourceModel describes the data source model.
 type RolesDataSourceModel struct {
-	ResourceID types.String                                  `tfsdk:"resource_id"`
-	Filter     *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
-	Roles      []RoleListItem                                `tfsdk:"roles"`
+	ResourceID    types.String                                  `tfsdk:"resource_id"`
+	IntegrationID types.String                                  `tfsdk:"integration_id"`
+	Filter        *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
+	Roles         []RoleListItem                                `tfsdk:"roles"`
 }
 
 // RoleListItem represents a single role in the list.
@@ -76,8 +81,26 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		},
 		Attributes: map[string]schema.Attribute{
 			"resource_id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
 				MarkdownDescription: "Filter roles assigned to a specific resource ID.",
+				Validators: []validator.String{
+					validators.UUID{},
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("integration_id"),
+					),
+				},
+			},
+			"integration_id": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Filter roles assigned to a specific integration ID.",
+				Validators: []validator.String{
+					validators.UUID{},
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("integration_id"),
+					),
+				},
 			},
 			"roles": schema.ListNestedAttribute{
 				Computed:            true,
@@ -120,18 +143,34 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
+	var params client.RolesIndexParams
+
 	resourceID := data.ResourceID.ValueString()
-	uid, err := uuid.Parse(resourceID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid Resource ID",
-			fmt.Sprintf("Failed to parse filter.resource_id (%s) as UUID: %s", resourceID, err),
-		)
-		return
+	if resourceID != "" {
+		uid, err := uuid.Parse(resourceID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Resource ID",
+				fmt.Sprintf("Failed to parse filter.resource_id (%s) as UUID: %s", resourceID, err),
+			)
+			return
+		}
+
+		params.ResourceId = &uid
 	}
 
-	params := client.RolesIndexParams{
-		ResourceId: uid,
+	integrationID := data.IntegrationID.ValueString()
+	if integrationID != "" {
+		uid, err := uuid.Parse(integrationID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Integration ID",
+				fmt.Sprintf("Failed to parse filter.integration_id (%s) as UUID: %s", integrationID, err),
+			)
+			return
+		}
+
+		params.IntegrationId = &uid
 	}
 
 	if data.Filter != nil {

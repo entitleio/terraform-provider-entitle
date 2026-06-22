@@ -848,7 +848,17 @@
           },
           {
             "name": "resourceId",
-            "required": true,
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "integrationId",
+            "required": false,
             "in": "query",
             "schema": {
               "format": "uuid",
