@@ -2040,10 +2040,12 @@ type IntegrationResourceRoleDestroyResponseSchema struct {
 
 // IntegrationResourceRoleListItemResponseSchema defines model for IntegrationResourceRoleListItemResponseSchema.
 type IntegrationResourceRoleListItemResponseSchema struct {
-	ExternalId *string                                   `json:"externalId,omitempty"`
-	Id         openapi_types.UUID                        `json:"id"`
-	Name       string                                    `json:"name"`
-	Resource   IntegrationResourceListItemResponseSchema `json:"resource"`
+	ExternalId  *string                                   `json:"externalId,omitempty"`
+	Id          openapi_types.UUID                        `json:"id"`
+	Name        string                                    `json:"name"`
+	Requestable *bool                                     `json:"requestable,omitempty"`
+	Resource    IntegrationResourceListItemResponseSchema `json:"resource"`
+	Workflow    *WorkflowResponseSchema                   `json:"workflow,omitempty"`
 }
 
 // IntegrationResourceRoleResponseSchema defines model for IntegrationResourceRoleResponseSchema.

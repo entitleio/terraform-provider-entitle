@@ -264,3 +264,13 @@ Read-Only:
 - `external_id` (String)
 - `id` (String)
 - `name` (String)
+- `requestable` (Boolean)
+- `workflow` (Attributes) (see [below for nested schema](#nestedatt--roles--workflow))
+
+<a id="nestedatt--roles--workflow"></a>
+### Nested Schema for `roles.workflow`
+
+Read-Only:
+
+- `id` (String) Workflow's unique identifier.
+- `name` (String) workflow's name
