@@ -12,55 +12,36 @@ import (
 )
 
 const (
-	// DefaultRequestTimeout is the per-request HTTP timeout. Any individual API
-	// call that does not complete within this window is cancelled and returns an
-	// error, preventing data-source reads from hanging indefinitely.
+	// DefaultRequestTimeout is the per-request HTTP timeout.
 	DefaultRequestTimeout = 30 * time.Second
 
-	// defaultMaxAttempts is the total number of attempts (1 original + 4 retries).
 	defaultMaxAttempts = 5
-
-	// defaultBaseBackoff is the initial back-off interval used when no
-	// Retry-After header is present.
 	defaultBaseBackoff = 2 * time.Second
+	defaultMaxBackoff  = 64 * time.Second
 
-	// defaultMaxBackoff caps the computed back-off so retries never wait longer
-	// than this duration regardless of what the server advertises.
-	defaultMaxBackoff = 64 * time.Second
-
-	// defaultRetryBudget is the total wall-clock budget for a single Do call,
-	// including all attempts and sleep intervals. http.Client.Timeout only
-	// bounds each individual attempt; without this cap, a call honouring
-	// defaultMaxAttempts with maxBackoff=64s each could block for several
-	// minutes. If the caller's context already has a shorter deadline, that
-	// takes precedence.
+	// defaultRetryBudget caps the total wall-clock time for a Do call including
+	// all attempts and sleeps. http.Client.Timeout only bounds each attempt.
 	defaultRetryBudget = 3 * time.Minute
 
-	// transportError is passed to isRetryable as the status code when no HTTP
-	// response was received (i.e. a network/transport-level error occurred).
+	// transportError is used as a status sentinel when no HTTP response was
+	// received (network/transport failure).
 	transportError = 0
 
-	// maxBodyDrainBytes caps how much of a retryable response body is drained
-	// before closing, so a large error page from a misbehaving gateway does not
-	// consume unbounded memory or time.
-	maxBodyDrainBytes = 1 << 20 // 1 MiB
+	// maxBodyDrainBytes limits how much of a retryable response body is read
+	// before closing, to avoid consuming unbounded memory on large error pages.
+	maxBodyDrainBytes = 1 << 20
 )
 
-// isRetryable reports whether a failed request should be retried given the
-// HTTP method and status code (use transportError for network-level failures).
+// isRetryable reports whether the request should be retried.
 //
-// 429 (Too Many Requests) is safe on any method: the server rejected the
-// request before processing it, so no side effect has occurred.
-//
-// 502 (Bad Gateway) and transport errors are only safe on idempotent methods.
-// The gateway may have forwarded the request before failing, so retrying POST
-// or PATCH risks duplicate resource creation or inconsistent state —
-// unacceptable in a Terraform provider.
+// 429 is safe on any method — the server rejected before processing.
+// 502 and transport errors are only safe on idempotent methods, since the
+// backend may have already processed the request.
 func isRetryable(method string, status int) bool {
 	switch status {
-	case http.StatusTooManyRequests: // 429 — rejected before processing, safe on any method
+	case http.StatusTooManyRequests:
 		return true
-	case http.StatusBadGateway, transportError: // 502 or transport error — idempotent methods only
+	case http.StatusBadGateway, transportError:
 		switch method {
 		case http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete, http.MethodOptions:
 			return true
@@ -69,10 +50,8 @@ func isRetryable(method string, status int) bool {
 	return false
 }
 
-// sleepWithContext waits for d or until ctx is done, whichever comes first.
-// Returns ctx.Err() if the context fired, nil otherwise.
-// Uses time.NewTimer (not time.After) to avoid leaking the timer when the
-// context fires before the duration elapses.
+// sleepWithContext waits for d, returning early with ctx.Err() if the context
+// is canceled. Uses time.NewTimer to avoid leaking the timer on early return.
 func sleepWithContext(ctx context.Context, d time.Duration) error {
 	t := time.NewTimer(d)
 	defer t.Stop()
@@ -84,12 +63,9 @@ func sleepWithContext(ctx context.Context, d time.Duration) error {
 	}
 }
 
-// RetryDoer wraps any HttpRequestDoer and adds:
-//   - Retry logic for 429 (Too Many Requests) and 502 (Bad Gateway) responses.
-//   - Respect for the Retry-After response header (both delta-seconds and
-//     HTTP-date forms are supported).
-//   - Exponential back-off when no Retry-After header is present.
-//   - Retry on transport errors (timeout, connection reset) for idempotent methods.
+// RetryDoer wraps an HttpRequestDoer with retry logic for 429 and 502
+// responses, honour the Retry-After header and falling back to exponential
+// backoff. Transport errors are retried on idempotent methods.
 type RetryDoer struct {
 	wrapped     HttpRequestDoer
 	maxAttempts int
@@ -97,7 +73,6 @@ type RetryDoer struct {
 	maxBackoff  time.Duration
 }
 
-// NewRetryDoer creates a RetryDoer that delegates to wrapped.
 func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 	return &RetryDoer{
 		wrapped:     wrapped,
@@ -107,12 +82,10 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 	}
 }
 
-// Do executes the request, retrying up to defaultMaxAttempts total attempts.
-// The request body is re-created for each retry attempt via req.GetBody when
-// available (the stdlib sets this automatically for bytes.Reader / strings.Reader
-// bodies, which is what the generated client uses). Requests with an
-// unrewindable body (Body != nil, GetBody == nil) are not retried on HTTP
-// errors; transport-error retries are also skipped for non-idempotent methods.
+// Do executes the request with retry logic. req.WithContext is called
+// internally, so the caller's *http.Request is not mutated. Do is not safe to
+// call twice with the same request — the generated client always builds a fresh
+// one, so this is fine in practice.
 //
 // Note: Do applies an internal context deadline and calls req.WithContext,
 // which creates a shallow copy of the request. req.Body is mutated on the
@@ -120,9 +93,6 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 // same *http.Request. This is fine in practice because the generated client
 // constructs a fresh request on every call.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
-	// Apply an overall budget for the entire retry loop (attempts + sleep).
-	// If the caller's context already has a shorter deadline, that takes
-	// precedence because context.WithTimeout picks the earliest deadline.
 	ctx, cancel := context.WithTimeout(req.Context(), defaultRetryBudget)
 	defer cancel()
 	req = req.WithContext(ctx)
@@ -130,7 +100,6 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 	backoff := r.baseBackoff
 
 	for attempt := 0; attempt < r.maxAttempts; attempt++ {
-		// Re-wind the request body for retries.
 		if attempt > 0 && req.GetBody != nil {
 			body, err := req.GetBody()
 			if err != nil {
@@ -141,19 +110,9 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 
 		resp, err := r.wrapped.Do(req)
 		if err != nil {
-			// Retry transport errors (timeout, connection reset) only for
-			// idempotent methods — non-idempotent requests (POST, PATCH) must
-			// not be re-sent blindly as they may have already produced side effects.
 			if attempt < r.maxAttempts-1 && isRetryable(req.Method, transportError) {
-				tflog.Debug(ctx, "entitle retry: transport error, retrying",
-					map[string]any{
-						"attempt":      attempt + 1,
-						"max_attempts": r.maxAttempts,
-						"method":       req.Method,
-						"url":          req.URL.String(),
-						"error":        err.Error(),
-						"backoff":      backoff.String(),
-					})
+				tflog.Debug(ctx, "entitle retry: transport error, will retry",
+					map[string]any{"attempt": attempt + 1, "method": req.Method, "error": err.Error(), "backoff": backoff.String()})
 				if sleepErr := sleepWithContext(ctx, backoff); sleepErr != nil {
 					return nil, sleepErr
 				}
@@ -163,35 +122,24 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 			return nil, err
 		}
 
-		// Not a retryable status/method combination — return immediately.
 		if !isRetryable(req.Method, resp.StatusCode) {
 			return resp, nil
 		}
 
-		// Exhausted attempts — return the last response (body still open).
 		if attempt == r.maxAttempts-1 {
 			return resp, nil
 		}
 
-		// Can't replay the body — return this response (body still open) rather
-		// than closing it and firing a broken request with an empty body.
+		// An unrewindable body means we can't safely retry — return the response
+		// as-is with the body still open for the caller to read.
 		if req.Body != nil && req.GetBody == nil {
 			return resp, nil
 		}
 
 		sleep := r.retryAfterDuration(ctx, resp, backoff)
+		tflog.Debug(ctx, "entitle retry: retryable response, will retry",
+			map[string]any{"attempt": attempt + 1, "method": req.Method, "status": resp.StatusCode, "sleep": sleep.String()})
 
-		tflog.Debug(ctx, "entitle retry: retryable response, retrying",
-			map[string]any{
-				"attempt":      attempt + 1,
-				"max_attempts": r.maxAttempts,
-				"method":       req.Method,
-				"url":          req.URL.String(),
-				"status":       resp.StatusCode,
-				"sleep":        sleep.String(),
-			})
-
-		// Drain up to maxBodyDrainBytes so the connection can be reused, then close.
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxBodyDrainBytes))
 		_ = resp.Body.Close()
 
@@ -202,33 +150,29 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 		backoff = min(backoff*2, r.maxBackoff)
 	}
 
-	// Unreachable: every loop iteration returns or continues.
 	return nil, fmt.Errorf("entitle retry: Do: fell through retry loop — this is a bug")
 }
 
-// retryAfterDuration returns the duration to wait before the next attempt.
-// It prefers the server-supplied Retry-After value; if absent or unparseable
-// it falls back to the caller-supplied exponential backoff value.
+// retryAfterDuration parses the Retry-After header and returns the sleep
+// duration, capped at maxBackoff. Falls back to backoff if the header is
+// absent or unparseable.
 func (r *RetryDoer) retryAfterDuration(ctx context.Context, resp *http.Response, backoff time.Duration) time.Duration {
 	ra := resp.Header.Get("Retry-After")
 	if ra == "" {
 		return backoff
 	}
 
-	// delta-seconds form: "Retry-After: 30"
+	// delta-seconds form
 	if secs, err := strconv.Atoi(ra); err == nil && secs > 0 {
-		d := time.Duration(secs) * time.Second
-		return min(d, r.maxBackoff)
+		return min(time.Duration(secs)*time.Second, r.maxBackoff)
 	}
 
-	// HTTP-date form: "Retry-After: Wed, 21 Oct 2015 07:28:00 GMT"
+	// HTTP-date form
 	if t, err := http.ParseTime(ra); err == nil {
 		if d := time.Until(t); d > 0 {
 			return min(d, r.maxBackoff)
 		}
-		// The Retry-After timestamp is in the past. This can indicate clock skew
-		// between client and server. Fall back to exponential backoff.
-		tflog.Debug(ctx, "entitle retry: Retry-After HTTP-date is in the past, possible clock skew; using backoff",
+		tflog.Debug(ctx, "entitle retry: Retry-After date is in the past, possible clock skew",
 			map[string]any{"retry_after": ra, "backoff": backoff.String()})
 	}
 
