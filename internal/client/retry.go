@@ -25,21 +25,27 @@ const (
 	defaultMaxBackoff = 64 * time.Second
 )
 
-// retryableStatuses lists the HTTP status codes that trigger a retry.
-var retryableStatuses = map[int]bool{
-	http.StatusTooManyRequests: true, // 429
-	http.StatusBadGateway:      true, // 502
-}
-
-// idempotentMethods lists HTTP methods that are safe to retry on transport
-// errors (timeout, connection reset, etc.) because re-sending them cannot
-// cause unintended side effects.
-var idempotentMethods = map[string]bool{
-	http.MethodGet:     true,
-	http.MethodHead:    true,
-	http.MethodPut:     true,
-	http.MethodDelete:  true,
-	http.MethodOptions: true,
+// isRetryable reports whether a failed request should be retried given the
+// HTTP method and status code (or zero for a transport error).
+//
+// 429 (Too Many Requests) is safe on any method: the server rejected the
+// request before processing it, so no side effect has occurred.
+//
+// 502 (Bad Gateway) and transport errors (status == 0) are only safe on
+// idempotent methods. The gateway may have forwarded the request before
+// failing, so retrying POST or PATCH risks duplicate resource creation or
+// inconsistent state — unacceptable in a Terraform provider.
+func isRetryable(method string, status int) bool {
+	switch status {
+	case http.StatusTooManyRequests: // 429 — rejected before processing, safe on any method
+		return true
+	case http.StatusBadGateway, 0: // 502 or transport error — idempotent methods only
+		switch method {
+		case http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete, http.MethodOptions:
+			return true
+		}
+	}
+	return false
 }
 
 // RetryDoer wraps any HttpRequestDoer and adds:
@@ -91,7 +97,7 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 			// Retry transport errors (timeout, connection reset) only for idempotent
 			// methods — non-idempotent requests (POST, PATCH) must not be re-sent
 			// blindly as they may have already produced side effects.
-			if attempt < r.maxRetries && idempotentMethods[req.Method] {
+			if attempt < r.maxRetries && isRetryable(req.Method, 0) {
 				select {
 				case <-req.Context().Done():
 					return nil, req.Context().Err()
@@ -103,8 +109,8 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 			return nil, err
 		}
 
-		// Not a retryable status — return immediately.
-		if !retryableStatuses[resp.StatusCode] {
+		// Not a retryable status/method combination — return immediately.
+		if !isRetryable(req.Method, resp.StatusCode) {
 			return resp, nil
 		}
 
