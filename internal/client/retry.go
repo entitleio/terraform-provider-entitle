@@ -63,6 +63,19 @@ func sleepWithContext(ctx context.Context, d time.Duration) error {
 	}
 }
 
+// cancelOnCloseBody wraps a response body and calls cancel when the body is
+// closed. This transfers ownership of a context's cancel function from Do to
+// the caller, so the context stays alive while the caller reads the body.
+type cancelOnCloseBody struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (b *cancelOnCloseBody) Close() error {
+	defer b.cancel()
+	return b.ReadCloser.Close()
+}
+
 // RetryDoer wraps an HttpRequestDoer with retry logic for 429 and 502
 // responses, honouring the Retry-After header and falling back to exponential
 // backoff. Transport errors are retried on idempotent methods.
@@ -88,10 +101,24 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 // generated client always builds a fresh one, so this is fine in practice.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 	ctx, cancel := context.WithTimeout(req.Context(), defaultRetryBudget)
-	defer cancel()
+	// cancelOwned tracks whether this function still owns cancel. On success
+	// paths, ownership is transferred to the response body so the context
+	// stays alive while the caller reads it; the defer only fires on errors.
+	cancelOwned := true
+	defer func() {
+		if cancelOwned {
+			cancel()
+		}
+	}()
 	req = req.WithContext(ctx)
 
 	backoff := r.baseBackoff
+
+	withCancel := func(resp *http.Response) *http.Response {
+		cancelOwned = false
+		resp.Body = &cancelOnCloseBody{ReadCloser: resp.Body, cancel: cancel}
+		return resp
+	}
 
 	for attempt := 0; attempt < r.maxAttempts; attempt++ {
 		if attempt > 0 && req.GetBody != nil {
@@ -117,17 +144,17 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 		}
 
 		if !isRetryable(req.Method, resp.StatusCode) {
-			return resp, nil
+			return withCancel(resp), nil
 		}
 
 		if attempt == r.maxAttempts-1 {
-			return resp, nil
+			return withCancel(resp), nil
 		}
 
 		// An unrewindable body means we can't safely retry — return the response
 		// as-is with the body still open for the caller to read.
 		if req.Body != nil && req.GetBody == nil {
-			return resp, nil
+			return withCancel(resp), nil
 		}
 
 		sleep := r.retryAfterDuration(ctx, resp, backoff)

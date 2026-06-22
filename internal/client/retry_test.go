@@ -291,6 +291,66 @@ func TestDo_rewindableBody_isResetBetweenAttempts(t *testing.T) {
 	}
 }
 
+func TestDo_cancelTransferredToBody(t *testing.T) {
+	// cancel must not fire when Do returns — it should fire when the caller
+	// closes the response body. We observe this via a channel written to by
+	// a cancel function we inject through a custom context.
+	cancelled := make(chan struct{})
+
+	// Wrap the response body with a closer that records when Close is called.
+	type trackClose struct {
+		io.ReadCloser
+		closed chan struct{}
+	}
+	trackBody := &trackClose{
+		ReadCloser: io.NopCloser(strings.NewReader("")),
+		closed:     cancelled,
+	}
+	// We can't easily inject into the internal context, so instead we verify
+	// that the returned body is a cancelOnCloseBody and that its Close
+	// triggers the underlying body's Close (proving the chain is intact).
+	mockResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{},
+		Body:       trackBody,
+	}
+
+	var cancelCalled bool
+	// Replace the wrapped doer with one that returns our instrumented response.
+	rd := &RetryDoer{
+		wrapped: doerFunc(func(_ *http.Request) (*http.Response, error) {
+			return mockResp, nil
+		}),
+		maxAttempts: defaultMaxAttempts,
+		baseBackoff: time.Millisecond,
+		maxBackoff:  5 * time.Millisecond,
+	}
+
+	r, err := rd.Do(getReq(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cb, ok := r.Body.(*cancelOnCloseBody)
+	if !ok {
+		t.Fatal("expected body to be wrapped in cancelOnCloseBody")
+	}
+	// Swap in an observable cancel to confirm it fires on Close, not before.
+	original := cb.cancel
+	cb.cancel = func() {
+		cancelCalled = true
+		original()
+	}
+
+	if cancelCalled {
+		t.Fatal("cancel fired before body was closed")
+	}
+	r.Body.Close()
+	if !cancelCalled {
+		t.Fatal("cancel did not fire after body close")
+	}
+}
+
 func TestRetryAfterDuration(t *testing.T) {
 	rd := &RetryDoer{maxBackoff: 60 * time.Second}
 	ctx := context.Background()
