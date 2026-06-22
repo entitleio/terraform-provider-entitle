@@ -58,6 +58,10 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 // available (the stdlib sets this automatically for bytes.Reader / strings.Reader
 // bodies, which is what the generated client uses). Non-GET requests without a
 // rewindable body are not retried.
+//
+// Note: Do mutates req.Body in place on retries. It is not safe to call Do
+// twice with the same *http.Request. This is fine in practice because the
+// generated client constructs a fresh request on every call.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 	backoff := r.baseBackoff
 
