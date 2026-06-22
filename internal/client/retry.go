@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 const (
@@ -84,9 +86,11 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 // bodies, which is what the generated client uses). Non-GET requests without a
 // rewindable body are not retried.
 //
-// Note: Do mutates req.Body in place on retries. It is not safe to call Do
-// twice with the same *http.Request. This is fine in practice because the
-// generated client constructs a fresh request on every call.
+// Note: Do applies an internal context deadline and calls req.WithContext,
+// which creates a shallow copy of the request. req.Body is mutated on the
+// copy, not the caller's original. It is not safe to call Do twice with the
+// same *http.Request. This is fine in practice because the generated client
+// constructs a fresh request on every call.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 	// Apply an overall budget for the entire retry loop (attempts + sleep).
 	// If the caller's context already has a shorter deadline, context.WithTimeout
@@ -140,7 +144,7 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 			return resp, nil
 		}
 
-		sleep := r.retryAfterDuration(resp, backoff)
+		sleep := r.retryAfterDuration(req.Context(), resp, backoff)
 		_ = resp.Body.Close()
 
 		select {
@@ -159,7 +163,7 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 // retryAfterDuration returns the duration to wait before the next attempt.
 // It prefers the server-supplied Retry-After value; if absent or unparseable
 // it falls back to the caller-supplied exponential backoff value.
-func (r *RetryDoer) retryAfterDuration(resp *http.Response, backoff time.Duration) time.Duration {
+func (r *RetryDoer) retryAfterDuration(ctx context.Context, resp *http.Response, backoff time.Duration) time.Duration {
 	ra := resp.Header.Get("Retry-After")
 	if ra == "" {
 		return backoff
@@ -176,6 +180,10 @@ func (r *RetryDoer) retryAfterDuration(resp *http.Response, backoff time.Duratio
 		if d := time.Until(t); d > 0 {
 			return min(d, r.maxBackoff)
 		}
+		// The Retry-After timestamp is in the past. This can indicate clock skew
+		// between client and server. Fall back to exponential backoff.
+		tflog.Debug(ctx, "entitle retry: Retry-After HTTP-date is in the past, possible clock skew; using backoff",
+			map[string]any{"retry_after": ra, "backoff": backoff.String()})
 	}
 
 	return backoff
