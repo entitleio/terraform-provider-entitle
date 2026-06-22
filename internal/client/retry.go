@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -23,6 +24,13 @@ const (
 	// defaultMaxBackoff caps the computed back-off so retries never wait longer
 	// than this duration regardless of what the server advertises.
 	defaultMaxBackoff = 64 * time.Second
+
+	// defaultRetryBudget is the total wall-clock budget for a single Do call,
+	// including all attempts and sleep intervals. http.Client.Timeout only bounds
+	// each individual attempt; without this cap, a call honouring maxRetries=5
+	// Retry-After values of maxBackoff=64s each could block for several minutes.
+	// If the caller's context already has a shorter deadline, that takes precedence.
+	defaultRetryBudget = 3 * time.Minute
 )
 
 // isRetryable reports whether a failed request should be retried given the
@@ -80,6 +88,13 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 // twice with the same *http.Request. This is fine in practice because the
 // generated client constructs a fresh request on every call.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
+	// Apply an overall budget for the entire retry loop (attempts + sleep).
+	// If the caller's context already has a shorter deadline, context.WithTimeout
+	// is a no-op in practice — the shorter deadline wins.
+	ctx, cancel := context.WithTimeout(req.Context(), defaultRetryBudget)
+	defer cancel()
+	req = req.WithContext(ctx)
+
 	backoff := r.baseBackoff
 
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
