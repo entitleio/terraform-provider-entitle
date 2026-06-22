@@ -31,6 +31,17 @@ var retryableStatuses = map[int]bool{
 	http.StatusBadGateway:      true, // 502
 }
 
+// idempotentMethods lists HTTP methods that are safe to retry on transport
+// errors (timeout, connection reset, etc.) because re-sending them cannot
+// cause unintended side effects.
+var idempotentMethods = map[string]bool{
+	http.MethodGet:     true,
+	http.MethodHead:    true,
+	http.MethodPut:     true,
+	http.MethodDelete:  true,
+	http.MethodOptions: true,
+}
+
 // RetryDoer wraps any HttpRequestDoer and adds:
 //   - Retry logic for 429 (Too Many Requests) and 502 (Bad Gateway) responses.
 //   - Respect for the Retry-After response header (both delta-seconds and
@@ -67,31 +78,44 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
 		// Re-wind the request body for retries.
-		if attempt > 0 {
-			if req.GetBody == nil && req.Method != http.MethodGet {
-				// Body already consumed and cannot be replayed — give up retrying.
-				break
+		if attempt > 0 && req.GetBody != nil {
+			body, err := req.GetBody()
+			if err != nil {
+				return nil, fmt.Errorf("entitle retry: resetting request body for attempt %d: %w", attempt, err)
 			}
-			if req.GetBody != nil {
-				body, err := req.GetBody()
-				if err != nil {
-					return nil, fmt.Errorf("entitle retry: resetting request body for attempt %d: %w", attempt, err)
-				}
-				req.Body = body
-			}
+			req.Body = body
 		}
 
 		resp, err := r.wrapped.Do(req)
 		if err != nil {
+			// Retry transport errors (timeout, connection reset) only for idempotent
+			// methods — non-idempotent requests (POST, PATCH) must not be re-sent
+			// blindly as they may have already produced side effects.
+			if attempt < r.maxRetries && idempotentMethods[req.Method] {
+				select {
+				case <-req.Context().Done():
+					return nil, req.Context().Err()
+				case <-time.After(backoff):
+				}
+				backoff = min(backoff*2, r.maxBackoff)
+				continue
+			}
 			return nil, err
 		}
 
+		// Not a retryable status — return immediately.
 		if !retryableStatuses[resp.StatusCode] {
 			return resp, nil
 		}
 
+		// Exhausted retries — return the last response (body still open).
 		if attempt == r.maxRetries {
-			// Return the final error response as-is so callers can inspect the body.
+			return resp, nil
+		}
+
+		// Can't replay the body — return this response (body still open) rather
+		// than closing it and firing a broken request with an empty body.
+		if req.Body != nil && req.GetBody == nil {
 			return resp, nil
 		}
 
@@ -107,8 +131,8 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 		backoff = min(backoff*2, r.maxBackoff)
 	}
 
-	// Unreachable, but satisfies the compiler.
-	return r.wrapped.Do(req)
+	// Unreachable: every loop iteration returns or continues.
+	panic("entitle retry: Do: fell through retry loop — this is a bug")
 }
 
 // retryAfterDuration returns the duration to wait before the next attempt.
