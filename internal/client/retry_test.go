@@ -345,7 +345,9 @@ func TestDo_cancelTransferredToBody(t *testing.T) {
 	if cancelCalled {
 		t.Fatal("cancel fired before body was closed")
 	}
-	r.Body.Close()
+	if err := r.Body.Close(); err != nil {
+		t.Fatalf("closing body: %v", err)
+	}
 	if !cancelCalled {
 		t.Fatal("cancel did not fire after body close")
 	}
