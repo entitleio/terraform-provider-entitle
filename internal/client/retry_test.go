@@ -35,18 +35,10 @@ func (m *mockDoer) Do(_ *http.Request) (*http.Response, error) {
 	return c.resp, c.err
 }
 
-// helpers
-
-func resp(status int, headers ...http.Header) *http.Response {
-	h := http.Header{}
-	for _, hh := range headers {
-		for k, v := range hh {
-			h[k] = v
-		}
-	}
+func resp(status int) *http.Response {
 	return &http.Response{
 		StatusCode: status,
-		Header:     h,
+		Header:     http.Header{},
 		Body:       io.NopCloser(strings.NewReader("")),
 	}
 }
