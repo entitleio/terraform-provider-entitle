@@ -64,7 +64,7 @@ func sleepWithContext(ctx context.Context, d time.Duration) error {
 }
 
 // RetryDoer wraps an HttpRequestDoer with retry logic for 429 and 502
-// responses, honour the Retry-After header and falling back to exponential
+// responses, honouring the Retry-After header and falling back to exponential
 // backoff. Transport errors are retried on idempotent methods.
 type RetryDoer struct {
 	wrapped     HttpRequestDoer
@@ -82,16 +82,10 @@ func NewRetryDoer(wrapped HttpRequestDoer) *RetryDoer {
 	}
 }
 
-// Do executes the request with retry logic. req.WithContext is called
-// internally, so the caller's *http.Request is not mutated. Do is not safe to
-// call twice with the same request — the generated client always builds a fresh
-// one, so this is fine in practice.
-//
-// Note: Do applies an internal context deadline and calls req.WithContext,
-// which creates a shallow copy of the request. req.Body is mutated on the
-// copy, not the caller's original. It is not safe to call Do twice with the
-// same *http.Request. This is fine in practice because the generated client
-// constructs a fresh request on every call.
+// Do executes the request with retry logic. It calls req.WithContext internally,
+// creating a shallow copy — req.Body is mutated on the copy, not the caller's
+// original. Do is not safe to call twice with the same *http.Request; the
+// generated client always builds a fresh one, so this is fine in practice.
 func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 	ctx, cancel := context.WithTimeout(req.Context(), defaultRetryBudget)
 	defer cancel()
@@ -138,7 +132,7 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 
 		sleep := r.retryAfterDuration(ctx, resp, backoff)
 		tflog.Debug(ctx, "entitle retry: retryable response, will retry",
-			map[string]any{"attempt": attempt + 1, "method": req.Method, "status": resp.StatusCode, "sleep": sleep.String()})
+			map[string]any{"attempt": attempt + 1, "method": req.Method, "url": req.URL.String(), "status": resp.StatusCode, "sleep": sleep.String()})
 
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxBodyDrainBytes))
 		_ = resp.Body.Close()
