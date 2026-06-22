@@ -221,7 +221,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 		if r.Workflow != nil {
 			roles[i].Workflow = new(utils.IdNameModel{
-				ID:   utils.TrimmedStringValue(r.Id.String()),
+				ID:   utils.TrimmedStringValue(r.Workflow.Id.String()),
 				Name: utils.TrimmedStringValue(r.Workflow.Name),
 			})
 		}
