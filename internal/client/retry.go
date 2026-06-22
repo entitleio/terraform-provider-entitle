@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -145,6 +146,7 @@ func (r *RetryDoer) Do(req *http.Request) (*http.Response, error) {
 		}
 
 		sleep := r.retryAfterDuration(req.Context(), resp, backoff)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
 
 		select {
