@@ -153,7 +153,7 @@ func (p *EntitleProvider) Configure(
 
 	tflog.Debug(ctx, "Creating entitle client...")
 
-	// Build an HTTP client with a per-request timeout so a non-responsive API
+	// Build an HTTP client with a per-request timeout
 	httpClient := &http.Client{
 		Timeout: client.DefaultRequestTimeout,
 	}
