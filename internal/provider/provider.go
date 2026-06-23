@@ -115,8 +115,8 @@ func (p *EntitleProvider) Configure(
 
 	// Validate and set API key.
 	token := os.Getenv("ENTITLE_API_KEY")
-	if !config.APIKey.IsUnknown() {
-		token = config.APIKey.String()
+	if !config.APIKey.IsNull() && !config.APIKey.IsUnknown() {
+		token = config.APIKey.ValueString()
 	}
 
 	if token == "" {
