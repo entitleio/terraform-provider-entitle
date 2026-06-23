@@ -2040,10 +2040,12 @@ type IntegrationResourceRoleDestroyResponseSchema struct {
 
 // IntegrationResourceRoleListItemResponseSchema defines model for IntegrationResourceRoleListItemResponseSchema.
 type IntegrationResourceRoleListItemResponseSchema struct {
-	ExternalId *string                                   `json:"externalId,omitempty"`
-	Id         openapi_types.UUID                        `json:"id"`
-	Name       string                                    `json:"name"`
-	Resource   IntegrationResourceListItemResponseSchema `json:"resource"`
+	ExternalId  *string                                   `json:"externalId,omitempty"`
+	Id          openapi_types.UUID                        `json:"id"`
+	Name        string                                    `json:"name"`
+	Requestable *bool                                     `json:"requestable,omitempty"`
+	Resource    IntegrationResourceListItemResponseSchema `json:"resource"`
+	Workflow    *WorkflowResponseSchema                   `json:"workflow,omitempty"`
 }
 
 // IntegrationResourceRoleResponseSchema defines model for IntegrationResourceRoleResponseSchema.
@@ -2738,11 +2740,12 @@ type ResourcesIndexParams struct {
 
 // RolesIndexParams defines parameters for RolesIndex.
 type RolesIndexParams struct {
-	Page       *int               `form:"page,omitempty" json:"page,omitempty"`
-	PerPage    *int               `form:"perPage,omitempty" json:"perPage,omitempty"`
-	ResourceId openapi_types.UUID `form:"resourceId" json:"resourceId"`
-	Search     *string            `form:"search,omitempty" json:"search,omitempty"`
-	ExternalId *string            `form:"externalId,omitempty" json:"externalId,omitempty"`
+	Page          *int                `form:"page,omitempty" json:"page,omitempty"`
+	PerPage       *int                `form:"perPage,omitempty" json:"perPage,omitempty"`
+	ResourceId    *openapi_types.UUID `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	IntegrationId *openapi_types.UUID `form:"integrationId,omitempty" json:"integrationId,omitempty"`
+	Search        *string             `form:"search,omitempty" json:"search,omitempty"`
+	ExternalId    *string             `form:"externalId,omitempty" json:"externalId,omitempty"`
 }
 
 // UsersIndexParams defines parameters for UsersIndex.
@@ -7892,16 +7895,36 @@ func NewRolesIndexRequest(server string, params *RolesIndexParams) (*http.Reques
 
 		}
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, params.ResourceId); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
+		if params.ResourceId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "resourceId", runtime.ParamLocationQuery, *params.ResourceId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
 				}
 			}
+
+		}
+
+		if params.IntegrationId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "integrationId", runtime.ParamLocationQuery, *params.IntegrationId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
 		}
 
 		if params.Search != nil {

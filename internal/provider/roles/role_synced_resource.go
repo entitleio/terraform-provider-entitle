@@ -740,7 +740,7 @@ func (r *RoleSyncedResource) getRoleID(ctx context.Context, resourceID uuid.UUID
 			PerPage:    utils.IntPointer(100),
 			Page:       utils.IntPointer(page),
 			Search:     name,
-			ResourceId: resourceID,
+			ResourceId: &resourceID,
 			ExternalId: externalID,
 		}
 

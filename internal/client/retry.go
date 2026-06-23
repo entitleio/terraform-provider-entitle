@@ -35,13 +35,13 @@ const (
 // isRetryable reports whether the request should be retried.
 //
 // 429 is safe on any method — the server rejected before processing.
-// 502 and transport errors are only safe on idempotent methods, since the
+// 502/504 and transport errors are only safe on idempotent methods, since the
 // backend may have already processed the request.
 func isRetryable(method string, status int) bool {
 	switch status {
 	case http.StatusTooManyRequests:
 		return true
-	case http.StatusBadGateway, transportError:
+	case http.StatusBadGateway, http.StatusGatewayTimeout, transportError:
 		switch method {
 		case http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete, http.MethodOptions:
 			return true

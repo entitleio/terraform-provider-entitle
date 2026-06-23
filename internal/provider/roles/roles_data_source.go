@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -30,16 +34,19 @@ func NewRolesDataSource() datasource.DataSource {
 
 // RolesDataSourceModel describes the data source model.
 type RolesDataSourceModel struct {
-	ResourceID types.String                                  `tfsdk:"resource_id"`
-	Filter     *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
-	Roles      []RoleListItem                                `tfsdk:"roles"`
+	ResourceID    types.String                                  `tfsdk:"resource_id"`
+	IntegrationID types.String                                  `tfsdk:"integration_id"`
+	Filter        *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
+	Roles         []RoleListItem                                `tfsdk:"roles"`
 }
 
 // RoleListItem represents a single role in the list.
 type RoleListItem struct {
-	ID         types.String `tfsdk:"id"`
-	ExternalID types.String `tfsdk:"external_id"`
-	Name       types.String `tfsdk:"name"`
+	ID          types.String       `tfsdk:"id"`
+	ExternalID  types.String       `tfsdk:"external_id"`
+	Name        types.String       `tfsdk:"name"`
+	Requestable types.Bool         `tfsdk:"requestable"`
+	Workflow    *utils.IdNameModel `tfsdk:"workflow"`
 }
 
 // Metadata sets the metadata for the data source.
@@ -53,7 +60,7 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		MarkdownDescription: docs.RolesDataSourceMarkdownDescription,
 		Blocks: map[string]schema.Block{
 			"filter": schema.SingleNestedBlock{
-				MarkdownDescription: "Filter roles by resource ID (mandatory) and optional search term.",
+				MarkdownDescription: "Pagination and filter roles by optional search term.",
 				Attributes: map[string]schema.Attribute{
 					"search": schema.StringAttribute{
 						Optional:            true,
@@ -76,8 +83,26 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		},
 		Attributes: map[string]schema.Attribute{
 			"resource_id": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
 				MarkdownDescription: "Filter roles assigned to a specific resource ID.",
+				Validators: []validator.String{
+					validators.UUID{},
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("integration_id"),
+					),
+				},
+			},
+			"integration_id": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Filter roles assigned to a specific integration ID.",
+				Validators: []validator.String{
+					validators.UUID{},
+					stringvalidator.AtLeastOneOf(
+						path.MatchRoot("resource_id"),
+						path.MatchRoot("integration_id"),
+					),
+				},
 			},
 			"roles": schema.ListNestedAttribute{
 				Computed:            true,
@@ -87,6 +112,22 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 						"id":          schema.StringAttribute{Computed: true},
 						"name":        schema.StringAttribute{Computed: true},
 						"external_id": schema.StringAttribute{Computed: true},
+						"requestable": schema.BoolAttribute{Computed: true},
+						"workflow": schema.SingleNestedAttribute{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Computed:            true,
+									Description:         "Workflow's unique identifier.",
+									MarkdownDescription: "Workflow's unique identifier.",
+								},
+								"name": schema.StringAttribute{
+									Computed:            true,
+									Description:         "workflow's name",
+									MarkdownDescription: "workflow's name",
+								},
+							},
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -120,18 +161,34 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
+	var params client.RolesIndexParams
+
 	resourceID := data.ResourceID.ValueString()
-	uid, err := uuid.Parse(resourceID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid Resource ID",
-			fmt.Sprintf("Failed to parse filter.resource_id (%s) as UUID: %s", resourceID, err),
-		)
-		return
+	if resourceID != "" {
+		uid, err := uuid.Parse(resourceID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Resource ID",
+				fmt.Sprintf("Failed to parse resource_id (%s) as UUID: %s", resourceID, err),
+			)
+			return
+		}
+
+		params.ResourceId = &uid
 	}
 
-	params := client.RolesIndexParams{
-		ResourceId: uid,
+	integrationID := data.IntegrationID.ValueString()
+	if integrationID != "" {
+		uid, err := uuid.Parse(integrationID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Integration ID",
+				fmt.Sprintf("Failed to parse integration_id (%s) as UUID: %s", integrationID, err),
+			)
+			return
+		}
+
+		params.IntegrationId = &uid
 	}
 
 	if data.Filter != nil {
@@ -156,9 +213,17 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	roles := make([]RoleListItem, len(apiResp.JSON200.Result))
 	for i, r := range apiResp.JSON200.Result {
 		roles[i] = RoleListItem{
-			ID:         types.StringValue(r.Id.String()),
-			Name:       types.StringValue(r.Name),
-			ExternalID: types.StringValue(r.GetExternalID()),
+			ID:          types.StringValue(r.Id.String()),
+			Name:        types.StringValue(r.Name),
+			ExternalID:  types.StringValue(r.GetExternalID()),
+			Requestable: types.BoolPointerValue(r.Requestable),
+		}
+
+		if r.Workflow != nil {
+			roles[i].Workflow = new(utils.IdNameModel{
+				ID:   utils.TrimmedStringValue(r.Workflow.Id.String()),
+				Name: utils.TrimmedStringValue(r.Workflow.Name),
+			})
 		}
 	}
 
