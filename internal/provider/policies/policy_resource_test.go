@@ -40,7 +40,9 @@ func TestPolicyResource(t *testing.T) {
 			`, os.Getenv("ENTITLE_DIRECTORY_GROUP_ID"), os.Getenv("ENTITLE_ROLE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
-					//resource.TestCheckResourceAttr("entitle_policy.my_policy", "", "My Policy"),
+					resource.TestCheckResourceAttr("entitle_policy.my_policy", "in_groups.0.id", os.Getenv("ENTITLE_DIRECTORY_GROUP_ID")),
+					resource.TestCheckResourceAttr("entitle_policy.my_policy", "in_groups.0.type", "group"),
+					resource.TestCheckResourceAttr("entitle_policy.my_policy", "roles.0.id", os.Getenv("ENTITLE_ROLE_ID")),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_policy.my_policy", "id"),
