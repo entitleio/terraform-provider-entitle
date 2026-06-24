@@ -191,9 +191,11 @@ func parseGitlabConnectionJson(m *GitlabConnectionModel) map[string]interface{} 
 		"configurationSchemaName": "Configuration ",
 		"domain":                  connectionModel.Domain.ValueString(),
 		"private_token":           connectionModel.PrivateToken.ValueString(),
-		"ssl": map[string]interface{}{
-			"verify":  connectionModel.SSLVerify.ValueBool(),
-			"ca_cert": connectionModel.SSLCaCert.ValueStringPointer(),
+		"options": map[string]interface{}{
+			"ssl": map[string]interface{}{
+				"verify":  connectionModel.SSLVerify.ValueBool(),
+				"ca_cert": connectionModel.SSLCaCert.ValueStringPointer(),
+			},
 		},
 	}
 
