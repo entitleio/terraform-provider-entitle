@@ -224,9 +224,10 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the owner's email (lowercase) is used when id was not provided",
 						MarkdownDescription: "the owner's email (lowercase) is used when id was not provided",
-						//Validators:          []validator.String{
-						//validators.LowerCaseNameValidator{},
-						//},
+						Validators: []validator.String{
+							validators.Email{},
+							validators.Lowercase{},
+						},
 					},
 				},
 				Optional: true,

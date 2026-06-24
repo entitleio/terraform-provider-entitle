@@ -76,6 +76,7 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 						MarkdownDescription: "the forwarder user's email address",
 						Validators: []validator.String{
 							validators.Email{},
+							validators.Lowercase{},
 						},
 					},
 				},
@@ -103,6 +104,7 @@ func (r *AccessRequestForwardResource) Schema(ctx context.Context, req resource.
 						MarkdownDescription: "the target user's email address",
 						Validators: []validator.String{
 							validators.Email{},
+							validators.Lowercase{},
 						},
 					},
 				},
