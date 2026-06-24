@@ -8,7 +8,7 @@ import (
 )
 
 // GetEmailStringValue is a function that extracts a string value from an openapi_types.Email.
-// Trims any surrounding double quotes and escape characters,
+// Trims any surrounding double quotes and escape characters.
 func GetEmailStringValue(email openapi_types.Email) types.String {
 	result := strings.Trim(string(email), `"`)
 	result = strings.Trim(result, "\\\"")
