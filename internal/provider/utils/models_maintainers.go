@@ -89,19 +89,9 @@ func GetMaintainers[T MaintainerInterface](
 				return nil, diags
 			}
 
-			bytes, err := responseSchema.User.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					fmt.Sprintf("Failed to get maintainer email for user id (%s)", body.User.Id),
-					err.Error(),
-				)
-
-				return nil, diags
-			}
-
 			u := &IdEmailModel{
 				Id:    TrimmedStringValue(responseSchema.User.Id.String()),
-				Email: TrimmedStringValue(string(bytes)),
+				Email: GetNullableEmailStringValue(responseSchema.User.Email),
 			}
 
 			uObject, diags := u.AsObjectValue(ctx)
@@ -125,19 +115,9 @@ func GetMaintainers[T MaintainerInterface](
 				return nil, diags
 			}
 
-			bytes, err := responseSchema.Group.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("failed to get maintainer group email bytes, error: %v", err),
-				)
-
-				return nil, diags
-			}
-
 			g := &IdEmailModel{
 				Id:    TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: TrimmedStringValue(string(bytes)),
+				Email: GetNullableEmailStringValue(responseSchema.Group.Email),
 			}
 
 			gObject, diagsAsObject := g.AsObjectValue(ctx)

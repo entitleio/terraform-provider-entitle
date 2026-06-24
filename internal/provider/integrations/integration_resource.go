@@ -1108,11 +1108,6 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		return IntegrationResourceModel{}, diags
 	}
 
-	marshalJSON, err := data.Owner.Email.MarshalJSON()
-	if err != nil {
-		return IntegrationResourceModel{}, nil
-	}
-
 	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
@@ -1149,19 +1144,9 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			bytes, err := responseSchema.User.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to get maintainer user email bytes, error: %v", err),
-				)
-
-				return IntegrationResourceModel{}, diags
-			}
-
 			u := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.User.Id.String()),
-				Email: utils.TrimmedStringValue(string(bytes)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.User.Email),
 			}
 
 			uObject, diagsValues := u.AsObjectValue(ctx)
@@ -1187,19 +1172,9 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			bytes, err := responseSchema.Group.Email.MarshalJSON()
-			if err != nil {
-				diags.AddError(
-					"No data",
-					fmt.Sprintf("Failed to get maintainer group email bytes, error: %v", err),
-				)
-
-				return IntegrationResourceModel{}, diags
-			}
-
 			g := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: utils.TrimmedStringValue(string(bytes)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.Group.Email),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
@@ -1275,7 +1250,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
 		Owner: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(string(marshalJSON)),
+			Email: utils.GetNullableEmailStringValue(data.Owner.Email),
 		},
 		Application: &utils.NameModel{
 			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name)),

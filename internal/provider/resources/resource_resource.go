@@ -1156,13 +1156,9 @@ func convertFullResourceResultResponseSchemaToModel(
 
 	var owner *utils.IdEmailModel
 	if data.Owner != nil {
-		marshalJSON, err := data.Owner.Email.MarshalJSON()
-		if err != nil {
-			return ResourceResourceModel{}, nil
-		}
 		owner = &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(strings.ToLower(string(marshalJSON))),
+			Email: utils.GetNullableEmailStringValue(data.Owner.Email),
 		}
 	}
 
