@@ -307,18 +307,7 @@ func (r *RoleSyncedResource) Configure(ctx context.Context, req resource.Configu
 func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Use a plan-read struct that absorbs unknown values for computed fields,
 	// since on first apply there is no prior state to resolve them from.
-	var createPlan struct {
-		Name       types.String       `tfsdk:"name"`
-		ExternalID types.String       `tfsdk:"external_id"`
-		Resource   *utils.IdNameModel `tfsdk:"resource"`
-		// Remaining fields declared with framework types to accept unknown values.
-		ID                      types.String `tfsdk:"id"`
-		AllowedDurations        types.Set    `tfsdk:"allowed_durations"`
-		Workflow                types.Object `tfsdk:"workflow"`
-		PrerequisitePermissions types.List   `tfsdk:"prerequisite_permissions"`
-		VirtualizedRole         types.Object `tfsdk:"virtualized_role"`
-		Requestable             types.Bool   `tfsdk:"requestable"`
-	}
+	var createPlan roleSyncedCreatePlan
 
 	// Read Terraform plan data into the model.
 	diags := req.Plan.Get(ctx, &createPlan)
@@ -380,6 +369,131 @@ func (r *RoleSyncedResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Save the data into Terraform state.
 	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	r.compareAndUpdate(ctx, createPlan, apiResp.JSON200.Result, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+type roleSyncedCreatePlan struct {
+	Name                    types.String       `tfsdk:"name"`
+	ExternalID              types.String       `tfsdk:"external_id"`
+	Resource                *utils.IdNameModel `tfsdk:"resource"`
+	ID                      types.String       `tfsdk:"id"`
+	AllowedDurations        types.Set          `tfsdk:"allowed_durations"`
+	Workflow                types.Object       `tfsdk:"workflow"`
+	PrerequisitePermissions types.List         `tfsdk:"prerequisite_permissions"`
+	VirtualizedRole         types.Object       `tfsdk:"virtualized_role"`
+	Requestable             types.Bool         `tfsdk:"requestable"`
+}
+
+func (r *RoleSyncedResource) compareAndUpdate(ctx context.Context, plan roleSyncedCreatePlan, result client.IntegrationResourceRoleResultSchema, resp *resource.CreateResponse) {
+	var updateRequest client.RolesUpdateJSONRequestBody
+	diff := false
+
+	// Requestable
+	if !plan.Requestable.IsNull() && !plan.Requestable.IsUnknown() {
+		if plan.Requestable.ValueBool() != result.Requestable {
+			diff = true
+			updateRequest.Requestable = plan.Requestable.ValueBoolPointer()
+		}
+	}
+
+	// AllowedDurations
+	if !plan.AllowedDurations.IsNull() && !plan.AllowedDurations.IsUnknown() {
+		planDurations, diags := utils.GetEnumAllowedDurationsSliceFromNumberSet(ctx, plan.AllowedDurations)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		if !utils.AllowedDurationsEqual(planDurations, result.AllowedDurations) {
+			diff = true
+			updateRequest.AllowedDurations = &planDurations
+		}
+	}
+
+	// Workflow
+	if !plan.Workflow.IsNull() && !plan.Workflow.IsUnknown() {
+		if idAttr, ok := plan.Workflow.Attributes()["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() {
+			planWorkflowID := idAttr.ValueString()
+			if result.Workflow == nil || result.Workflow.Id.String() != planWorkflowID {
+				diff = true
+				wfID, err := uuid.Parse(planWorkflowID)
+				if err != nil {
+					resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to parse workflow id to UUID: %v", err))
+					return
+				}
+				updateRequest.Workflow = &client.IdParamsSchema{Id: wfID}
+			}
+		}
+	}
+
+	// PrerequisitePermissions — include if set in plan
+	if !plan.PrerequisitePermissions.IsNull() && !plan.PrerequisitePermissions.IsUnknown() && len(plan.PrerequisitePermissions.Elements()) > 0 {
+		var ppModels []utils.PrerequisitePermissionModel
+		if diags := plan.PrerequisitePermissions.ElementsAs(ctx, &ppModels, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		ppData := make([][]client.IntegrationResourceRolesUpdateBodySchema_PrerequisitePermissions_Item, 0, len(ppModels))
+		for _, pp := range ppModels {
+			if pp.Role == nil || pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+				continue
+			}
+			item := client.IntegrationResourceRolesUpdateBodySchema_PrerequisitePermissions_Item{}
+			mergeErr := item.MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
+				Default: pp.Default.ValueBool(),
+				Role: map[string]interface{}{
+					"id": pp.Role.ID.ValueString(),
+				},
+			})
+			if mergeErr != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", mergeErr))
+				return
+			}
+			ppData = append(ppData, []client.IntegrationResourceRolesUpdateBodySchema_PrerequisitePermissions_Item{item})
+		}
+		if len(ppData) > 0 {
+			diff = true
+			updateRequest.PrerequisitePermissions = &ppData
+		}
+	}
+
+	if !diff {
+		return
+	}
+
+	apiResp, err := r.client.RolesUpdateWithResponse(ctx, result.Id, updateRequest)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiConnection.Error(),
+			fmt.Sprintf("Unable to update the role. Got error: %v", err),
+		)
+		return
+	}
+
+	err = utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			fmt.Sprintf("Failed to update the role: %s", err.Error()),
+		)
+		return
+	}
+
+	data, diags := IntegrationResourceRoleResultSchemaToRoleResourceModel(ctx, apiResp.JSON200.Result)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Save the updated data into Terraform state.
+	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -626,7 +740,7 @@ func (r *RoleSyncedResource) getRoleID(ctx context.Context, resourceID uuid.UUID
 			PerPage:    utils.IntPointer(100),
 			Page:       utils.IntPointer(page),
 			Search:     name,
-			ResourceId: resourceID,
+			ResourceId: &resourceID,
 			ExternalId: externalID,
 		}
 

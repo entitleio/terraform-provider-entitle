@@ -30,6 +30,7 @@ data "entitle_resources" "my_resource" {
 					resource.TestCheckResourceAttrSet("data.entitle_resources.my_resource", "resources.0.id"),
 					resource.TestCheckResourceAttrSet("data.entitle_resources.my_resource", "resources.0.name"),
 					resource.TestCheckResourceAttrSet("data.entitle_resources.my_resource", "resources.0.integration.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_resources.my_resource", "resources.0.external_id"),
 				),
 			},
 			{

@@ -29,6 +29,7 @@ data "entitle_role" "my_role" {
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "name"),
+					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "external_id"),
 					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "resource.id"),
 					resource.TestCheckResourceAttrSet("data.entitle_role.my_role", "requestable"),
 				),

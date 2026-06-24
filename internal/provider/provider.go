@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -152,8 +153,17 @@ func (p *EntitleProvider) Configure(
 
 	tflog.Debug(ctx, "Creating entitle client...")
 
+	// Build an HTTP client with a per-request timeout
+	httpClient := &http.Client{
+		Timeout: client.DefaultRequestTimeout,
+	}
+
+	// Wrap the HTTP client with retry logic.
+	retryClient := client.NewRetryDoer(httpClient)
+
 	c, err := client.NewClientWithResponses(
 		server,
+		client.WithHTTPClient(retryClient),
 		client.WithRequestEditorFn(
 			client.SetBearerToken(token),
 		),

@@ -204,6 +204,7 @@ Or navigate to **Integrations** → select your integration → **Resources** �
 ### Read-Only
 
 - `allowed_durations` (Set of Number) As the admin, you can set different durations for the role, compared to the workflow linked to it.
+- `external_id` (String) The external ID of the role as assigned by the upstream integration.
 - `name` (String) The display name for Entitle Role.
 - `prerequisite_permissions` (Attributes List) Users granted any role from this role through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `requestable` (Boolean) Indicates if the role is requestable (default: true)

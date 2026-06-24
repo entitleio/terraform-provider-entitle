@@ -29,6 +29,8 @@ data "entitle_roles" "my_list" {
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.id"),
 					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.name"),
+					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.external_id"),
+					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.requestable"),
 				),
 			},
 			{
@@ -63,10 +65,10 @@ func TestRolesDataSource_MissingResourceID(t *testing.T) {
 			{
 				Config: testhelpers.ProviderConfig + `
 data "entitle_roles" "my_list" {
-    # resource_id missing
+    # resource_id and integration_id missing
 }
 `,
-				ExpectError: regexp.MustCompile(`The argument "resource_id" is required`),
+				ExpectError: regexp.MustCompile("At least one attribute out of"),
 				PlanOnly:    true,
 			},
 		},

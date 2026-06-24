@@ -9,6 +9,24 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 )
 
+// AllowedDurationsEqual reports whether two EnumAllowedDurations slices contain the same values (order-independent).
+func AllowedDurationsEqual(a, b []client.EnumAllowedDurations) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[float32]int, len(a))
+	for _, v := range a {
+		counts[float32(v)]++
+	}
+	for _, v := range b {
+		counts[float32(v)]--
+		if counts[float32(v)] < 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func ConvertTerraformSetToAllowedDurations(ctx context.Context, terraformValue types.Set) ([]client.EnumAllowedDurations, diag.Diagnostics) {
 	allowedDurations := make([]client.EnumAllowedDurations, 0)
 

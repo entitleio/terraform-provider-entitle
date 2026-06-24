@@ -33,6 +33,7 @@ func NewResourceDataSource() datasource.DataSource {
 // ResourceDataSourceModel describes the data source data model.
 type ResourceDataSourceModel struct {
 	Id                      types.String                        `tfsdk:"id"`
+	ExternalID              types.String                        `tfsdk:"external_id"`
 	Workflow                *utils.IdNameModel                  `tfsdk:"workflow"`
 	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
 	Integration             types.Object                        `tfsdk:"integration"`
@@ -64,6 +65,11 @@ func (d *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 				Validators: []validator.String{
 					validators.UUID{},
 				},
+			},
+			"external_id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The external ID of the resource as assigned by the upstream integration.",
+				MarkdownDescription: "The external ID of the resource as assigned by the upstream integration.",
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
@@ -403,8 +409,13 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	var externalID string
+	if resourceResp.JSON200.Result.ExternalId != nil {
+		externalID = *resourceResp.JSON200.Result.ExternalId
+	}
 	data = ResourceDataSourceModel{
 		Id:                     utils.TrimmedStringValue(resourceResp.JSON200.Result.Id.String()),
+		ExternalID:             utils.TrimmedStringValue(externalID),
 		Name:                   utils.TrimmedStringValue(resourceResp.JSON200.Result.Name),
 		AllowedDurations:       allowedDurations,
 		Requestable:            types.BoolValue(resourceResp.JSON200.Result.Requestable),

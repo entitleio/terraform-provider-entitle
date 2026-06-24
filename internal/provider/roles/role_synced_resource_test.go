@@ -25,16 +25,17 @@ resource "entitle_role_synced" "my_role" {
 	resource = {
 		id = "%s"
 	}
+	requestable = false
 }
 `, os.Getenv("ENTITLE_ROLE_SYNCED_NAME"), os.Getenv("ENTITLE_RESOURCE_SYNCED_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_role_synced.my_role", "name", os.Getenv("ENTITLE_ROLE_SYNCED_NAME")),
 					resource.TestCheckResourceAttr("entitle_role_synced.my_role", "resource.id", os.Getenv("ENTITLE_RESOURCE_SYNCED_ID")),
+					resource.TestCheckResourceAttr("entitle_role_synced.my_role", "requestable", "false"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "id"),
-					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "requestable"),
 					resource.TestCheckResourceAttrSet("entitle_role_synced.my_role", "resource.name"),
 				),
 			},

@@ -26,12 +26,14 @@ func TestResourceSyncedResource(t *testing.T) {
 				integration = {
 				  id = "%s"
 				}
+				requestable = false
 			}
 			`, os.Getenv("ENTITLE_RESOURCE_SYNCED_NAME"), os.Getenv("ENTITLE_INTEGRATION_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_resource_synced.my_resource", "name", os.Getenv("ENTITLE_RESOURCE_SYNCED_NAME")),
 					resource.TestCheckResourceAttr("entitle_resource_synced.my_resource", "integration.id", os.Getenv("ENTITLE_INTEGRATION_ID")),
+					resource.TestCheckResourceAttr("entitle_resource_synced.my_resource", "requestable", "false"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_resource_synced.my_resource", "id"),

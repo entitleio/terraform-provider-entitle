@@ -35,6 +35,7 @@ data "entitle_resource" "my_resource" {
 					resource.TestCheckResourceAttrSet("data.entitle_resource.my_resource", "user_defined_tags.0"),
 					resource.TestCheckResourceAttrSet("data.entitle_resource.my_resource", "integration.id"),
 					resource.TestCheckResourceAttrSet("data.entitle_resource.my_resource", "workflow.id"),
+					resource.TestCheckResourceAttrSet("data.entitle_resource.my_resource", "external_id"),
 				),
 			},
 		},
