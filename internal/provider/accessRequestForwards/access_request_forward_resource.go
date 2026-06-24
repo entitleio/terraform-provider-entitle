@@ -231,10 +231,10 @@ func (r *AccessRequestForwardResource) Create(
 	plan.ID = utils.TrimmedStringValue(apiResp.JSON200.Result.Id.String())
 
 	plan.Forwarder.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Forwarder.Id.String())
-	plan.Forwarder.Email = utils.GetEmailStringValue(apiResp.JSON200.Result.Forwarder.Email)
+	plan.Forwarder.Email = utils.GetNullableEmailStringValue(apiResp.JSON200.Result.Forwarder.Email)
 
 	plan.Target.Id = utils.TrimmedStringValue(apiResp.JSON200.Result.Target.Id.String())
-	plan.Target.Email = utils.GetEmailStringValue(apiResp.JSON200.Result.Target.Email)
+	plan.Target.Email = utils.GetNullableEmailStringValue(apiResp.JSON200.Result.Target.Email)
 
 	// Save data into Terraform state
 	diags = resp.State.Set(ctx, &plan)
@@ -310,11 +310,11 @@ func (r *AccessRequestForwardResource) Read(
 		ID: utils.TrimmedStringValue(responseSchema.Id.String()),
 		Forwarder: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Forwarder.Id.String()),
-			Email: utils.TrimmedStringValue(string(responseSchema.Forwarder.Email)),
+			Email: utils.GetNullableEmailStringValue(responseSchema.Forwarder.Email),
 		},
 		Target: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(responseSchema.Target.Id.String()),
-			Email: utils.TrimmedStringValue(string(responseSchema.Target.Email)),
+			Email: utils.GetNullableEmailStringValue(responseSchema.Target.Email),
 		},
 	}
 

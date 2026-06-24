@@ -1670,8 +1670,8 @@ type DirectoryGroupResponseSchema struct {
 
 // EntityResponseSchema defines model for EntityResponseSchema.
 type EntityResponseSchema struct {
-	Email openapi_types.Email `json:"email"`
-	Id    openapi_types.UUID  `json:"id"`
+	Email *openapi_types.Email `json:"email"`
+	Id    openapi_types.UUID   `json:"id"`
 }
 
 // EnumAllowedDurations defines model for EnumAllowedDurations.

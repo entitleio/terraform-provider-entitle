@@ -1036,7 +1036,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			u := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.User.Id.String()),
-				Email: utils.TrimmedStringValue(string(responseSchema.User.Email)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.User.Email),
 			}
 
 			uObject, diagsValues := u.AsObjectValue(ctx)
@@ -1067,7 +1067,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			g := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: utils.TrimmedStringValue(string(responseSchema.Group.Email)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.Group.Email),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
