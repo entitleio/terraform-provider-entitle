@@ -569,7 +569,7 @@ Allowed values:
 
 ### Optional
 
-- `agent_token` (Attributes) Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.n (see [below for nested schema](#nestedatt--agent_token))
+- `agent_token` (Attributes) Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate. (see [below for nested schema](#nestedatt--agent_token))
 - `allow_changing_account_permissions` (Boolean) Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
