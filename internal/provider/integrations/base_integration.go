@@ -65,7 +65,7 @@ func CreateIntegration(
 		return BaseIntegrationResourceModel{}, diags
 	}
 
-	tflog.Trace(ctx, "created a entitle integration resource")
+	tflog.Trace(ctx, "Created a entitle integration resource")
 	return result, diags
 }
 
@@ -251,7 +251,10 @@ func BuildUpdateBodyFromPlan(
 	if data.Workflow.ID.ValueString() != "" {
 		id, err := uuid.Parse(data.Workflow.ID.ValueString())
 		if err != nil {
-			diags.AddError("Client Error", fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err))
+			diags.AddError(
+				"Client Error",
+				fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err),
+			)
 			return client.IntegrationsUpdateBodySchema{}, diags
 		}
 		workflow.Id = id
@@ -377,12 +380,6 @@ func ConvertBaseIntegrationResultToBaseModel(
 		return BaseIntegrationResourceModel{}, "", diags
 	}
 
-	marshalJSON, err := data.Owner.Email.MarshalJSON()
-	if err != nil {
-		diags.AddError("No data", fmt.Sprintf("failed to marshal owner email, error: %v", err))
-		return BaseIntegrationResourceModel{}, "", diags
-	}
-
 	maintainers, maintainerDiags := utils.GetMaintainers(ctx, data.Maintainers)
 	if maintainerDiags.HasError() {
 		diags.Append(maintainerDiags...)
@@ -441,7 +438,7 @@ func ConvertBaseIntegrationResultToBaseModel(
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
 		Owner: &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(string(marshalJSON)),
+			Email: utils.GetNullableEmailStringValue(data.Owner.Email),
 		},
 		AgentToken: agentToken,
 		Workflow: &utils.IdNameModel{
