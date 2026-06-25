@@ -2654,7 +2654,8 @@
           "email": {
             "type": "string",
             "format": "email",
-            "example": "user@org.domain"
+            "example": "user@org.domain",
+            "nullable": true
           }
         },
         "required": [

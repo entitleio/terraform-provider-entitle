@@ -377,7 +377,7 @@ func (d *ResourceDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resourceResp.JSON200.Result.Owner != nil {
 		owner = &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(resourceResp.JSON200.Result.Owner.Id.String()),
-			Email: utils.GetEmailStringValue(resourceResp.JSON200.Result.Owner.Email),
+			Email: utils.GetNullableEmailStringValue(resourceResp.JSON200.Result.Owner.Email),
 		}
 	}
 

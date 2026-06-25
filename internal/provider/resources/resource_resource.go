@@ -224,9 +224,10 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 						Computed:            true,
 						Description:         "the owner's email (lowercase) is used when id was not provided",
 						MarkdownDescription: "the owner's email (lowercase) is used when id was not provided",
-						//Validators:          []validator.String{
-						//validators.LowerCaseNameValidator{},
-						//},
+						Validators: []validator.String{
+							validators.Email{},
+							validators.Lowercase{},
+						},
 					},
 				},
 				Optional: true,
@@ -1036,7 +1037,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			u := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.User.Id.String()),
-				Email: utils.TrimmedStringValue(string(responseSchema.User.Email)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.User.Email),
 			}
 
 			uObject, diagsValues := u.AsObjectValue(ctx)
@@ -1067,7 +1068,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 			g := &utils.IdEmailModel{
 				Id:    utils.TrimmedStringValue(responseSchema.Group.Id.String()),
-				Email: utils.TrimmedStringValue(string(responseSchema.Group.Email)),
+				Email: utils.GetNullableEmailStringValue(responseSchema.Group.Email),
 			}
 
 			gObject, diagsValues := g.AsObjectValue(ctx)
@@ -1156,13 +1157,9 @@ func convertFullResourceResultResponseSchemaToModel(
 
 	var owner *utils.IdEmailModel
 	if data.Owner != nil {
-		marshalJSON, err := data.Owner.Email.MarshalJSON()
-		if err != nil {
-			return ResourceResourceModel{}, nil
-		}
 		owner = &utils.IdEmailModel{
 			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.TrimmedStringValue(strings.ToLower(string(marshalJSON))),
+			Email: utils.GetNullableEmailStringValue(data.Owner.Email),
 		}
 	}
 
