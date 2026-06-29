@@ -54,7 +54,7 @@ type ResourceResourceModel struct {
 	ExternalID              types.String                        `tfsdk:"external_id"`
 	Name                    types.String                        `tfsdk:"name"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
-	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Maintainers             []utils.MaintainerModel             `tfsdk:"maintainers"`
 	Tags                    types.Set                           `tfsdk:"tags"`
 	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
@@ -109,7 +109,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					setplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -133,6 +133,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 									Computed:            true,
 									Description:         "Maintainer's email",
 									MarkdownDescription: "Maintainer's email",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 							Optional:            true,
@@ -1002,7 +1005,7 @@ func convertFullResourceResultResponseSchemaToModel(
 		return ResourceResourceModel{}, diags
 	}
 
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	maintainers := make([]utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
 
@@ -1054,12 +1057,10 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			maintainerUser := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: uObject,
-			}
-
-			maintainers = append(maintainers, maintainerUser)
+			})
 		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
@@ -1085,12 +1086,10 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			maintainerGroup := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: gObject,
-			}
-
-			maintainers = append(maintainers, maintainerGroup)
+			})
 		default:
 			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return ResourceResourceModel{}, diags
@@ -1218,7 +1217,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 // buildUpdateMaintainers converts the maintainer list from the resource model into the
 // API update body format. Extracted here to keep Update readable.
-func buildUpdateMaintainers(_ context.Context, maintainers []*utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
+func buildUpdateMaintainers(_ context.Context, maintainers []utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
 	result := make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(maintainers))
 	for _, m := range maintainers {
 		if m.Type.IsNull() || m.Type.IsUnknown() {

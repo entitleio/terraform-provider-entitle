@@ -54,7 +54,7 @@ type createPlan struct {
 	Workflow                types.Object `tfsdk:"workflow"`
 	Requestable             types.Bool   `tfsdk:"requestable"`
 	Owner                   types.Object `tfsdk:"owner"`
-	Maintainers             types.List   `tfsdk:"maintainers"`
+	Maintainers             types.Set    `tfsdk:"maintainers"`
 	Tags                    types.Set    `tfsdk:"tags"`
 	UserDefinedTags         types.Set    `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String `tfsdk:"user_defined_description"`
@@ -212,7 +212,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 					objectplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -231,11 +231,17 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 									Computed:            true,
 									Description:         "Maintainer's unique identifier.",
 									MarkdownDescription: "Maintainer's unique identifier.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
 									Description:         "Maintainer's email.",
 									MarkdownDescription: "Maintainer's email.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 							Optional:            true,
@@ -249,8 +255,8 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Computed:            true,
 				Description:         "Secondary owners of the resource. Can be users or IDP groups.",
 				MarkdownDescription: "Secondary owners of the resource. Can be users or IDP groups.",
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"tags": schema.SetAttribute{
@@ -554,7 +560,7 @@ func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, plan crea
 
 	// Maintainers — include if set in plan (opaque union types prevent deep comparison)
 	if !plan.Maintainers.IsNull() && !plan.Maintainers.IsUnknown() && len(plan.Maintainers.Elements()) > 0 {
-		var maintainerModels []*utils.MaintainerModel
+		var maintainerModels []utils.MaintainerModel
 		if diags := plan.Maintainers.ElementsAs(ctx, &maintainerModels, false); diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return
