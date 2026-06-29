@@ -59,7 +59,7 @@ type IntegrationResourceModel struct {
 	Application                          *utils.NameModel                    `tfsdk:"application"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
 	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
-	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Maintainers                          []utils.MaintainerModel             `tfsdk:"maintainers"`
 	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 }
@@ -97,7 +97,7 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					validators.NewSetMinLength(1),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -121,6 +121,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 									Computed:            true,
 									Description:         "Maintainer's email",
 									MarkdownDescription: "Maintainer's email",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 							Optional:            true,
@@ -134,8 +137,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
-				Validators: []validator.List{
-					validators.NewListMinLength(1),
+				Validators: []validator.Set{
+					validators.NewSetMinLength(1),
 				},
 			},
 			"application": schema.SingleNestedAttribute{
@@ -1108,7 +1111,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		return IntegrationResourceModel{}, diags
 	}
 
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	maintainers := make([]utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
 
@@ -1155,12 +1158,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			maintainerUser := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: uObject,
-			}
-
-			maintainers = append(maintainers, maintainerUser)
+			})
 		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
@@ -1183,12 +1184,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			maintainerGroup := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: gObject,
-			}
-
-			maintainers = append(maintainers, maintainerGroup)
+			})
 		default:
 			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return IntegrationResourceModel{}, diags
