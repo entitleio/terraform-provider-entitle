@@ -316,6 +316,30 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "maintainers.#", "3"),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"maintainers.*",
+						map[string]string{
+							"entity.id": os.Getenv("ENTITLE_USER2_ID"),
+							"type":      "user",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"maintainers.*",
+						map[string]string{
+							"entity.id": os.Getenv("ENTITLE_DIRECTORY_GROUP_ID"),
+							"type":      "group",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"maintainers.*",
+						map[string]string{
+							"entity.id": os.Getenv("ENTITLE_USER1_ID"),
+							"type":      "user",
+						},
+					),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
