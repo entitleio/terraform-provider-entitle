@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -60,7 +61,7 @@ type IntegrationResourceModel struct {
 	Application                          *utils.NameModel                    `tfsdk:"application"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
 	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
-	Maintainers                          []utils.MaintainerModel             `tfsdk:"maintainers"`
+	Maintainers                          types.Set                           `tfsdk:"maintainers"`
 	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 }
@@ -537,8 +538,16 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	connectionJson = &data
 
+	var planMaintainerModels []utils.MaintainerModel
+	if !plan.Maintainers.IsNull() && !plan.Maintainers.IsUnknown() {
+		if diags := plan.Maintainers.ElementsAs(ctx, &planMaintainerModels, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+	}
+
 	maintainers := make([]client.IntegrationCreateBodySchema_Maintainers_Item, 0)
-	for _, maintainer := range plan.Maintainers {
+	for _, maintainer := range planMaintainerModels {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
 			continue
 		}
@@ -859,8 +868,16 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		connectionJson = &result
 	}
 
+	var planMaintainerModelsUpdate []utils.MaintainerModel
+	if !data.Maintainers.IsNull() && !data.Maintainers.IsUnknown() {
+		if diags := data.Maintainers.ElementsAs(ctx, &planMaintainerModelsUpdate, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+	}
+
 	maintainers := make([]client.IntegrationsUpdateBodySchema_Maintainers_Item, 0)
-	for _, maintainer := range data.Maintainers {
+	for _, maintainer := range planMaintainerModelsUpdate {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
 			continue
 		}
@@ -1227,8 +1244,27 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 	}
 
+	maintainerElementType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type": types.StringType,
+			"entity": types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"id":    types.StringType,
+					"email": types.StringType,
+				},
+			},
+		},
+	}
+	var maintainersSet types.Set
 	if len(maintainers) == 0 {
-		maintainers = nil
+		maintainersSet = types.SetNull(maintainerElementType)
+	} else {
+		var setDiags diag.Diagnostics
+		maintainersSet, setDiags = types.SetValueFrom(ctx, maintainerElementType, maintainers)
+		if setDiags.HasError() {
+			diags.Append(setDiags...)
+			return IntegrationResourceModel{}, diags
+		}
 	}
 
 	// Create the Terraform resource model using the extracted data
@@ -1256,7 +1292,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
-		Maintainers:             maintainers,
+		Maintainers:             maintainersSet,
 		ConnectionJson:          utils.TrimmedStringValue(connectionJson),
 		PrerequisitePermissions: prerequisitePermissions,
 	}, diags
