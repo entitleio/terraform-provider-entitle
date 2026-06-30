@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -103,14 +102,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Optional:            true,
-							Description:         "\"user\" or \"group\" (default: \"user\")",
-							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
-							Computed:            true,
-							Default:             stringdefault.StaticString("user"),
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							Required:            true,
+							Description:         "\"user\" or \"group\"",
+							MarkdownDescription: "\"user\" or \"group\"",
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -123,9 +117,6 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 									Computed:            true,
 									Description:         "Maintainer's email",
 									MarkdownDescription: "Maintainer's email",
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
-									},
 								},
 							},
 							Optional:            true,
@@ -1085,6 +1076,36 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 // it in Terraform state using resource.ImportStatePassthroughID.
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// ModifyPlan fills in the computed entity.email for maintainer set elements that are
+// still Unknown at plan time, using the prior state element with the same entity.id as
+// the source.  This is necessary because SetNestedAttribute element-level plan modifiers
+// (e.g. UseStateForUnknown) cannot reliably correlate plan elements to state elements —
+// the set hash changes whenever a Computed attribute is Unknown.  Using entity.id as a
+// stable key here gives us reliable correlation without any per-attribute plan modifier.
+func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
+		return
+	}
+
+	var plan, state IntegrationResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	updated, changed := utils.FillMaintainerEmailsFromState(ctx, plan.Maintainers, state.Maintainers)
+	if !changed {
+		return
+	}
+
+	plan.Maintainers = updated
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 }
 
 // convertFullIntegrationResultResponseSchemaToModel is a utility function used to convert the API response data

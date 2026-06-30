@@ -628,10 +628,13 @@ Required:
 <a id="nestedatt--maintainers"></a>
 ### Nested Schema for `maintainers`
 
+Required:
+
+- `type` (String) "user" or "group"
+
 Optional:
 
 - `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
-- `type` (String) "user" or "group" (default: "user")
 
 <a id="nestedatt--maintainers--entity"></a>
 ### Nested Schema for `maintainers.entity`

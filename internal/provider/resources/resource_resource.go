@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -113,14 +112,9 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Optional:            true,
-							Description:         "\"user\" or \"group\" (default: \"user\")",
-							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
-							Computed:            true,
-							Default:             stringdefault.StaticString("user"),
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							Required:            true,
+							Description:         "\"user\" or \"group\"",
+							MarkdownDescription: "\"user\" or \"group\"",
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -133,9 +127,6 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 									Computed:            true,
 									Description:         "Maintainer's email",
 									MarkdownDescription: "Maintainer's email",
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
-									},
 								},
 							},
 							Optional:            true,
