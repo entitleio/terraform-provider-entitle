@@ -8,15 +8,18 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -59,7 +62,7 @@ type IntegrationResourceModel struct {
 	Application                          *utils.NameModel                    `tfsdk:"application"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
 	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
-	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Maintainers                          types.Set                           `tfsdk:"maintainers"`
 	ConnectionJson                       types.String                        `tfsdk:"connection_json"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 }
@@ -94,21 +97,16 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description:         "As the admin, you can set different durations for the integration, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				MarkdownDescription: "As the admin, you can set different durations for the integration, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
-					validators.NewSetMinLength(1),
+					setvalidator.SizeAtLeast(1),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Optional:            true,
-							Description:         "\"user\" or \"group\" (default: \"user\")",
-							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
-							Computed:            true,
-							Default:             stringdefault.StaticString("user"),
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							Required:            true,
+							Description:         "\"user\" or \"group\"",
+							MarkdownDescription: "\"user\" or \"group\"",
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -130,13 +128,17 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 				},
 				Optional: true,
+				Computed: true,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
-				Validators: []validator.List{
-					validators.NewListMinLength(1),
-				},
 			},
 			"application": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -290,52 +292,79 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 									Computed:            true,
 									Description:         "The name of the role.",
 									MarkdownDescription: "The name of the role.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"resource": schema.SingleNestedAttribute{
+									Computed:            true,
+									Description:         "The specific resource associated with the role.",
+									MarkdownDescription: "The specific resource associated with the role.",
+									PlanModifiers: []planmodifier.Object{
+										objectplanmodifier.UseStateForUnknown(),
+									},
 									Attributes: map[string]schema.Attribute{
 										"id": schema.StringAttribute{
 											Computed:            true,
 											Description:         "The unique identifier of the resource.",
 											MarkdownDescription: "The unique identifier of the resource.",
+											PlanModifiers: []planmodifier.String{
+												stringplanmodifier.UseStateForUnknown(),
+											},
 										},
 										"name": schema.StringAttribute{
 											Computed:            true,
 											Description:         "The display name of the resource.",
 											MarkdownDescription: "The display name of the resource.",
+											PlanModifiers: []planmodifier.String{
+												stringplanmodifier.UseStateForUnknown(),
+											},
 										},
 										"integration": schema.SingleNestedAttribute{
+											Computed:            true,
+											Description:         "The integration that the resource belongs to.",
+											MarkdownDescription: "The integration that the resource belongs to.",
+											PlanModifiers: []planmodifier.Object{
+												objectplanmodifier.UseStateForUnknown(),
+											},
 											Attributes: map[string]schema.Attribute{
 												"id": schema.StringAttribute{
 													Computed:            true,
 													Description:         "The identifier of the integration.",
 													MarkdownDescription: "The identifier of the integration.",
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"name": schema.StringAttribute{
 													Computed:            true,
 													Description:         "The display name of the integration.",
 													MarkdownDescription: "The display name of the integration.",
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"application": schema.SingleNestedAttribute{
+													Computed:            true,
+													Description:         "The application that the integration is connected to.",
+													MarkdownDescription: "The application that the integration is connected to.",
+													PlanModifiers: []planmodifier.Object{
+														objectplanmodifier.UseStateForUnknown(),
+													},
 													Attributes: map[string]schema.Attribute{
 														"name": schema.StringAttribute{
 															Computed:            true,
 															Description:         "The name of the connected application.",
 															MarkdownDescription: "The name of the connected application.",
+															PlanModifiers: []planmodifier.String{
+																stringplanmodifier.UseStateForUnknown(),
+															},
 														},
 													},
-													Computed:            true,
-													Description:         "The application that the integration is connected to.",
-													MarkdownDescription: "The application that the integration is connected to.",
 												},
 											},
-											Computed:            true,
-											Description:         "The integration that the resource belongs to.",
-											MarkdownDescription: "The integration that the resource belongs to.",
 										},
 									},
-									Computed:            true,
-									Description:         "The specific resource associated with the role.",
-									MarkdownDescription: "The specific resource associated with the role.",
 								},
 							},
 						},
@@ -353,6 +382,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Computed:            true,
 						Description:         "the owner's email",
 						MarkdownDescription: "the owner's email",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Required: true,
@@ -375,6 +407,9 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Computed:            true,
 						Description:         "the workflow's name",
 						MarkdownDescription: "the workflow's name",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 				Required: true,
@@ -537,8 +572,16 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	connectionJson = &data
 
+	var planMaintainerModels []utils.MaintainerModel
+	if !plan.Maintainers.IsNull() && !plan.Maintainers.IsUnknown() {
+		if diags := plan.Maintainers.ElementsAs(ctx, &planMaintainerModels, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+	}
+
 	maintainers := make([]client.IntegrationCreateBodySchema_Maintainers_Item, 0)
-	for _, maintainer := range plan.Maintainers {
+	for _, maintainer := range planMaintainerModels {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
 			continue
 		}
@@ -859,8 +902,16 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		connectionJson = &result
 	}
 
+	var planMaintainerModelsUpdate []utils.MaintainerModel
+	if !data.Maintainers.IsNull() && !data.Maintainers.IsUnknown() {
+		if diags := data.Maintainers.ElementsAs(ctx, &planMaintainerModelsUpdate, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+	}
+
 	maintainers := make([]client.IntegrationsUpdateBodySchema_Maintainers_Item, 0)
-	for _, maintainer := range data.Maintainers {
+	for _, maintainer := range planMaintainerModelsUpdate {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
 			continue
 		}
@@ -1108,7 +1159,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		return IntegrationResourceModel{}, diags
 	}
 
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	maintainers := make([]utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
 
@@ -1155,12 +1206,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			maintainerUser := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: uObject,
-			}
-
-			maintainers = append(maintainers, maintainerUser)
+			})
 		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
@@ -1183,12 +1232,10 @@ func convertFullIntegrationResultResponseSchemaToModel(
 				return IntegrationResourceModel{}, diags
 			}
 
-			maintainerGroup := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: gObject,
-			}
-
-			maintainers = append(maintainers, maintainerGroup)
+			})
 		default:
 			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return IntegrationResourceModel{}, diags
@@ -1231,8 +1278,27 @@ func convertFullIntegrationResultResponseSchemaToModel(
 		}
 	}
 
+	maintainerElementType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type": types.StringType,
+			"entity": types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"id":    types.StringType,
+					"email": types.StringType,
+				},
+			},
+		},
+	}
+	var maintainersSet types.Set
 	if len(maintainers) == 0 {
-		maintainers = nil
+		maintainersSet = types.SetNull(maintainerElementType)
+	} else {
+		var setDiags diag.Diagnostics
+		maintainersSet, setDiags = types.SetValueFrom(ctx, maintainerElementType, maintainers)
+		if setDiags.HasError() {
+			diags.Append(setDiags...)
+			return IntegrationResourceModel{}, diags
+		}
 	}
 
 	// Create the Terraform resource model using the extracted data
@@ -1260,7 +1326,7 @@ func convertFullIntegrationResultResponseSchemaToModel(
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
-		Maintainers:             maintainers,
+		Maintainers:             maintainersSet,
 		ConnectionJson:          utils.TrimmedStringValue(connectionJson),
 		PrerequisitePermissions: prerequisitePermissions,
 	}, diags
