@@ -136,6 +136,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					},
 				},
 				Optional: true,
+				Computed: true,
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
