@@ -6,12 +6,13 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -82,7 +83,7 @@ type BaseIntegrationResourceModel struct {
 	Owner                                *utils.IdEmailModel                 `tfsdk:"owner"`
 	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
 	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
-	Maintainers                          []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Maintainers                          types.Set                           `tfsdk:"maintainers"`
 	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
 }
 
@@ -109,21 +110,16 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Description:         "As the admin, you can set different durations for the integration, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 		MarkdownDescription: "As the admin, you can set different durations for the integration, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 		Validators: []validator.Set{
-			validators.NewSetMinLength(1),
+			setvalidator.SizeAtLeast(1),
 		},
 	},
-	"maintainers": schema.ListNestedAttribute{
+	"maintainers": schema.SetNestedAttribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"type": schema.StringAttribute{
-					Optional:            true,
-					Description:         "\"user\" or \"group\" (default: \"user\")",
-					MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
-					Computed:            true,
-					Default:             stringdefault.StaticString("user"),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
+					Required:            true,
+					Description:         "\"user\" or \"group\"",
+					MarkdownDescription: "\"user\" or \"group\"",
 				},
 				"entity": schema.SingleNestedAttribute{
 					Attributes: map[string]schema.Attribute{
@@ -145,13 +141,17 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 			},
 		},
 		Optional: true,
+		Computed: true,
+		Validators: []validator.Set{
+			setvalidator.SizeAtLeast(1),
+		},
+		PlanModifiers: []planmodifier.Set{
+			setplanmodifier.UseStateForUnknown(),
+		},
 		Description: "Maintainer of the resource, second tier owner of that resource you can " +
 			"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 		MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
 			"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
-		Validators: []validator.List{
-			validators.NewListMinLength(1),
-		},
 	},
 	"agent_token": schema.SingleNestedAttribute{
 		Attributes: map[string]schema.Attribute{

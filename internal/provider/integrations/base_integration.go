@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -260,7 +261,7 @@ func BuildUpdateBodyFromPlan(
 		workflow.Id = id
 	}
 
-	maintainers, mDiags := BuildUpdateMaintainersFromPlan(data.Maintainers)
+	maintainers, mDiags := BuildUpdateMaintainersFromPlan(ctx, data.Maintainers)
 	if mDiags.HasError() {
 		diags.Append(mDiags...)
 		return client.IntegrationsUpdateBodySchema{}, diags
@@ -319,7 +320,7 @@ func BuildCreateBodyFromPlan(
 		agentToken = &client.NameSchema{Name: plan.AgentToken.Name.ValueString()}
 	}
 
-	maintainers, mDiags := BuildCreateMaintainersFromPlan(plan.Maintainers)
+	maintainers, mDiags := BuildCreateMaintainersFromPlan(ctx, plan.Maintainers)
 	if mDiags.HasError() {
 		diags.Append(mDiags...)
 		return client.IntegrationCreateBodySchema{}, diags
@@ -420,8 +421,35 @@ func ConvertBaseIntegrationResultToBaseModel(
 		}
 	}
 
-	if len(maintainers) == 0 {
-		maintainers = nil
+	maintainerElementType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"type": types.StringType,
+			"entity": types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"id":    types.StringType,
+					"email": types.StringType,
+				},
+			},
+		},
+	}
+
+	maintainerModels := make([]utils.MaintainerModel, 0, len(maintainers))
+	for _, m := range maintainers {
+		if m != nil {
+			maintainerModels = append(maintainerModels, *m)
+		}
+	}
+
+	var maintainersSet types.Set
+	if len(maintainerModels) == 0 {
+		maintainersSet = types.SetNull(maintainerElementType)
+	} else {
+		var setDiags diag.Diagnostics
+		maintainersSet, setDiags = types.SetValueFrom(ctx, maintainerElementType, maintainerModels)
+		if setDiags.HasError() {
+			diags.Append(setDiags...)
+			return BaseIntegrationResourceModel{}, "", diags
+		}
 	}
 
 	return BaseIntegrationResourceModel{
@@ -445,7 +473,7 @@ func ConvertBaseIntegrationResultToBaseModel(
 			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
 			Name: utils.TrimmedStringValue(data.Workflow.Name),
 		},
-		Maintainers:             maintainers,
+		Maintainers:             maintainersSet,
 		PrerequisitePermissions: prerequisitePermissions,
 	}, strings.ToLower(data.Application.Name), diags
 }
@@ -495,11 +523,21 @@ type maintainerItemPtr[T any] interface {
 // and BuildUpdateMaintainersFromPlan. T is the value type (e.g.
 // IntegrationCreateBodySchema_Maintainers_Item); PT is its pointer (*T), which carries
 // the Merge methods.
-func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](plan []*utils.MaintainerModel) ([]T, diag.Diagnostics) {
+func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](ctx context.Context, plan types.Set) ([]T, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	maintainers := make([]T, 0)
 
-	for _, maintainer := range plan {
+	if plan.IsNull() || plan.IsUnknown() {
+		return maintainers, diags
+	}
+
+	var planMaintainerModels []utils.MaintainerModel
+	if elemDiags := plan.ElementsAs(ctx, &planMaintainerModels, false); elemDiags.HasError() {
+		diags.Append(elemDiags...)
+		return nil, diags
+	}
+
+	for _, maintainer := range planMaintainerModels {
 		if maintainer.Type.IsNull() || maintainer.Type.IsUnknown() {
 			continue
 		}
@@ -509,7 +547,7 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](plan []*utils.Main
 			return nil, diags
 		}
 
-		entityID, ok := extractMaintainerEntityID(maintainer, &diags)
+		entityID, ok := extractMaintainerEntityID(&maintainer, &diags)
 		if !ok {
 			return nil, diags
 		}
@@ -548,22 +586,24 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](plan []*utils.Main
 
 // BuildCreateMaintainersFromPlan converts plan maintainer models into the API create body items.
 func BuildCreateMaintainersFromPlan(
-	plan []*utils.MaintainerModel,
+	ctx context.Context,
+	plan types.Set,
 ) ([]client.IntegrationCreateBodySchema_Maintainers_Item, diag.Diagnostics) {
 	return buildMaintainersFromPlan[
 		client.IntegrationCreateBodySchema_Maintainers_Item,
 		*client.IntegrationCreateBodySchema_Maintainers_Item,
-	](plan)
+	](ctx, plan)
 }
 
 // BuildUpdateMaintainersFromPlan converts plan maintainer models into the API update body items.
 func BuildUpdateMaintainersFromPlan(
-	plan []*utils.MaintainerModel,
+	ctx context.Context,
+	plan types.Set,
 ) ([]client.IntegrationsUpdateBodySchema_Maintainers_Item, diag.Diagnostics) {
 	return buildMaintainersFromPlan[
 		client.IntegrationsUpdateBodySchema_Maintainers_Item,
 		*client.IntegrationsUpdateBodySchema_Maintainers_Item,
-	](plan)
+	](ctx, plan)
 }
 
 // prereqPermItemPtr is the pointer constraint used by buildPrerequisitePermissionsFromPlan.
