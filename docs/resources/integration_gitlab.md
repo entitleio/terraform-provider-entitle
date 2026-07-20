@@ -316,7 +316,7 @@ Allowed values:
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
-- `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
+- `maintainers` (Attributes Set) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
 - `prerequisite_permissions` (Attributes List) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `readonly` (Boolean) If turned on, any request opened by a user will not be automatically granted, instead a ticket will be opened for manual resolution. (default: false)
@@ -376,10 +376,13 @@ Required:
 <a id="nestedatt--maintainers"></a>
 ### Nested Schema for `maintainers`
 
+Required:
+
+- `type` (String) "user" or "group"
+
 Optional:
 
 - `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
-- `type` (String) "user" or "group" (default: "user")
 
 <a id="nestedatt--maintainers--entity"></a>
 ### Nested Schema for `maintainers.entity`
