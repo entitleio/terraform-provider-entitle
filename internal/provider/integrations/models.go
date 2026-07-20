@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -259,6 +260,9 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 							Computed:            true,
 							Description:         "The name of the role.",
 							MarkdownDescription: "The name of the role.",
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"resource": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -266,11 +270,17 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 									Computed:            true,
 									Description:         "The unique identifier of the resource.",
 									MarkdownDescription: "The unique identifier of the resource.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"name": schema.StringAttribute{
 									Computed:            true,
 									Description:         "The display name of the resource.",
 									MarkdownDescription: "The display name of the resource.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"integration": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -278,11 +288,17 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 											Computed:            true,
 											Description:         "The identifier of the integration.",
 											MarkdownDescription: "The identifier of the integration.",
+											PlanModifiers: []planmodifier.String{
+												stringplanmodifier.UseStateForUnknown(),
+											},
 										},
 										"name": schema.StringAttribute{
 											Computed:            true,
 											Description:         "The display name of the integration.",
 											MarkdownDescription: "The display name of the integration.",
+											PlanModifiers: []planmodifier.String{
+												stringplanmodifier.UseStateForUnknown(),
+											},
 										},
 										"application": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -290,21 +306,33 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 													Computed:            true,
 													Description:         "The name of the connected application.",
 													MarkdownDescription: "The name of the connected application.",
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 											},
 											Computed:            true,
 											Description:         "The application that the integration is connected to.",
 											MarkdownDescription: "The application that the integration is connected to.",
+											PlanModifiers: []planmodifier.Object{
+												objectplanmodifier.UseStateForUnknown(),
+											},
 										},
 									},
 									Computed:            true,
 									Description:         "The integration that the resource belongs to.",
 									MarkdownDescription: "The integration that the resource belongs to.",
+									PlanModifiers: []planmodifier.Object{
+										objectplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 							Computed:            true,
 							Description:         "The specific resource associated with the role.",
 							MarkdownDescription: "The specific resource associated with the role.",
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
@@ -322,6 +350,9 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 				Computed:            true,
 				Description:         "the owner's email",
 				MarkdownDescription: "the owner's email",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Required: true,
@@ -344,6 +375,9 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 				Computed:            true,
 				Description:         "the workflow's name",
 				MarkdownDescription: "the workflow's name",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Required: true,
