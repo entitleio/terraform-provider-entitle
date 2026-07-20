@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/numberplanmodifier"
@@ -131,7 +132,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Description:         "List of user groups for which this rule is applicable.",
 							MarkdownDescription: "List of user groups for which this rule is applicable.",
 							Validators: []validator.List{
-								validators.NewListMinLength(1),
+								listvalidator.SizeAtLeast(1),
 							},
 						},
 						"in_schedules": schema.ListNestedAttribute{
@@ -153,7 +154,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Description:         "List of schedules during which this rule is valid.",
 							MarkdownDescription: "List of schedules during which this rule is valid.",
 							Validators: []validator.List{
-								validators.NewListMinLength(1),
+								listvalidator.SizeAtLeast(1),
 							},
 						},
 						"approval_flow": schema.SingleNestedAttribute{
@@ -276,7 +277,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												MarkdownDescription: "List of users or groups to be notified during this approval step.",
 
 												Validators: []validator.List{
-													validators.NewListMinLength(1),
+													listvalidator.SizeAtLeast(1),
 												},
 											},
 											"approval_entities": schema.ListNestedAttribute{

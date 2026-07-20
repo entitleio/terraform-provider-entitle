@@ -831,7 +831,7 @@ Allowed values:
   - 63072000 - 730 days
   - -1 - unlimited
 - `integration` (Attributes) Integration the resource belongs to. Required when creating a managed resource; populated automatically for synced resources. (see [below for nested schema](#nestedatt--integration))
-- `maintainers` (Attributes List) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
+- `maintainers` (Attributes Set) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `owner` (Attributes) Define the owner of the resource, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `prerequisite_permissions` (Attributes List) Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `user_defined_description` (String)
@@ -859,10 +859,13 @@ Read-Only:
 <a id="nestedatt--maintainers"></a>
 ### Nested Schema for `maintainers`
 
+Required:
+
+- `type` (String) "user" or "group"
+
 Optional:
 
 - `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
-- `type` (String) "user" or "group" (default: "user")
 
 <a id="nestedatt--maintainers--entity"></a>
 ### Nested Schema for `maintainers.entity`

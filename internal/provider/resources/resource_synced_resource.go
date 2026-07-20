@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -27,7 +28,6 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/docs"
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
-	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -54,7 +54,7 @@ type createPlan struct {
 	Workflow                types.Object `tfsdk:"workflow"`
 	Requestable             types.Bool   `tfsdk:"requestable"`
 	Owner                   types.Object `tfsdk:"owner"`
-	Maintainers             types.List   `tfsdk:"maintainers"`
+	Maintainers             types.Set    `tfsdk:"maintainers"`
 	Tags                    types.Set    `tfsdk:"tags"`
 	UserDefinedTags         types.Set    `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String `tfsdk:"user_defined_description"`
@@ -143,7 +143,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Description:         "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				MarkdownDescription: "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
-					validators.NewSetMinLength(1),
+					setvalidator.SizeAtLeast(1),
 				},
 				PlanModifiers: []planmodifier.Set{
 					setplanmodifier.UseStateForUnknown(),
@@ -212,7 +212,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 					objectplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -231,11 +231,17 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 									Computed:            true,
 									Description:         "Maintainer's unique identifier.",
 									MarkdownDescription: "Maintainer's unique identifier.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"email": schema.StringAttribute{
 									Computed:            true,
 									Description:         "Maintainer's email.",
 									MarkdownDescription: "Maintainer's email.",
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 							Optional:            true,
@@ -249,8 +255,8 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Computed:            true,
 				Description:         "Secondary owners of the resource. Can be users or IDP groups.",
 				MarkdownDescription: "Secondary owners of the resource. Can be users or IDP groups.",
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"tags": schema.SetAttribute{
@@ -266,7 +272,7 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 				Description:         "User-defined searchable metadata tags.",
 				MarkdownDescription: "User-defined searchable metadata tags.",
 				Validators: []validator.Set{
-					validators.NewSetMinLength(1),
+					setvalidator.SizeAtLeast(1),
 				},
 				PlanModifiers: []planmodifier.Set{
 					setplanmodifier.UseStateForUnknown(),
@@ -554,7 +560,7 @@ func (r *ResourceSyncedResource) compareAndUpdate(ctx context.Context, plan crea
 
 	// Maintainers — include if set in plan (opaque union types prevent deep comparison)
 	if !plan.Maintainers.IsNull() && !plan.Maintainers.IsUnknown() && len(plan.Maintainers.Elements()) > 0 {
-		var maintainerModels []*utils.MaintainerModel
+		var maintainerModels []utils.MaintainerModel
 		if diags := plan.Maintainers.ElementsAs(ctx, &maintainerModels, false); diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return

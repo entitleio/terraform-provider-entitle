@@ -347,7 +347,7 @@ Allowed values:
   - 63072000 - 730 days
   - -1 - unlimited
 - `external_id` (String) The external ID of the resource as assigned by the upstream integration.  Used together with integration.id to look up the existing synced resource.
-- `maintainers` (Attributes List) Secondary owners of the resource. Can be users or IDP groups. (see [below for nested schema](#nestedatt--maintainers))
+- `maintainers` (Attributes Set) Secondary owners of the resource. Can be users or IDP groups. (see [below for nested schema](#nestedatt--maintainers))
 - `name` (String) The display name of the resource. Used together with integration.id to look up the existing synced resource.
 - `owner` (Attributes) The owner of the resource, used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
 - `prerequisite_permissions` (Attributes List) Users granted any role from this resource through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))

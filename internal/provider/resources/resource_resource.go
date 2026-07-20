@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -18,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -52,7 +53,7 @@ type ResourceResourceModel struct {
 	ExternalID              types.String                        `tfsdk:"external_id"`
 	Name                    types.String                        `tfsdk:"name"`
 	AllowedDurations        types.Set                           `tfsdk:"allowed_durations"`
-	Maintainers             []*utils.MaintainerModel            `tfsdk:"maintainers"`
+	Maintainers             []utils.MaintainerModel             `tfsdk:"maintainers"`
 	Tags                    types.Set                           `tfsdk:"tags"`
 	UserDefinedTags         types.Set                           `tfsdk:"user_defined_tags"`
 	UserDefinedDescription  types.String                        `tfsdk:"user_defined_description"`
@@ -101,21 +102,19 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				Description:         "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				MarkdownDescription: "As the admin, you can set different durations for the resource, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 				Validators: []validator.Set{
-					validators.NewSetMinLength(1),
+					setvalidator.SizeAtLeast(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"maintainers": schema.ListNestedAttribute{
+			"maintainers": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Optional:            true,
-							Description:         "\"user\" or \"group\" (default: \"user\")",
-							MarkdownDescription: "\"user\" or \"group\" (default: \"user\")",
-							Computed:            true,
-							Default:             stringdefault.StaticString("user"),
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							Required:            true,
+							Description:         "\"user\" or \"group\"",
+							MarkdownDescription: "\"user\" or \"group\"",
 						},
 						"entity": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
@@ -137,6 +136,13 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					},
 				},
 				Optional: true,
+				Computed: true,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 				Description: "Maintainer of the resource, second tier owner of that resource you can " +
 					"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 				MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
@@ -158,7 +164,10 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				MarkdownDescription: "Any meta-data searchable tags should be added here, " +
 					"like “accounting”, “ATL_Marketing” or “Production_Line_14”.",
 				Validators: []validator.Set{
-					validators.NewSetMinLength(1),
+					setvalidator.SizeAtLeast(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"user_defined_description": schema.StringAttribute{
@@ -994,7 +1003,7 @@ func convertFullResourceResultResponseSchemaToModel(
 		return ResourceResourceModel{}, diags
 	}
 
-	maintainers := make([]*utils.MaintainerModel, 0, len(data.Maintainers))
+	maintainers := make([]utils.MaintainerModel, 0, len(data.Maintainers))
 	for _, item := range data.Maintainers {
 		var body utils.MaintainerCommonResponseSchema
 
@@ -1046,12 +1055,10 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			maintainerUser := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: uObject,
-			}
-
-			maintainers = append(maintainers, maintainerUser)
+			})
 		case utils.MaintainerTypeGroup:
 			responseSchema, err := item.AsMaintainerGroupResponseSchema()
 			if err != nil {
@@ -1077,12 +1084,10 @@ func convertFullResourceResultResponseSchemaToModel(
 				return ResourceResourceModel{}, diags
 			}
 
-			maintainerGroup := &utils.MaintainerModel{
+			maintainers = append(maintainers, utils.MaintainerModel{
 				Type:   utils.TrimmedStringValue(body.Type),
 				Entity: gObject,
-			}
-
-			maintainers = append(maintainers, maintainerGroup)
+			})
 		default:
 			diags.AddError("Failed invalid type for maintainer", body.Type)
 			return ResourceResourceModel{}, diags
@@ -1210,7 +1215,7 @@ func convertFullResourceResultResponseSchemaToModel(
 
 // buildUpdateMaintainers converts the maintainer list from the resource model into the
 // API update body format. Extracted here to keep Update readable.
-func buildUpdateMaintainers(_ context.Context, maintainers []*utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
+func buildUpdateMaintainers(_ context.Context, maintainers []utils.MaintainerModel) ([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, error) {
 	result := make([]client.IntegrationResourcesUpdateBodySchema_Maintainers_Item, 0, len(maintainers))
 	for _, m := range maintainers {
 		if m.Type.IsNull() || m.Type.IsUnknown() {
