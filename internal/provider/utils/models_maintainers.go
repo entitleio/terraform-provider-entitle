@@ -70,8 +70,9 @@ func GetMaintainers[T MaintainerInterface](
 		var body MaintainerCommonResponseSchema
 		err = json.Unmarshal(data, &body)
 		if err != nil {
+
 			diags.AddError(
-				"Failed to unmarshal maintainer data",
+				fmt.Sprintf("Failed to unmarshal the maintainer data (%s)", data),
 				err.Error(),
 			)
 			return nil, diags
