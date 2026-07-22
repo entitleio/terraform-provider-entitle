@@ -57,7 +57,7 @@ resource "entitle_integration_gitlab" "gitlab_saas" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
   requestable             = true
 }
 ```
@@ -88,7 +88,7 @@ resource "entitle_integration_gitlab" "gitlab_selfhosted" {
   }
 
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   requestable             = true
 }
 ```
