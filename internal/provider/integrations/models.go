@@ -3,7 +3,6 @@ package integrations
 import (
 	"maps"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -69,23 +68,39 @@ func (i applicationName) canEditPermissions() *bool {
 }
 
 // BaseIntegrationResourceModel describes the base resource model.
+//
+// NOTE: OwnerID, AgentToken, and WorkflowID must stay as plain types.String (never
+// *types.String). The terraform-plugin-framework's reflection-based conversion only
+// supports a pointer-to-attr.Value struct field when the corresponding schema attribute
+// is itself a nested object; for primitive attributes (schema.StringAttribute /
+// types.StringType, as used here) it requires the value type directly and returns
+// "Cannot use attr.Value *basetypes.StringValue, only basetypes.StringValue is
+// supported..." if given a pointer. types.String already has its own null/unknown
+// state via IsNull()/IsUnknown(), so a Go-level pointer is unnecessary anyway.
 type BaseIntegrationResourceModel struct {
-	ID                                   types.String                        `tfsdk:"id"`
-	Name                                 types.String                        `tfsdk:"name"`
-	AllowedDurations                     types.Set                           `tfsdk:"allowed_durations"`
-	AllowChangingAccountPermissions      types.Bool                          `tfsdk:"allow_changing_account_permissions"`
-	AllowCreatingAccounts                types.Bool                          `tfsdk:"allow_creating_accounts"`
-	Readonly                             types.Bool                          `tfsdk:"readonly"`
-	Requestable                          types.Bool                          `tfsdk:"requestable"`
-	RequestableByDefault                 types.Bool                          `tfsdk:"requestable_by_default"`
-	AutoAssignRecommendedMaintainers     types.Bool                          `tfsdk:"auto_assign_recommended_maintainers"`
-	AutoAssignRecommendedOwners          types.Bool                          `tfsdk:"auto_assign_recommended_owners"`
-	NotifyAboutExternalPermissionChanges types.Bool                          `tfsdk:"notify_about_external_permission_changes"`
-	Owner                                *utils.IdEmailModel                 `tfsdk:"owner"`
-	AgentToken                           *utils.NameModel                    `tfsdk:"agent_token"`
-	Workflow                             *utils.IdNameModel                  `tfsdk:"workflow"`
-	Maintainers                          types.Set                           `tfsdk:"maintainers"`
-	PrerequisitePermissions              []utils.PrerequisitePermissionModel `tfsdk:"prerequisite_permissions"`
+	ID                                   types.String `tfsdk:"id"`
+	Name                                 types.String `tfsdk:"name"`
+	AllowedDurations                     types.Set    `tfsdk:"allowed_durations"`
+	AllowChangingAccountPermissions      types.Bool   `tfsdk:"allow_changing_account_permissions"`
+	AllowCreatingAccounts                types.Bool   `tfsdk:"allow_creating_accounts"`
+	Readonly                             types.Bool   `tfsdk:"readonly"`
+	Requestable                          types.Bool   `tfsdk:"requestable"`
+	RequestableByDefault                 types.Bool   `tfsdk:"requestable_by_default"`
+	AutoAssignRecommendedMaintainers     types.Bool   `tfsdk:"auto_assign_recommended_maintainers"`
+	AutoAssignRecommendedOwners          types.Bool   `tfsdk:"auto_assign_recommended_owners"`
+	NotifyAboutExternalPermissionChanges types.Bool   `tfsdk:"notify_about_external_permission_changes"`
+	OwnerID                              types.String `tfsdk:"owner_id"`
+	AgentToken                           types.String `tfsdk:"agent_token"`
+	WorkflowID                           types.String `tfsdk:"workflow_id"`
+	Maintainers                          types.Set    `tfsdk:"maintainers"`
+	PrerequisitePermissions              types.Set    `tfsdk:"prerequisite_permissions"`
+}
+
+// IntegrationMaintainerModel is the flattened maintainer model used by BaseIntegrationResourceModel.
+// Type is "user" or "group", and ID is the identifier of that user or group.
+type IntegrationMaintainerModel struct {
+	Type types.String `tfsdk:"type"`
+	ID   types.String `tfsdk:"id"`
 }
 
 var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
@@ -121,23 +136,17 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 					Required:            true,
 					Description:         "\"user\" or \"group\"",
 					MarkdownDescription: "\"user\" or \"group\"",
-				},
-				"entity": schema.SingleNestedAttribute{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required:            true,
-							Description:         "Maintainer's unique identifier",
-							MarkdownDescription: "Maintainer's unique identifier",
-						},
-						"email": schema.StringAttribute{
-							Computed:            true,
-							Description:         "Maintainer's email",
-							MarkdownDescription: "Maintainer's email",
-						},
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
 					},
-					Optional:            true,
-					Description:         "Maintainer's entity",
-					MarkdownDescription: "Maintainer's entity",
+				},
+				"id": schema.StringAttribute{
+					Required:            true,
+					Description:         "Maintainer's unique identifier",
+					MarkdownDescription: "Maintainer's unique identifier",
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 			},
 		},
@@ -154,17 +163,11 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "Maintainer of the resource, second tier owner of that resource you can " +
 			"have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource.",
 	},
-	"agent_token": schema.SingleNestedAttribute{
-		Attributes: map[string]schema.Attribute{
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "agent token's name",
-				MarkdownDescription: "agent token's name",
-			},
-		},
+	"agent_token": schema.StringAttribute{
 		Optional:            true,
-		Description:         "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
-		MarkdownDescription: "Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate.",
+		WriteOnly:           true,
+		Description:         "The agent token's name. Used for agent-based integrations where Entitle needs a token to authenticate.",
+		MarkdownDescription: "The agent token's name. Used for agent-based integrations where Entitle needs a token to authenticate.",
 	},
 	"readonly": schema.BoolAttribute{
 		Optional: true,
@@ -173,7 +176,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 			"instead a ticket will be opened for manual resolution. (default: false)",
 		MarkdownDescription: "If turned on, any request opened by a user will not be automatically granted, " +
 			"instead a ticket will be opened for manual resolution. (default: false)",
-		Default: booldefault.StaticBool(defaultIntegrationReadonly),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
@@ -197,7 +199,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 			"to the user. (default: true)",
 		MarkdownDescription: "Controls whether resources that are added to the integration could be shown " +
 			"to the user. (default: true)",
-		Default: booldefault.StaticBool(defaultIntegrationAllowRequestsByDefault),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
@@ -207,7 +208,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Computed:            true,
 		Description:         "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
 		MarkdownDescription: "When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedMaintainers),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
@@ -217,7 +217,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Computed:            true,
 		Description:         "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
 		MarkdownDescription: "When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAutoAssignRecommendedOwners),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
@@ -227,12 +226,11 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Computed:            true,
 		Description:         "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
 		MarkdownDescription: "When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationNotifyAboutExternalPermissionChanges),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
 	},
-	"prerequisite_permissions": schema.ListNestedAttribute{
+	"prerequisite_permissions": schema.SetNestedAttribute{
 		Optional:            true,
 		Description:         "Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below.",
 		MarkdownDescription: "Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below.",
@@ -248,123 +246,39 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 						boolplanmodifier.UseStateForUnknown(),
 					},
 				},
-				"role": schema.SingleNestedAttribute{
-					Required: true,
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required:            true,
-							Description:         "The identifier of the role to be granted.",
-							MarkdownDescription: "The identifier of the role to be granted.",
-						},
-						"name": schema.StringAttribute{
-							Computed:            true,
-							Description:         "The name of the role.",
-							MarkdownDescription: "The name of the role.",
-						},
-						"resource": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Computed:            true,
-									Description:         "The unique identifier of the resource.",
-									MarkdownDescription: "The unique identifier of the resource.",
-								},
-								"name": schema.StringAttribute{
-									Computed:            true,
-									Description:         "The display name of the resource.",
-									MarkdownDescription: "The display name of the resource.",
-								},
-								"integration": schema.SingleNestedAttribute{
-									Attributes: map[string]schema.Attribute{
-										"id": schema.StringAttribute{
-											Computed:            true,
-											Description:         "The identifier of the integration.",
-											MarkdownDescription: "The identifier of the integration.",
-										},
-										"name": schema.StringAttribute{
-											Computed:            true,
-											Description:         "The display name of the integration.",
-											MarkdownDescription: "The display name of the integration.",
-										},
-										"application": schema.SingleNestedAttribute{
-											Attributes: map[string]schema.Attribute{
-												"name": schema.StringAttribute{
-													Computed:            true,
-													Description:         "The name of the connected application.",
-													MarkdownDescription: "The name of the connected application.",
-												},
-											},
-											Computed:            true,
-											Description:         "The application that the integration is connected to.",
-											MarkdownDescription: "The application that the integration is connected to.",
-										},
-									},
-									Computed:            true,
-									Description:         "The integration that the resource belongs to.",
-									MarkdownDescription: "The integration that the resource belongs to.",
-								},
-							},
-							Computed:            true,
-							Description:         "The specific resource associated with the role.",
-							MarkdownDescription: "The specific resource associated with the role.",
-						},
+				"role_id": schema.StringAttribute{
+					Required:            true,
+					Description:         "The identifier of the role to be granted.",
+					MarkdownDescription: "The identifier of the role to be granted.",
+					Validators: []validator.String{
+						validators.UUID{},
 					},
 				},
 			},
 		},
 	},
-	"owner": schema.SingleNestedAttribute{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Required:            true,
-				Description:         "the owner's id",
-				MarkdownDescription: "the owner's id",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"email": schema.StringAttribute{
-				Computed:            true,
-				Description:         "the owner's email",
-				MarkdownDescription: "the owner's email",
-			},
-		},
+	"owner_id": schema.StringAttribute{
 		Required: true,
-		Description: "Define the owner of the integration, which will be used for administrative " +
+		Description: "The id of the user who owns the integration, used for administrative " +
 			"purposes and approval workflows.",
-		MarkdownDescription: "Define the owner of the integration, which will be used for administrative " +
+		MarkdownDescription: "The id of the user who owns the integration, used for administrative " +
 			"purposes and approval workflows.",
 	},
-	"workflow": schema.SingleNestedAttribute{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Required:            true,
-				Description:         "the workflow's id",
-				MarkdownDescription: "the workflow's id",
-				Validators: []validator.String{
-					validators.UUID{},
-				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "the workflow's name",
-				MarkdownDescription: "the workflow's name",
-			},
-		},
+	"workflow_id": schema.StringAttribute{
 		Required: true,
-		Description: "The default approval workflow for entitlements for the integration " +
+		Description: "The id of the default approval workflow for entitlements for the integration " +
 			"(can be overwritten on resource/role level).",
-		MarkdownDescription: "The default approval workflow for entitlements for the integration " +
+		MarkdownDescription: "The id of the default approval workflow for entitlements for the integration " +
 			"(can be overwritten on resource/role level).",
+		Validators: []validator.String{
+			validators.UUID{},
+		},
 	},
 	"allow_changing_account_permissions": schema.BoolAttribute{
 		Optional:            true,
 		Computed:            true,
 		Description:         "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
 		MarkdownDescription: "Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAllowChangingAccountPermissions),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 			boolplanmodifier.RequiresReplace(),
@@ -375,7 +289,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		Computed:            true,
 		Description:         "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
 		MarkdownDescription: "Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)",
-		Default:             booldefault.StaticBool(defaultIntegrationAllowCreatingAccounts),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 			boolplanmodifier.RequiresReplace(),

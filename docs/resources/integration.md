@@ -26,13 +26,9 @@ description: |-
       name = "slack"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
     allowed_durations       = [3600, 28800, 86400]
     allow_creating_accounts = true
@@ -53,13 +49,9 @@ description: |-
       name = "aws"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
     allowed_durations                    = [3600, 7200]
     allow_creating_accounts              = false   # Users must already exist in AWS
@@ -82,26 +74,18 @@ description: |-
       name = "github"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
     maintainers = [
       {
         type = "user"
-        entity = {
-          id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
-        }
+        id   = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
       },
       {
         type = "group"
-        entity = {
-          id = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
-        }
+        id   = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
       }
     ]
   
@@ -130,17 +114,11 @@ description: |-
       name = "postgresql"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
-    agent_token = {
-      name = entitle_agent_token.internal_db_agent.name
-    }
+    agent_token = entitle_agent_token.internal_db_agent.name
   
     allowed_durations       = [3600, 28800]
     allow_creating_accounts = false
@@ -160,20 +138,14 @@ description: |-
       name = "okta"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
     prerequisite_permissions = [
       {
         default = true
-        role = {
-          id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
-        }
+        role_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
       }
     ]
   
@@ -195,13 +167,9 @@ description: |-
       name = "custom"
     }
   
-    owner = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    }
+    owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   
-    workflow = {
-      id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-    }
+    workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   
     readonly          = true   # Requests create manual tickets
     requestable       = true
@@ -282,13 +250,9 @@ resource "entitle_integration" "slack_workspace" {
     name = "slack"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations       = [3600, 28800, 86400]
   allow_creating_accounts = true
@@ -312,13 +276,9 @@ resource "entitle_integration" "aws_production" {
     name = "aws"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations                    = [3600, 7200]
   allow_creating_accounts              = false   # Users must already exist in AWS
@@ -344,26 +304,18 @@ resource "entitle_integration" "github_org" {
     name = "github"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   maintainers = [
     {
       type = "user"
-      entity = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
-      }
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
     },
     {
       type = "group"
-      entity = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
-      }
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
     }
   ]
 
@@ -395,17 +347,11 @@ resource "entitle_integration" "internal_postgres" {
     name = "postgresql"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
-  agent_token = {
-    name = entitle_agent_token.internal_db_agent.name
-  }
+  agent_token = entitle_agent_token.internal_db_agent.name
 
   allowed_durations       = [3600, 28800]
   allow_creating_accounts = false
@@ -428,20 +374,14 @@ resource "entitle_integration" "okta_admin" {
     name = "okta"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   prerequisite_permissions = [
     {
       default = true
-      role = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
-      }
+      role_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
     }
   ]
 
@@ -466,13 +406,9 @@ resource "entitle_integration" "legacy_erp" {
     name = "custom"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   readonly          = true   # Requests create manual tickets
   requestable       = true
@@ -564,19 +500,21 @@ Allowed values:
 - `application` (Attributes) The application the integration connects to must be chosen from the list of supported applications. (see [below for nested schema](#nestedatt--application))
 - `connection_json` (String) You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).
 - `name` (String) The display name for the integration. Length between 2 and 50.
-- `owner` (Attributes) Define the owner of the integration, which will be used for administrative purposes and approval workflows. (see [below for nested schema](#nestedatt--owner))
-- `workflow` (Attributes) The default approval workflow for entitlements for the integration (can be overwritten on resource/role level). (see [below for nested schema](#nestedatt--workflow))
+- `owner_id` (String) The id of the user who owns the integration, used for administrative purposes and approval workflows.
+- `workflow_id` (String) The id of the default approval workflow for entitlements for the integration (can be overwritten on resource/role level).
 
 ### Optional
 
-- `agent_token` (Attributes) Agent token configuration. Used for agent-based integrations where Entitle needs a token to authenticate. (see [below for nested schema](#nestedatt--agent_token))
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
+
+- `agent_token` (String, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) The agent token's name. Used for agent-based integrations where Entitle needs a token to authenticate.
 - `allow_changing_account_permissions` (Boolean) Controls whether Entitle can modify the permissions of accounts under this integration. If disabled, Entitle can only read permissions but cannot grant or revoke them. (default: true)
 - `allow_creating_accounts` (Boolean) Controls whether Entitle is allowed to create new user accounts in the connected application when access is requested. If disabled, users must already exist in the application before access can be granted. (default: true)
 - `auto_assign_recommended_maintainers` (Boolean) When enabled, Entitle automatically assigns suggested maintainers to the integration based on usage patterns and access signals. (default: true)
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
 - `maintainers` (Attributes Set) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
-- `prerequisite_permissions` (Attributes List) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
+- `prerequisite_permissions` (Attributes Set) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
 - `readonly` (Boolean) If turned on, any request opened by a user will not be automatically granted, instead a ticket will be opened for manual resolution. (default: false)
 - `requestable` (Boolean) Controls whether a user can create requests for entitlements for resources under the integration. (default: true)
 - `requestable_by_default` (Boolean) Controls whether resources that are added to the integration could be shown to the user. (default: true)
@@ -593,60 +531,13 @@ Required:
 - `name` (String) The application's name (lowercase). Could be found using entitle_applications. More detailed info about integrations available on [this page](https://docs.beyondtrust.com/entitle/docs/integrations).
 
 
-<a id="nestedatt--owner"></a>
-### Nested Schema for `owner`
-
-Required:
-
-- `id` (String) the owner's id
-
-Read-Only:
-
-- `email` (String) the owner's email
-
-
-<a id="nestedatt--workflow"></a>
-### Nested Schema for `workflow`
-
-Required:
-
-- `id` (String) the workflow's id
-
-Read-Only:
-
-- `name` (String) the workflow's name
-
-
-<a id="nestedatt--agent_token"></a>
-### Nested Schema for `agent_token`
-
-Required:
-
-- `name` (String) agent token's name
-
-
 <a id="nestedatt--maintainers"></a>
 ### Nested Schema for `maintainers`
 
 Required:
 
-- `type` (String) "user" or "group"
-
-Optional:
-
-- `entity` (Attributes) Maintainer's entity (see [below for nested schema](#nestedatt--maintainers--entity))
-
-<a id="nestedatt--maintainers--entity"></a>
-### Nested Schema for `maintainers.entity`
-
-Required:
-
 - `id` (String) Maintainer's unique identifier
-
-Read-Only:
-
-- `email` (String) Maintainer's email
-
+- `type` (String) "user" or "group"
 
 
 <a id="nestedatt--prerequisite_permissions"></a>
@@ -654,45 +545,8 @@ Read-Only:
 
 Required:
 
-- `role` (Attributes) (see [below for nested schema](#nestedatt--prerequisite_permissions--role))
+- `role_id` (String) The identifier of the role to be granted.
 
 Optional:
 
 - `default` (Boolean) Indicates whether this prerequisite permission should be automatically granted as a default permission. When set to true, users will receive this permission by default when accessing the associated resource (default: false).
-
-<a id="nestedatt--prerequisite_permissions--role"></a>
-### Nested Schema for `prerequisite_permissions.role`
-
-Required:
-
-- `id` (String) The identifier of the role to be granted.
-
-Read-Only:
-
-- `name` (String) The name of the role.
-- `resource` (Attributes) The specific resource associated with the role. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource))
-
-<a id="nestedatt--prerequisite_permissions--role--resource"></a>
-### Nested Schema for `prerequisite_permissions.role.resource`
-
-Read-Only:
-
-- `id` (String) The unique identifier of the resource.
-- `integration` (Attributes) The integration that the resource belongs to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration))
-- `name` (String) The display name of the resource.
-
-<a id="nestedatt--prerequisite_permissions--role--resource--integration"></a>
-### Nested Schema for `prerequisite_permissions.role.resource.integration`
-
-Read-Only:
-
-- `application` (Attributes) The application that the integration is connected to. (see [below for nested schema](#nestedatt--prerequisite_permissions--role--resource--integration--application))
-- `id` (String) The identifier of the integration.
-- `name` (String) The display name of the integration.
-
-<a id="nestedatt--prerequisite_permissions--role--resource--integration--application"></a>
-### Nested Schema for `prerequisite_permissions.role.resource.integration.application`
-
-Read-Only:
-
-- `name` (String) The name of the connected application.
