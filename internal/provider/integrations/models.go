@@ -36,8 +36,9 @@ const (
 type applicationName string
 
 const (
-	applicationGitlab  applicationName = "gitlab"
-	applicationVirtual applicationName = "virtual application"
+	applicationGitlab    applicationName = "gitlab"
+	applicationBitbucket applicationName = "bitbucket"
+	applicationVirtual   applicationName = "virtual application"
 )
 
 func (a applicationName) String() string {
@@ -47,7 +48,7 @@ func (a applicationName) String() string {
 func (i applicationName) canCreateActors() *bool {
 	var v bool
 	switch i {
-	case applicationGitlab:
+	case applicationGitlab, applicationBitbucket:
 		v = false
 	default:
 		return nil
@@ -59,7 +60,7 @@ func (i applicationName) canCreateActors() *bool {
 func (i applicationName) canEditPermissions() *bool {
 	var v bool
 	switch i {
-	case applicationGitlab:
+	case applicationGitlab, applicationBitbucket:
 		v = true
 	default:
 		return nil

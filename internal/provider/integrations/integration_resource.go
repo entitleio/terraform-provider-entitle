@@ -166,7 +166,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), parsedConnectionJson, resp)
+	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), &parsedConnectionJson, resp)
 	if newBase == nil {
 		return
 	}

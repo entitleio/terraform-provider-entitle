@@ -75,7 +75,7 @@ func UpdateIntegration(
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
 	appName applicationName,
-	parsedConnectionJson map[string]interface{},
+	parsedConnectionJson *map[string]interface{},
 	resp *resource.UpdateResponse,
 ) *BaseIntegrationResourceModel {
 	uid, err := uuid.Parse(base.ID.String())
@@ -87,7 +87,7 @@ func UpdateIntegration(
 		return nil
 	}
 
-	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
+	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, parsedConnectionJson)
 	resp.Diagnostics.Append(bDiags...)
 	if resp.Diagnostics.HasError() {
 		return nil
