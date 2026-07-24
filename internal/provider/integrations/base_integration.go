@@ -325,20 +325,20 @@ func BuildCreateBodyFromPlan(
 
 	return client.IntegrationCreateBodySchema{
 		AgentToken:                           agentToken,
-		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
-		AllowCreatingAccounts:                plan.AllowCreatingAccounts.ValueBool(),
-		Requestable:                          plan.Requestable.ValueBoolPointer(),
-		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
+		AllowChangingAccountPermissions:      utils.BoolOrDefault(plan.AllowChangingAccountPermissions, defaultIntegrationAllowChangingAccountPermissions),
+		AllowCreatingAccounts:                utils.BoolOrDefault(plan.AllowCreatingAccounts, defaultIntegrationAllowCreatingAccounts),
+		Requestable:                          utils.BoolPtrOrDefault(plan.Requestable, defaultIntegrationAllowRequests),
+		RequestableByDefault:                 utils.BoolPtrOrDefault(plan.RequestableByDefault, defaultIntegrationAllowRequestsByDefault),
 		AllowedDurations:                     allowedDurations,
 		Application:                          client.NameSchema{Name: appName.String()},
-		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
-		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
+		AutoAssignRecommendedMaintainers:     utils.BoolOrDefault(plan.AutoAssignRecommendedMaintainers, defaultIntegrationAutoAssignRecommendedMaintainers),
+		AutoAssignRecommendedOwners:          utils.BoolOrDefault(plan.AutoAssignRecommendedOwners, defaultIntegrationAutoAssignRecommendedOwners),
 		ConnectionJson:                       parsedConnectionJson,
 		Maintainers:                          &maintainers,
 		Name:                                 plan.Name.ValueString(),
-		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
+		NotifyAboutExternalPermissionChanges: utils.BoolOrDefault(plan.NotifyAboutExternalPermissionChanges, defaultIntegrationNotifyAboutExternalPermissionChanges),
 		Owner:                                client.UserEntitySchema{Id: utils.TrimPrefixSuffix(plan.OwnerID.ValueString())},
-		Readonly:                             plan.Readonly.ValueBool(),
+		Readonly:                             utils.BoolOrDefault(plan.Readonly, defaultIntegrationReadonly),
 		Workflow:                             client.IdParamsSchema{Id: workflowID},
 		PrerequisitePermissions:              prereqs,
 	}, diags
@@ -461,22 +461,25 @@ func ValidateVirtualApplicationConstraints(baseData BaseIntegrationResourceModel
 		return diags
 	}
 
-	if baseData.NotifyAboutExternalPermissionChanges.ValueBool() {
+	// Use the same default fallback as BuildCreateBodyFromPlan/BuildUpdateBodyFromPlan
+	// so that an attribute the user left unset is validated against the value that
+	// will actually be sent/kept, not against the zero value of a null/unknown Bool.
+	if utils.BoolOrDefault(baseData.NotifyAboutExternalPermissionChanges, defaultIntegrationNotifyAboutExternalPermissionChanges) {
 		diags.AddError("Client Error", "Virtual integrations cannot set notifyAboutExternalPermissions to true")
 	}
-	if baseData.AutoAssignRecommendedMaintainers.ValueBool() {
+	if utils.BoolOrDefault(baseData.AutoAssignRecommendedMaintainers, defaultIntegrationAutoAssignRecommendedMaintainers) {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceMaintainers to true")
 	}
-	if baseData.AutoAssignRecommendedOwners.ValueBool() {
+	if utils.BoolOrDefault(baseData.AutoAssignRecommendedOwners, defaultIntegrationAutoAssignRecommendedOwners) {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceOwner to true")
 	}
-	if baseData.Readonly.ValueBool() {
+	if utils.BoolOrDefault(baseData.Readonly, defaultIntegrationReadonly) {
 		diags.AddError("Client Error", "Virtual integrations cannot set readonly to true")
 	}
-	if !baseData.Requestable.ValueBool() {
+	if !utils.BoolOrDefault(baseData.Requestable, defaultIntegrationAllowRequests) {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestable to false")
 	}
-	if !baseData.RequestableByDefault.ValueBool() {
+	if !utils.BoolOrDefault(baseData.RequestableByDefault, defaultIntegrationAllowRequestsByDefault) {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestableByDefault to false")
 	}
 

@@ -187,7 +187,6 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 			"under the integration. (default: true)",
 		MarkdownDescription: "Controls whether a user can create requests for entitlements for resources " +
 			"under the integration. (default: true)",
-		Default: booldefault.StaticBool(defaultIntegrationAllowRequests),
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.UseStateForUnknown(),
 		},
