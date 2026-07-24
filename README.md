@@ -37,22 +37,24 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 
 The provider also exposes 17 data sources for looking up existing Entitle objects (use these instead of hardcoding UUIDs in your configuration):
 
-| Singular (lookup one)              | Plural (list / filter)      |
-|------------------------------------|-----------------------------|
-| `entitle_user`                     | `entitle_users`             |
-| `entitle_role`                     | `entitle_roles`             |
-| `entitle_resource`                 | `entitle_resources`         |
-| `entitle_workflow`                 | —                           |
-| `entitle_bundle`                   | —                           |
-| `entitle_policy`                   | —                           |
-| `entitle_integration`              | —                           |
-| `entitle_agent_token`              | —                           |
-| `entitle_access_request_forward`   | —                           |
-| `entitle_access_review_forward`    | —                           |
-| —                                  | `entitle_accounts`          |
-| —                                  | `entitle_applications`      |
-| —                                  | `entitle_directory_groups`  |
-| —                                  | `entitle_permissions`       |
+| Singular (lookup one)            | Plural (list / filter)      |
+|----------------------------------|-----------------------------|
+| `entitle_user`                   | `entitle_users`             |
+| `entitle_role`                   | `entitle_roles`             |
+| `entitle_resource`               | `entitle_resources`         |
+| `entitle_workflow`               | —                           |
+| `entitle_bundle`                 | —                           |
+| `entitle_policy`                 | —                           |
+| `entitle_integration`            | —                           |
+| `entitle_integration_bitbucket`  | —                           |
+| `entitle_integration_gitlab`     | —                           |
+| `entitle_agent_token`            | —                           |
+| `entitle_access_request_forward` | —                           |
+| `entitle_access_review_forward`  | —                           |
+| —                                | `entitle_accounts`          |
+| —                                | `entitle_applications`      |
+| —                                | `entitle_directory_groups`  |
+| —                                | `entitle_permissions`       |
 
 See the [Terraform Registry documentation](https://registry.terraform.io/providers/entitleio/entitle/latest/docs) for full schemas.
 
@@ -82,7 +84,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 
 ## Requirements
 
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.11
 - [Go](https://golang.org/doc/install) >= 1.24.3
 
 ## Building The Provider
