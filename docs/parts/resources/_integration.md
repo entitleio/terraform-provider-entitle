@@ -39,13 +39,9 @@ resource "entitle_integration" "slack_workspace" {
     name = "slack"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations       = [3600, 28800, 86400]
   allow_creating_accounts = true
@@ -69,13 +65,9 @@ resource "entitle_integration" "aws_production" {
     name = "aws"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations                    = [3600, 7200]
   allow_creating_accounts              = false   # Users must already exist in AWS
@@ -101,26 +93,18 @@ resource "entitle_integration" "github_org" {
     name = "github"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   maintainers = [
     {
       type = "user"
-      entity = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
-      }
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Security lead
     },
     {
       type = "group"
-      entity = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
-      }
+      id   = "7d080bfa-9143-11ee-b9d1-0242ac120004"  # DevOps team group
     }
   ]
 
@@ -152,17 +136,11 @@ resource "entitle_integration" "internal_postgres" {
     name = "postgresql"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
-  agent_token = {
-    name = entitle_agent_token.internal_db_agent.name
-  }
+  agent_token = entitle_agent_token.internal_db_agent.name
 
   allowed_durations       = [3600, 28800]
   allow_creating_accounts = false
@@ -185,20 +163,14 @@ resource "entitle_integration" "okta_admin" {
     name = "okta"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   prerequisite_permissions = [
     {
       default = true
-      role = {
-        id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
-      }
+      role_id = "7d080bfa-9143-11ee-b9d1-0242ac120003"  # Okta read-only access
     }
   ]
 
@@ -223,13 +195,9 @@ resource "entitle_integration" "legacy_erp" {
     name = "custom"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   readonly          = true   # Requests create manual tickets
   requestable       = true
