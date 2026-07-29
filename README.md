@@ -22,6 +22,8 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 ### Supported Resources
 * **Workflow** (`entitle_workflow`) — A Just-In-Time approval process: who approves, in what order, for how long. Assignable to integrations, resources, roles, and bundles.
 * **Integration** (`entitle_integration`) — A configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub org, or Slack workspace), including credentials and access settings.
+* **Integration: GitLab** (`entitle_integration_gitlab`) — A configured connection to a GitLab instance (SaaS or self-hosted), including domain and access token.
+* **Integration: Bitbucket** (`entitle_integration_bitbucket`) — A configured connection to a Bitbucket instance (Cloud or Server/Data Center), including credentials and access settings.
 * **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group). Use this for manual/virtual integrations where Entitle manages the resource lifecycle.
 * **Resource Synced** (`entitle_resource_synced`) — Adopts an existing resource that is automatically synchronized from an external integration (GCP, AWS, GitHub, Okta, etc.). Terraform manages its Entitle settings (owner, workflow, durations) without creating or deleting the underlying resource.
 * **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions. Use this for manual/virtual integrations where Entitle manages the role lifecycle.
@@ -46,8 +48,6 @@ The provider also exposes 17 data sources for looking up existing Entitle object
 | `entitle_bundle`                 | —                           |
 | `entitle_policy`                 | —                           |
 | `entitle_integration`            | —                           |
-| `entitle_integration_bitbucket`  | —                           |
-| `entitle_integration_gitlab`     | —                           |
 | `entitle_agent_token`            | —                           |
 | `entitle_access_request_forward` | —                           |
 | `entitle_access_review_forward`  | —                           |
