@@ -4,6 +4,7 @@ package workflows
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -1488,5 +1489,126 @@ func TestReconcileEntityOrder_ChannelAndGroupMixed(t *testing.T) {
 		if gotKey != wantKey {
 			t.Errorf("notified entity[%d]: got key %q, want %q", i, gotKey, wantKey)
 		}
+	}
+}
+
+// TestGetWorkflowsRules_OmittedListsSerializeToNull verifies that a rule which
+// omits in_groups / in_schedules is serialized with inGroups: null and
+// inSchedules: null rather than [].
+//
+// The platform reads an empty array as "the on-call condition is set, but no
+// specific groups are pinned" (the requester must be on call), and null as
+// "no on-call condition" - the "Any user" behaviour of the built-in Default
+// workflow. Because the provider always built these slices with
+// make([]T, 0, ...) they were never nil, so every Terraform-created workflow
+// was assigned the on-call condition and became non-requestable.
+func TestGetWorkflowsRules_OmittedListsSerializeToNull(t *testing.T) {
+	ctx := context.Background()
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(true),
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
+							{
+								Type:     types.StringValue("Automatic"),
+								User:     types.ObjectNull(utils.IdEmailModel{}.AttributeTypes()),
+								Group:    types.ObjectNull(utils.IdNameModel{}.AttributeTypes()),
+								Schedule: types.ObjectNull(utils.IdNameModel{}.AttributeTypes()),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+	if len(rules) != 1 {
+		t.Fatalf("expected 1 rule, got %d", len(rules))
+	}
+
+	if rules[0].InGroups != nil {
+		t.Errorf("expected InGroups to be nil, got %#v", rules[0].InGroups)
+	}
+	if rules[0].InSchedules != nil {
+		t.Errorf("expected InSchedules to be nil, got %#v", rules[0].InSchedules)
+	}
+
+	// The serialized payload is what actually matters to the API.
+	raw, err := json.Marshal(rules[0])
+	if err != nil {
+		t.Fatalf("failed to marshal rule: %v", err)
+	}
+
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatalf("failed to unmarshal rule payload: %v", err)
+	}
+
+	for _, field := range []string{"inGroups", "inSchedules"} {
+		got, ok := payload[field]
+		if !ok {
+			t.Errorf("expected %q to be present in the payload", field)
+			continue
+		}
+		if string(got) != "null" {
+			t.Errorf("expected %q to serialize to null, got %s", field, string(got))
+		}
+	}
+}
+
+// TestGetWorkflowsRules_PopulatedListsSerializeToArrays verifies the fix above
+// did not break the case where the config does provide in_groups /
+// in_schedules: those must still be sent as populated arrays.
+func TestGetWorkflowsRules_PopulatedListsSerializeToArrays(t *testing.T) {
+	ctx := context.Background()
+
+	const (
+		groupID    = "dddddddd-1111-2222-3333-444444444444"
+		scheduleID = "eeeeeeee-1111-2222-3333-444444444444"
+	)
+
+	planRules := []*workflowRulesModel{
+		{
+			SortOrder:     types.NumberValue(big.NewFloat(0)),
+			UnderDuration: types.NumberValue(big.NewFloat(3600)),
+			AnySchedule:   types.BoolValue(false),
+			InGroups: []*utils.IdNameModel{
+				{ID: types.StringValue(groupID), Name: types.StringNull()},
+			},
+			InSchedules: []*utils.IdNameModel{
+				{ID: types.StringValue(scheduleID), Name: types.StringNull()},
+			},
+			ApprovalFlow: &workflowRulesApprovalFlowModel{
+				Steps: []*workflowRulesApprovalFlowStepModel{
+					{
+						SortOrder: types.NumberValue(big.NewFloat(0)),
+						Operator:  types.StringValue("and"),
+					},
+				},
+			},
+		},
+	}
+
+	rules, diags := getWorkflowsRules(ctx, planRules)
+	if diags.HasError() {
+		t.Fatalf("getWorkflowsRules returned errors: %s", diags.Errors())
+	}
+
+	if len(rules[0].InGroups) != 1 || rules[0].InGroups[0].Id != groupID {
+		t.Errorf("expected InGroups to contain %q, got %#v", groupID, rules[0].InGroups)
+	}
+	if len(rules[0].InSchedules) != 1 || rules[0].InSchedules[0].Id != scheduleID {
+		t.Errorf("expected InSchedules to contain %q, got %#v", scheduleID, rules[0].InSchedules)
 	}
 }

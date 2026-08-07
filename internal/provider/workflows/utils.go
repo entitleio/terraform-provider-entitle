@@ -43,32 +43,46 @@ func getWorkflowsRules(
 			underDuration, _ = val.ValueBigFloat().Float32()
 		}
 
-		inGroups := make([]client.GroupEntitySchema, 0, len(rule.InGroups))
-		for _, group := range rule.InGroups {
-			if group.ID.IsNull() || group.ID.IsUnknown() {
-				continue
-			}
+		// Left nil when the config omits in_groups: a nil slice marshals to JSON
+		// null, while a non-nil empty slice marshals to []. The platform treats
+		// an empty list as "the on-call condition is set, but no groups are
+		// pinned" (i.e. the requester must be on call), whereas null means "no
+		// on-call condition at all" - the "Any user" behaviour of the built-in
+		// Default workflow. Sending [] for an omitted in_groups made every
+		// Terraform-created workflow non-requestable.
+		var inGroups []client.GroupEntitySchema
+		if len(rule.InGroups) > 0 {
+			inGroups = make([]client.GroupEntitySchema, 0, len(rule.InGroups))
+			for _, group := range rule.InGroups {
+				if group.ID.IsNull() || group.ID.IsUnknown() {
+					continue
+				}
 
-			inGroups = append(
-				inGroups,
-				client.GroupEntitySchema{
-					Id: utils.TrimPrefixSuffix(group.ID.String()),
-				},
-			)
+				inGroups = append(
+					inGroups,
+					client.GroupEntitySchema{
+						Id: utils.TrimPrefixSuffix(group.ID.String()),
+					},
+				)
+			}
 		}
 
-		inSchedules := make([]client.ScheduleEntitySchema, 0, len(rule.InSchedules))
-		for _, s := range rule.InSchedules {
-			if s.ID.IsNull() || s.ID.IsUnknown() {
-				continue
-			}
+		// Left nil for the same reason as inGroups above - see the comment there.
+		var inSchedules []client.ScheduleEntitySchema
+		if len(rule.InSchedules) > 0 {
+			inSchedules = make([]client.ScheduleEntitySchema, 0, len(rule.InSchedules))
+			for _, s := range rule.InSchedules {
+				if s.ID.IsNull() || s.ID.IsUnknown() {
+					continue
+				}
 
-			inSchedules = append(
-				inSchedules,
-				client.ScheduleEntitySchema{
-					Id: utils.TrimPrefixSuffix(s.ID.String()),
-				},
-			)
+				inSchedules = append(
+					inSchedules,
+					client.ScheduleEntitySchema{
+						Id: utils.TrimPrefixSuffix(s.ID.String()),
+					},
+				)
+			}
 		}
 
 		var planApprovalFlowSteps []*workflowRulesApprovalFlowStepModel
