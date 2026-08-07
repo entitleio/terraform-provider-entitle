@@ -591,8 +591,6 @@ func (r *ResourceResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a entitle resource resource")
 
 	// Save data into Terraform state

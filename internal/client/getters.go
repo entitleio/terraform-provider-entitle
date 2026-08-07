@@ -50,3 +50,10 @@ func (i IntegrationResourceListItemResponseSchema) GetExternalID() string {
 
 	return *i.ExternalId
 }
+
+func (w WorkflowsWebhookResponseSchema) GetID() uuid.UUID {
+	return w.Id
+}
+func (w WorkflowsWebhookResponseSchema) GetName() string {
+	return w.Name
+}

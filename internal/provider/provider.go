@@ -30,6 +30,7 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/roles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/users"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflowWebhooks"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflows"
 )
 
@@ -201,6 +202,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		roles.NewRoleResource,
 		roles.NewRoleSyncedResource,
 		workflows.NewWorkflowResource,
+		workflowWebhooks.NewWorkflowWebhookResource,
 	}
 }
 
@@ -224,6 +226,7 @@ func (p *EntitleProvider) DataSources(ctx context.Context) []func() datasource.D
 		users.NewUserDataSource,
 		users.NewUsersDataSource,
 		workflows.NewWorkflowDataSource,
+		workflowWebhooks.NewWorkflowWebhookDataSource,
 	}
 }
 

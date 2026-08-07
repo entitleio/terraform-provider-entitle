@@ -1813,6 +1813,16 @@ type GetUsersResponseSchema struct {
 	Result     []UserResultSchema       `json:"result"`
 }
 
+// GetWorkflowsWebhookResponseSchema defines model for GetWorkflowsWebhookResponseSchema.
+type GetWorkflowsWebhookResponseSchema struct {
+	Result WorkflowsWebhookResponseSchema `json:"result"`
+}
+
+// GetWorkflowsWebhooksResponseSchema defines model for GetWorkflowsWebhooksResponseSchema.
+type GetWorkflowsWebhooksResponseSchema struct {
+	Result []WorkflowsWebhookResponseSchema `json:"result"`
+}
+
 // GroupEntityResponseSchema defines model for GroupEntityResponseSchema.
 type GroupEntityResponseSchema struct {
 	Id   openapi_types.UUID `json:"id"`
@@ -2253,6 +2263,11 @@ type NotifiedEntityNullResponseSchema struct {
 	Type   EnumNotifiedEntityWithoutEntity `json:"type"`
 }
 
+// OkResponseSchema defines model for OkResponseSchema.
+type OkResponseSchema struct {
+	Ok bool `json:"ok"`
+}
+
 // PaginatedForwardResponseSchema defines model for PaginatedForwardResponseSchema.
 type PaginatedForwardResponseSchema struct {
 	Pagination PaginationResponseSchema `json:"pagination"`
@@ -2645,6 +2660,39 @@ type WorkflowUpdatedBodySchema struct {
 	Rules *[]WorkflowRuleSchema `json:"rules,omitempty"`
 }
 
+// WorkflowsWebhookCreateBodySchema defines model for WorkflowsWebhookCreateBodySchema.
+type WorkflowsWebhookCreateBodySchema struct {
+	// Headers HTTP headers to send with webhook
+	Headers *map[string]string `json:"headers"`
+
+	// Name Webhook name
+	Name string `json:"name"`
+
+	// Url Webhook URL (HTTPS only)
+	Url string `json:"url"`
+}
+
+// WorkflowsWebhookResponseSchema defines model for WorkflowsWebhookResponseSchema.
+type WorkflowsWebhookResponseSchema struct {
+	// Headers HTTP headers sent with the webhook request
+	Headers *map[string]string `json:"headers"`
+	Id      openapi_types.UUID `json:"id"`
+	Name    string             `json:"name"`
+	Url     string             `json:"url"`
+}
+
+// WorkflowsWebhookUpdateBodySchema defines model for WorkflowsWebhookUpdateBodySchema.
+type WorkflowsWebhookUpdateBodySchema struct {
+	// Headers HTTP headers to send with webhook
+	Headers *map[string]string `json:"headers"`
+
+	// Name Webhook name
+	Name *string `json:"name,omitempty"`
+
+	// Url Webhook URL (HTTPS only)
+	Url *string `json:"url,omitempty"`
+}
+
 // AccessRequestForwardsIndexParams defines parameters for AccessRequestForwardsIndex.
 type AccessRequestForwardsIndexParams struct {
 	Page    *float32 `form:"page,omitempty" json:"page,omitempty"`
@@ -2826,6 +2874,12 @@ type WorkflowsCreateJSONRequestBody = WorkflowCreateBodySchema
 
 // WorkflowsUpdateJSONRequestBody defines body for WorkflowsUpdate for application/json ContentType.
 type WorkflowsUpdateJSONRequestBody = WorkflowUpdatedBodySchema
+
+// WorkflowsWebhooksCreateJSONRequestBody defines body for WorkflowsWebhooksCreate for application/json ContentType.
+type WorkflowsWebhooksCreateJSONRequestBody = WorkflowsWebhookCreateBodySchema
+
+// WorkflowsWebhooksUpdateJSONRequestBody defines body for WorkflowsWebhooksUpdate for application/json ContentType.
+type WorkflowsWebhooksUpdateJSONRequestBody = WorkflowsWebhookUpdateBodySchema
 
 // AsAccessRequestBundleTargetCreateSchema returns the union data inside the AccessRequestCreateBodySchema_Target as a AccessRequestBundleTargetCreateSchema
 func (t AccessRequestCreateBodySchema_Target) AsAccessRequestBundleTargetCreateSchema() (AccessRequestBundleTargetCreateSchema, error) {
@@ -4771,6 +4825,25 @@ type ClientInterface interface {
 	WorkflowsUpdateWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	WorkflowsUpdate(ctx context.Context, id openapi_types.UUID, body WorkflowsUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WorkflowsWebhooksIndex request
+	WorkflowsWebhooksIndex(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WorkflowsWebhooksCreateWithBody request with any body
+	WorkflowsWebhooksCreateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	WorkflowsWebhooksCreate(ctx context.Context, body WorkflowsWebhooksCreateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WorkflowsWebhooksDestroy request
+	WorkflowsWebhooksDestroy(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WorkflowsWebhooksShow request
+	WorkflowsWebhooksShow(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WorkflowsWebhooksUpdateWithBody request with any body
+	WorkflowsWebhooksUpdateWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	WorkflowsWebhooksUpdate(ctx context.Context, id openapi_types.UUID, body WorkflowsWebhooksUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) AccessRequestForwardsIndex(ctx context.Context, params *AccessRequestForwardsIndexParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -5663,6 +5736,90 @@ func (c *Client) WorkflowsUpdateWithBody(ctx context.Context, id openapi_types.U
 
 func (c *Client) WorkflowsUpdate(ctx context.Context, id openapi_types.UUID, body WorkflowsUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewWorkflowsUpdateRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksIndex(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksIndexRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksCreateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksCreateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksCreate(ctx context.Context, body WorkflowsWebhooksCreateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksCreateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksDestroy(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksDestroyRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksShow(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksShowRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksUpdateWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksUpdateRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) WorkflowsWebhooksUpdate(ctx context.Context, id openapi_types.UUID, body WorkflowsWebhooksUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkflowsWebhooksUpdateRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8613,6 +8770,188 @@ func NewWorkflowsUpdateRequestWithBody(server string, id openapi_types.UUID, con
 	return req, nil
 }
 
+// NewWorkflowsWebhooksIndexRequest generates requests for WorkflowsWebhooksIndex
+func NewWorkflowsWebhooksIndexRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/workflowsWebhooks")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkflowsWebhooksCreateRequest calls the generic WorkflowsWebhooksCreate builder with application/json body
+func NewWorkflowsWebhooksCreateRequest(server string, body WorkflowsWebhooksCreateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWorkflowsWebhooksCreateRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewWorkflowsWebhooksCreateRequestWithBody generates requests for WorkflowsWebhooksCreate with any type of body
+func NewWorkflowsWebhooksCreateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/workflowsWebhooks")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWorkflowsWebhooksDestroyRequest generates requests for WorkflowsWebhooksDestroy
+func NewWorkflowsWebhooksDestroyRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/workflowsWebhooks/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkflowsWebhooksShowRequest generates requests for WorkflowsWebhooksShow
+func NewWorkflowsWebhooksShowRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/workflowsWebhooks/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkflowsWebhooksUpdateRequest calls the generic WorkflowsWebhooksUpdate builder with application/json body
+func NewWorkflowsWebhooksUpdateRequest(server string, id openapi_types.UUID, body WorkflowsWebhooksUpdateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWorkflowsWebhooksUpdateRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewWorkflowsWebhooksUpdateRequestWithBody generates requests for WorkflowsWebhooksUpdate with any type of body
+func NewWorkflowsWebhooksUpdateRequestWithBody(server string, id openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/workflowsWebhooks/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -8861,6 +9200,25 @@ type ClientWithResponsesInterface interface {
 	WorkflowsUpdateWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkflowsUpdateResponse, error)
 
 	WorkflowsUpdateWithResponse(ctx context.Context, id openapi_types.UUID, body WorkflowsUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkflowsUpdateResponse, error)
+
+	// WorkflowsWebhooksIndexWithResponse request
+	WorkflowsWebhooksIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksIndexResponse, error)
+
+	// WorkflowsWebhooksCreateWithBodyWithResponse request with any body
+	WorkflowsWebhooksCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksCreateResponse, error)
+
+	WorkflowsWebhooksCreateWithResponse(ctx context.Context, body WorkflowsWebhooksCreateJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksCreateResponse, error)
+
+	// WorkflowsWebhooksDestroyWithResponse request
+	WorkflowsWebhooksDestroyWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksDestroyResponse, error)
+
+	// WorkflowsWebhooksShowWithResponse request
+	WorkflowsWebhooksShowWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksShowResponse, error)
+
+	// WorkflowsWebhooksUpdateWithBodyWithResponse request with any body
+	WorkflowsWebhooksUpdateWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksUpdateResponse, error)
+
+	WorkflowsWebhooksUpdateWithResponse(ctx context.Context, id openapi_types.UUID, body WorkflowsWebhooksUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksUpdateResponse, error)
 }
 
 type AccessRequestForwardsIndexResponse struct {
@@ -10100,6 +10458,116 @@ func (r WorkflowsUpdateResponse) StatusCode() int {
 	return 0
 }
 
+type WorkflowsWebhooksIndexResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetWorkflowsWebhooksResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkflowsWebhooksIndexResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkflowsWebhooksIndexResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkflowsWebhooksCreateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetWorkflowsWebhookResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkflowsWebhooksCreateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkflowsWebhooksCreateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkflowsWebhooksDestroyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OkResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkflowsWebhooksDestroyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkflowsWebhooksDestroyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkflowsWebhooksShowResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetWorkflowsWebhookResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkflowsWebhooksShowResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkflowsWebhooksShowResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkflowsWebhooksUpdateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetWorkflowsWebhookResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkflowsWebhooksUpdateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkflowsWebhooksUpdateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // AccessRequestForwardsIndexWithResponse request returning *AccessRequestForwardsIndexResponse
 func (c *ClientWithResponses) AccessRequestForwardsIndexWithResponse(ctx context.Context, params *AccessRequestForwardsIndexParams, reqEditors ...RequestEditorFn) (*AccessRequestForwardsIndexResponse, error) {
 	rsp, err := c.AccessRequestForwardsIndex(ctx, params, reqEditors...)
@@ -10754,6 +11222,67 @@ func (c *ClientWithResponses) WorkflowsUpdateWithResponse(ctx context.Context, i
 		return nil, err
 	}
 	return ParseWorkflowsUpdateResponse(rsp)
+}
+
+// WorkflowsWebhooksIndexWithResponse request returning *WorkflowsWebhooksIndexResponse
+func (c *ClientWithResponses) WorkflowsWebhooksIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksIndexResponse, error) {
+	rsp, err := c.WorkflowsWebhooksIndex(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksIndexResponse(rsp)
+}
+
+// WorkflowsWebhooksCreateWithBodyWithResponse request with arbitrary body returning *WorkflowsWebhooksCreateResponse
+func (c *ClientWithResponses) WorkflowsWebhooksCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksCreateResponse, error) {
+	rsp, err := c.WorkflowsWebhooksCreateWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksCreateResponse(rsp)
+}
+
+func (c *ClientWithResponses) WorkflowsWebhooksCreateWithResponse(ctx context.Context, body WorkflowsWebhooksCreateJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksCreateResponse, error) {
+	rsp, err := c.WorkflowsWebhooksCreate(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksCreateResponse(rsp)
+}
+
+// WorkflowsWebhooksDestroyWithResponse request returning *WorkflowsWebhooksDestroyResponse
+func (c *ClientWithResponses) WorkflowsWebhooksDestroyWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksDestroyResponse, error) {
+	rsp, err := c.WorkflowsWebhooksDestroy(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksDestroyResponse(rsp)
+}
+
+// WorkflowsWebhooksShowWithResponse request returning *WorkflowsWebhooksShowResponse
+func (c *ClientWithResponses) WorkflowsWebhooksShowWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksShowResponse, error) {
+	rsp, err := c.WorkflowsWebhooksShow(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksShowResponse(rsp)
+}
+
+// WorkflowsWebhooksUpdateWithBodyWithResponse request with arbitrary body returning *WorkflowsWebhooksUpdateResponse
+func (c *ClientWithResponses) WorkflowsWebhooksUpdateWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksUpdateResponse, error) {
+	rsp, err := c.WorkflowsWebhooksUpdateWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksUpdateResponse(rsp)
+}
+
+func (c *ClientWithResponses) WorkflowsWebhooksUpdateWithResponse(ctx context.Context, id openapi_types.UUID, body WorkflowsWebhooksUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkflowsWebhooksUpdateResponse, error) {
+	rsp, err := c.WorkflowsWebhooksUpdate(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWorkflowsWebhooksUpdateResponse(rsp)
 }
 
 // ParseAccessRequestForwardsIndexResponse parses an HTTP response from a AccessRequestForwardsIndexWithResponse call
@@ -12237,6 +12766,136 @@ func ParseWorkflowsUpdateResponse(rsp *http.Response) (*WorkflowsUpdateResponse,
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest FullWorkflowResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkflowsWebhooksIndexResponse parses an HTTP response from a WorkflowsWebhooksIndexWithResponse call
+func ParseWorkflowsWebhooksIndexResponse(rsp *http.Response) (*WorkflowsWebhooksIndexResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkflowsWebhooksIndexResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetWorkflowsWebhooksResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkflowsWebhooksCreateResponse parses an HTTP response from a WorkflowsWebhooksCreateWithResponse call
+func ParseWorkflowsWebhooksCreateResponse(rsp *http.Response) (*WorkflowsWebhooksCreateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkflowsWebhooksCreateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetWorkflowsWebhookResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkflowsWebhooksDestroyResponse parses an HTTP response from a WorkflowsWebhooksDestroyWithResponse call
+func ParseWorkflowsWebhooksDestroyResponse(rsp *http.Response) (*WorkflowsWebhooksDestroyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkflowsWebhooksDestroyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OkResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkflowsWebhooksShowResponse parses an HTTP response from a WorkflowsWebhooksShowWithResponse call
+func ParseWorkflowsWebhooksShowResponse(rsp *http.Response) (*WorkflowsWebhooksShowResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkflowsWebhooksShowResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetWorkflowsWebhookResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkflowsWebhooksUpdateResponse parses an HTTP response from a WorkflowsWebhooksUpdateWithResponse call
+func ParseWorkflowsWebhooksUpdateResponse(rsp *http.Response) (*WorkflowsWebhooksUpdateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkflowsWebhooksUpdateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetWorkflowsWebhookResponseSchema
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

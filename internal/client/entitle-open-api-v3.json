@@ -2230,6 +2230,196 @@
         ]
       }
     },
+    "/public/v1/workflowsWebhooks": {
+      "get": {
+        "operationId": "WorkflowsWebhooks_index",
+        "summary": "List all workflow webhooks",
+        "description": "Get a list of all workflow webhooks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWorkflowsWebhooksResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows Webhooks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "WorkflowsWebhooks_create",
+        "summary": "Create workflow webhook",
+        "description": "Create a new workflow webhook",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowsWebhookCreateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWorkflowsWebhookResponseSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Workflows Webhooks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/public/v1/workflowsWebhooks/{id}": {
+      "get": {
+        "operationId": "WorkflowsWebhooks_show",
+        "summary": "Get workflow webhook by ID",
+        "description": "Get a single workflow webhook by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWorkflowsWebhookResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows Webhooks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "WorkflowsWebhooks_update",
+        "summary": "Update workflow webhook",
+        "description": "Update an existing workflow webhook",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowsWebhookUpdateBodySchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWorkflowsWebhookResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows Webhooks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "WorkflowsWebhooks_destroy",
+        "summary": "Delete workflow webhook",
+        "description": "Delete a workflow webhook by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workflows Webhooks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/directoryGroups": {
       "get": {
         "operationId": "DirectoryGroups_index",
@@ -5611,6 +5801,129 @@
         }
       },
       "WorkflowDestroyResponseSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "WorkflowsWebhookResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "HTTP headers sent with the webhook request",
+            "example": {
+              "Authorization": "Bearer token"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "name"
+        ]
+      },
+      "GetWorkflowsWebhooksResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowsWebhookResponseSchema"
+            }
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GetWorkflowsWebhookResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/WorkflowsWebhookResponseSchema"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "WorkflowsWebhookCreateBodySchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Webhook URL (HTTPS only)",
+            "example": "https://example.com/webhook"
+          },
+          "name": {
+            "type": "string",
+            "description": "Webhook name",
+            "example": "Production Workflow Webhook"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "HTTP headers to send with webhook",
+            "example": {
+              "Authorization": "Bearer token"
+            }
+          }
+        },
+        "required": [
+          "url",
+          "name"
+        ]
+      },
+      "WorkflowsWebhookUpdateBodySchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Webhook URL (HTTPS only)",
+            "example": "https://example.com/webhook"
+          },
+          "name": {
+            "type": "string",
+            "description": "Webhook name",
+            "example": "Production Workflow Webhook"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "HTTP headers to send with webhook",
+            "example": {
+              "Authorization": "Bearer token"
+            }
+          }
+        }
+      },
+      "OkResponseSchema": {
         "type": "object",
         "properties": {
           "ok": {

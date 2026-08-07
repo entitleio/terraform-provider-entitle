@@ -43,6 +43,8 @@ var (
 	UsersDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_workflow.md
 	WorkflowDataSourceMarkdownDescription string
+	//go:embed parts/data-sources/_workflow_webhook.md
+	WorkflowWebhookDataSourceMarkdownDescription string
 )
 
 // List of resources.
@@ -73,4 +75,6 @@ var (
 	RoleSyncedResourceMarkdownDescription string
 	//go:embed parts/resources/_workflow.md
 	WorkflowResourceMarkdownDescription string
+	//go:embed parts/resources/_workflow_webhook.md
+	WorkflowWebhookResourceMarkdownDescription string
 )

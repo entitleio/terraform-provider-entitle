@@ -1,0 +1,133 @@
+An Entitle Workflow Webhook is an HTTPS endpoint that Entitle calls as part of an approval workflow. Webhooks let you push approval activity into systems Entitle does not integrate with natively — an internal audit service, a custom ChatOps bot, an ITSM queue, or a serverless function that applies your own business logic.
+
+Once created, a webhook can be referenced from an approval workflow step as a notified entity, so the endpoint is called whenever that step is reached.
+
+## Key Concepts
+
+- **URL**: The HTTPS endpoint Entitle sends the request to. Plain `http` endpoints are rejected by the API
+- **Headers**: Optional HTTP headers sent with every request, typically used to authenticate Entitle against your endpoint
+- **Reuse**: A single webhook can be referenced by many approval workflows and many steps within them
+
+## When to Use Workflow Webhooks
+
+- Notifying an external approval or audit system when an access request reaches a given step
+- Triggering custom automation (for example a Lambda or Cloud Function) on approval activity
+- Forwarding approval events into an ITSM or ticketing platform that has no native Entitle integration
+- Recording approval activity in your own data warehouse or SIEM
+
+## Example Usage
+
+### Basic Workflow Webhook
+
+```terraform
+resource "entitle_workflow_webhook" "audit" {
+  name = "audit-service"
+  url  = "https://hooks.example.com/entitle/audit"
+}
+```
+
+### Webhook With Authentication Headers
+
+Header values are treated as sensitive and will not be shown in plan output:
+
+```terraform
+resource "entitle_workflow_webhook" "secured" {
+  name = "secured-endpoint"
+  url  = "https://hooks.example.com/entitle/approvals"
+
+  headers = {
+    Authorization = "Bearer ${var.webhook_token}"
+    "X-Env"       = "production"
+  }
+}
+```
+
+### Referencing a Webhook From an Approval Workflow
+
+Use the webhook's `id` as a notified entity on an approval step:
+
+```terraform
+resource "entitle_workflow_webhook" "approvals" {
+  name = "approvals-bot"
+  url  = "https://hooks.example.com/entitle/approvals"
+}
+
+resource "entitle_workflow" "sensitive_access" {
+  name = "Sensitive Access"
+
+  rules = [{
+    sort_order = 1
+
+    approval_flow = {
+      steps = [{
+        sort_order = 1
+        operator   = "or"
+
+        approval_entities = [{
+          type = "Manager"
+        }]
+
+        notified_entities = [{
+          type = "Webhook"
+          webhook = {
+            id = entitle_workflow_webhook.approvals.id
+          }
+        }]
+      }]
+    }
+
+    in_groups    = []
+    in_schedules = []
+  }]
+}
+```
+
+### Webhook Secret Sourced From a Secrets Manager
+
+```terraform
+data "aws_secretsmanager_secret_version" "webhook" {
+  secret_id = "entitle/workflow-webhook"
+}
+
+resource "entitle_workflow_webhook" "from_secrets_manager" {
+  name = "approvals-secured"
+  url  = "https://hooks.example.com/entitle/approvals"
+
+  headers = {
+    Authorization = "Bearer ${data.aws_secretsmanager_secret_version.webhook.secret_string}"
+  }
+}
+```
+
+## Import
+
+Existing workflow webhooks can be imported using their UUID:
+
+```shell
+terraform import entitle_workflow_webhook.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+```
+
+### Finding the Workflow Webhook ID
+
+1. Log in to the Entitle UI
+2. Navigate to **Org Settings** → **Webhooks**
+3. Locate the webhook you want to import — the UUID is visible in the browser URL
+
+Alternatively, look the webhook up by name with the `entitle_workflow_webhook` data source.
+
+## Notes and Best Practices
+
+### Transport Security
+
+- Only `https` URLs are accepted; the provider rejects other schemes at plan time so you get an error before an API call is made
+- Prefer a dedicated, unguessable path for the endpoint and verify the `Authorization` header on the receiving side
+
+### Header Handling
+
+- `headers` is marked sensitive, so values are redacted from plan and apply output. They are still stored in Terraform state — protect your state backend accordingly
+- Source secrets from a secrets manager or a sensitive variable rather than committing them
+- Omitting `headers` sends no headers at all; setting it to `{}` is treated as an explicit empty set
+
+### Deleting Webhooks
+
+- Remove references to the webhook from all approval workflows before destroying it, otherwise workflows may be left pointing at a webhook that no longer exists
