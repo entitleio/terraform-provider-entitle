@@ -70,7 +70,7 @@ resource "entitle_workflow" "manager_approval" {
         operator   = "or"
 
         approval_entities = [{
-          type = "Manager"
+          type = "DirectManager"
         }]
 
         notified_entities = []
@@ -110,7 +110,7 @@ resource "entitle_workflow" "production_access" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Manager"
+            type = "DirectManager"
           }]
 
           notified_entities = []
@@ -121,7 +121,7 @@ resource "entitle_workflow" "production_access" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security_team.directory_groups[0].id
           }]
 
@@ -168,11 +168,11 @@ resource "entitle_workflow" "flexible_approval" {
 
         approval_entities = [
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           },
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.devops.directory_groups[0].id
           }
         ]
@@ -220,11 +220,11 @@ resource "entitle_workflow" "dual_approval_parallel" {
 
         approval_entities = [
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           },
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.compliance.directory_groups[0].id
           }
         ]
@@ -272,7 +272,7 @@ resource "entitle_workflow" "dual_approval_sequential" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
@@ -283,7 +283,7 @@ resource "entitle_workflow" "dual_approval_sequential" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.compliance.directory_groups[0].id
           }]
 
@@ -332,7 +332,7 @@ resource "entitle_workflow" "complex_approval" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Manager"
+            type = "DirectManager"
           }]
 
           notified_entities = []
@@ -344,11 +344,11 @@ resource "entitle_workflow" "complex_approval" {
 
           approval_entities = [
             {
-              type = "Group"
+              type = "DirectoryGroup"
               id   = data.entitle_directory_groups.security.directory_groups[0].id
             },
             {
-              type = "Group"
+              type = "DirectoryGroup"
               id   = data.entitle_directory_groups.compliance.directory_groups[0].id
             }
           ]
@@ -414,7 +414,7 @@ resource "entitle_workflow" "duration_based" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Manager"
+            type = "DirectManager"
           }]
 
           notified_entities = []
@@ -436,7 +436,7 @@ resource "entitle_workflow" "duration_based" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
@@ -507,7 +507,7 @@ resource "entitle_workflow" "schedule_based" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
@@ -580,7 +580,7 @@ resource "entitle_workflow" "group_based" {
           operator   = "or"
 
           approval_entities = [{
-            type = "Manager"
+            type = "DirectManager"
           }]
 
           notified_entities = []
@@ -691,7 +691,7 @@ resource "entitle_workflow" "with_notifications" {
         operator   = "or"
 
         approval_entities = [{
-          type = "Manager"
+          type = "DirectManager"
         }]
 
         # These people will be notified but don't need to approve
@@ -701,7 +701,7 @@ resource "entitle_workflow" "with_notifications" {
             id   = data.entitle_user.ciso.id
           },
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.security_team.directory_groups[0].id
           }
         ]
@@ -741,10 +741,10 @@ resource "entitle_workflow" "manager_with_fallback" {
 
         approval_entities = [
           {
-            type = "Manager"
+            type = "DirectManager"
           },
           {
-            type = "Group"
+            type = "DirectoryGroup"
             id   = data.entitle_directory_groups.team_leads.directory_groups[0].id
           }
         ]
@@ -771,80 +771,6 @@ A rule matches an access request when **ALL** of the following conditions are tr
 2. The requester is in one of the groups specified in `in_groups` (or `in_groups` is empty)
 3. The request time matches one of the schedules in `in_schedules` (or `any_schedule` is true)
 
-### Rule Attributes
-
-- `sort_order` (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
-TODO:
-- `under_duration` (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
-    - Example: `3600` = 1 hour, `7200` = 2 hours, `86400` = 24 hours
-    - Use a high value (e.g., `999999999`) for a catch-all rule
-
-- `any_schedule` (Required, Boolean) If `true`, this rule applies at any time regardless of schedule. If `false`, the rule only applies during the schedules specified in `in_schedules`.
-    - **Note**: Set to `true` if not using schedule-based rules
-    - Cannot be `true` if `in_schedules` is not empty
-
-- `in_schedules` (Required, List of Strings) List of schedule IDs during which this rule applies. Leave empty (`[]`) if `any_schedule` is `true`.
-    - Schedules define time windows (e.g., "Business Hours", "Weekends")
-    - Schedule IDs are UUIDs — obtain them from the Entitle UI under **Settings → Schedules**, or hardcode them as `locals`
-    - If multiple schedule IDs are provided, the rule applies if the current time matches ANY of the schedules (OR logic)
-
-- `in_groups` (Required, List of Strings) List of group IDs for which this rule applies. If empty (`[]`), the rule applies to all users.
-    - Use this to create different approval flows for different teams
-    - Obtain group IDs from the `entitle_directory_groups` data source
-    - **Logic**: User must be in at least ONE of the listed groups (OR logic)
-
-- `approval_flow` (Required, Object) Defines the approval process for requests matching this rule. See [Approval Flow](#approval-flow) below.
-
-## Approval Flow
-
-The `approval_flow` object defines the sequence of approval steps required.
-
-### Approval Flow Attributes
-
-- `steps` (Required, List of Objects) Sequential list of approval steps. Requests must be approved at each step in order (by `sort_order`) before access is granted. See [Approval Steps](#approval-steps) below.
-
-## Approval Steps
-
-Each step represents a stage in the approval process. Steps are executed sequentially based on `sort_order`.
-
-### Approval Step Attributes
-
-- `sort_order` (Required, Integer) The order in which this step is executed. Lower numbers execute first. Must be unique within the approval flow.
-
-- `operator` (Required, String) Defines how multiple `approval_entities` within this step are evaluated:
-    - `"or"` - **Any ONE** of the approval entities can approve (at least one must approve to proceed)
-    - `"and"` - **ALL** of the approval entities must approve (every entity must approve to proceed)
-
-  **Examples:**
-
-  **Using "or"**: Any member of Security OR DevOps can approve
-  ```terraform
-  {
-    operator = "or"
-    approval_entities = [
-      { type = "Group", id = security_group_id },
-      { type = "Group", id = devops_group_id }
-    ]
-  }
-  ```
-
-  **Using "and"**: Both Security AND Compliance must approve
-  ```terraform
-  {
-    operator = "and"
-    approval_entities = [
-      { type = "Group", id = security_group_id },
-      { type = "Group", id = compliance_group_id }
-    ]
-  }
-  ```
-
-- `approval_entities` (Required, List of Objects) List of entities (users, groups, etc.) who can approve at this step. See [Approval Entities](#approval-entities) below.
-    - With `operator = "or"`: At least ONE entity must approve
-    - With `operator = "and"`: ALL entities must approve
-
-- `notified_entities` (Required, List of Objects) List of entities who will be notified when a request reaches this step, but are not required to approve. Same structure as `approval_entities`. Can be empty (`[]`).
-
 ### Understanding Steps vs Operators
 
 There are two ways to require multiple approvals:
@@ -870,8 +796,8 @@ Use when multiple approvers must approve, but order doesn't matter:
 steps = [{
   operator = "and"
   approval_entities = [
-    { type = "Group", id = security_id },
-    { type = "Group", id = compliance_id }
+    { type = "DirectoryGroup", id = security_id },
+    { type = "DirectoryGroup", id = compliance_id }
   ]
 }]
 ```
@@ -889,50 +815,23 @@ steps = [
     # Step 1: Manager must approve first
     sort_order = 1
     operator = "or"
-    approval_entities = [{ type = "Manager" }]
+    approval_entities = [{ type = "DirectManager" }]
   },
   {
     # Step 2: Then Security AND Compliance (parallel)
     sort_order = 2
     operator = "and"
     approval_entities = [
-      { type = "Group", id = security_id },
-      { type = "Group", id = compliance_id }
+      { type = "DirectoryGroup", id = security_id },
+      { type = "DirectoryGroup", id = compliance_id }
     ]
   }
 ]
 ```
 
-## Approval Entities
-
-Each approval entity represents someone who can approve (or be notified about) an access request.
-
-### Approval Entity Attributes
-
-- `type` (Required, String) The type of approval entity. Valid values:
-    - `"Automatic"` — Access is automatically approved without human intervention
-    - `"Manager"` — The requester's direct manager must approve
-    - `"ResourceOwner"` — The owner of the resource being accessed must approve
-    - `"Group"` — Any member of a specific IdP group can approve (requires `id`)
-    - `"User"` — A specific named user must approve (requires `id`)
-    - `"SlackChannel"` — A Slack channel is notified and any member can approve (requires `channel.id`)
-    - `"TeamsChannel"` — A Microsoft Teams channel is notified and any member can approve (requires `channel.id`)
-    - `"Webhook"` — An external webhook handles the approval decision (requires `webhook.id`)
-
-- `id` (Optional, String) **Required when `type` is `"Group"` or `"User"`.** The unique identifier of the group or user.
-    - Obtain user IDs from the `entitle_user` data source
-    - Obtain group IDs from the `entitle_directory_groups` data source
-    - Must be omitted for types: `"Automatic"`, `"Manager"`, `"ResourceOwner"`, `"SlackChannel"`, `"TeamsChannel"`, `"Webhook"`
-
-- `channel` (Optional, Object) **Required when `type` is `"SlackChannel"` or `"TeamsChannel"`.** The channel to notify.
-    - `id` (Required, String) The unique identifier of the Slack or Teams channel configured in Entitle.
-
-- `webhook` (Optional, Object) **Required when `type` is `"Webhook"`.** The webhook endpoint to invoke.
-    - `id` (Required, String) The unique identifier of the webhook configured in Entitle.
-
 ### Approval Entity Behavior
 
-**Manager Type:**
+**DirectManager Type:**
 - Requires the requester to have a manager assigned in Entitle
 - **If the requester has no manager assigned, the access request will fail**
 - Best Practice: Ensure all users who will request access have managers assigned
@@ -943,7 +842,7 @@ Each approval entity represents someone who can approve (or be notified about) a
 - **All resources/integrations in Entitle must have an owner assigned**
 - The resource owner will be notified and must approve the request
 
-**Group Type:**
+**DirectoryGroup Type:**
 - **Minimum 1 member of the group must approve**
 - Any single member of the group can approve (not all members required)
 - If using `operator = "and"` with multiple groups, one member from each group must approve
@@ -970,10 +869,10 @@ You can combine different entity types in the same step:
   
   approval_entities = [
     {
-      type = "Manager"
+      type = "DirectManager"
     },
     {
-      type = "Group"
+      type = "DirectoryGroup"
       id   = data.entitle_directory_groups.security.directory_groups[0].id
     },
     {
@@ -1120,7 +1019,7 @@ steps = [
 
 ### Group Approval Behavior
 
-When using `type = "Group"`:
+When using `type = "DirectoryGroup"`:
 - **With operator = "or"**: Any ONE member of any listed group can approve
 - **With operator = "and"**: Any ONE member of each listed group must approve
 
@@ -1129,8 +1028,8 @@ Example:
 {
   operator = "and"
   approval_entities = [
-    { type = "Group", id = security_group },    # Any security member
-    { type = "Group", id = compliance_group }   # AND any compliance member
+    { type = "DirectoryGroup", id = security_group },    # Any security member
+    { type = "DirectoryGroup", id = compliance_group }   # AND any compliance member
   ]
 }
 ```
@@ -1186,7 +1085,7 @@ rules = [
     sort_order = 2
     under_duration = 10800  # 1-3h: Manager
     approval_flow = {
-      steps = [{ operator = "or", approval_entities = [{ type = "Manager" }] }]
+      steps = [{ operator = "or", approval_entities = [{ type = "DirectManager" }] }]
     }
   },
   {
@@ -1194,8 +1093,8 @@ rules = [
     under_duration = -1  # >3h: Manager + Security (sequential)
     approval_flow = {
       steps = [
-        { sort_order = 1, operator = "or", approval_entities = [{ type = "Manager" }] },
-        { sort_order = 2, operator = "or", approval_entities = [{ type = "Group", id = security_id }] }
+        { sort_order = 1, operator = "or", approval_entities = [{ type = "DirectManager" }] },
+        { sort_order = 2, operator = "or", approval_entities = [{ type = "DirectoryGroup", id = security_id }] }
       ]
     }
   }
@@ -1211,8 +1110,8 @@ approval_flow = {
   steps = [{
     operator = "and"
     approval_entities = [
-      { type = "Group", id = security_id },
-      { type = "Group", id = compliance_id }
+      { type = "DirectoryGroup", id = security_id },
+      { type = "DirectoryGroup", id = compliance_id }
     ]
   }]
 }
@@ -1225,9 +1124,9 @@ Each level must approve in order:
 ```terraform
 approval_flow = {
   steps = [
-    { sort_order = 1, operator = "or", approval_entities = [{ type = "Manager" }] },
-    { sort_order = 2, operator = "or", approval_entities = [{ type = "Group", id = team_lead_id }] },
-    { sort_order = 3, operator = "or", approval_entities = [{ type = "Group", id = director_id }] }
+    { sort_order = 1, operator = "or", approval_entities = [{ type = "DirectManager" }] },
+    { sort_order = 2, operator = "or", approval_entities = [{ type = "DirectoryGroup", id = team_lead_id }] },
+    { sort_order = 3, operator = "or", approval_entities = [{ type = "DirectoryGroup", id = director_id }] }
   ]
 }
 ```
@@ -1241,15 +1140,15 @@ Normal approval OR automatic escalation to security:
 steps = [{
   operator = "or"
   approval_entities = [
-    { type = "Manager" },
-    { type = "Group", id = security_id }
+    { type = "DirectManager" },
+    { type = "DirectoryGroup", id = security_id }
   ]
 }]
 
 # Longer duration: Manager THEN Security
 steps = [
-  { sort_order = 1, operator = "or", approval_entities = [{ type = "Manager" }] },
-  { sort_order = 2, operator = "or", approval_entities = [{ type = "Group", id = security_id }] }
+  { sort_order = 1, operator = "or", approval_entities = [{ type = "DirectManager" }] },
+  { sort_order = 2, operator = "or", approval_entities = [{ type = "DirectoryGroup", id = security_id }] }
 ]
 ```
 
@@ -1267,7 +1166,7 @@ rules = [
   {
     # After hours: Security approval required
     any_schedule = true
-    approval_flow = { steps = [{ approval_entities = [{ type = "Group", id = security_id }] }] }
+    approval_flow = { steps = [{ approval_entities = [{ type = "DirectoryGroup", id = security_id }] }] }
   }
 ]
 ```
@@ -1286,15 +1185,15 @@ rules = [
   {
     # Contractors: Manager approval
     in_groups = [contractors_id]
-    approval_flow = { steps = [{ approval_entities = [{ type = "Manager" }] }] }
+    approval_flow = { steps = [{ approval_entities = [{ type = "DirectManager" }] }] }
   },
   {
     # External: Manager + Security approval
     in_groups = [external_id]
     approval_flow = {
       steps = [
-        { sort_order = 1, approval_entities = [{ type = "Manager" }] },
-        { sort_order = 2, approval_entities = [{ type = "Group", id = security_id }] }
+        { sort_order = 1, approval_entities = [{ type = "DirectManager" }] },
+        { sort_order = 2, approval_entities = [{ type = "DirectoryGroup", id = security_id }] }
       ]
     }
   }
@@ -1312,8 +1211,8 @@ approval_flow = {
     approval_entities = [{ type = "Automatic" }]
     notified_entities = [
       { type = "User", id = ciso_id },
-      { type = "Group", id = security_team_id },
-      { type = "Group", id = compliance_team_id }
+      { type = "DirectoryGroup", id = security_team_id },
+      { type = "DirectoryGroup", id = compliance_team_id }
     ]
   }]
 }
@@ -1321,7 +1220,7 @@ approval_flow = {
 
 ## Manager Assignment Best Practices
 
-Since workflows using `type = "Manager"` require users to have managers assigned:
+Since workflows using `type = "DirectManager"` require users to have managers assigned:
 
 ### Prevention
 
@@ -1353,7 +1252,7 @@ Since workflows using `type = "Manager"` require users to have managers assigned
        
        approval_flow = {
          steps = [{
-           approval_entities = [{ type = "Manager" }]
+           approval_entities = [{ type = "DirectManager" }]
          }]
        }
      }]
@@ -1368,7 +1267,7 @@ Since workflows using `type = "Manager"` require users to have managers assigned
        approval_flow = {
          steps = [{
            approval_entities = [{
-             type = "Group"
+             type = "DirectoryGroup"
              id   = data.entitle_directory_groups.team_leads.directory_groups[0].id
            }]
          }]
@@ -1382,7 +1281,7 @@ Since workflows using `type = "Manager"` require users to have managers assigned
 
    ```terraform
    approval_entities = [
-     { type = "Manager" },
-     { type = "Group", id = default_approvers_id }
+     { type = "DirectManager" },
+     { type = "DirectoryGroup", id = default_approvers_id }
    ]
    ```

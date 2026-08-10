@@ -189,6 +189,23 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Type of notified entity",
 															MarkdownDescription: "Type of notified entity",
+															Validators: []validator.String{
+																stringvalidator.OneOf(
+																	string(client.OnCallIntegrationSchedule),
+																	string(client.DirectoryGroup),
+																	string(client.SlackChannel),
+																	string(client.TeamsChannel),
+																	string(client.EnumApprovalEntityUserUserUser),
+																	string(client.EnumApprovalEntityWithoutEntityAutomatic),
+																	string(client.EnumApprovalEntityWithoutEntityDirectManager),
+																	string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
+																	string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
+																	string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
+																	string(client.EnumApprovalEntityWithoutEntityResourceOwner),
+																	string(client.EnumApprovalEntityWithoutEntityTeamMember),
+																	"Webhook",
+																),
+															},
 														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
@@ -287,7 +304,23 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Optional:            true,
 															Description:         "Type of approval entity.",
 															MarkdownDescription: "Type of approval entity.",
-														},
+															Validators: []validator.String{
+																stringvalidator.OneOf(
+																	string(client.OnCallIntegrationSchedule),
+																	string(client.DirectoryGroup),
+																	string(client.SlackChannel),
+																	string(client.TeamsChannel),
+																	string(client.EnumApprovalEntityUserUserUser),
+																	string(client.EnumApprovalEntityWithoutEntityAutomatic),
+																	string(client.EnumApprovalEntityWithoutEntityDirectManager),
+																	string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
+																	string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
+																	string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
+																	string(client.EnumApprovalEntityWithoutEntityResourceOwner),
+																	string(client.EnumApprovalEntityWithoutEntityTeamMember),
+																	"Webhook",
+																),
+															}},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{

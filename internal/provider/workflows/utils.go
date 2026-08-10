@@ -93,7 +93,7 @@ func getWorkflowsRules(
 					}
 
 					switch entity.Type.ValueString() {
-					case "schedule", string(client.OnCallIntegrationSchedule):
+					case string(client.OnCallIntegrationSchedule):
 						if entity.Schedule.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -151,7 +151,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case "group", string(client.DirectoryGroup):
+					case string(client.DirectoryGroup):
 						if entity.Group.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -180,7 +180,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case "webhook", "Webhook":
+					case "Webhook":
 						if entity.Webhook.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -378,7 +378,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-					case "schedule", string(client.OnCallIntegrationSchedule):
+					case string(client.OnCallIntegrationSchedule):
 						if entity.Schedule.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -413,7 +413,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-					case "webhook", "Webhook":
+					case "Webhook":
 						if entity.Webhook.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -773,15 +773,6 @@ func convertWebhookToNotifiedFlowSchema(webhook *utils.IdNameModel) (client.Appr
 // by its type and entity ID, used for matching entities between plan and API response.
 func entitySortKey(entity *workflowRulesApprovalFlowStepApprovalNotifiedModel) string {
 	t := strings.ToLower(entity.Type.ValueString())
-	// Normalize known type aliases to the canonical API types so keys match between
-	// plan (which may use "group"/"schedule") and API responses (which use
-	// "directory_group"/"on_call_integration_schedule").
-	switch t {
-	case "group":
-		t = "directory_group"
-	case "schedule":
-		t = "on_call_integration_schedule"
-	}
 	id := ""
 
 	if !entity.User.IsNull() && !entity.User.IsUnknown() {
