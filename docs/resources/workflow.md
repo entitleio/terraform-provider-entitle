@@ -2663,12 +2663,15 @@ Optional:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities`
 
+Required:
+
+- `type` (String) Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
+
 Optional:
 
 - `channel` (Attributes) Slack or Teams channel for this step. Use with `type = "SlackChannel"` or `type = "TeamsChannel"`. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--channel))
 - `group` (Attributes) Represents a group whose members are responsible for approving the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--schedule))
-- `type` (String) Type of approval entity.
 - `user` (Attributes) Represents an individual user who is required to approve the permission request at this step. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--user))
 - `webhook` (Attributes) Webhook to be invoked for approval. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--approval_entities--webhook))
 
@@ -2732,12 +2735,15 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities`
 
+Required:
+
+- `type` (String) Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
+
 Optional:
 
 - `channel` (Attributes) Slack or Teams channel for this step. Use with `type = "SlackChannel"` or `type = "TeamsChannel"`. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--channel))
 - `group` (Attributes) Represents a user group whose members will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
-- `type` (String) Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
 - `user` (Attributes) Represents an individual user who will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
 - `webhook` (Attributes) Webhook to be invoked for notification. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
 
