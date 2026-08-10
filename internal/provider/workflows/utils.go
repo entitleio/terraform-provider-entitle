@@ -88,10 +88,6 @@ func getWorkflowsRules(
 			approvalEntities := make([]client.ApprovalFlowSchema_ApprovalEntities_Item, 0, len(step.ApprovalEntities))
 			if len(step.ApprovalEntities) > 0 {
 				for _, entity := range step.ApprovalEntities {
-					if entity.Type.IsNull() || entity.Type.IsUnknown() {
-						continue
-					}
-
 					switch entity.Type.ValueString() {
 					case string(client.OnCallIntegrationSchedule):
 						if entity.Schedule.IsNull() {

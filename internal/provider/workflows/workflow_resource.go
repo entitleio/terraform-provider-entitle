@@ -112,6 +112,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							PlanModifiers: []planmodifier.Number{
 								numberplanmodifier.UseStateForUnknown(),
 							},
+							Validators: []validator.Number{
+								validators.DurationValidator(),
+							},
 						},
 						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
@@ -301,8 +304,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
 															Required:            true,
-															Description:         "Type of approval entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
-															MarkdownDescription: "Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
+															Description:         "Type of approval entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, Automatic, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
+															MarkdownDescription: "Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `Automatic`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
 															Validators: []validator.String{
 																stringvalidator.OneOf(
 																	string(client.OnCallIntegrationSchedule),
@@ -319,7 +322,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 																	string(client.EnumApprovalEntityWithoutEntityTeamMember),
 																	"Webhook",
 																),
-															}},
+															},
+														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
