@@ -921,7 +921,7 @@ func TestReconcileEntityOrder_TypeCasingMismatch(t *testing.T) {
 						SortOrder: types.NumberValue(big.NewFloat(0)),
 						Operator:  types.StringValue("and"),
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
-							makeWebhookWithType("webhook", webhookID, "My Hook"),
+							makeWebhookWithType("Webhook", webhookID, "My Hook"),
 							makeGroupEntity(t, groupID, "Group"),
 						},
 					},
