@@ -2665,7 +2665,7 @@ Optional:
 
 Required:
 
-- `type` (String) Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
+- `type` (String) Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `Automatic`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
 
 Optional:
 
