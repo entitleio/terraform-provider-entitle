@@ -56,7 +56,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 10800 # 3 hours
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -80,7 +80,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 21600 # 6 hours
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -110,7 +110,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [
@@ -161,7 +161,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -209,7 +209,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -257,7 +257,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [
@@ -310,7 +310,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [
@@ -366,7 +366,7 @@ description: |-
         # Rule 1: Short duration (up to 1 hour) - auto approve
         sort_order     = 1
         under_duration = 3600 # 1 hour
-        any_schedule   = true
+        any_schedule   = false
   
         approval_flow = {
           steps = [{
@@ -383,7 +383,7 @@ description: |-
         # Rule 2: Longer duration (1-6 hours) - requires manager
         sort_order     = 2
         under_duration = 21600 # 6 hours
-        any_schedule   = true
+        any_schedule   = false
   
         approval_flow = {
           steps = [{
@@ -400,7 +400,7 @@ description: |-
         # Rule 3: Very long duration (over 6 hours) - requires security
         sort_order     = 3
         under_duration = -1 # catches everything above 6 hours
-        any_schedule   = true
+        any_schedule   = false
   
         approval_flow = {
           steps = [{
@@ -463,7 +463,7 @@ description: |-
         # Rule 2: Any other time - requires security approval
         sort_order     = 2
         under_duration = 3600 # 1 hour
-        any_schedule   = true # Catch-all: applies regardless of schedule
+        any_schedule   = false
   
         approval_flow = {
           steps = [{
@@ -505,7 +505,7 @@ description: |-
         # Rule 1: Developers get auto-approval
         sort_order     = 1
         under_duration = 10800 # 3 hours
-        any_schedule   = true
+        any_schedule   = false
   
         in_groups = [{
           id = data.entitle_directory_groups.developers.directory_groups[0].id
@@ -526,7 +526,7 @@ description: |-
         # Rule 2: Contractors need manager approval
         sort_order     = 2
         under_duration = 3600 # 1 hour
-        any_schedule   = true
+        any_schedule   = false
   
         in_groups = [{
           id = data.entitle_directory_groups.contractors.directory_groups[0].id
@@ -555,7 +555,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 10800 # 3 hours
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -583,7 +583,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -620,7 +620,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -660,7 +660,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -688,7 +688,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -722,7 +722,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 10800
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -749,7 +749,7 @@ description: |-
   Each rule in the rules list represents a conditional approval requirement. Rules are evaluated in order (by sort_order), and the first matching rule is applied to the access request.
   Rule Matching Logic
   A rule matches an access request when ALL of the following conditions are true:
-  The requested duration is less than or equal to under_duration (or under_duration is -1)The requester is in one of the groups specified in in_groups (or in_groups is omitted)any_schedule = true, or the request time falls inside one of the schedules listed in in_schedules
+  The requested duration is less than or equal to under_duration (or under_duration is -1)The requester is in one of the groups specified in in_groups (or in_groups is omitted)any_schedule = false, or the request time falls inside one of the schedules listed in in_schedules
   Understanding Steps vs Operators
   There are two ways to require multiple approvals:
   1. Sequential Approvals (Multiple Steps)
@@ -892,7 +892,7 @@ description: |-
   Create a final catch-all rule with under_duration = -1 to handle any duration
   Order rules from shortest to longest duration for logical flow
   Schedule Considerations
-  If the rule should apply at any time, set any_schedule = true (the default) and omit in_schedulesTo restrict a rule to specific time windows, set any_schedule = false and list one or more in_schedules entriesSchedule-based rules are useful for:
+  If the rule should apply at any time, set any_schedule = false (the default) and omit in_schedulesTo restrict a rule to specific time windows, set any_schedule = true and list one or more in_schedules entriesSchedule-based rules are useful for:
   Different approval requirements during business hours vs after-hoursWeekend access requiring additional approvalMaintenance windows with relaxed approvalMultiple schedules use OR logic (matches if current time is in ANY listed schedule)Schedule IDs come from the Entitle UI under Settings → Schedules
   Group-Based Rules
   Use in_groups to create team-specific workflowsin_groups is a list of objects: [{ id = "<uuid>" }]Users must be in at least one of the listed groups for the rule to matchOmit in_groups entirely for a rule that applies to everyone
@@ -1034,7 +1034,7 @@ description: |-
     {
       # Everything else: Security approval required
       sort_order   = 2
-      any_schedule = true
+      any_schedule = false
       approval_flow = {
         steps = [{ operator = "or", approval_entities = [{ type = "DirectoryGroup", group = { id = local.security_id } }] }]
       }
@@ -1246,7 +1246,7 @@ resource "entitle_workflow" "auto_approve" {
   rules = [{
     sort_order     = 1
     under_duration = 10800 # 3 hours
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1273,7 +1273,7 @@ resource "entitle_workflow" "manager_approval" {
   rules = [{
     sort_order     = 1
     under_duration = 21600 # 6 hours
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1306,7 +1306,7 @@ resource "entitle_workflow" "production_access" {
   rules = [{
     sort_order     = 1
     under_duration = 3600 # 1 hour
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [
@@ -1360,7 +1360,7 @@ resource "entitle_workflow" "flexible_approval" {
   rules = [{
     sort_order     = 1
     under_duration = 3600 # 1 hour
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1411,7 +1411,7 @@ resource "entitle_workflow" "dual_approval_parallel" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1462,7 +1462,7 @@ resource "entitle_workflow" "dual_approval_sequential" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [
@@ -1518,7 +1518,7 @@ resource "entitle_workflow" "complex_approval" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [
@@ -1577,7 +1577,7 @@ resource "entitle_workflow" "duration_based" {
       # Rule 1: Short duration (up to 1 hour) - auto approve
       sort_order     = 1
       under_duration = 3600 # 1 hour
-      any_schedule   = true
+      any_schedule   = false
 
       approval_flow = {
         steps = [{
@@ -1594,7 +1594,7 @@ resource "entitle_workflow" "duration_based" {
       # Rule 2: Longer duration (1-6 hours) - requires manager
       sort_order     = 2
       under_duration = 21600 # 6 hours
-      any_schedule   = true
+      any_schedule   = false
 
       approval_flow = {
         steps = [{
@@ -1611,7 +1611,7 @@ resource "entitle_workflow" "duration_based" {
       # Rule 3: Very long duration (over 6 hours) - requires security
       sort_order     = 3
       under_duration = -1 # catches everything above 6 hours
-      any_schedule   = true
+      any_schedule   = false
 
       approval_flow = {
         steps = [{
@@ -1677,7 +1677,7 @@ resource "entitle_workflow" "schedule_based" {
       # Rule 2: Any other time - requires security approval
       sort_order     = 2
       under_duration = 3600 # 1 hour
-      any_schedule   = true # Catch-all: applies regardless of schedule
+      any_schedule   = false
 
       approval_flow = {
         steps = [{
@@ -1722,7 +1722,7 @@ resource "entitle_workflow" "group_based" {
       # Rule 1: Developers get auto-approval
       sort_order     = 1
       under_duration = 10800 # 3 hours
-      any_schedule   = true
+      any_schedule   = false
 
       in_groups = [{
         id = data.entitle_directory_groups.developers.directory_groups[0].id
@@ -1743,7 +1743,7 @@ resource "entitle_workflow" "group_based" {
       # Rule 2: Contractors need manager approval
       sort_order     = 2
       under_duration = 3600 # 1 hour
-      any_schedule   = true
+      any_schedule   = false
 
       in_groups = [{
         id = data.entitle_directory_groups.contractors.directory_groups[0].id
@@ -1775,7 +1775,7 @@ resource "entitle_workflow" "resource_owner" {
   rules = [{
     sort_order     = 1
     under_duration = 10800 # 3 hours
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1806,7 +1806,7 @@ resource "entitle_workflow" "specific_user" {
   rules = [{
     sort_order     = 1
     under_duration = 3600 # 1 hour
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1846,7 +1846,7 @@ resource "entitle_workflow" "with_notifications" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1889,7 +1889,7 @@ resource "entitle_workflow" "channel_approval" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1921,7 +1921,7 @@ resource "entitle_workflow" "webhook_approval" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1958,7 +1958,7 @@ resource "entitle_workflow" "manager_with_fallback" {
   rules = [{
     sort_order     = 1
     under_duration = 10800
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1992,7 +1992,7 @@ A rule matches an access request when **ALL** of the following conditions are tr
 
 1. The requested duration is **less than or equal to** `under_duration` (or `under_duration` is `-1`)
 2. The requester is in one of the groups specified in `in_groups` (or `in_groups` is omitted)
-3. `any_schedule = true`, or the request time falls inside one of the schedules listed in `in_schedules`
+3. `any_schedule = false`, or the request time falls inside one of the schedules listed in `in_schedules`
 
 ### Understanding Steps vs Operators
 
@@ -2240,8 +2240,8 @@ rules = [
 
 ### Schedule Considerations
 
-- If the rule should apply at any time, set `any_schedule = true` (the default) and omit `in_schedules`
-- To restrict a rule to specific time windows, set `any_schedule = false` and list one or more `in_schedules` entries
+- If the rule should apply at any time, set `any_schedule = false` (the default) and omit `in_schedules`
+- To restrict a rule to specific time windows, set `any_schedule = true` and list one or more `in_schedules` entries
 - Schedule-based rules are useful for:
     - Different approval requirements during business hours vs after-hours
     - Weekend access requiring additional approval
@@ -2450,7 +2450,7 @@ rules = [
   {
     # Everything else: Security approval required
     sort_order   = 2
-    any_schedule = true
+    any_schedule = false
     approval_flow = {
       steps = [{ operator = "or", approval_entities = [{ type = "DirectoryGroup", group = { id = local.security_id } }] }]
     }
