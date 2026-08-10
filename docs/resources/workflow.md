@@ -2621,7 +2621,7 @@ Since workflows using `type = "DirectManager"` require users to have managers as
 
 Optional:
 
-- `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to true.
+- `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to false.
 - `approval_flow` (Attributes) The approval process defined by one or more ordered steps. Each step includes approvers and conditions. (see [below for nested schema](#nestedatt--rules--approval_flow))
 - `in_groups` (Attributes List) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
 - `in_schedules` (Attributes List) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
@@ -2737,7 +2737,7 @@ Optional:
 - `channel` (Attributes) Slack or Teams channel for this step. Use with `type = "SlackChannel"` or `type = "TeamsChannel"`. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--channel))
 - `group` (Attributes) Represents a user group whose members will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--group))
 - `schedule` (Attributes) Schedule applied to the approval entity. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--schedule))
-- `type` (String) Type of notified entity
+- `type` (String) Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).
 - `user` (Attributes) Represents an individual user who will be notified during this step of the approval process. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--user))
 - `webhook` (Attributes) Webhook to be invoked for notification. (see [below for nested schema](#nestedatt--rules--approval_flow--steps--notified_entities--webhook))
 

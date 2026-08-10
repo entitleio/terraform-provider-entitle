@@ -72,7 +72,7 @@ resource "entitle_workflow" "my_workflow" {
 
 					// Verify default values
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.operator", "and"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.any_schedule", "true"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.any_schedule", "false"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.under_duration", "3600"),
 
 					// Verify dynamic values have any value set in the state.
@@ -138,7 +138,7 @@ resource "entitle_workflow" "my_workflow" {
 
 					// Verify default values
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.approval_flow.steps.0.operator", "and"),
-					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.any_schedule", "true"),
+					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.any_schedule", "false"),
 					resource.TestCheckResourceAttr("entitle_workflow.my_workflow", "rules.0.under_duration", "3600"),
 
 					// Verify dynamic values have any value set in the state.

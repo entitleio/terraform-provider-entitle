@@ -86,9 +86,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 						"any_schedule": schema.BoolAttribute{
 							Computed:            true,
 							Optional:            true,
-							Default:             booldefault.StaticBool(true),
-							Description:         "Indicates whether the rule applies at any schedule. Defaults to true.",
-							MarkdownDescription: "Indicates whether the rule applies at any schedule. Defaults to true.",
+							Default:             booldefault.StaticBool(false),
+							Description:         "Indicates whether the rule applies at any schedule. Defaults to false.",
+							MarkdownDescription: "Indicates whether the rule applies at any schedule. Defaults to false.",
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.UseStateForUnknown(),
 							},
