@@ -742,8 +742,8 @@ Use when multiple approvers must approve, but order doesn't matter:
 steps = [{
   operator = "and"
   approval_entities = [
-    { type = "DirectoryGroup", id = security_id },
-    { type = "DirectoryGroup", id = compliance_id }
+    { type = "DirectoryGroup", group = { id = security_id } },
+    { type = "DirectoryGroup", group = { id = compliance_id } }
   ]
 }]
 ```
