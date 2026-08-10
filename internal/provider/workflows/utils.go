@@ -122,7 +122,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case "user", string(client.EnumApprovalEntityUserUserUser):
+					case string(client.EnumApprovalEntityUserUserUser):
 						if entity.User.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -267,7 +267,7 @@ func getWorkflowsRules(
 						}
 
 						approvalEntities = append(approvalEntities, item)
-					case "approval", string(client.EnumApprovalEntityWithoutEntityDirectManager),
+					case string(client.EnumApprovalEntityWithoutEntityDirectManager),
 						string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
 						string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
 						string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
@@ -308,7 +308,7 @@ func getWorkflowsRules(
 					}
 
 					switch entity.Type.ValueString() {
-					case "user", string(client.EnumApprovalEntityUserUserUser):
+					case string(client.EnumApprovalEntityUserUserUser):
 						if entity.User.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -343,7 +343,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-					case "group", string(client.DirectoryGroup):
+					case string(client.DirectoryGroup):
 						if entity.Group.IsNull() {
 							diags.AddError(
 								"Client Error",
@@ -513,7 +513,7 @@ func getWorkflowsRules(
 						}
 
 						notifiedEntities = append(notifiedEntities, t)
-					case "notified", string(client.EnumNotifiedEntityWithoutEntityDirectManager),
+					case string(client.EnumNotifiedEntityWithoutEntityDirectManager),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
 						string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
 						string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
