@@ -296,7 +296,7 @@ func TestReconcileEntityOrder_ReordersShuffledEntities(t *testing.T) {
 
 	for i, wantID := range wantIDs {
 		gotKey := entitySortKey(got[i])
-		wantKey := "directory_group:" + wantID
+		wantKey := "directorygroup:" + wantID
 		if gotKey != wantKey {
 			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
 		}
@@ -356,8 +356,8 @@ func TestReconcileEntityOrder_MixedEntityTypes(t *testing.T) {
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
 		"user:" + userID,
-		"directory_group:" + groupA,
-		"directory_group:" + groupB,
+		"directorygroup:" + groupA,
+		"directorygroup:" + groupB,
 	}
 
 	for i, wantKey := range wantKeys {
@@ -416,8 +416,8 @@ func TestReconcileEntityOrder_NotifiedEntities(t *testing.T) {
 
 	got := resultRules[0].ApprovalFlow.Steps[0].NotifiedEntities
 	wantKeys := []string{
-		"directory_group:" + groupA,
-		"directory_group:" + groupB,
+		"directorygroup:" + groupA,
+		"directorygroup:" + groupB,
 	}
 
 	for i, wantKey := range wantKeys {
@@ -555,19 +555,19 @@ func TestReconcileEntityOrder_MultipleRulesAndSteps(t *testing.T) {
 
 	// Rule 0, Step 0
 	got0 := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
-	if entitySortKey(got0[0]) != "directory_group:"+groupA {
+	if entitySortKey(got0[0]) != "directorygroup:"+groupA {
 		t.Errorf("rule[0] entity[0]: got %q, want group A", entitySortKey(got0[0]))
 	}
-	if entitySortKey(got0[1]) != "directory_group:"+groupB {
+	if entitySortKey(got0[1]) != "directorygroup:"+groupB {
 		t.Errorf("rule[0] entity[1]: got %q, want group B", entitySortKey(got0[1]))
 	}
 
 	// Rule 1, Step 0
 	got1 := resultRules[1].ApprovalFlow.Steps[0].ApprovalEntities
-	if entitySortKey(got1[0]) != "directory_group:"+groupC {
+	if entitySortKey(got1[0]) != "directorygroup:"+groupC {
 		t.Errorf("rule[1] entity[0]: got %q, want group C", entitySortKey(got1[0]))
 	}
-	if entitySortKey(got1[1]) != "directory_group:"+groupD {
+	if entitySortKey(got1[1]) != "directorygroup:"+groupD {
 		t.Errorf("rule[1] entity[1]: got %q, want group D", entitySortKey(got1[1]))
 	}
 }
@@ -661,19 +661,19 @@ func TestReconcileEntityOrder_MismatchedRuleStepOrder(t *testing.T) {
 
 	// Result rule sort_order=0 should match plan rule sort_order=0 → [A, B]
 	got0 := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
-	if entitySortKey(got0[0]) != "directory_group:"+groupA {
+	if entitySortKey(got0[0]) != "directorygroup:"+groupA {
 		t.Errorf("rule[sort=0] entity[0]: got %q, want group A", entitySortKey(got0[0]))
 	}
-	if entitySortKey(got0[1]) != "directory_group:"+groupB {
+	if entitySortKey(got0[1]) != "directorygroup:"+groupB {
 		t.Errorf("rule[sort=0] entity[1]: got %q, want group B", entitySortKey(got0[1]))
 	}
 
 	// Result rule sort_order=1 should match plan rule sort_order=1 → [C, D]
 	got1 := resultRules[1].ApprovalFlow.Steps[0].ApprovalEntities
-	if entitySortKey(got1[0]) != "directory_group:"+groupC {
+	if entitySortKey(got1[0]) != "directorygroup:"+groupC {
 		t.Errorf("rule[sort=1] entity[0]: got %q, want group C", entitySortKey(got1[0]))
 	}
-	if entitySortKey(got1[1]) != "directory_group:"+groupD {
+	if entitySortKey(got1[1]) != "directorygroup:"+groupD {
 		t.Errorf("rule[sort=1] entity[1]: got %q, want group D", entitySortKey(got1[1]))
 	}
 }
@@ -732,7 +732,7 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
 		"direct_manager:",
-		"directory_group:" + groupA,
+		"directorygroup:" + groupA,
 		"integration_owner:",
 	}
 
@@ -871,10 +871,10 @@ func TestReconcileEntityOrder_ExtraResultEntities(t *testing.T) {
 
 	// Plan entities first in plan order, then extras in original API order
 	wantKeys := []string{
-		"directory_group:" + groupA,
-		"directory_group:" + groupB,
+		"directorygroup:" + groupA,
+		"directorygroup:" + groupB,
 		"user:" + extraUser,
-		"directory_group:" + extraGroup,
+		"directorygroup:" + extraGroup,
 	}
 
 	if len(got) != len(wantKeys) {
@@ -956,7 +956,7 @@ func TestReconcileEntityOrder_TypeCasingMismatch(t *testing.T) {
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
 		"webhook:" + webhookID,
-		"directory_group:" + groupID,
+		"directorygroup:" + groupID,
 	}
 
 	if len(got) != len(wantKeys) {
@@ -1026,7 +1026,7 @@ func TestReconcileEntityOrder_WebhookEntities(t *testing.T) {
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
 		"webhook:" + webhookA,
-		"directory_group:" + groupC,
+		"directorygroup:" + groupC,
 		"webhook:" + webhookB,
 	}
 
@@ -1477,7 +1477,7 @@ func TestReconcileEntityOrder_ChannelAndGroupMixed(t *testing.T) {
 	got := resultRules[0].ApprovalFlow.Steps[0].NotifiedEntities
 	wantKeys := []string{
 		"slackchannel:" + slackID,
-		"directory_group:" + groupID,
+		"directorygroup:" + groupID,
 	}
 
 	if len(got) != len(wantKeys) {
