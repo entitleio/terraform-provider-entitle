@@ -66,7 +66,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 						Operator:  types.StringValue("and"),
 						NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
 							{
-								Type:     types.StringValue("user"),
+								Type:     types.StringValue("User"),
 								User:     userObj,
 								Group:    nullGroup,
 								Schedule: nullSchedule,
@@ -74,7 +74,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 							{
-								Type:     types.StringValue("group"),
+								Type:     types.StringValue("DirectoryGroup"),
 								User:     nullUser,
 								Group:    groupObj,
 								Schedule: nullSchedule,
@@ -82,7 +82,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 								Channel:  types.ObjectNull((&utils.IdentityOnlyModel{}).AttributeTypes()),
 							},
 							{
-								Type:     types.StringValue("schedule"),
+								Type:     types.StringValue("OnCallIntegrationSchedule"),
 								User:     nullUser,
 								Group:    nullGroup,
 								Schedule: scheduleObj,
@@ -163,7 +163,7 @@ func makeGroupEntity(t *testing.T, id, name string) *workflowRulesApprovalFlowSt
 	}
 
 	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-		Type:     types.StringValue("directory_group"),
+		Type:     types.StringValue("DirectoryGroup"),
 		Group:    vObj,
 		User:     types.ObjectNull((&utils.IdEmailModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
@@ -187,7 +187,7 @@ func makeUserEntity(t *testing.T, id, email string) *workflowRulesApprovalFlowSt
 	}
 
 	return &workflowRulesApprovalFlowStepApprovalNotifiedModel{
-		Type:     types.StringValue("user"),
+		Type:     types.StringValue("User"),
 		User:     vObj,
 		Group:    types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
 		Schedule: types.ObjectNull((&utils.IdNameModel{}).AttributeTypes()),
