@@ -695,9 +695,9 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 						SortOrder: types.NumberValue(big.NewFloat(0)),
 						Operator:  types.StringValue("and"),
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
-							makeNullEntity("direct_manager"),
+							makeNullEntity("DirectManager"),
 							makeGroupEntity(t, groupA, "Group A"),
-							makeNullEntity("integration_owner"),
+							makeNullEntity("IntegrationOwner"),
 						},
 					},
 				},
@@ -717,8 +717,8 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 						SortOrder: types.NumberValue(big.NewFloat(0)),
 						Operator:  types.StringValue("and"),
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
-							makeNullEntity("integration_owner"),
-							makeNullEntity("direct_manager"),
+							makeNullEntity("IntegrationOwner"),
+							makeNullEntity("DirectManager"),
 							makeGroupEntity(t, groupA, "Group A"),
 						},
 					},
@@ -731,9 +731,9 @@ func TestReconcileEntityOrder_NullEntityTypes(t *testing.T) {
 
 	got := resultRules[0].ApprovalFlow.Steps[0].ApprovalEntities
 	wantKeys := []string{
-		"direct_manager:",
+		"directmanager:",
 		"directorygroup:" + groupA,
-		"integration_owner:",
+		"integrationowner:",
 	}
 
 	if len(got) != len(wantKeys) {
@@ -762,8 +762,8 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 						SortOrder: types.NumberValue(big.NewFloat(0)),
 						Operator:  types.StringValue("and"),
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
-							makeNullEntity("direct_manager"),
-							makeNullEntity("direct_manager"),
+							makeNullEntity("DirectManager"),
+							makeNullEntity("DirectManager"),
 						},
 					},
 				},
@@ -782,8 +782,8 @@ func TestReconcileEntityOrder_DuplicateNullEntityTypes(t *testing.T) {
 						SortOrder: types.NumberValue(big.NewFloat(0)),
 						Operator:  types.StringValue("and"),
 						ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{
-							makeNullEntity("direct_manager"),
-							makeNullEntity("direct_manager"),
+							makeNullEntity("DirectManager"),
+							makeNullEntity("DirectManager"),
 						},
 					},
 				},
