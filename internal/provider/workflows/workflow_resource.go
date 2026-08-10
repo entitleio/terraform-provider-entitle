@@ -36,6 +36,45 @@ import (
 var _ resource.Resource = &WorkflowResource{}
 var _ resource.ResourceWithImportState = &WorkflowResource{}
 
+// notifiedEntityTypes and approvalEntityTypes are the accepted values for the
+// "type" attribute of notified_entities and approval_entities.
+//
+// These are the single source of truth for both the schema validators below and
+// the switch statements in getWorkflowsRules. TestGetWorkflowsRules_AllEntityTypes
+// walks every value here through getWorkflowsRules, so adding a value without
+// handling it in the corresponding switch fails the test rather than reaching
+// users as an "Unsupported entity type" error at apply time.
+var notifiedEntityTypes = []string{
+	string(client.OnCallIntegrationSchedule),
+	string(client.DirectoryGroup),
+	string(client.SlackChannel),
+	string(client.TeamsChannel),
+	string(client.EnumApprovalEntityUserUserUser),
+	string(client.EnumNotifiedEntityWithoutEntityDirectManager),
+	string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
+	string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
+	string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
+	string(client.EnumNotifiedEntityWithoutEntityResourceOwner),
+	string(client.EnumNotifiedEntityWithoutEntityTeamMember),
+	"Webhook",
+}
+
+var approvalEntityTypes = []string{
+	string(client.OnCallIntegrationSchedule),
+	string(client.DirectoryGroup),
+	string(client.SlackChannel),
+	string(client.TeamsChannel),
+	string(client.EnumApprovalEntityUserUserUser),
+	string(client.EnumApprovalEntityWithoutEntityAutomatic),
+	string(client.EnumApprovalEntityWithoutEntityDirectManager),
+	string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
+	string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
+	string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
+	string(client.EnumApprovalEntityWithoutEntityResourceOwner),
+	string(client.EnumApprovalEntityWithoutEntityTeamMember),
+	"Webhook",
+}
+
 func NewWorkflowResource() resource.Resource {
 	return &WorkflowResource{}
 }
@@ -193,20 +232,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Type of notified entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
 															MarkdownDescription: "Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
 															Validators: []validator.String{
-																stringvalidator.OneOf(
-																	string(client.OnCallIntegrationSchedule),
-																	string(client.DirectoryGroup),
-																	string(client.SlackChannel),
-																	string(client.TeamsChannel),
-																	string(client.EnumApprovalEntityUserUserUser),
-																	string(client.EnumNotifiedEntityWithoutEntityDirectManager),
-																	string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
-																	string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
-																	string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
-																	string(client.EnumNotifiedEntityWithoutEntityResourceOwner),
-																	string(client.EnumNotifiedEntityWithoutEntityTeamMember),
-																	"Webhook",
-																),
+																stringvalidator.OneOf(notifiedEntityTypes...),
 															},
 														},
 														"user": schema.SingleNestedAttribute{
@@ -307,21 +333,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 															Description:         "Type of approval entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, Automatic, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
 															MarkdownDescription: "Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `Automatic`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
 															Validators: []validator.String{
-																stringvalidator.OneOf(
-																	string(client.OnCallIntegrationSchedule),
-																	string(client.DirectoryGroup),
-																	string(client.SlackChannel),
-																	string(client.TeamsChannel),
-																	string(client.EnumApprovalEntityUserUserUser),
-																	string(client.EnumApprovalEntityWithoutEntityAutomatic),
-																	string(client.EnumApprovalEntityWithoutEntityDirectManager),
-																	string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
-																	string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
-																	string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
-																	string(client.EnumApprovalEntityWithoutEntityResourceOwner),
-																	string(client.EnumApprovalEntityWithoutEntityTeamMember),
-																	"Webhook",
-																),
+																stringvalidator.OneOf(approvalEntityTypes...),
 															},
 														},
 														"user": schema.SingleNestedAttribute{

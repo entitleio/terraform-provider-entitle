@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 )
 
@@ -1422,6 +1423,90 @@ func TestReconcileEntityOrder_ChannelEntities(t *testing.T) {
 		if gotKey != wantKey {
 			t.Errorf("entity[%d]: got key %q, want %q", i, gotKey, wantKey)
 		}
+	}
+}
+
+// makeEntityForType builds an entity of the given type with whichever nested
+// object that type requires populated.
+func makeEntityForType(t *testing.T, entityType string) *workflowRulesApprovalFlowStepApprovalNotifiedModel {
+	t.Helper()
+
+	const (
+		id      = "11111111-2222-3333-4444-555555555555"
+		channel = "C1234567890"
+	)
+
+	switch entityType {
+	case string(client.EnumApprovalEntityUserUserUser):
+		return makeUserEntity(t, id, "user@example.com")
+	case string(client.DirectoryGroup):
+		return makeGroupEntity(t, id, "Group")
+	case "Webhook":
+		return makeWebhookEntity(t, id, "Webhook")
+	case string(client.SlackChannel), string(client.TeamsChannel):
+		return makeChannelEntity(t, entityType, channel)
+	case string(client.OnCallIntegrationSchedule):
+		entity := makeNullEntity(entityType)
+		v := utils.IdNameModel{ID: types.StringValue(id), Name: types.StringValue("Schedule")}
+		vObj, diags := v.AsObjectValue(context.Background())
+		if diags.HasError() {
+			t.Fatalf("failed to create schedule object: %v", diags.Errors())
+		}
+		entity.Schedule = vObj
+		return entity
+	default:
+		// Entity types that carry no nested object (Automatic, DirectManager, ...).
+		return makeNullEntity(entityType)
+	}
+}
+
+// TestGetWorkflowsRules_AllEntityTypes walks every value accepted by the
+// approval_entities and notified_entities "type" validators through
+// getWorkflowsRules and fails if any of them is rejected.
+//
+// This is what keeps the validator lists in workflow_resource.go and the
+// switch statements in getWorkflowsRules from drifting apart: a type accepted
+// by the schema but missing from a switch would otherwise only surface as an
+// "Unsupported entity type" error during a real apply.
+func TestGetWorkflowsRules_AllEntityTypes(t *testing.T) {
+	ctx := context.Background()
+
+	newRule := func(step *workflowRulesApprovalFlowStepModel) []*workflowRulesModel {
+		return []*workflowRulesModel{
+			{
+				SortOrder:     types.NumberValue(big.NewFloat(0)),
+				UnderDuration: types.NumberValue(big.NewFloat(3600)),
+				AnySchedule:   types.BoolValue(true),
+				ApprovalFlow:  &workflowRulesApprovalFlowModel{Steps: []*workflowRulesApprovalFlowStepModel{step}},
+			},
+		}
+	}
+
+	for _, entityType := range approvalEntityTypes {
+		t.Run("approval/"+entityType, func(t *testing.T) {
+			_, diags := getWorkflowsRules(ctx, newRule(&workflowRulesApprovalFlowStepModel{
+				SortOrder:        types.NumberValue(big.NewFloat(0)),
+				Operator:         types.StringValue("and"),
+				ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{makeEntityForType(t, entityType)},
+			}))
+			if diags.HasError() {
+				t.Errorf("approval entity type %q rejected by getWorkflowsRules: %s", entityType, diags.Errors())
+			}
+		})
+	}
+
+	for _, entityType := range notifiedEntityTypes {
+		t.Run("notified/"+entityType, func(t *testing.T) {
+			_, diags := getWorkflowsRules(ctx, newRule(&workflowRulesApprovalFlowStepModel{
+				SortOrder:        types.NumberValue(big.NewFloat(0)),
+				Operator:         types.StringValue("and"),
+				NotifiedEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{makeEntityForType(t, entityType)},
+				ApprovalEntities: []*workflowRulesApprovalFlowStepApprovalNotifiedModel{makeNullEntity("Automatic")},
+			}))
+			if diags.HasError() {
+				t.Errorf("notified entity type %q rejected by getWorkflowsRules: %s", entityType, diags.Errors())
+			}
+		})
 	}
 }
 
