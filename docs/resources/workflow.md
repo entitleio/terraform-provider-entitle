@@ -30,12 +30,9 @@ description: |-
             type = "Automatic"
           }]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -59,12 +56,9 @@ description: |-
             type = "DirectManager"
           }]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -96,7 +90,6 @@ description: |-
               type = "DirectManager"
             }]
   
-            notified_entities = []
           },
           {
             # Second approval: Security team
@@ -108,13 +101,10 @@ description: |-
               id   = data.entitle_directory_groups.security_team.directory_groups[0].id
             }]
   
-            notified_entities = []
           }
         ]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -157,12 +147,9 @@ description: |-
             }
           ]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -206,12 +193,9 @@ description: |-
             }
           ]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -250,7 +234,6 @@ description: |-
               id   = data.entitle_directory_groups.security.directory_groups[0].id
             }]
   
-            notified_entities = []
           },
           {
             sort_order = 2
@@ -261,13 +244,10 @@ description: |-
               id   = data.entitle_directory_groups.compliance.directory_groups[0].id
             }]
   
-            notified_entities = []
           }
         ]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -306,7 +286,6 @@ description: |-
               type = "DirectManager"
             }]
   
-            notified_entities = []
           },
           {
             # Step 2: Both Security AND Compliance must approve (parallel)
@@ -324,13 +303,10 @@ description: |-
               }
             ]
   
-            notified_entities = []
           }
         ]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -363,12 +339,9 @@ description: |-
               type = "Automatic"
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_groups    = []
-        in_schedules = []
       },
       {
         # Rule 2: Longer duration (1-6 hours) - requires manager
@@ -385,12 +358,9 @@ description: |-
               type = "DirectManager"
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_groups    = []
-        in_schedules = []
       },
       {
         # Rule 3: Very long duration (over 6 hours) - requires security
@@ -408,12 +378,9 @@ description: |-
               id   = data.entitle_directory_groups.security.directory_groups[0].id
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_groups    = []
-        in_schedules = []
       }
     ]
   }
@@ -454,11 +421,9 @@ description: |-
               type = "Automatic"
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_groups = []
       },
       {
         # Rule 2: After hours - requires security approval
@@ -476,12 +441,9 @@ description: |-
               id   = data.entitle_directory_groups.security.directory_groups[0].id
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_groups    = []
-        in_schedules = []
       }
     ]
   }
@@ -522,17 +484,15 @@ description: |-
               type = "Automatic"
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_schedules = []
       },
       {
         # Rule 2: Contractors need manager approval
         sort_order     = 2
         under_duration = 3600  # 1 hour
-        any_schedule   = true
+        any_schedule   = false
   
         in_groups = [data.entitle_directory_groups.contractors.directory_groups[0].id]
   
@@ -545,11 +505,9 @@ description: |-
               type = "DirectManager"
             }]
   
-            notified_entities = []
           }]
         }
   
-        in_schedules = []
       }
     ]
   }
@@ -563,7 +521,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 10800  # 3 hours
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -574,12 +532,9 @@ description: |-
             type = "ResourceOwner"
           }]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -596,7 +551,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600  # 1 hour
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -608,12 +563,9 @@ description: |-
             id   = data.entitle_user.security_lead.id
           }]
   
-          notified_entities = []
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -636,7 +588,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 3600
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -661,8 +613,6 @@ description: |-
         }]
       }
   
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -682,7 +632,7 @@ description: |-
     rules = [{
       sort_order     = 1
       under_duration = 10800
-      any_schedule   = true
+      any_schedule   = false
   
       approval_flow = {
         steps = [{
@@ -699,12 +649,8 @@ description: |-
             }
           ]
   
-          notified_entities = []
         }]
       }
-  
-      in_groups    = []
-      in_schedules = []
     }]
   }
   
@@ -712,7 +658,7 @@ description: |-
   Each rule in the rules list represents a conditional approval requirement. Rules are evaluated in order (by sort_order), and the first matching rule is applied to the access request.
   Rule Matching Logic
   A rule matches an access request when ALL of the following conditions are true:
-  The requested duration is less than or equal to under_durationThe requester is in one of the groups specified in in_groups (or in_groups is empty)The request time matches one of the schedules in in_schedules (or any_schedule is true)
+  The requested duration is less than or equal to under_durationThe requester is in one of the groups specified in in_groups (or in_groups is empty)The request time matches one of the schedules in in_schedules (or any_schedule is false)
   Understanding Steps vs Operators
   There are two ways to require multiple approvals:
   1. Sequential Approvals (Multiple Steps)
@@ -841,10 +787,10 @@ description: |-
   Create a final catch-all rule with under_duration -1 to handle any duration
   Order rules from shortest to longest duration for logical flow
   Schedule Considerations
-  If not using time-based rules, set any_schedule = true and in_schedules = []Schedule-based rules are useful for:
+  If not using time-based rules, set any_schedule = false and no in_schedulesSchedule-based rules are useful for:
   Different approval requirements during business hours vs after-hoursWeekend access requiring additional approvalMaintenance windows with relaxed approvalMultiple schedules use OR logic (matches if current time is in ANY listed schedule)
   Group-Based Rules
-  Use in_groups to create team-specific workflowsIf in_groups = [], the rule applies to all usersUsers must be in at least one of the listed groups for the rule to match
+  Use in_groups to create team-specific workflowsUsers must be in at least one of the listed groups for the rule to match
   Approval Strategy: Steps vs Operators
   When to use multiple steps (sequential):
   Approvals must happen in a specific orderEach level of approval builds on the previousExample: Manager → Team Lead → Director
@@ -971,12 +917,13 @@ description: |-
   rules = [
     {
       # Business hours: Auto-approve
+      any_schedule = true
       in_schedules = [business_hours_id]
       approval_flow = { steps = [{ approval_entities = [{ type = "Automatic" }] }] }
     },
     {
       # After hours: Security approval required
-      any_schedule = true
+      any_schedule = false
       approval_flow = { steps = [{ approval_entities = [{ type = "DirectoryGroup", id = security_id }] }] }
     }
   ]
@@ -1128,12 +1075,9 @@ resource "entitle_workflow" "auto_approve" {
           type = "Automatic"
         }]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1160,12 +1104,9 @@ resource "entitle_workflow" "manager_approval" {
           type = "DirectManager"
         }]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1200,7 +1141,6 @@ resource "entitle_workflow" "production_access" {
             type = "DirectManager"
           }]
 
-          notified_entities = []
         },
         {
           # Second approval: Security team
@@ -1212,13 +1152,10 @@ resource "entitle_workflow" "production_access" {
             id   = data.entitle_directory_groups.security_team.directory_groups[0].id
           }]
 
-          notified_entities = []
         }
       ]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1264,12 +1201,9 @@ resource "entitle_workflow" "flexible_approval" {
           }
         ]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1316,12 +1250,9 @@ resource "entitle_workflow" "dual_approval_parallel" {
           }
         ]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1363,7 +1294,6 @@ resource "entitle_workflow" "dual_approval_sequential" {
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
-          notified_entities = []
         },
         {
           sort_order = 2
@@ -1374,13 +1304,10 @@ resource "entitle_workflow" "dual_approval_sequential" {
             id   = data.entitle_directory_groups.compliance.directory_groups[0].id
           }]
 
-          notified_entities = []
         }
       ]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1422,7 +1349,6 @@ resource "entitle_workflow" "complex_approval" {
             type = "DirectManager"
           }]
 
-          notified_entities = []
         },
         {
           # Step 2: Both Security AND Compliance must approve (parallel)
@@ -1440,13 +1366,10 @@ resource "entitle_workflow" "complex_approval" {
             }
           ]
 
-          notified_entities = []
         }
       ]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1482,12 +1405,9 @@ resource "entitle_workflow" "duration_based" {
             type = "Automatic"
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_groups    = []
-      in_schedules = []
     },
     {
       # Rule 2: Longer duration (1-6 hours) - requires manager
@@ -1504,12 +1424,9 @@ resource "entitle_workflow" "duration_based" {
             type = "DirectManager"
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_groups    = []
-      in_schedules = []
     },
     {
       # Rule 3: Very long duration (over 6 hours) - requires security
@@ -1527,12 +1444,9 @@ resource "entitle_workflow" "duration_based" {
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_groups    = []
-      in_schedules = []
     }
   ]
 }
@@ -1576,11 +1490,9 @@ resource "entitle_workflow" "schedule_based" {
             type = "Automatic"
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_groups = []
     },
     {
       # Rule 2: After hours - requires security approval
@@ -1598,12 +1510,9 @@ resource "entitle_workflow" "schedule_based" {
             id   = data.entitle_directory_groups.security.directory_groups[0].id
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_groups    = []
-      in_schedules = []
     }
   ]
 }
@@ -1647,17 +1556,15 @@ resource "entitle_workflow" "group_based" {
             type = "Automatic"
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_schedules = []
     },
     {
       # Rule 2: Contractors need manager approval
       sort_order     = 2
       under_duration = 3600  # 1 hour
-      any_schedule   = true
+      any_schedule   = false
 
       in_groups = [data.entitle_directory_groups.contractors.directory_groups[0].id]
 
@@ -1670,11 +1577,9 @@ resource "entitle_workflow" "group_based" {
             type = "DirectManager"
           }]
 
-          notified_entities = []
         }]
       }
 
-      in_schedules = []
     }
   ]
 }
@@ -1691,7 +1596,7 @@ resource "entitle_workflow" "resource_owner" {
   rules = [{
     sort_order     = 1
     under_duration = 10800  # 3 hours
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1702,12 +1607,9 @@ resource "entitle_workflow" "resource_owner" {
           type = "ResourceOwner"
         }]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1727,7 +1629,7 @@ resource "entitle_workflow" "specific_user" {
   rules = [{
     sort_order     = 1
     under_duration = 3600  # 1 hour
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1739,12 +1641,9 @@ resource "entitle_workflow" "specific_user" {
           id   = data.entitle_user.security_lead.id
         }]
 
-        notified_entities = []
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1770,7 +1669,7 @@ resource "entitle_workflow" "with_notifications" {
   rules = [{
     sort_order     = 1
     under_duration = 3600
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1795,8 +1694,6 @@ resource "entitle_workflow" "with_notifications" {
       }]
     }
 
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1819,7 +1716,7 @@ resource "entitle_workflow" "manager_with_fallback" {
   rules = [{
     sort_order     = 1
     under_duration = 10800
-    any_schedule   = true
+    any_schedule   = false
 
     approval_flow = {
       steps = [{
@@ -1836,12 +1733,8 @@ resource "entitle_workflow" "manager_with_fallback" {
           }
         ]
 
-        notified_entities = []
       }]
     }
-
-    in_groups    = []
-    in_schedules = []
   }]
 }
 ```
@@ -1856,7 +1749,7 @@ A rule matches an access request when **ALL** of the following conditions are tr
 
 1. The requested duration is **less than or equal to** `under_duration`
 2. The requester is in one of the groups specified in `in_groups` (or `in_groups` is empty)
-3. The request time matches one of the schedules in `in_schedules` (or `any_schedule` is true)
+3. The request time matches one of the schedules in `in_schedules` (or `any_schedule` is false)
 
 ### Understanding Steps vs Operators
 
@@ -2063,7 +1956,7 @@ rules = [
 
 ### Schedule Considerations
 
-- If not using time-based rules, set `any_schedule = true` and `in_schedules = []`
+- If not using time-based rules, set `any_schedule = false` and no `in_schedules`
 - Schedule-based rules are useful for:
     - Different approval requirements during business hours vs after-hours
     - Weekend access requiring additional approval
@@ -2073,7 +1966,6 @@ rules = [
 ### Group-Based Rules
 
 - Use `in_groups` to create team-specific workflows
-- If `in_groups = []`, the rule applies to all users
 - Users must be in at least one of the listed groups for the rule to match
 
 ### Approval Strategy: Steps vs Operators
@@ -2247,12 +2139,13 @@ Relaxed approval during business hours, stricter after-hours:
 rules = [
   {
     # Business hours: Auto-approve
+    any_schedule = true
     in_schedules = [business_hours_id]
     approval_flow = { steps = [{ approval_entities = [{ type = "Automatic" }] }] }
   },
   {
     # After hours: Security approval required
-    any_schedule = true
+    any_schedule = false
     approval_flow = { steps = [{ approval_entities = [{ type = "DirectoryGroup", id = security_id }] }] }
   }
 ]
