@@ -321,7 +321,7 @@ resource "entitle_workflow" "complex_approval" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200
+    under_duration = 3600
     any_schedule   = true
 
     approval_flow = {
@@ -682,7 +682,7 @@ resource "entitle_workflow" "with_notifications" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200
+    under_duration = 3600
     any_schedule   = true
 
     approval_flow = {
@@ -940,7 +940,7 @@ rules = [
   },
   {
     sort_order = 2
-    under_duration = 7200      # Matches requests ≤ 2 hours (but > 1 hour)
+    under_duration = 10800      # Matches requests ≤ 3 hours (but > 1 hour)
     # ... medium duration approval ...
   },
   {
