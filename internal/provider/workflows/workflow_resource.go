@@ -187,8 +187,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
 															Optional:            true,
-															Description:         "Type of notified entity",
-															MarkdownDescription: "Type of notified entity",
+															Description:         "Type of notified entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
+															MarkdownDescription: "Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
 															Validators: []validator.String{
 																stringvalidator.OneOf(
 																	string(client.OnCallIntegrationSchedule),
