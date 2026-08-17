@@ -126,8 +126,8 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							Computed:            true,
 							Optional:            true,
 							Default:             booldefault.StaticBool(false),
-							Description:         "Indicates whether the rule applies at any schedule. Defaults to false.",
-							MarkdownDescription: "Indicates whether the rule applies at any schedule. Defaults to false.",
+							Description:         "Indicates whether the rule requires a matching schedule. Defaults to false. When set to true, the schedule must match.",
+							MarkdownDescription: "Indicates whether the rule requires a matching schedule. Defaults to false. When set to true, the schedule must match.",
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.UseStateForUnknown(),
 							},

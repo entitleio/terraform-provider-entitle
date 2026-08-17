@@ -2621,7 +2621,7 @@ Since workflows using `type = "DirectManager"` require users to have managers as
 
 Optional:
 
-- `any_schedule` (Boolean) Indicates whether the rule applies at any schedule. Defaults to false.
+- `any_schedule` (Boolean) Indicates whether the rule requires a matching schedule. Defaults to false. When set to true, the schedule must match.
 - `approval_flow` (Attributes) The approval process defined by one or more ordered steps. Each step includes approvers and conditions. (see [below for nested schema](#nestedatt--rules--approval_flow))
 - `in_groups` (Attributes List) List of user groups for which this rule is applicable. (see [below for nested schema](#nestedatt--rules--in_groups))
 - `in_schedules` (Attributes List) List of schedules during which this rule is valid. (see [below for nested schema](#nestedatt--rules--in_schedules))
