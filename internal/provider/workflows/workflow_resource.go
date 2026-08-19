@@ -159,7 +159,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Optional:            true,
+										Required:            true,
 										Description:         "A unique identifier of the group",
 										MarkdownDescription: "A unique identifier of the group",
 									},
@@ -181,7 +181,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Optional:            true,
+										Required:            true,
 										Description:         "A unique identifier of the schedule",
 										MarkdownDescription: "A unique identifier of the schedule",
 									},
@@ -238,7 +238,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the notified user.",
 																	MarkdownDescription: "Unique identifier of the notified user.",
 																},
@@ -255,7 +255,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "A unique identifier of the group",
 																	MarkdownDescription: "A unique identifier of the group",
 																},
@@ -272,7 +272,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "A unique identifier of the schedule",
 																	MarkdownDescription: "A unique identifier of the schedule",
 																},
@@ -306,7 +306,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"channel": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier (name) of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier (name) of the Slack or Teams channel.",
 																},
@@ -339,7 +339,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the approver.",
 																	MarkdownDescription: "Unique identifier of the approver.",
 																},
@@ -356,7 +356,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the approver group.",
 																	MarkdownDescription: "Unique identifier of the approver group.",
 																},
@@ -373,12 +373,12 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Computed:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the schedule for the approval entity.",
 																	MarkdownDescription: "Unique identifier of the schedule for the approval entity.",
 																},
 																"name": schema.StringAttribute{
-																	Optional:            true,
+																	Computed:            true,
 																	Description:         "Name of the approval schedule.",
 																	MarkdownDescription: "Name of the approval schedule.",
 																},
@@ -390,7 +390,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"webhook": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the webhook.",
 																	MarkdownDescription: "Unique identifier of the webhook.",
 																},
@@ -407,7 +407,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"channel": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Required:            true,
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
 																},
