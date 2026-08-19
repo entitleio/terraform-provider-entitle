@@ -59,7 +59,7 @@ func TestGetWorkflowsRules_NotifiedEntityIDs(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1078,7 +1078,7 @@ func TestGetWorkflowsRules_SlackChannelApprovalEntityID(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1125,7 +1125,7 @@ func TestGetWorkflowsRules_TeamsChannelApprovalEntityID(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1172,7 +1172,7 @@ func TestGetWorkflowsRules_SlackChannelNotifiedEntityID(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1222,7 +1222,7 @@ func TestGetWorkflowsRules_TeamsChannelNotifiedEntityID(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1274,7 +1274,7 @@ func TestGetWorkflowsRules_MixedChannelEntities(t *testing.T) {
 		{
 			SortOrder:     types.NumberValue(big.NewFloat(0)),
 			UnderDuration: types.NumberValue(big.NewFloat(3600)),
-			AnySchedule:   types.BoolValue(true),
+			AnySchedule:   types.BoolValue(false),
 			ApprovalFlow: &workflowRulesApprovalFlowModel{
 				Steps: []*workflowRulesApprovalFlowStepModel{
 					{
@@ -1476,7 +1476,7 @@ func TestGetWorkflowsRules_AllEntityTypes(t *testing.T) {
 			{
 				SortOrder:     types.NumberValue(big.NewFloat(0)),
 				UnderDuration: types.NumberValue(big.NewFloat(3600)),
-				AnySchedule:   types.BoolValue(true),
+				AnySchedule:   types.BoolValue(false),
 				ApprovalFlow:  &workflowRulesApprovalFlowModel{Steps: []*workflowRulesApprovalFlowStepModel{step}},
 			},
 		}
