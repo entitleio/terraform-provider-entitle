@@ -559,10 +559,10 @@ func getWorkflowsRules(
 			UnderDuration: client.EnumAllowedDurations(underDuration),
 		}
 
-		if len(inSchedules) > 0 && item.AnySchedule {
+		if len(inSchedules) == 0 && item.AnySchedule {
 			diags.AddError(
 				"Invalid Input",
-				"not allowed to put in_schedules values when the any_schedule parameter is true",
+				"not allowed to put empty in_schedules when the any_schedule parameter is true",
 			)
 
 			return rules, diags
