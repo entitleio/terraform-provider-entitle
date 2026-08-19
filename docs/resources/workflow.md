@@ -2678,7 +2678,7 @@ Optional:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--channel"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.channel`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the Slack or Teams channel.
 
@@ -2686,7 +2686,7 @@ Required:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.group`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the approver group.
 
@@ -2698,7 +2698,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--schedule"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.schedule`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the schedule for the approval entity.
 
@@ -2710,7 +2710,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--user"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.user`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the approver.
 
@@ -2722,7 +2722,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--approval_entities--webhook"></a>
 ### Nested Schema for `rules.approval_flow.steps.approval_entities.webhook`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the webhook.
 
@@ -2750,7 +2750,7 @@ Optional:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--channel"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.channel`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier (name) of the Slack or Teams channel.
 
@@ -2758,7 +2758,7 @@ Required:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--group"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.group`
 
-Required:
+Optional:
 
 - `id` (String) A unique identifier of the group
 
@@ -2770,7 +2770,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--schedule"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.schedule`
 
-Required:
+Optional:
 
 - `id` (String) A unique identifier of the schedule
 
@@ -2782,7 +2782,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--user"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.user`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the notified user.
 
@@ -2794,7 +2794,7 @@ Read-Only:
 <a id="nestedatt--rules--approval_flow--steps--notified_entities--webhook"></a>
 ### Nested Schema for `rules.approval_flow.steps.notified_entities.webhook`
 
-Required:
+Optional:
 
 - `id` (String) Unique identifier of the webhook.
 
@@ -2809,7 +2809,7 @@ Read-Only:
 <a id="nestedatt--rules--in_groups"></a>
 ### Nested Schema for `rules.in_groups`
 
-Required:
+Optional:
 
 - `id` (String) A unique identifier of the group
 
@@ -2821,7 +2821,7 @@ Read-Only:
 <a id="nestedatt--rules--in_schedules"></a>
 ### Nested Schema for `rules.in_schedules`
 
-Required:
+Optional:
 
 - `id` (String) A unique identifier of the schedule
 
