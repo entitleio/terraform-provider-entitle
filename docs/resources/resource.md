@@ -95,7 +95,7 @@ description: |-
       }
     ]
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   }
   
   Non-Requestable Resource
@@ -485,7 +485,7 @@ resource "entitle_resource" "postgres_production" {
     }
   ]
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 

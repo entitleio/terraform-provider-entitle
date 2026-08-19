@@ -204,7 +204,7 @@ description: |-
       id = data.entitle_workflow.security_approval.id
     }
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   }
   
   Import
@@ -482,7 +482,7 @@ resource "entitle_role" "app_admin" {
     id = data.entitle_workflow.security_approval.id
   }
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 
