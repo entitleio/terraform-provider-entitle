@@ -112,6 +112,7 @@ var BaseIntegrationResourceAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "As the admin, you can set different durations for the integration, compared to the workflow linked to it.  \nAllowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 		Validators: []validator.Set{
 			setvalidator.SizeAtLeast(1),
+			validators.DurationSetValidator(),
 		},
 	},
 	"maintainers": schema.SetNestedAttribute{
