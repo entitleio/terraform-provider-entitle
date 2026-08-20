@@ -69,7 +69,7 @@ resource "entitle_role" "backend_read" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
 }
 ```
 

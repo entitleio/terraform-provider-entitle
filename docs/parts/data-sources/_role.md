@@ -50,7 +50,7 @@ resource "entitle_bundle" "dev_bundle" {
     id = data.entitle_role.github_read.id
   }]
 
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
 }
 ```
 

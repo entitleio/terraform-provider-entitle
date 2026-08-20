@@ -82,7 +82,7 @@ resource "entitle_resource" "github_backend_repo" {
   }
 
   user_defined_tags = ["backend", "api", "production", "critical"]
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 }
 ```
 
@@ -122,7 +122,7 @@ resource "entitle_resource" "postgres_production" {
     }
   ]
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 
@@ -181,7 +181,7 @@ resource "entitle_resource" "kubernetes_cluster" {
     }
   ]
 
-  allowed_durations = [3600, 28800]
+  allowed_durations = [3600, 21600]
 }
 ```
 
@@ -227,7 +227,7 @@ resource "entitle_resource" "gcp_data_platform" {
     id = data.entitle_workflow.manager_approval.id
   }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 
   lifecycle {
     # Synced resources are owned by the upstream application (GCP).
@@ -281,7 +281,7 @@ resource "entitle_resource" "aws_prod_account" {
   ]
 
   user_defined_tags = ["aws", "production", "critical", "hipaa"]
-  allowed_durations = [3600, 14400, 28800]
+  allowed_durations = [3600, 10800, 21600]
 }
 ```
 
@@ -354,7 +354,7 @@ resource "entitle_resource" "gcp_data_platform" {
   owner    = { id = "7d080bfa-9143-11ee-b9d1-0242ac120003" }
   workflow = { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 
   lifecycle {
     prevent_destroy = true
@@ -388,7 +388,7 @@ resource "entitle_resource" "gcp" {
   owner       = { id = data.entitle_user.platform_lead.id }
   workflow    = { id = data.entitle_workflow.manager_approval.id }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 
   lifecycle {
     prevent_destroy = true

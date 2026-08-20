@@ -47,7 +47,7 @@ description: |-
       id = data.entitle_workflow.standard_approval.id
     }
   
-    allowed_durations       = [3600, 28800]
+    allowed_durations       = [3600, 21600]
     allow_creating_accounts = true
   }
   
@@ -69,7 +69,7 @@ description: |-
       id = data.entitle_workflow.security_approval.id
     }
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   }
   
   Reference a Workflow in a Bundle
@@ -91,7 +91,7 @@ description: |-
       { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" }
     ]
   
-    allowed_durations = [28800, 86400]
+    allowed_durations = [21600, 86400]
   }
   
   Inspect Workflow Rules
@@ -187,7 +187,7 @@ resource "entitle_integration" "github" {
     id = data.entitle_workflow.standard_approval.id
   }
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   allow_creating_accounts = true
 }
 ```
@@ -211,7 +211,7 @@ resource "entitle_role" "prod_admin" {
     id = data.entitle_workflow.security_approval.id
   }
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 
@@ -235,7 +235,7 @@ resource "entitle_bundle" "dev_tools" {
     { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" }
   ]
 
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
 }
 ```
 

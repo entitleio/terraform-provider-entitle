@@ -48,7 +48,7 @@ description: |-
     }
   
     # Allow only 1h, 3h, or 8h access windows
-    allowed_durations = [3600, 10800, 28800]
+    allowed_durations = [3600, 10800, 21600]
   }
   
   Non-Requestable Role (Policy-Only Access)
@@ -204,7 +204,7 @@ description: |-
       id = data.entitle_workflow.security_approval.id
     }
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   }
   
   Import
@@ -311,7 +311,7 @@ resource "entitle_role" "prod_admin" {
   }
 
   # Allow only 1h, 3h, or 8h access windows
-  allowed_durations = [3600, 10800, 28800]
+  allowed_durations = [3600, 10800, 21600]
 }
 ```
 
@@ -482,7 +482,7 @@ resource "entitle_role" "app_admin" {
     id = data.entitle_workflow.security_approval.id
   }
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 

@@ -122,7 +122,7 @@ resource "entitle_integration" "internal_postgres" {
     name = entitle_agent_token.db_agent.name
   }
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   allow_creating_accounts = false
 }
 ```
