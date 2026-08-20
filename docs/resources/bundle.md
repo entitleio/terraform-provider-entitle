@@ -22,7 +22,7 @@ description: |-
     roles = [{
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }]
-    allowed_durations = [3600, 28800]
+    allowed_durations = [3600, 21600]
   }
   
   Multi-Application Bundle
@@ -68,7 +68,7 @@ description: |-
     ]
   
     # Allow 8h, 24h, or 7-day access windows
-    allowed_durations = [28800, 86400, 604800]
+    allowed_durations = [21600, 86400, 604800]
   }
   
   Bundle with Category and Tags
@@ -159,7 +159,7 @@ description: |-
       id = data.entitle_roles.github_read.roles[0].id
     }]
   
-    allowed_durations = [28800, 86400]
+    allowed_durations = [21600, 86400]
   }
   
   Import
@@ -231,7 +231,7 @@ resource "entitle_bundle" "aws_dev_access" {
   roles = [{
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }]
-  allowed_durations = [3600, 28800]
+  allowed_durations = [3600, 21600]
 }
 ```
 
@@ -283,7 +283,7 @@ resource "entitle_bundle" "project_alpha" {
   ]
 
   # Allow 8h, 24h, or 7-day access windows
-  allowed_durations = [28800, 86400, 604800]
+  allowed_durations = [21600, 86400, 604800]
 }
 ```
 
@@ -383,7 +383,7 @@ resource "entitle_bundle" "dynamic_bundle" {
     id = data.entitle_roles.github_read.roles[0].id
   }]
 
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
 }
 ```
 

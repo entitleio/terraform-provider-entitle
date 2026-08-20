@@ -292,7 +292,7 @@ description: |-
   
     rules = [{
       sort_order     = 1
-      under_duration = 7200
+      under_duration = 10800
       any_schedule   = true
   
       approval_flow = {
@@ -635,7 +635,7 @@ description: |-
   
     rules = [{
       sort_order     = 1
-      under_duration = 7200
+      under_duration = 10800
       any_schedule   = true
   
       approval_flow = {
@@ -718,7 +718,7 @@ description: |-
   sort_order (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
   TODO:
   under_duration (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
-  Example: 3600 = 1 hour, 7200 = 2 hours, 86400 = 24 hoursUse a high value (e.g., 999999999) for a catch-all rule
+  Example: 3600 = 1 hour, 10800 = 3 hours, 86400 = 24 hoursUse -1 (any duration) for a catch-all rule
   any_schedule (Required, Boolean) If true, this rule applies at any time regardless of schedule. If false, the rule only applies during the schedules specified in in_schedules.
   Note: Set to true if not using schedule-based rulesCannot be true if in_schedules is not empty
   in_schedules (Required, List of Strings) List of schedule IDs during which this rule applies. Leave empty ([]) if any_schedule is true.
@@ -884,7 +884,7 @@ description: |-
     },
     {
       sort_order = 2
-      under_duration = 7200      # Matches requests ≤ 2 hours (but > 1 hour)
+      under_duration = 10800     # Matches requests ≤ 3 hours (but > 1 hour)
       # ... medium duration approval ...
     },
     {
@@ -1468,7 +1468,7 @@ resource "entitle_workflow" "complex_approval" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200
+    under_duration = 10800
     any_schedule   = true
 
     approval_flow = {
@@ -1829,7 +1829,7 @@ resource "entitle_workflow" "with_notifications" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 7200
+    under_duration = 10800
     any_schedule   = true
 
     approval_flow = {
@@ -1923,8 +1923,8 @@ A rule matches an access request when **ALL** of the following conditions are tr
 - `sort_order` (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
 TODO:
 - `under_duration` (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
-    - Example: `3600` = 1 hour, `7200` = 2 hours, `86400` = 24 hours
-    - Use a high value (e.g., `999999999`) for a catch-all rule
+    - Example: `3600` = 1 hour, `10800` = 3 hours, `86400` = 24 hours
+    - Use `-1` (any duration) for a catch-all rule
 
 - `any_schedule` (Required, Boolean) If `true`, this rule applies at any time regardless of schedule. If `false`, the rule only applies during the schedules specified in `in_schedules`.
     - **Note**: Set to `true` if not using schedule-based rules
@@ -2188,7 +2188,7 @@ rules = [
   },
   {
     sort_order = 2
-    under_duration = 7200      # Matches requests ≤ 2 hours (but > 1 hour)
+    under_duration = 10800     # Matches requests ≤ 3 hours (but > 1 hour)
     # ... medium duration approval ...
   },
   {
