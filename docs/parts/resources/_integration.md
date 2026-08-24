@@ -77,7 +77,7 @@ resource "entitle_integration" "aws_production" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations                    = [3600, 7200]
+  allowed_durations                    = [3600, 10800]
   allow_creating_accounts              = false   # Users must already exist in AWS
   allow_changing_account_permissions   = true
   readonly                             = false
@@ -202,7 +202,7 @@ resource "entitle_integration" "okta_admin" {
     }
   ]
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
   allow_creating_accounts = false
 }
 ```

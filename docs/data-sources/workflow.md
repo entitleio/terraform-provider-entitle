@@ -69,7 +69,7 @@ description: |-
       id = data.entitle_workflow.security_approval.id
     }
   
-    allowed_durations = [3600, 7200]
+    allowed_durations = [3600, 10800]
   }
   
   Reference a Workflow in a Bundle
@@ -211,7 +211,7 @@ resource "entitle_role" "prod_admin" {
     id = data.entitle_workflow.security_approval.id
   }
 
-  allowed_durations = [3600, 7200]
+  allowed_durations = [3600, 10800]
 }
 ```
 
