@@ -101,6 +101,8 @@ jobs:
       ENTITLE_US_WEBHOOK_ID: ${{ secrets.ENTITLE_US_WEBHOOK_ID }}
       ENTITLE_US_WEBHOOK_ID_2: ${{ secrets.ENTITLE_US_WEBHOOK_ID_2 }}
       GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+      BITBUCKET_EMAIL: ${{ secrets.BITBUCKET_EMAIL }}
+      BITBUCKET_APP_TOKEN: ${{ secrets.BITBUCKET_APP_TOKEN }}
   goreleaser:
     # Releases need permissions to read and write the repository contents.
     # GitHub considers creating releases and uploading assets as writing contents.
