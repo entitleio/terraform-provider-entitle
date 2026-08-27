@@ -8,3 +8,10 @@ type PrerequisitePermissionModel struct {
 	Default types.Bool `tfsdk:"default"`
 	Role    *Role      `tfsdk:"role"`
 }
+
+// ResourcePrerequisitePermissionModel represents a model defining prerequisite permissions
+// for a specific role and default setting.
+type ResourcePrerequisitePermissionModel struct {
+	Default types.Bool   `tfsdk:"default"`
+	RoleID  types.String `tfsdk:"role_id"`
+}

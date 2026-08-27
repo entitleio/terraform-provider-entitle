@@ -201,9 +201,6 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 						Computed:            true,
 						Description:         "The owner's email (lowercase) is used when id was not provided.",
 						MarkdownDescription: "The owner's email (lowercase) is used when id was not provided.",
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
 					},
 				},
 				Optional:            true,
@@ -241,9 +238,6 @@ func (r *ResourceSyncedResource) Schema(ctx context.Context, req resource.Schema
 									Computed:            true,
 									Description:         "Maintainer's email.",
 									MarkdownDescription: "Maintainer's email.",
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
-									},
 								},
 							},
 							Optional:            true,

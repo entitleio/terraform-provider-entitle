@@ -36,27 +36,19 @@ resource "entitle_integration" "my_gitlab" {
 		configurationSchemaName = "Configuration "
 	  })
     notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
+    owner_id = "%s"
     readonly = false
-    workflow = {
-      id   = "%s"
-    }
+    workflow_id = "%s"
 	maintainers = [
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		}
 	]
 	prerequisite_permissions = [
 		{
 			default = true
-			role = {
-				id = "%s"
-			}
+			role_id = "%s"
 		}
 	]
 }
@@ -72,20 +64,23 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"role_id": os.Getenv("ENTITLE_ROLE_ID")},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"default": "true"},
+					),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
-
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 			// Update testing
@@ -108,19 +103,13 @@ resource "entitle_integration" "my_gitlab" {
 		configurationSchemaName = "Configuration "
 	})
     notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
+    owner_id = "%s"
     readonly = false
-    workflow = {
-      id   = "%s"
-    }
+    workflow_id = "%s"
 	prerequisite_permissions = [
 		{
 			default = true
-			role = {
-				id = "%s"
-			}
+			role_id = "%s"
 		}
 	]
 }
@@ -137,10 +126,14 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"role_id": os.Getenv("ENTITLE_ROLE_ID")},
+					),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 				),
 			},
@@ -176,39 +169,27 @@ resource "entitle_integration" "my_gitlab" {
 		configurationSchemaName = "Configuration "
 	  })
     notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
+    owner_id = "%s"
     readonly = false
-    workflow = {
-      id   = "%s"
-    }
+    workflow_id = "%s"
 	maintainers = [
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "group"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 	]
 	prerequisite_permissions = [
 		{
 			default = true
-			role = {
-				id = "%s"
-			}
+			role_id = "%s"
 		}
 	]
 }
@@ -224,21 +205,24 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"role_id": os.Getenv("ENTITLE_ROLE_ID")},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"default": "true"},
+					),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "maintainers.#", "3"),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
-
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 			// Update testing
@@ -261,39 +245,27 @@ resource "entitle_integration" "my_gitlab" {
 		configurationSchemaName = "Configuration "
 	  })
     notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
+    owner_id = "%s"
     readonly = false
-    workflow = {
-      id   = "%s"
-    }
+    workflow_id = "%s"
 	maintainers = [
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "group"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 	]
 	prerequisite_permissions = [
 		{
 			default = true
-			role = {
-				id = "%s"
-			}
+			role_id = "%s"
 		}
 	]
 }
@@ -309,45 +281,39 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"role_id": os.Getenv("ENTITLE_ROLE_ID")},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"default": "true"},
+					),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "maintainers.#", "3"),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"entitle_integration.my_gitlab",
 						"maintainers.*",
-						map[string]string{
-							"entity.id": os.Getenv("ENTITLE_USER2_ID"),
-							"type":      "user",
-						},
+						map[string]string{"type": "user", "id": os.Getenv("ENTITLE_USER2_ID")},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"entitle_integration.my_gitlab",
 						"maintainers.*",
-						map[string]string{
-							"entity.id": os.Getenv("ENTITLE_DIRECTORY_GROUP_ID"),
-							"type":      "group",
-						},
+						map[string]string{"type": "group", "id": os.Getenv("ENTITLE_DIRECTORY_GROUP_ID")},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"entitle_integration.my_gitlab",
 						"maintainers.*",
-						map[string]string{
-							"entity.id": os.Getenv("ENTITLE_USER1_ID"),
-							"type":      "user",
-						},
+						map[string]string{"type": "user", "id": os.Getenv("ENTITLE_USER1_ID")},
 					),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
-
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 			// Update testing - add maintainer
@@ -370,45 +336,31 @@ resource "entitle_integration" "my_gitlab" {
 		configurationSchemaName = "Configuration "
 	  })
     notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
+    owner_id = "%s"
     readonly = false
-    workflow = {
-      id   = "%s"
-    }
+    workflow_id = "%s"
 	maintainers = [
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "group"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 		{
 			type = "user"
-			entity = {
-				id = "%s"
-			}
+			id   = "%s"
 		},
 	]
 	prerequisite_permissions = [
 		{
 			default = true
-			role = {
-				id = "%s"
-			}
+			role_id = "%s"
 		}
 	]
 }
@@ -424,21 +376,24 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "notify_about_external_permission_changes", "true"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
-					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"role_id": os.Getenv("ENTITLE_ROLE_ID")},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(
+						"entitle_integration.my_gitlab",
+						"prerequisite_permissions.*",
+						map[string]string{"default": "true"},
+					),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "maintainers.#", "4"),
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
-
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 		},
@@ -459,12 +414,8 @@ resource "entitle_integration" "test_integration" {
   }
   allowed_durations = [1800,3600]
   connection_json = jsonencode({})
-  owner = {
-    id = "%s"
-  }
-  workflow = {
-    id = "%s"
-  }
+  owner_id = "%s"
+  workflow_id = "%s"
   allow_changing_account_permissions = false
   allow_creating_accounts = false
   auto_assign_recommended_owners = false
@@ -484,18 +435,13 @@ resource "entitle_integration" "test_integration" {
 					resource.TestCheckResourceAttr("entitle_integration.test_integration", "auto_assign_recommended_owners", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.test_integration", "allow_creating_accounts", "false"),
 					resource.TestCheckResourceAttr("entitle_integration.test_integration", "notify_about_external_permission_changes", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.test_integration", "owner.id", os.Getenv("ENTITLE_OWNER_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "owner_id", os.Getenv("ENTITLE_OWNER_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.test_integration", "readonly", "false"),
-					resource.TestCheckResourceAttr("entitle_integration.test_integration", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
+					resource.TestCheckResourceAttr("entitle_integration.test_integration", "workflow_id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttrSet("entitle_integration.test_integration", "connection_json"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.test_integration", "id"),
-
-					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.name"),
-					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.name"),
-					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.name"),
-					//resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 		},
