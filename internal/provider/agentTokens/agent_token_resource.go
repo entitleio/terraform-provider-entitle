@@ -25,6 +25,10 @@ import (
 var _ resource.Resource = &AgentTokenResource{}
 var _ resource.ResourceWithImportState = &AgentTokenResource{}
 
+// rotationPath is where this resource keeps its rotation trigger. The token
+// plan modifier reads it to decide whether a rotation is pending.
+var rotationPath = path.Root(utils.DefaultRotationAttributeName)
+
 // NewAgentTokenResource creates a new instance of the AgentTokenResource.
 func NewAgentTokenResource() resource.Resource {
 	return &AgentTokenResource{}
@@ -37,9 +41,10 @@ type AgentTokenResource struct {
 
 // AgentTokenResourceModel describes the resource data model.
 type AgentTokenResourceModel struct {
-	ID    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Token types.String `tfsdk:"token"`
+	ID       types.String `tfsdk:"id"`
+	Name     types.String `tfsdk:"name"`
+	Token    types.String `tfsdk:"token"`
+	Rotation types.String `tfsdk:"rotation"`
 }
 
 // Metadata sets the metadata for the resource.
@@ -62,7 +67,6 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Optional:            false,
 				MarkdownDescription: "The display name for the agent token.",
 				Description:         "The display name for the agent token.",
 			},
@@ -71,10 +75,12 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Sensitive:           true,
 				MarkdownDescription: "The token for the agent token. (sensitive)",
 				Description:         "The token for the agent token. (sensitive)",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// Carries the secret forward from state, because the API only
+				// returns it on create and on rotate, except when a rotation is
+				// pending, in which case it becomes "(known after apply)".
+				PlanModifiers: utils.RotatableSecretPlanModifiers(rotationPath),
 			},
+			utils.DefaultRotationAttributeName: utils.RotationSchemaAttribute("token"),
 		},
 	}
 }
@@ -151,14 +157,25 @@ func (r *AgentTokenResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	if agentTokenResp.JSON200 == nil || agentTokenResp.JSON200.Result == nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			"The Agent Token create response contained no result",
+		)
+		return
+	}
+
 	// Write logs using the tflog package.
 	tflog.Trace(ctx, "created an Entitle agent token resource")
 
 	// Update the AgentTokenResourceModel with the created agent token data.
+	// Rotation is a client-side trigger with no server representation, so it is
+	// carried through from the plan untouched.
 	plan = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  utils.TrimmedStringValue(name),
-		Token: utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Token),
+		ID:       utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:     utils.TrimmedStringValue(name),
+		Token:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Token),
+		Rotation: plan.Rotation,
 	}
 
 	// Save the data into Terraform state.
@@ -185,11 +202,11 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Parse the resource ID into a UUID for API request.
-	uid, err := uuid.Parse(data.ID.String())
+	uid, err := uuid.Parse(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.String(), err),
+			fmt.Sprintf("Failed to parse the resource id (%s) to UUID, got error: %s", data.ID.ValueString(), err),
 		)
 		return
 	}
@@ -225,11 +242,24 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
+	if agentTokenResp.JSON200 == nil || agentTokenResp.JSON200.Result == nil {
+		resp.Diagnostics.AddError(
+			utils.ErrApiResponse.Error(),
+			fmt.Sprintf("The Agent Token read response for the id (%s) contained no result", uid.String()),
+		)
+		return
+	}
+
 	// Update the AgentTokenResourceModel with the retrieved data.
+	//
+	// The API never returns the secret on read, and rotation has no server-side
+	// representation, so both are preserved from prior state. Overwriting either
+	// here would produce a permanent diff.
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
-		Token: data.Token,
+		ID:       utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
+		Name:     utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
+		Token:    data.Token,
+		Rotation: data.Rotation,
 	}
 
 	// Save the updated data into Terraform state.
@@ -244,9 +274,20 @@ func (r *AgentTokenResource) Read(ctx context.Context, req resource.ReadRequest,
 //
 // It reads the updated Terraform plan data, sends a request to the Entitle API
 // to update the resource, and saves the updated resource data into Terraform state.
+//
+// Two independent changes are handled here:
+//
+//   - a change to "name" is a PUT against /agentTokens/{id};
+//   - a change to "rotation" is a POST against /agentTokens/{id}/rotate, which
+//     issues a new secret for the same token. The resource id, and therefore any
+//     grant or integration that references it, is unchanged.
+//
+// Both can happen in the same apply; the rename runs first. Neither response
+// body is trusted for "name", which is Required and therefore always written
+// back from the plan.
 func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// Create an instance of the AgentTokenResourceModel to store the resource data.
-	var data AgentTokenResourceModel
+	var data, state AgentTokenResourceModel
 
 	// Read Terraform plan data into the model.
 	diags := req.Plan.Get(ctx, &data)
@@ -255,8 +296,15 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
+	// Read prior state as well; rotation is decided by comparing the two.
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Parse the unique identifier from the resource data.
-	uid, err := uuid.Parse(data.ID.String())
+	uid, err := uuid.Parse(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -277,44 +325,109 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	name = data.Name.ValueString()
 
-	// Send a request to the Entitle API to update the agent token.
-	agentTokenResp, err := r.client.AgentTokensUpdateWithResponse(ctx, uid, client.AgentTokenCreateBodySchema{
-		Name: name,
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			utils.ErrApiConnection.Error(),
-			fmt.Sprintf("Unable to update agent token by the id (%s), got error: %s", uid.String(), err),
-		)
-		return
-	}
+	// The secret is not returned by the update endpoint, so it defaults to the
+	// value already in state and is only replaced if a rotation happens below.
+	token := state.Token
 
-	err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
-	if err != nil {
-		if errors.Is(err, utils.ErrNotFound) {
-			tflog.Debug(ctx, "Resource no longer exists, removing from state")
-
-			resp.State.RemoveResource(ctx)
+	if !data.Name.Equal(state.Name) {
+		// Send a request to the Entitle API to update the agent token.
+		agentTokenResp, err := r.client.AgentTokensUpdateWithResponse(ctx, uid, client.AgentTokenCreateBodySchema{
+			Name: name,
+		})
+		if err != nil {
+			resp.Diagnostics.AddError(
+				utils.ErrApiConnection.Error(),
+				fmt.Sprintf("Unable to update agent token by the id (%s), got error: %s", uid.String(), err),
+			)
 			return
 		}
 
-		resp.Diagnostics.AddError(
-			utils.ErrApiResponse.Error(),
-			fmt.Sprintf(
-				"Failed to update the Agent Token by the id (%s), status code: %d, %s",
-				uid.String(),
-				agentTokenResp.HTTPResponse.StatusCode,
-				err.Error(),
-			),
-		)
-		return
+		err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
+		if err != nil {
+			if errors.Is(err, utils.ErrNotFound) {
+				tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+				resp.State.RemoveResource(ctx)
+				return
+			}
+
+			resp.Diagnostics.AddError(
+				utils.ErrApiResponse.Error(),
+				fmt.Sprintf(
+					"Failed to update the Agent Token by the id (%s), status code: %d, %s",
+					uid.String(),
+					agentTokenResp.HTTPResponse.StatusCode,
+					err.Error(),
+				),
+			)
+			return
+		}
+	}
+
+	if utils.RotationChanged(state.Rotation, data.Rotation) {
+		tflog.Debug(ctx, "rotating an Entitle agent token", map[string]any{"id": uid.String()})
+
+		rotateResp, err := r.client.AgentTokensRotateWithResponse(ctx, uid)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				utils.ErrApiConnection.Error(),
+				fmt.Sprintf("Unable to rotate agent token by the id (%s), got error: %s", uid.String(), err),
+			)
+			return
+		}
+
+		err = utils.HTTPResponseToError(rotateResp.HTTPResponse.StatusCode, rotateResp.Body)
+		if err != nil {
+			if errors.Is(err, utils.ErrNotFound) {
+				tflog.Debug(ctx, "Resource no longer exists, removing from state")
+
+				resp.State.RemoveResource(ctx)
+				return
+			}
+
+			resp.Diagnostics.AddError(
+				utils.ErrApiResponse.Error(),
+				fmt.Sprintf(
+					"Failed to rotate the Agent Token by the id (%s), status code: %d, %s",
+					uid.String(),
+					rotateResp.HTTPResponse.StatusCode,
+					err.Error(),
+				),
+			)
+			return
+		}
+
+		// A rotation that reports success but returns no secret would silently
+		// leave the old value in state, and the next apply would see no pending
+		// change while the agent is already locked out. Fail loudly instead.
+		if rotateResp.JSON200 == nil || rotateResp.JSON200.Result == nil || rotateResp.JSON200.Result.Token == "" {
+			resp.Diagnostics.AddError(
+				utils.ErrApiResponse.Error(),
+				fmt.Sprintf(
+					"The Agent Token (%s) was rotated but the API returned no new token value. "+
+						"The old token is no longer valid and the new one cannot be recovered; "+
+						"taint or recreate the resource to obtain a usable token.",
+					uid.String(),
+				),
+			)
+			return
+		}
+
+		token = utils.TrimmedStringValue(rotateResp.JSON200.Result.Token)
+
+		tflog.Trace(ctx, "rotated an Entitle agent token resource")
 	}
 
 	// Update the AgentTokenResourceModel with the updated agent token data.
+	//
+	// "name" is taken from the plan rather than from either response body: it is
+	// a Required attribute, so writing anything else here would fail the apply
+	// with "Provider produced inconsistent result after apply".
 	data = AgentTokenResourceModel{
-		ID:    utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Id.String()),
-		Name:  utils.TrimmedStringValue(agentTokenResp.JSON200.Result.Name),
-		Token: data.Token,
+		ID:       utils.TrimmedStringValue(uid.String()),
+		Name:     data.Name,
+		Token:    token,
+		Rotation: data.Rotation,
 	}
 
 	// Save the updated data into Terraform state.
@@ -343,7 +456,7 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// Parse the unique identifier from the resource data.
-	uid, err := uuid.Parse(data.ID.String())
+	uid, err := uuid.Parse(data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -357,7 +470,7 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
-			fmt.Sprintf("Unable to delete agent token, id: (%s), got error: %v", data.ID.String(), err),
+			fmt.Sprintf("Unable to delete agent token, id: (%s), got error: %v", uid.String(), err),
 		)
 		return
 	}
@@ -368,7 +481,7 @@ func (r *AgentTokenResource) Delete(ctx context.Context, req resource.DeleteRequ
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf(
 				"Failed to delete the Agent by the id (%s), status code: %d, %s",
-				data.ID.String(),
+				uid.String(),
 				httpResp.HTTPResponse.StatusCode,
 				err.Error(),
 			),

@@ -89,6 +89,50 @@ resource "aws_secretsmanager_secret_version" "entitle_token_value" {
 }
 ```
 
+### Rotating a Token in Place
+
+Change the `rotation` value and apply. The token is rotated through the Entitle rotate endpoint, the resource `id` is unchanged, and the new secret is written to `token` so downstream resources pick it up in the same apply:
+
+```terraform
+resource "entitle_agent_token" "primary_agent" {
+  name     = "primary-agent"
+  rotation = "2" # was "1"
+}
+```
+
+`terraform plan` shows the pending rotation before it happens:
+
+```text
+  ~ resource "entitle_agent_token" "primary_agent" {
+        id       = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name     = "primary-agent"
+      ~ rotation = "1" -> "2"
+      ~ token    = (sensitive value)
+    }
+```
+
+### Rotating a Token on a Cadence
+
+Drive `rotation` from the `time` provider to rotate roughly every 90 days without editing the configuration:
+
+```terraform
+resource "time_rotating" "agent_token" {
+  rotation_days = 90
+}
+
+resource "entitle_agent_token" "scheduled_agent" {
+  name     = "scheduled-rotation-agent"
+  rotation = time_rotating.agent_token.rfc3339
+}
+```
+
+Once 90 days have elapsed, `time_rotating` proposes its own recreation, `rfc3339` becomes a new timestamp, and the agent token is rotated in the same apply.
+
+Two things to know before relying on this:
+
+- **This is a cadence, not a schedule.** `time_rotating` only notices the deadline when Terraform runs, so the token rotates on the first apply *after* 90 days, not at the 90-day mark. It needs a pipeline that applies regularly; otherwise the token simply does not rotate. The subsequent 90 days are measured from the new timestamp, so the drift does not accumulate
+- Because `rfc3339` defaults to the current time rather than being set in the configuration, its value is unknown at plan time during the apply that recreates it. The plan therefore shows `rotation = (known after apply)` alongside `token = (known after apply)` rather than the old and new timestamps. The rotation is still visible in the plan, just without the concrete values
+
 ### Integration Using an Agent Token
 
 Link an agent token to an integration that requires agent-based connectivity:
@@ -135,7 +179,7 @@ Existing agent tokens can be imported using their UUID:
 terraform import entitle_agent_token.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
-**Note:** Importing an agent token does not recover the `token` value. The `token` attribute will be empty after import. Only use import to bring an existing token resource under Terraform management — you cannot retrieve the token secret via import.
+**Note:** Importing an agent token does not recover the `token` value. The `token` attribute will be empty after import — you cannot retrieve the token secret via import. To get a usable secret for an imported token, set `rotation` and apply; see [Token Rotation](#token-rotation). Be aware that this invalidates the secret the agent is currently using.
 
 ### Finding the Agent Token ID
 
@@ -162,8 +206,43 @@ To find the UUID of an existing agent token:
 
 ### Token Rotation
 
-- To rotate a token, create a new `entitle_agent_token` resource with a new name, update the agent deployment to use the new token, then delete the old resource
-- Entitle generates new token values on each resource creation — there is no in-place rotation
+- Rotate in place by changing the `rotation` value. The next apply calls the Entitle rotate endpoint, keeps the same resource `id`, and writes the new secret to `token`
+- Because the resource `id` does not change, integrations and grants that reference the token keep working — nothing has to be re-linked
+- The value of `rotation` is meaningless. Only a change matters, and **any** change rotates — including setting the attribute for the first time on a token that already exists. Run `terraform plan` first: a pending rotation shows up as `token = (known after apply)`
+- Removing the attribute does not rotate
+- After `terraform import`, setting `rotation` is how you obtain a usable `token`. Import does not recover the secret, but a rotation issues a new one
+- **Rotation invalidates the previous secret immediately** — there is no overlap window. Anything Terraform-managed that reads `entitle_agent_token.x.token` is updated in the same apply, so the new secret reaches your secret store automatically; see [Picking Up the New Token](#picking-up-the-new-token) for what that does and does not cover
+
+### Picking Up the New Token
+
+Because a pending rotation makes `token` unknown at plan time, every resource that reads it is planned for update in the same apply. A `kubernetes_secret` or `aws_secretsmanager_secret_version` that references `entitle_agent_token.x.token` therefore holds the new secret within the same apply, with no manual step.
+
+Whether the *running agent* is using it is a separate question, and it is the one that decides whether rotation costs downtime:
+
+- If the agent re-reads its credential (for example from a Secret mounted as a volume, which kubelet refreshes), rotation is transparent
+- If the agent reads the credential once at startup — which is the case for the `kubernetes_secret` example above, where the token arrives as an environment variable — the pod keeps the old value until it restarts. Updating the Secret does not restart it. Trigger a rolling restart from the token itself, so the restart is part of the same apply:
+
+```terraform
+resource "kubernetes_deployment" "entitle_agent" {
+  # ...
+  spec {
+    template {
+      metadata {
+        annotations = {
+          # Changes on rotation, which rolls the pods. The key is arbitrary and
+          # nothing reads it; only the fact that it changes matters. This follows
+          # the "checksum/..." convention used by Helm charts for the same trick.
+          "checksum/entitle-agent-token" = sha256(entitle_agent_token.k8s_agent.token)
+        }
+      }
+    }
+  }
+}
+```
+
+With more than one replica the rolling restart means no interruption. With a single replica there is a brief gap while the pod restarts, which is usually acceptable — the agent reconnects on its own.
+
+Reach for two tokens and a manual cutover only when neither applies: the token is consumed outside Terraform (an agent someone configured by hand, a credential pasted into a VM), so nothing propagates automatically. In that case add a second `entitle_agent_token` with a different `name`, move the deployment across while both are valid, confirm it has connected, then remove the first resource. This assumes two agents may be connected at once, which holds only for fully redundant deployments — see [One Token Per Agent](#one-token-per-agent) above.
 
 ### Agent Deployment
 
