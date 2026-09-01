@@ -77,7 +77,8 @@ func (r *AgentTokenResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description:         "The token for the agent token. (sensitive)",
 				// Carries the secret forward from state, because the API only
 				// returns it on create and on rotate, except when a rotation is
-				// pending, in which case it becomes "(known after apply)".
+				// pending, in which case it is planned as unknown and shows up
+				// in the plan as "(sensitive value)".
 				PlanModifiers: utils.RotatableSecretPlanModifiers(rotationPath),
 			},
 			utils.DefaultRotationAttributeName: utils.RotationSchemaAttribute("token"),

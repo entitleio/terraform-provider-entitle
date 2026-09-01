@@ -104,8 +104,12 @@ func RotatableSecretPlanModifiers(rotationPath path.Path) []planmodifier.String 
 // trigger changes the secret is about to change, so the planned value must
 // become unknown instead. That has two effects:
 //
-//   - terraform plan renders the attribute as "(known after apply)", which is
-//     how the pending rotation becomes visible before it happens.
+//   - the attribute appears in terraform plan as a pending change, which is how
+//     the rotation becomes visible before it happens. Note that a Sensitive
+//     attribute renders as "(sensitive value)" and not "(known after apply)":
+//     Terraform's differ checks sensitivity before unknownness, so sensitivity
+//     wins. Any documentation that tells users what to look for in the plan
+//     must say "(sensitive value)" for a secret.
 //   - anything that consumes the secret (a Kubernetes secret, a Secrets Manager
 //     version) sees a planned change and is updated in the same apply.
 //
@@ -127,7 +131,7 @@ type rotationPlanModifier struct {
 }
 
 func (m rotationPlanModifier) Description(_ context.Context) string {
-	return fmt.Sprintf("Marks the value as known after apply when %s changes.", m.rotationPath)
+	return fmt.Sprintf("Plans the value as unknown when %s changes, so the pending rotation is visible in the plan.", m.rotationPath)
 }
 
 func (m rotationPlanModifier) MarkdownDescription(ctx context.Context) string {
