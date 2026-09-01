@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -373,6 +375,35 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 			resp.Diagnostics.AddError(
 				utils.ErrApiConnection.Error(),
 				fmt.Sprintf("Unable to rotate agent token by the id (%s), got error: %s", uid.String(), err),
+			)
+			return
+		}
+
+		// The rotate route is gated by the "enableAgentTokenRotation" feature
+		// flag, which is disabled by default, and the backend's guard rejects a
+		// disabled flag with 401. HTTPResponseToError maps every 401 to
+		// "unauthorized token: update the entitle token and retry please", which
+		// would send the operator off to replace working API credentials instead
+		// of asking for the flag. Handle it before that mapping and pass the
+		// API's own message through, since it is what distinguishes a disabled
+		// flag from genuinely bad credentials.
+		if rotateResp.HTTPResponse.StatusCode == http.StatusUnauthorized {
+			detail := strings.TrimSpace(string(rotateResp.Body))
+			if errBody, parseErr := utils.GetErrorBody(rotateResp.Body); parseErr == nil {
+				detail = errBody.Message
+			}
+
+			resp.Diagnostics.AddError(
+				utils.ErrApiResponse.Error(),
+				fmt.Sprintf(
+					"Failed to rotate the Agent Token by the id (%s): the API returned 401. "+
+						"Agent token rotation is gated by the \"enableAgentTokenRotation\" feature "+
+						"flag, which is disabled by default. If your Entitle credentials are "+
+						"otherwise working, ask Entitle to enable the flag for your tenant; "+
+						"otherwise check the credentials. API response: %s",
+					uid.String(),
+					detail,
+				),
 			)
 			return
 		}

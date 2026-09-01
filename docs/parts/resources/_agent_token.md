@@ -91,6 +91,8 @@ resource "aws_secretsmanager_secret_version" "entitle_token_value" {
 
 ### Rotating a Token in Place
 
+> **Prerequisite:** in-place rotation requires the `enableAgentTokenRotation` feature flag to be enabled for your tenant. It is **disabled by default**. With the flag off, the rotate endpoint returns HTTP 401 and the apply fails — the provider's error names the flag, so you can tell that case apart from an actual credentials problem. Contact Entitle to have it enabled before adopting `rotation`.
+
 Change the `rotation` value and apply. The token is rotated through the Entitle rotate endpoint, the resource `id` is unchanged, and the new secret is written to `token` so downstream resources pick it up in the same apply:
 
 ```terraform
@@ -217,6 +219,7 @@ To find the UUID of an existing agent token:
 
 ### Token Rotation
 
+- In-place rotation requires the `enableAgentTokenRotation` feature flag, which is disabled by default. Ask Entitle to enable it for your tenant first; without it the rotate endpoint returns 401 and the apply fails
 - Rotate in place by changing the `rotation` value. The next apply calls the Entitle rotate endpoint, keeps the same resource `id`, and writes the new secret to `token`
 - Because the resource `id` does not change, integrations and grants that reference the token keep working — nothing has to be re-linked
 - The value of `rotation` is meaningless. Only a change matters, and **any** change rotates — including setting the attribute for the first time on a token that already exists. Run `terraform plan` first: because `token` is sensitive, a pending rotation shows up as `~ token = (sensitive value)`, not `(known after apply)`
