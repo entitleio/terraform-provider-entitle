@@ -347,17 +347,16 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 		err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 		if err != nil {
-			if errors.Is(err, utils.ErrNotFound) {
-				tflog.Debug(ctx, "Resource no longer exists, removing from state")
-
-				resp.State.RemoveResource(ctx)
-				return
-			}
-
+			// Deliberately not RemoveResource, for the same reason as the rotate
+			// path below: state removal belongs in Read, where core expects it.
+			// Returning a null state from Update fails core's consistency check
+			// and reports a provider bug instead of a clean removal.
 			resp.Diagnostics.AddError(
 				utils.ErrApiResponse.Error(),
 				fmt.Sprintf(
-					"Failed to update the Agent Token by the id (%s), status code: %d, %s",
+					"Failed to update the Agent Token by the id (%s), status code: %d, %s. "+
+						"If the token was deleted outside Terraform, run "+
+						"`terraform apply -refresh-only` to reconcile state before retrying.",
 					uid.String(),
 					agentTokenResp.HTTPResponse.StatusCode,
 					err.Error(),
@@ -410,17 +409,21 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 		err = utils.HTTPResponseToError(rotateResp.HTTPResponse.StatusCode, rotateResp.Body)
 		if err != nil {
-			if errors.Is(err, utils.ErrNotFound) {
-				tflog.Debug(ctx, "Resource no longer exists, removing from state")
-
-				resp.State.RemoveResource(ctx)
-				return
-			}
-
+			// Deliberately not RemoveResource. A 404 here is ambiguous: the
+			// backend rewrites an unregistered route into the same
+			// "resource.notFound" body as a missing token, and an upstream 404
+			// is passed through with the same status. Dropping the resource
+			// would create a second token on the next apply and orphan the
+			// first, which is still live and still linked to integrations.
+			// Removing state mid-Update also returns a null state for a change
+			// core planned as in-place, which fails its consistency check.
 			resp.Diagnostics.AddError(
 				utils.ErrApiResponse.Error(),
 				fmt.Sprintf(
-					"Failed to rotate the Agent Token by the id (%s), status code: %d, %s",
+					"Failed to rotate the Agent Token by the id (%s), status code: %d, %s. "+
+						"The existing token is unchanged. If the token was deleted outside "+
+						"Terraform, run `terraform apply -refresh-only` to reconcile state "+
+						"before retrying.",
 					uid.String(),
 					rotateResp.HTTPResponse.StatusCode,
 					err.Error(),
