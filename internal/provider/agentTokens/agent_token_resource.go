@@ -347,10 +347,11 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 
 		err = utils.HTTPResponseToError(agentTokenResp.HTTPResponse.StatusCode, agentTokenResp.Body)
 		if err != nil {
-			// Deliberately not RemoveResource, for the same reason as the rotate
-			// path below: state removal belongs in Read, where core expects it.
-			// Returning a null state from Update fails core's consistency check
-			// and reports a provider bug instead of a clean removal.
+			// Deliberately not RemoveResource: state removal belongs in Read,
+			// where core expects it. Returning a null state from Update fails
+			// core's consistency check and reports a provider bug instead of a
+			// clean removal. The rotate path below declines it for this reason
+			// too, plus one specific to that route.
 			resp.Diagnostics.AddError(
 				utils.ErrApiResponse.Error(),
 				fmt.Sprintf(
@@ -411,12 +412,13 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 		if err != nil {
 			// Deliberately not RemoveResource. A 404 here is ambiguous: the
 			// backend rewrites an unregistered route into the same
-			// "resource.notFound" body as a missing token, and an upstream 404
-			// is passed through with the same status. Dropping the resource
-			// would create a second token on the next apply and orphan the
-			// first, which is still live and still linked to integrations.
-			// Removing state mid-Update also returns a null state for a change
-			// core planned as in-place, which fails its consistency check.
+			// "resource.notFound" body as a deleted token, so a provider
+			// released ahead of the API rollout is indistinguishable from a
+			// token that is genuinely gone. Dropping the resource would create
+			// a second token on the next apply and orphan the first, which is
+			// still live and still linked to integrations. Removing state
+			// mid-Update also returns a null state for a change core planned as
+			// in-place, which fails its consistency check.
 			resp.Diagnostics.AddError(
 				utils.ErrApiResponse.Error(),
 				fmt.Sprintf(
