@@ -365,6 +365,25 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 			)
 			return
 		}
+
+		// Checkpoint the rename before attempting the rotate. The framework
+		// seeds Update's response state from the *prior* state, deliberately,
+		// so that progress has to be recorded explicitly ("Require explicit
+		// provider updates for tracking successful updates"). Without this,
+		// a rotate failure below returns with state still claiming the old
+		// name while the server holds the new one, and the next apply's
+		// short-circuit sees state and config agreeing on the old name and
+		// skips the PUT, so the drift survives until a refresh.
+		//
+		// Only the name is advanced here: the rotation trigger and the secret
+		// must stay at their prior values, because no rotation has happened
+		// yet and the next apply still has to perform one.
+		state.Name = data.Name
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	if utils.RotationChanged(state.Rotation, data.Rotation) {
