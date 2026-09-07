@@ -21,6 +21,7 @@ import (
 
 const (
 	stubAddr       = "entitle_agent_token.stub"
+	stubName       = "Stub Agent Token"
 	stubTokenID    = "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
 	stubTokenValue = "eyJzdHViIjp0cnVlfQ=="
 
@@ -29,28 +30,59 @@ const (
 	flagDisabledBody = `{"errorId":"request.unauthorized",` +
 		`"message":"This endpoint is not available because the required feature flag is not enabled."}`
 
-	// A deleted token and an unregistered route both come back as
+	// A deleted record and an unregistered route both come back as
 	// resource.notFound, which is why the provider must not treat either as
 	// grounds for dropping the resource from state.
-	tokenGoneBody = `{"errorId":"resource.notFound","message":"Token not found"}`
+	notFoundBody = `{"errorId":"resource.notFound","message":"Token not found"}`
 )
 
+// stubResponses configures the stub's replies. Zero values mean "behave
+// normally", so each test only states the one failure it is about.
+//
+// It is separate from stubAPI so the handler can take a copy under the mutex
+// without copying a lock, which go vet's copylocks check would reject.
+type stubResponses struct {
+	createBody   string
+	readBody     string
+	putStatus    int
+	putBody      string
+	rotateStatus int
+	rotateBody   string
+}
+
 // stubAPI is a minimal stand-in for the Entitle API: enough to create and read
-// an agent token, and to fail a rotation with a chosen status.
+// an agent token, and to fail any one operation on demand.
 //
 // It exists because the rotate error paths are unreachable against the real
 // API. A tenant either has the feature flag or it does not, and a 404 needs the
-// token to vanish between the refresh and the apply. The provider's endpoint
+// record to vanish between the refresh and the apply. The provider's endpoint
 // attribute is validated against an allowlist of production URLs, but Configure
 // reads ENTITLE_API_ENDPOINT before it looks at the attribute and does not
 // validate the environment variable — that is the seam these tests use, so no
 // production code has to grow a test hook.
 type stubAPI struct {
-	rotateStatus int
-	rotateBody   string
-
 	mu   sync.Mutex
 	name string
+	resp stubResponses
+}
+
+func newStubAPI(resp stubResponses) *stubAPI {
+	return &stubAPI{resp: resp}
+}
+
+func (s *stubAPI) responses() stubResponses {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.resp
+}
+
+// setReadBody swaps the read response mid-test, from a TestStep PreConfig.
+func (s *stubAPI) setReadBody(body string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.resp.readBody = body
 }
 
 func (s *stubAPI) currentName() string {
@@ -71,36 +103,54 @@ func (s *stubAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	const base = "/public/v1/agentTokens"
 
 	item := base + "/" + stubTokenID
+	resp := s.responses()
 
 	switch {
 	case r.Method == http.MethodPost && r.URL.Path == base:
-		var body struct {
-			Name string `json:"name"`
+		s.setName(decodeName(r))
+
+		if resp.createBody != "" {
+			writeJSON(w, http.StatusOK, resp.createBody)
+			return
 		}
 
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		s.setName(body.Name)
-
 		writeJSON(w, http.StatusOK, fmt.Sprintf(
-			`{"result":{"id":%q,"name":%q,"token":%q}}`, stubTokenID, body.Name, stubTokenValue))
+			`{"result":{"id":%q,"name":%q,"token":%q}}`, stubTokenID, s.currentName(), stubTokenValue))
 
 	case r.Method == http.MethodGet && r.URL.Path == item:
+		if resp.readBody != "" {
+			writeJSON(w, http.StatusOK, resp.readBody)
+			return
+		}
+
 		writeJSON(w, http.StatusOK, fmt.Sprintf(
 			`{"result":{"id":%q,"name":%q}}`, stubTokenID, s.currentName()))
 
 	case r.Method == http.MethodPut && r.URL.Path == item:
-		var body struct {
-			Name string `json:"name"`
+		if resp.putStatus != 0 && resp.putStatus != http.StatusOK {
+			// A failed rename must not take effect server-side.
+			writeJSON(w, resp.putStatus, orDefault(resp.putBody, notFoundBody))
+			return
 		}
 
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		s.setName(body.Name)
+		s.setName(decodeName(r))
 
 		writeJSON(w, http.StatusOK, fmt.Sprintf(
-			`{"result":{"id":%q,"name":%q}}`, stubTokenID, body.Name))
+			`{"result":{"id":%q,"name":%q}}`, stubTokenID, s.currentName()))
 
 	case r.Method == http.MethodPost && r.URL.Path == item+"/rotate":
-		writeJSON(w, s.rotateStatus, s.rotateBody)
+		status := resp.rotateStatus
+		if status == 0 {
+			status = http.StatusOK
+		}
+
+		body := resp.rotateBody
+		if body == "" {
+			body = fmt.Sprintf(
+				`{"result":{"id":%q,"name":%q,"token":%q}}`, stubTokenID, s.currentName(), stubTokenValue+"rotated")
+		}
+
+		writeJSON(w, status, body)
 
 	case r.Method == http.MethodDelete && r.URL.Path == item:
 		writeJSON(w, http.StatusOK, `{"ok":true}`)
@@ -111,6 +161,24 @@ func (s *stubAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, fmt.Sprintf(
 			`{"errorId":"resource.notFound","message":"Cannot %s %s"}`, r.Method, r.URL.Path))
 	}
+}
+
+func decodeName(r *http.Request) string {
+	var body struct {
+		Name string `json:"name"`
+	}
+
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
+	return body.Name
+}
+
+func orDefault(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+
+	return value
 }
 
 func writeJSON(w http.ResponseWriter, status int, body string) {
@@ -149,14 +217,18 @@ func wrapped(phrase string) *regexp.Regexp {
 }
 
 func stubConfig(rotation string) string {
+	return stubConfigNamed(stubName, rotation)
+}
+
+func stubConfigNamed(name, rotation string) string {
 	return fmt.Sprintf(`
 provider "entitle" {}
 
 resource "entitle_agent_token" "stub" {
-	name     = "Stub Agent Token"
+	name     = %q
 	rotation = %q
 }
-`, rotation)
+`, name, rotation)
 }
 
 // TestAgentTokenRotationFeatureFlagDisabled covers the default state of a
@@ -165,10 +237,10 @@ resource "entitle_agent_token" "stub" {
 // "unauthorized token: update the entitle token and retry please" — sending the
 // operator to replace credentials that are working fine.
 func TestAgentTokenRotationFeatureFlagDisabled(t *testing.T) {
-	api := &stubAPI{
+	api := newStubAPI(stubResponses{
 		rotateStatus: http.StatusUnauthorized,
 		rotateBody:   flagDisabledBody,
-	}
+	})
 
 	startStubAPI(t, api)
 
@@ -182,8 +254,6 @@ func TestAgentTokenRotationFeatureFlagDisabled(t *testing.T) {
 					resource.TestCheckResourceAttr(stubAddr, "token", stubTokenValue),
 				),
 			},
-			// The diagnostic has to name the flag, and must not be the generic
-			// credentials message.
 			{
 				Config:      stubConfig("2"),
 				ExpectError: wrapped("enableAgentTokenRotation"),
@@ -198,15 +268,15 @@ func TestAgentTokenRotationFeatureFlagDisabled(t *testing.T) {
 	})
 }
 
-// TestAgentTokenRotationNotFoundKeepsState covers the 404 path. A 404 from
-// rotate is ambiguous — deleted token, unregistered route, or a provider
-// released ahead of the API — so the resource must stay in state rather than be
-// silently dropped and recreated, which would orphan a live token.
+// TestAgentTokenRotationNotFoundKeepsState covers the 404 path on rotate. A 404
+// is ambiguous — deleted token, unregistered route, or a provider released
+// ahead of the API — so the resource must stay in state rather than be silently
+// dropped and recreated, which would orphan a live token.
 func TestAgentTokenRotationNotFoundKeepsState(t *testing.T) {
-	api := &stubAPI{
+	api := newStubAPI(stubResponses{
 		rotateStatus: http.StatusNotFound,
-		rotateBody:   tokenGoneBody,
-	}
+		rotateBody:   notFoundBody,
+	})
 
 	startStubAPI(t, api)
 
@@ -229,6 +299,112 @@ func TestAgentTokenRotationNotFoundKeepsState(t *testing.T) {
 			{
 				Config:   stubConfig("1"),
 				PlanOnly: true,
+			},
+		},
+	})
+}
+
+// TestAgentTokenRenameNotFoundKeepsState covers the same 404 rule on the rename
+// path, which previously removed the resource from state inside Update.
+func TestAgentTokenRenameNotFoundKeepsState(t *testing.T) {
+	api := newStubAPI(stubResponses{
+		putStatus: http.StatusNotFound,
+		putBody:   notFoundBody,
+	})
+
+	startStubAPI(t, api)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: stubProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: stubConfigNamed(stubName, "1"),
+				Check:  resource.TestCheckResourceAttr(stubAddr, "id", stubTokenID),
+			},
+			{
+				Config:      stubConfigNamed("Renamed Agent Token", "1"),
+				ExpectError: wrapped("Failed to update the Agent Token"),
+			},
+			// The rename failed server-side too, so the original name still
+			// matches. An empty plan proves the resource is still in state.
+			{
+				Config:   stubConfigNamed(stubName, "1"),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+// TestAgentTokenRotationWithoutNewTokenIsFatal covers a rotate that reports
+// success but returns no secret. Accepting it would leave the dead token in
+// state with no pending change, so the agent would be locked out and the next
+// plan would look clean.
+func TestAgentTokenRotationWithoutNewTokenIsFatal(t *testing.T) {
+	api := newStubAPI(stubResponses{
+		rotateStatus: http.StatusOK,
+		rotateBody: fmt.Sprintf(
+			`{"result":{"id":%q,"name":%q,"token":""}}`, stubTokenID, stubName),
+	})
+
+	startStubAPI(t, api)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: stubProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: stubConfig("1"),
+				Check:  resource.TestCheckResourceAttr(stubAddr, "token", stubTokenValue),
+			},
+			{
+				Config:      stubConfig("2"),
+				ExpectError: wrapped("returned no new token value"),
+			},
+		},
+	})
+}
+
+// TestAgentTokenCreateWithoutResultIsFatal covers a 200 with no result object,
+// which would otherwise be a nil dereference and crash the provider.
+func TestAgentTokenCreateWithoutResultIsFatal(t *testing.T) {
+	api := newStubAPI(stubResponses{createBody: `{}`})
+
+	startStubAPI(t, api)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: stubProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      stubConfig("1"),
+				ExpectError: wrapped("create response contained no result"),
+			},
+		},
+	})
+}
+
+// TestAgentTokenReadWithoutResultIsFatal covers the same guard on read.
+func TestAgentTokenReadWithoutResultIsFatal(t *testing.T) {
+	api := newStubAPI(stubResponses{})
+
+	startStubAPI(t, api)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: stubProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: stubConfig("1"),
+				Check:  resource.TestCheckResourceAttr(stubAddr, "id", stubTokenID),
+			},
+			{
+				PreConfig:   func() { api.setReadBody(`{}`) },
+				Config:      stubConfig("1"),
+				ExpectError: wrapped("read response for the id"),
+			},
+			// Restore the stub so the framework's teardown refresh and destroy
+			// do not trip over the broken read.
+			{
+				PreConfig: func() { api.setReadBody("") },
+				Config:    stubConfig("1"),
+				PlanOnly:  true,
 			},
 		},
 	})
