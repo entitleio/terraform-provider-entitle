@@ -407,6 +407,8 @@ func (r *AgentTokenResource) Update(ctx context.Context, req resource.UpdateRequ
 		// API's own message through, since it is what distinguishes a disabled
 		// flag from genuinely bad credentials.
 		if rotateResp.HTTPResponse.StatusCode == http.StatusUnauthorized {
+			// GetErrorBody rejects a body with no message, in which case the
+			// raw payload is the most informative thing available.
 			detail := strings.TrimSpace(string(rotateResp.Body))
 			if errBody, parseErr := utils.GetErrorBody(rotateResp.Body); parseErr == nil {
 				detail = errBody.Message
