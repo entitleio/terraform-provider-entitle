@@ -718,7 +718,7 @@ description: |-
   sort_order (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
   TODO:
   under_duration (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
-  Example: 3600 = 1 hour, 10800 = 3 hours, 86400 = 24 hoursUse -1 (any duration) for a catch-all rule
+  Example: 3600 = 1 hour, 10800 = 3 hours, 86400 = 24 hours; use -1 (any duration) for a catch-all rule
   any_schedule (Required, Boolean) If true, this rule applies at any time regardless of schedule. If false, the rule only applies during the schedules specified in in_schedules.
   Note: Set to true if not using schedule-based rulesCannot be true if in_schedules is not empty
   in_schedules (Required, List of Strings) List of schedule IDs during which this rule applies. Leave empty ([]) if any_schedule is true.

@@ -67,7 +67,7 @@ description: |-
       { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }   # Alpha deployment pipeline
     ]
   
-    # Allow 8h, 24h, or 7-day access windows
+    # Allow 6h, 24h, or 7-day access windows
     allowed_durations = [21600, 86400, 604800]
   }
   
@@ -282,7 +282,7 @@ resource "entitle_bundle" "project_alpha" {
     { id = "7d080bfa-9143-11ee-b9d1-0242ac120004" }   # Alpha deployment pipeline
   ]
 
-  # Allow 8h, 24h, or 7-day access windows
+  # Allow 6h, 24h, or 7-day access windows
   allowed_durations = [21600, 86400, 604800]
 }
 ```

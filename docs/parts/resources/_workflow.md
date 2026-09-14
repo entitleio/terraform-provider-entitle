@@ -776,8 +776,7 @@ A rule matches an access request when **ALL** of the following conditions are tr
 - `sort_order` (Required, Integer) The evaluation order of this rule. Rules with lower numbers are evaluated first. Must be unique within the workflow.
 TODO:
 - `under_duration` (Required, Integer) Maximum access duration in seconds for which this rule applies. Requests for access durations up to and including this value will match this rule.
-    - Example: `3600` = 1 hour, `10800` = 3 hours, `86400` = 24 hours
-    - Use `-1` (any duration) for a catch-all rule
+    - Example: `3600` = 1 hour, `10800` = 3 hours, `86400` = 24 hours; use `-1` (any duration) for a catch-all rule
 
 - `any_schedule` (Required, Boolean) If `true`, this rule applies at any time regardless of schedule. If `false`, the rule only applies during the schedules specified in `in_schedules`.
     - **Note**: Set to `true` if not using schedule-based rules
