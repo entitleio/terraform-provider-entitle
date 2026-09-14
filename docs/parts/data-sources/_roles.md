@@ -69,7 +69,7 @@ resource "entitle_bundle" "github_read_bundle" {
     id = data.entitle_roles.read_roles.roles[0].id
   }]
 
-  allowed_durations = [28800, 86400]
+  allowed_durations = [21600, 86400]
 }
 ```
 

@@ -50,7 +50,7 @@ description: |-
       name = data.entitle_agent_token.existing_agent.name
     }
   
-    allowed_durations       = [3600, 28800]
+    allowed_durations       = [3600, 21600]
     allow_creating_accounts = false
   }
   
@@ -131,7 +131,7 @@ resource "entitle_integration" "internal_service" {
     name = data.entitle_agent_token.existing_agent.name
   }
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   allow_creating_accounts = false
 }
 ```

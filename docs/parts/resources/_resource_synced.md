@@ -58,7 +58,7 @@ resource "entitle_resource_synced" "aws_prod_account" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 }
 ```
 
@@ -110,7 +110,7 @@ resource "entitle_resource_synced" "gcp_prod" {
     id = data.entitle_user.platform_lead.id
   }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 
   user_defined_tags = ["gcp", "production", "critical"]
 }
@@ -142,7 +142,7 @@ resource "entitle_resource_synced" "gcp" {
     id = data.entitle_user.platform_lead.id
   }
 
-  allowed_durations = [3600, 28800, 86400]
+  allowed_durations = [3600, 21600, 86400]
 }
 ```
 

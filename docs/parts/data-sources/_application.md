@@ -53,7 +53,7 @@ resource "entitle_integration" "my_github" {
   owner    = { id = "7d080bfa-9143-11ee-b9d1-0242ac120001" }
   workflow = { id = "7d080bfa-9143-11ee-b9d1-0242ac120002" }
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   allow_creating_accounts = true
 }
 ```

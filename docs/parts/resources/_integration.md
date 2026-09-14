@@ -47,7 +47,7 @@ resource "entitle_integration" "slack_workspace" {
     id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
   }
 
-  allowed_durations       = [3600, 28800, 86400]
+  allowed_durations       = [3600, 21600, 86400]
   allow_creating_accounts = true
 }
 ```
@@ -124,7 +124,7 @@ resource "entitle_integration" "github_org" {
     }
   ]
 
-  allowed_durations = [3600, 28800]
+  allowed_durations = [3600, 21600]
   allow_creating_accounts = true
 }
 ```
@@ -164,7 +164,7 @@ resource "entitle_integration" "internal_postgres" {
     name = entitle_agent_token.internal_db_agent.name
   }
 
-  allowed_durations       = [3600, 28800]
+  allowed_durations       = [3600, 21600]
   allow_creating_accounts = false
 }
 ```
