@@ -12,112 +12,112 @@ description: |-
   Example Usage
   Basic Agent Token
   Create a token for a single agent deployment:
-  
+
   resource "entitle_agent_token" "primary_agent" {
     name = "primary-agent"
   }
-  
+
   # Save the token value securely after apply
   output "agent_token_value" {
     value     = entitle_agent_token.primary_agent.token
     sensitive = true
   }
-  
+
   Agent Token for a Specific Environment
   Name tokens clearly to indicate their purpose or environment:
-  
+
   resource "entitle_agent_token" "production_agent" {
     name = "production-datacenter-agent"
   }
-  
+
   resource "entitle_agent_token" "staging_agent" {
     name = "staging-environment-agent"
   }
-  
+
   Agent Token Passed to a Kubernetes Deployment
   Provision a token and pass it directly to the agent's Kubernetes configuration:
-  
+
   resource "entitle_agent_token" "k8s_agent" {
     name = "kubernetes-cluster-agent"
   }
-  
+
   resource "kubernetes_secret" "entitle_agent_secret" {
     metadata {
       name      = "entitle-agent-token"
       namespace = "entitle"
     }
-  
+
     data = {
       ENTITLE_TOKEN = entitle_agent_token.k8s_agent.token
     }
   }
-  
+
   Agent Token Stored in AWS Secrets Manager
   Securely store the generated token in AWS Secrets Manager:
-  
+
   resource "entitle_agent_token" "aws_agent" {
     name = "aws-private-vpc-agent"
   }
-  
+
   resource "aws_secretsmanager_secret" "entitle_token" {
     name        = "entitle/agent-token"
     description = "Entitle Agent authentication token"
   }
-  
+
   resource "aws_secretsmanager_secret_version" "entitle_token_value" {
     secret_id     = aws_secretsmanager_secret.entitle_token.id
     secret_string = entitle_agent_token.aws_agent.token
   }
-  
+
   Rotating a Token in Place
   **Prerequisite:** in-place rotation requires the `enableAgentTokenRotation` feature flag to be enabled for your tenant. It is **disabled by default**. With the flag off, the rotate endpoint returns HTTP 401 and the apply fails — the provider's error names the flag, so you can tell that case apart from an actual credentials problem. Contact Entitle to have it enabled before adopting `rotation`.
   Change the rotation value and apply. The token is rotated through the Entitle rotate endpoint, the resource id is unchanged, and the new secret is written to token so downstream resources pick it up in the same apply:
-  
+
   resource "entitle_agent_token" "primary_agent" {
     name     = "primary-agent"
     rotation = "2" # was "1"
   }
-  
+
   terraform plan shows the pending rotation before it happens:
-  
+
     ~ resource "entitle_agent_token" "primary_agent" {
           id       = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           name     = "primary-agent"
         ~ rotation = "1" -> "2"
         ~ token    = (sensitive value)
       }
-  
+
   Rotating a Token on a Cadence
   Drive rotation from the time provider to rotate roughly every 90 days without editing the configuration:
-  
+
   resource "time_rotating" "agent_token" {
     rotation_days = 90
   }
-  
+
   resource "entitle_agent_token" "scheduled_agent" {
     name     = "scheduled-rotation-agent"
     rotation = time_rotating.agent_token.rfc3339
   }
-  
+
   Once 90 days have elapsed, time_rotating proposes its own recreation, rfc3339 becomes a new timestamp, and the agent token is rotated in the same apply.
   Two things to know before relying on this:
   This is a cadence, not a schedule. time_rotating only notices the deadline when Terraform runs, so the token rotates on the first apply after 90 days, not at the 90-day mark. It needs a pipeline that applies regularly; otherwise the token simply does not rotate. The subsequent 90 days are measured from the new timestamp, so the drift does not accumulateBecause rfc3339 defaults to the current time rather than being set in the configuration, its value is unknown at plan time during the apply that recreates it. The plan therefore shows the old timestamp but not the new one:
-  
+
     ~ resource "entitle_agent_token" "scheduled_agent" {
           id       = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           name     = "scheduled-rotation-agent"
         ~ rotation = "2026-05-01T10:00:00Z" -> (known after apply)
         ~ token    = (sensitive value)
       }
-  
+
   The rotation is still visible in the plan, just without the incoming timestamp
   Integration Using an Agent Token
   Link an agent token to an integration that requires agent-based connectivity:
-  
+
   resource "entitle_agent_token" "db_agent" {
     name = "internal-database-agent"
   }
-  
+
   resource "entitle_integration" "internal_postgres" {
     name            = "Internal PostgreSQL"
     connection_json = jsonencode({
@@ -125,32 +125,32 @@ description: |-
       port     = 5432
       database = "production"
     })
-  
+
     application = {
       name = "postgresql"
     }
-  
+
     owner = {
       id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
     }
-  
+
     workflow = {
       id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
     }
-  
+
     agent_token = {
       name = entitle_agent_token.db_agent.name
     }
-  
+
     allowed_durations       = [3600, 21600]
     allow_creating_accounts = false
   }
-  
+
   Import
   Existing agent tokens can be imported using their UUID:
-  
+
   terraform import entitle_agent_token.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
-  
+
   Note: Importing an agent token does not recover the token value. The token attribute will be empty after import — you cannot retrieve the token secret via import. To get a usable secret for an imported token, set rotation and apply; see Token Rotation. Be aware that this invalidates the secret the agent is currently using.
   Finding the Agent Token ID
   To find the UUID of an existing agent token:
@@ -166,7 +166,7 @@ description: |-
   Because a pending rotation makes token unknown at plan time, every resource that reads it is planned for update in the same apply. A kubernetes_secret or aws_secretsmanager_secret_version that references entitle_agent_token.x.token therefore holds the new secret within the same apply, with no manual step.
   Whether the running agent is using it is a separate question, and it is the one that decides whether rotation costs downtime:
   If the agent re-reads its credential (for example from a Secret mounted as a volume, which kubelet refreshes), rotation is transparentIf the agent reads the credential once at startup — which is the case for the kubernetes_secret example above, where the token arrives as an environment variable — the pod keeps the old value until it restarts. Updating the Secret does not restart it. Trigger a rolling restart from the token itself, so the restart is part of the same apply:
-  
+
   resource "kubernetes_deployment" "entitle_agent" {
     # ...
     spec {
@@ -182,7 +182,7 @@ description: |-
       }
     }
   }
-  
+
   With more than one replica the rolling restart means no interruption. With a single replica there is a brief gap while the pod restarts, which is usually acceptable — the agent reconnects on its own.
   Reach for two tokens and a manual cutover only when neither applies: the token is consumed outside Terraform (an agent someone configured by hand, a credential pasted into a VM), so nothing propagates automatically. In that case add a second entitle_agent_token with a different name, move the deployment across while both are valid, confirm it has connected, then remove the first resource. This assumes two agents may be connected at once, which holds only for fully redundant deployments — see One Token Per Agent above.
   Agent Deployment
