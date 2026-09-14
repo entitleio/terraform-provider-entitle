@@ -1384,6 +1384,15 @@ type AgentTokenResponseSchema struct {
 	} `json:"result,omitempty"`
 }
 
+// AgentTokenRotateResponseSchema defines model for AgentTokenRotateResponseSchema.
+type AgentTokenRotateResponseSchema struct {
+	Result *struct {
+		Id    openapi_types.UUID `json:"id"`
+		Name  string             `json:"name"`
+		Token string             `json:"token"`
+	} `json:"result,omitempty"`
+}
+
 // AgentTokensListResponseSchema defines model for AgentTokensListResponseSchema.
 type AgentTokensListResponseSchema struct {
 	Pagination PaginationResponseSchema   `json:"pagination"`
@@ -4624,6 +4633,9 @@ type ClientInterface interface {
 
 	AgentTokensUpdate(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AgentTokensRotate request
+	AgentTokensRotate(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ApplicationsIndex request
 	ApplicationsIndex(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5015,6 +5027,18 @@ func (c *Client) AgentTokensUpdateWithBody(ctx context.Context, id openapi_types
 
 func (c *Client) AgentTokensUpdate(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAgentTokensUpdateRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AgentTokensRotate(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAgentTokensRotateRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -6402,6 +6426,40 @@ func NewAgentTokensUpdateRequestWithBody(server string, id openapi_types.UUID, c
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAgentTokensRotateRequest generates requests for AgentTokensRotate
+func NewAgentTokensRotateRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/public/v1/agentTokens/%s/rotate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -8714,6 +8772,9 @@ type ClientWithResponsesInterface interface {
 
 	AgentTokensUpdateWithResponse(ctx context.Context, id openapi_types.UUID, body AgentTokensUpdateJSONRequestBody, reqEditors ...RequestEditorFn) (*AgentTokensUpdateResponse, error)
 
+	// AgentTokensRotateWithResponse request
+	AgentTokensRotateWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*AgentTokensRotateResponse, error)
+
 	// ApplicationsIndexWithResponse request
 	ApplicationsIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ApplicationsIndexResponse, error)
 
@@ -9212,6 +9273,28 @@ func (r AgentTokensUpdateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r AgentTokensUpdateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AgentTokensRotateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AgentTokenRotateResponseSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r AgentTokensRotateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AgentTokensRotateResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10284,6 +10367,15 @@ func (c *ClientWithResponses) AgentTokensUpdateWithResponse(ctx context.Context,
 	return ParseAgentTokensUpdateResponse(rsp)
 }
 
+// AgentTokensRotateWithResponse request returning *AgentTokensRotateResponse
+func (c *ClientWithResponses) AgentTokensRotateWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*AgentTokensRotateResponse, error) {
+	rsp, err := c.AgentTokensRotate(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAgentTokensRotateResponse(rsp)
+}
+
 // ApplicationsIndexWithResponse request returning *ApplicationsIndexResponse
 func (c *ClientWithResponses) ApplicationsIndexWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ApplicationsIndexResponse, error) {
 	rsp, err := c.ApplicationsIndex(ctx, reqEditors...)
@@ -11183,6 +11275,32 @@ func ParseAgentTokensUpdateResponse(rsp *http.Response) (*AgentTokensUpdateRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AgentTokenResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAgentTokensRotateResponse parses an HTTP response from a AgentTokensRotateWithResponse call
+func ParseAgentTokensRotateResponse(rsp *http.Response) (*AgentTokensRotateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AgentTokensRotateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AgentTokenRotateResponseSchema
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

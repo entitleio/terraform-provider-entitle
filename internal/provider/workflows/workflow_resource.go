@@ -36,6 +36,45 @@ import (
 var _ resource.Resource = &WorkflowResource{}
 var _ resource.ResourceWithImportState = &WorkflowResource{}
 
+// notifiedEntityTypes and approvalEntityTypes are the accepted values for the
+// "type" attribute of notified_entities and approval_entities.
+//
+// These are the single source of truth for both the schema validators below and
+// the switch statements in getWorkflowsRules. TestGetWorkflowsRules_AllEntityTypes
+// walks every value here through getWorkflowsRules, so adding a value without
+// handling it in the corresponding switch fails the test rather than reaching
+// users as an "Unsupported entity type" error at apply time.
+var notifiedEntityTypes = []string{
+	string(client.OnCallIntegrationSchedule),
+	string(client.DirectoryGroup),
+	string(client.SlackChannel),
+	string(client.TeamsChannel),
+	string(client.EnumApprovalEntityUserUserUser),
+	string(client.EnumNotifiedEntityWithoutEntityDirectManager),
+	string(client.EnumNotifiedEntityWithoutEntityIntegrationMaintainer),
+	string(client.EnumNotifiedEntityWithoutEntityIntegrationOwner),
+	string(client.EnumNotifiedEntityWithoutEntityResourceMaintainer),
+	string(client.EnumNotifiedEntityWithoutEntityResourceOwner),
+	string(client.EnumNotifiedEntityWithoutEntityTeamMember),
+	"Webhook",
+}
+
+var approvalEntityTypes = []string{
+	string(client.OnCallIntegrationSchedule),
+	string(client.DirectoryGroup),
+	string(client.SlackChannel),
+	string(client.TeamsChannel),
+	string(client.EnumApprovalEntityUserUserUser),
+	string(client.EnumApprovalEntityWithoutEntityAutomatic),
+	string(client.EnumApprovalEntityWithoutEntityDirectManager),
+	string(client.EnumApprovalEntityWithoutEntityIntegrationMaintainer),
+	string(client.EnumApprovalEntityWithoutEntityIntegrationOwner),
+	string(client.EnumApprovalEntityWithoutEntityResourceMaintainer),
+	string(client.EnumApprovalEntityWithoutEntityResourceOwner),
+	string(client.EnumApprovalEntityWithoutEntityTeamMember),
+	"Webhook",
+}
+
 func NewWorkflowResource() resource.Resource {
 	return &WorkflowResource{}
 }
@@ -86,9 +125,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 						"any_schedule": schema.BoolAttribute{
 							Computed:            true,
 							Optional:            true,
-							Default:             booldefault.StaticBool(true),
-							Description:         "Indicates whether the rule applies at any schedule. Defaults to true.",
-							MarkdownDescription: "Indicates whether the rule applies at any schedule. Defaults to true.",
+							Default:             booldefault.StaticBool(false),
+							Description:         "Indicates whether the rule requires a matching schedule. Defaults to false. When set to true, the schedule must match.",
+							MarkdownDescription: "Indicates whether the rule requires a matching schedule. Defaults to false. When set to true, the schedule must match.",
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.UseStateForUnknown(),
 							},
@@ -106,18 +145,25 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 						"under_duration": schema.NumberAttribute{
 							Computed:            true,
 							Optional:            true,
-							Description:         "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
-							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour).",
+							Description:         "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour). Allowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
+							MarkdownDescription: "Maximum request duration (in seconds) for which the rule applies. Defaults to 3600 seconds (1 hour). Allowed values:\n  - 1800 - 30min\n  - 3600 - 1 hour\n  - 10800 - 3 hours\n  - 21600 - 6 hours\n  - 43200 - 12 hours\n  - 57600 - 16 hours\n  - 86400 - 24 hours\n  - 259200 - 3 days\n  - 604800 - 7 days\n  - 2628000  - ~30,4 days\n  - 7884000 - 91,25 days\n  - 15768000 - 182,5 days\n  - 31536000 - 365 days\n  - 63072000 - 730 days\n  - -1 - unlimited",
 							Default:             numberdefault.StaticBigFloat(big.NewFloat(3600)),
 							PlanModifiers: []planmodifier.Number{
 								numberplanmodifier.UseStateForUnknown(),
+							},
+							Validators: []validator.Number{
+								validators.DurationValidator(),
 							},
 						},
 						"in_groups": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Optional:            true,
+										Optional: true,
+										Computed: true,
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.UseStateForUnknown(),
+										},
 										Description:         "A unique identifier of the group",
 										MarkdownDescription: "A unique identifier of the group",
 									},
@@ -139,7 +185,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
-										Optional:            true,
+										Optional: true,
+										Computed: true,
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.UseStateForUnknown(),
+										},
 										Description:         "A unique identifier of the schedule",
 										MarkdownDescription: "A unique identifier of the schedule",
 									},
@@ -186,14 +236,21 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
-															Optional:            true,
-															Description:         "Type of notified entity",
-															MarkdownDescription: "Type of notified entity",
+															Required:            true,
+															Description:         "Type of notified entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
+															MarkdownDescription: "Type of notified entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
+															Validators: []validator.String{
+																stringvalidator.OneOf(notifiedEntityTypes...),
+															},
 														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the notified user.",
 																	MarkdownDescription: "Unique identifier of the notified user.",
 																},
@@ -210,7 +267,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "A unique identifier of the group",
 																	MarkdownDescription: "A unique identifier of the group",
 																},
@@ -227,7 +288,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "A unique identifier of the schedule",
 																	MarkdownDescription: "A unique identifier of the schedule",
 																},
@@ -244,7 +309,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"webhook": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Required:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the webhook.",
 																	MarkdownDescription: "Unique identifier of the webhook.",
 																},
@@ -261,7 +330,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"channel": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier (name) of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier (name) of the Slack or Teams channel.",
 																},
@@ -284,14 +357,21 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 												NestedObject: schema.NestedAttributeObject{
 													Attributes: map[string]schema.Attribute{
 														"type": schema.StringAttribute{
-															Optional:            true,
-															Description:         "Type of approval entity.",
-															MarkdownDescription: "Type of approval entity.",
+															Required:            true,
+															Description:         "Type of approval entity. One of: OnCallIntegrationSchedule, DirectoryGroup, SlackChannel, TeamsChannel, User, Automatic, DirectManager, IntegrationMaintainer, IntegrationOwner, ResourceMaintainer, ResourceOwner, TeamMember, Webhook.",
+															MarkdownDescription: "Type of approval entity. One of: `OnCallIntegrationSchedule`, `DirectoryGroup`, `SlackChannel`, `TeamsChannel`, `User`, `Automatic`, `DirectManager`, `IntegrationMaintainer`, `IntegrationOwner`, `ResourceMaintainer`, `ResourceOwner`, `TeamMember`, `Webhook`. Entity types that reference an object also require the matching nested block (`user`, `group`, `schedule`, `webhook`, `channel`).",
+															Validators: []validator.String{
+																stringvalidator.OneOf(approvalEntityTypes...),
+															},
 														},
 														"user": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the approver.",
 																	MarkdownDescription: "Unique identifier of the approver.",
 																},
@@ -308,7 +388,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"group": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the approver group.",
 																	MarkdownDescription: "Unique identifier of the approver group.",
 																},
@@ -325,12 +409,16 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"schedule": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Computed:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the schedule for the approval entity.",
 																	MarkdownDescription: "Unique identifier of the schedule for the approval entity.",
 																},
 																"name": schema.StringAttribute{
-																	Optional:            true,
+																	Computed:            true,
 																	Description:         "Name of the approval schedule.",
 																	MarkdownDescription: "Name of the approval schedule.",
 																},
@@ -342,7 +430,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"webhook": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the webhook.",
 																	MarkdownDescription: "Unique identifier of the webhook.",
 																},
@@ -359,7 +451,11 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 														"channel": schema.SingleNestedAttribute{
 															Attributes: map[string]schema.Attribute{
 																"id": schema.StringAttribute{
-																	Optional:            true,
+																	Optional: true,
+																	Computed: true,
+																	PlanModifiers: []planmodifier.String{
+																		stringplanmodifier.UseStateForUnknown(),
+																	},
 																	Description:         "Unique identifier of the Slack or Teams channel.",
 																	MarkdownDescription: "Unique identifier of the Slack or Teams channel.",
 																},

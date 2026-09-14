@@ -551,6 +551,44 @@
         ]
       }
     },
+    "/public/v1/agentTokens/{id}/rotate": {
+      "post": {
+        "operationId": "AgentTokens_rotate",
+        "summary": "Rotate agent token by id",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTokenRotateResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Agent Tokens"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/public/v1/auditLogs/search": {
       "post": {
         "operationId": "AuditLogs_search",
@@ -2784,6 +2822,32 @@
             "required": [
               "id",
               "name"
+            ]
+          }
+        }
+      },
+      "AgentTokenRotateResponseSchema": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "00000000-0000-0000-0000-000000000000"
+              },
+              "name": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "token"
             ]
           }
         }
