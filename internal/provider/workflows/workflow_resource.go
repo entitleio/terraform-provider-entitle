@@ -475,6 +475,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 									Optional:            true,
 									Description:         "List of approval steps defining the sequence and conditions of approval.",
 									MarkdownDescription: "List of approval steps defining the sequence and conditions of approval.",
+									Validators: []validator.List{
+										validators.UniqueChildAttribute("sort_order"),
+									},
 								},
 							},
 							Optional:            true,
@@ -486,6 +489,9 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:            true,
 				Description:         "A list of rules that determine how approvals should be handled based on specific conditions.",
 				MarkdownDescription: "A list of rules that determine how approvals should be handled based on specific conditions.",
+				Validators: []validator.List{
+					validators.UniqueChildAttribute("sort_order"),
+				},
 			},
 		},
 	}
