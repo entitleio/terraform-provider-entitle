@@ -22,6 +22,7 @@ import (
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &IntegrationResource{}
 var _ resource.ResourceWithImportState = &IntegrationResource{}
+var _ resource.ResourceWithUpgradeState = &IntegrationResource{}
 
 func NewIntegrationResource() resource.Resource {
 	return &IntegrationResource{}
@@ -45,6 +46,12 @@ func (r *IntegrationResource) Metadata(ctx context.Context, req resource.Metadat
 
 func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		// Version 1: owner/workflow/agent_token flattened to plain strings, maintainers
+		// flattened to {type, id}, prerequisite_permissions flattened to {default,
+		// role_id}. See UpgradeState (integration_resource_state_upgrade.go) for the
+		// migration from version 0 (every entitle_integration state written before this
+		// change).
+		Version:             1,
 		MarkdownDescription: docs.IntegrationResourceMarkdownDescription,
 		Attributes: func() map[string]schema.Attribute {
 			m := maps.Clone(BaseIntegrationResourceAttributes)
@@ -166,7 +173,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), parsedConnectionJson, resp)
+	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), &parsedConnectionJson, resp)
 	if newBase == nil {
 		return
 	}

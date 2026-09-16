@@ -67,6 +67,31 @@ func BoolValue(v *bool) bool {
 	return false
 }
 
+// BoolOrDefault returns v's underlying bool if it is known (explicitly set
+// by the user, or already resolved for the plan), otherwise it returns def.
+//
+// This is primarily useful when building a Create request body for an
+// Optional+Computed attribute: on create there is no prior state, so an
+// unset attribute stays Unknown in the plan, and this is where the
+// attribute's documented default should be applied instead. On Update, a
+// UseStateForUnknown plan modifier on the attribute already carries the
+// previous state value into the plan when it's left unset in config, so
+// callers building the Update body can read the plan value directly without
+// this fallback.
+func BoolOrDefault(v types.Bool, def bool) bool {
+	if v.IsUnknown() || v.IsNull() {
+		return def
+	}
+	return v.ValueBool()
+}
+
+// BoolPtrOrDefault is the *bool variant of BoolOrDefault, for API fields that
+// are themselves optional.
+func BoolPtrOrDefault(v types.Bool, def bool) *bool {
+	value := BoolOrDefault(v, def)
+	return &value
+}
+
 // IntPointer takes an int 'v' as input and returns a pointer to that int.
 func IntPointer(v int) *int {
 	return new(v)

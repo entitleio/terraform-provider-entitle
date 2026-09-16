@@ -169,7 +169,11 @@ func (r *IntegrationGitlabResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	parsedConnectionJson := parseGitlabConnectionJson(data.Connection)
+	var parsedConnectionJson *map[string]interface{}
+	if data.Connection != nil {
+		parsedConnectionJson = new(parseGitlabConnectionJson(data.Connection))
+	}
+
 	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationGitlab, parsedConnectionJson, resp)
 	if newBase == nil {
 		return
@@ -196,9 +200,8 @@ func parseGitlabConnectionJson(m *GitlabConnectionModel) map[string]interface{} 
 	}
 
 	jsonSchema := map[string]interface{}{
-		"configurationSchemaName": "Configuration ",
-		"domain":                  connectionModel.Domain.ValueString(),
-		"private_token":           connectionModel.PrivateToken.ValueString(),
+		"domain":        connectionModel.Domain.ValueString(),
+		"private_token": connectionModel.PrivateToken.ValueString(),
 		"options": map[string]interface{}{
 			"ssl": ssl,
 		},

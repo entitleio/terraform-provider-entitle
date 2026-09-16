@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -55,12 +54,7 @@ func CreateIntegration(
 		return BaseIntegrationResourceModel{}, diags
 	}
 
-	agentTokenName := ""
-	if base.AgentToken != nil {
-		agentTokenName = base.AgentToken.Name.ValueString()
-	}
-
-	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result)
 	diags.Append(rDiags...)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
@@ -75,7 +69,7 @@ func UpdateIntegration(
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
 	appName applicationName,
-	parsedConnectionJson map[string]interface{},
+	parsedConnectionJson *map[string]interface{},
 	resp *resource.UpdateResponse,
 ) *BaseIntegrationResourceModel {
 	uid, err := uuid.Parse(base.ID.String())
@@ -87,7 +81,7 @@ func UpdateIntegration(
 		return nil
 	}
 
-	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
+	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, parsedConnectionJson)
 	resp.Diagnostics.Append(bDiags...)
 	if resp.Diagnostics.HasError() {
 		return nil
@@ -120,12 +114,7 @@ func UpdateIntegration(
 		return nil
 	}
 
-	agentTokenName := ""
-	if base.AgentToken != nil {
-		agentTokenName = base.AgentToken.Name.ValueString()
-	}
-
-	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, _, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result)
 	resp.Diagnostics.Append(rDiags...)
 	if resp.Diagnostics.HasError() {
 		return nil
@@ -176,12 +165,7 @@ func ReadIntegration(
 		return BaseIntegrationResourceModel{}, "", false
 	}
 
-	agentTokenName := ""
-	if base.AgentToken != nil {
-		agentTokenName = base.AgentToken.Name.ValueString()
-	}
-
-	result, appName, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result, agentTokenName)
+	result, appName, rDiags := ConvertBaseIntegrationResultToBaseModel(ctx, &integrationResp.JSON200.Result)
 	resp.Diagnostics.Append(rDiags...)
 	if resp.Diagnostics.HasError() {
 		return BaseIntegrationResourceModel{}, "", false
@@ -249,8 +233,8 @@ func BuildUpdateBodyFromPlan(
 	}
 
 	var workflow client.IdParamsSchema
-	if data.Workflow.ID.ValueString() != "" {
-		id, err := uuid.Parse(data.Workflow.ID.ValueString())
+	if data.WorkflowID.ValueString() != "" {
+		id, err := uuid.Parse(data.WorkflowID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Client Error",
@@ -267,7 +251,7 @@ func BuildUpdateBodyFromPlan(
 		return client.IntegrationsUpdateBodySchema{}, diags
 	}
 
-	prereqs, pDiags := BuildUpdatePrerequisitePermissionsFromPlan(data.PrerequisitePermissions)
+	prereqs, pDiags := BuildUpdatePrerequisitePermissionsFromPlan(ctx, data.PrerequisitePermissions)
 	if pDiags.HasError() {
 		diags.Append(pDiags...)
 		return client.IntegrationsUpdateBodySchema{}, diags
@@ -281,7 +265,7 @@ func BuildUpdateBodyFromPlan(
 		Maintainers:                          &maintainers,
 		Name:                                 utils.StringPointer(data.Name.ValueString()),
 		NotifyAboutExternalPermissionChanges: utils.BoolPointer(data.NotifyAboutExternalPermissionChanges.ValueBool()),
-		Owner:                                &client.UserEntitySchema{Id: data.Owner.Id.ValueString()},
+		Owner:                                &client.UserEntitySchema{Id: data.OwnerID.ValueString()},
 		Workflow:                             &workflow,
 		PrerequisitePermissions:              prereqs,
 		Requestable:                          data.Requestable.ValueBoolPointer(),
@@ -316,8 +300,8 @@ func BuildCreateBodyFromPlan(
 	}
 
 	var agentToken *client.NameSchema
-	if plan.AgentToken != nil {
-		agentToken = &client.NameSchema{Name: plan.AgentToken.Name.ValueString()}
+	if plan.AgentToken.ValueStringPointer() != nil {
+		agentToken = &client.NameSchema{Name: plan.AgentToken.ValueString()}
 	}
 
 	maintainers, mDiags := BuildCreateMaintainersFromPlan(ctx, plan.Maintainers)
@@ -326,13 +310,13 @@ func BuildCreateBodyFromPlan(
 		return client.IntegrationCreateBodySchema{}, diags
 	}
 
-	prereqs, pDiags := BuildCreatePrerequisitePermissionsFromPlan(plan.PrerequisitePermissions)
+	prereqs, pDiags := BuildCreatePrerequisitePermissionsFromPlan(ctx, plan.PrerequisitePermissions)
 	if pDiags.HasError() {
 		diags.Append(pDiags...)
 		return client.IntegrationCreateBodySchema{}, diags
 	}
 
-	workflowID, err := uuid.Parse(plan.Workflow.ID.ValueString())
+	workflowID, err := uuid.Parse(plan.WorkflowID.ValueString())
 	if err != nil {
 		diags.AddError("Client Error", fmt.Sprintf("Failed to parse given workflow id to UUID, got error: %v", err))
 
@@ -341,20 +325,20 @@ func BuildCreateBodyFromPlan(
 
 	return client.IntegrationCreateBodySchema{
 		AgentToken:                           agentToken,
-		AllowChangingAccountPermissions:      plan.AllowChangingAccountPermissions.ValueBool(),
-		AllowCreatingAccounts:                plan.AllowCreatingAccounts.ValueBool(),
-		Requestable:                          plan.Requestable.ValueBoolPointer(),
-		RequestableByDefault:                 plan.RequestableByDefault.ValueBoolPointer(),
+		AllowChangingAccountPermissions:      utils.BoolOrDefault(plan.AllowChangingAccountPermissions, defaultIntegrationAllowChangingAccountPermissions),
+		AllowCreatingAccounts:                utils.BoolOrDefault(plan.AllowCreatingAccounts, defaultIntegrationAllowCreatingAccounts),
+		Requestable:                          utils.BoolPtrOrDefault(plan.Requestable, defaultIntegrationAllowRequests),
+		RequestableByDefault:                 utils.BoolPtrOrDefault(plan.RequestableByDefault, defaultIntegrationAllowRequestsByDefault),
 		AllowedDurations:                     allowedDurations,
 		Application:                          client.NameSchema{Name: appName.String()},
-		AutoAssignRecommendedMaintainers:     plan.AutoAssignRecommendedMaintainers.ValueBool(),
-		AutoAssignRecommendedOwners:          plan.AutoAssignRecommendedOwners.ValueBool(),
+		AutoAssignRecommendedMaintainers:     utils.BoolOrDefault(plan.AutoAssignRecommendedMaintainers, defaultIntegrationAutoAssignRecommendedMaintainers),
+		AutoAssignRecommendedOwners:          utils.BoolOrDefault(plan.AutoAssignRecommendedOwners, defaultIntegrationAutoAssignRecommendedOwners),
 		ConnectionJson:                       parsedConnectionJson,
 		Maintainers:                          &maintainers,
 		Name:                                 plan.Name.ValueString(),
-		NotifyAboutExternalPermissionChanges: plan.NotifyAboutExternalPermissionChanges.ValueBool(),
-		Owner:                                client.UserEntitySchema{Id: utils.TrimPrefixSuffix(plan.Owner.Id.ValueString())},
-		Readonly:                             plan.Readonly.ValueBool(),
+		NotifyAboutExternalPermissionChanges: utils.BoolOrDefault(plan.NotifyAboutExternalPermissionChanges, defaultIntegrationNotifyAboutExternalPermissionChanges),
+		Owner:                                client.UserEntitySchema{Id: utils.TrimPrefixSuffix(plan.OwnerID.ValueString())},
+		Readonly:                             utils.BoolOrDefault(plan.Readonly, defaultIntegrationReadonly),
 		Workflow:                             client.IdParamsSchema{Id: workflowID},
 		PrerequisitePermissions:              prereqs,
 	}, diags
@@ -366,7 +350,6 @@ func BuildCreateBodyFromPlan(
 func ConvertBaseIntegrationResultToBaseModel(
 	ctx context.Context,
 	data *client.IntegrationResultSchema,
-	agentTokenName string,
 ) (BaseIntegrationResourceModel, string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -381,18 +364,20 @@ func ConvertBaseIntegrationResultToBaseModel(
 		return BaseIntegrationResourceModel{}, "", diags
 	}
 
-	maintainers, maintainerDiags := utils.GetMaintainers(ctx, data.Maintainers)
+	maintainerModels, maintainerDiags := getIntegrationMaintainers(data.Maintainers)
 	if maintainerDiags.HasError() {
 		diags.Append(maintainerDiags...)
 		return BaseIntegrationResourceModel{}, "", diags
 	}
 
-	var agentToken *utils.NameModel
-	if len(agentTokenName) != 0 {
-		agentToken = &utils.NameModel{Name: utils.TrimmedStringValue(agentTokenName)}
+	prerequisitePermissionElementType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"default": types.BoolType,
+			"role_id": types.StringType,
+		},
 	}
 
-	var prerequisitePermissions []utils.PrerequisitePermissionModel
+	prerequisitePermissionModels := make([]utils.ResourcePrerequisitePermissionModel, 0)
 	if data.PrerequisitePermissions != nil {
 		for _, pp := range *data.PrerequisitePermissions {
 			for _, item := range pp {
@@ -405,39 +390,33 @@ func ConvertBaseIntegrationResultToBaseModel(
 					return BaseIntegrationResourceModel{}, "", diags
 				}
 
-				roleModel, diagsGetRoles := utils.GetRole(ctx, v.Role.Id.String(), v.Role.Name, v.Role.Resource)
-				if diagsGetRoles.HasError() {
-					diags.Append(diagsGetRoles...)
-					return BaseIntegrationResourceModel{}, "", diags
-				}
-
-				prerequisitePermissions = append(prerequisitePermissions,
-					utils.PrerequisitePermissionModel{
+				prerequisitePermissionModels = append(prerequisitePermissionModels,
+					utils.ResourcePrerequisitePermissionModel{
 						Default: types.BoolValue(v.Default),
-						Role:    roleModel,
+						RoleID:  utils.TrimmedStringValue(v.Role.Id.String()),
 					},
 				)
 			}
 		}
 	}
 
+	var prerequisitePermissionsSet types.Set
+	if len(prerequisitePermissionModels) == 0 {
+		prerequisitePermissionsSet = types.SetNull(prerequisitePermissionElementType)
+	} else {
+		var ppDiags diag.Diagnostics
+		prerequisitePermissionsSet, ppDiags = types.SetValueFrom(ctx, prerequisitePermissionElementType, prerequisitePermissionModels)
+		if ppDiags.HasError() {
+			diags.Append(ppDiags...)
+			return BaseIntegrationResourceModel{}, "", diags
+		}
+	}
+
 	maintainerElementType := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"type": types.StringType,
-			"entity": types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"id":    types.StringType,
-					"email": types.StringType,
-				},
-			},
+			"id":   types.StringType,
 		},
-	}
-
-	maintainerModels := make([]utils.MaintainerModel, 0, len(maintainers))
-	for _, m := range maintainers {
-		if m != nil {
-			maintainerModels = append(maintainerModels, *m)
-		}
 	}
 
 	var maintainersSet types.Set
@@ -464,17 +443,10 @@ func ConvertBaseIntegrationResultToBaseModel(
 		AutoAssignRecommendedMaintainers:     types.BoolValue(data.AutoAssignRecommendedMaintainers),
 		AutoAssignRecommendedOwners:          types.BoolValue(data.AutoAssignRecommendedOwners),
 		NotifyAboutExternalPermissionChanges: types.BoolValue(data.NotifyAboutExternalPermissionChanges),
-		Owner: &utils.IdEmailModel{
-			Id:    utils.TrimmedStringValue(data.Owner.Id.String()),
-			Email: utils.GetNullableEmailStringValue(data.Owner.Email),
-		},
-		AgentToken: agentToken,
-		Workflow: &utils.IdNameModel{
-			ID:   utils.TrimmedStringValue(data.Workflow.Id.String()),
-			Name: utils.TrimmedStringValue(data.Workflow.Name),
-		},
-		Maintainers:             maintainersSet,
-		PrerequisitePermissions: prerequisitePermissions,
+		OwnerID:                              utils.TrimmedStringNullValue(data.Owner.Id.String()),
+		WorkflowID:                           utils.TrimmedStringNullValue(data.Workflow.Id.String()),
+		Maintainers:                          maintainersSet,
+		PrerequisitePermissions:              prerequisitePermissionsSet,
 	}, strings.ToLower(data.Application.Name), diags
 }
 
@@ -489,22 +461,25 @@ func ValidateVirtualApplicationConstraints(baseData BaseIntegrationResourceModel
 		return diags
 	}
 
-	if baseData.NotifyAboutExternalPermissionChanges.ValueBool() {
+	// Use the same default fallback as BuildCreateBodyFromPlan/BuildUpdateBodyFromPlan
+	// so that an attribute the user left unset is validated against the value that
+	// will actually be sent/kept, not against the zero value of a null/unknown Bool.
+	if utils.BoolOrDefault(baseData.NotifyAboutExternalPermissionChanges, defaultIntegrationNotifyAboutExternalPermissionChanges) {
 		diags.AddError("Client Error", "Virtual integrations cannot set notifyAboutExternalPermissions to true")
 	}
-	if baseData.AutoAssignRecommendedMaintainers.ValueBool() {
+	if utils.BoolOrDefault(baseData.AutoAssignRecommendedMaintainers, defaultIntegrationAutoAssignRecommendedMaintainers) {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceMaintainers to true")
 	}
-	if baseData.AutoAssignRecommendedOwners.ValueBool() {
+	if utils.BoolOrDefault(baseData.AutoAssignRecommendedOwners, defaultIntegrationAutoAssignRecommendedOwners) {
 		diags.AddError("Client Error", "Virtual integrations cannot set autoAssignRecommendedResourceOwner to true")
 	}
-	if baseData.Readonly.ValueBool() {
+	if utils.BoolOrDefault(baseData.Readonly, defaultIntegrationReadonly) {
 		diags.AddError("Client Error", "Virtual integrations cannot set readonly to true")
 	}
-	if !baseData.Requestable.ValueBool() {
+	if !utils.BoolOrDefault(baseData.Requestable, defaultIntegrationAllowRequests) {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestable to false")
 	}
-	if !baseData.RequestableByDefault.ValueBool() {
+	if !utils.BoolOrDefault(baseData.RequestableByDefault, defaultIntegrationAllowRequestsByDefault) {
 		diags.AddError("Client Error", "Virtual integrations cannot set requestableByDefault to false")
 	}
 
@@ -531,7 +506,7 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](ctx context.Contex
 		return maintainers, diags
 	}
 
-	var planMaintainerModels []utils.MaintainerModel
+	var planMaintainerModels []IntegrationMaintainerModel
 	if elemDiags := plan.ElementsAs(ctx, &planMaintainerModels, false); elemDiags.HasError() {
 		diags.Append(elemDiags...)
 		return nil, diags
@@ -542,13 +517,8 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](ctx context.Contex
 			continue
 		}
 
-		if maintainer.Entity.IsNull() {
-			diags.AddError("Client Error", "Missing data for entity maintainer")
-			return nil, diags
-		}
-
-		entityID, ok := extractMaintainerEntityID(&maintainer, &diags)
-		if !ok {
+		if maintainer.ID.IsNull() || maintainer.ID.IsUnknown() {
+			diags.AddError("Client Error", "Missing id for maintainer")
 			return nil, diags
 		}
 
@@ -558,7 +528,7 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](ctx context.Contex
 		case utils.MaintainerTypeUser:
 			if err := pt.MergeUserMaintainerSchema(client.UserMaintainerSchema{
 				Type: client.EnumMaintainerTypeUserUser,
-				User: client.UserEntitySchema{Id: entityID},
+				User: client.UserEntitySchema{Id: maintainer.ID.ValueString()},
 			}); err != nil {
 				diags.AddError("Client Error", fmt.Sprintf("Failed to merge user maintainer data, error: %v", err))
 				return nil, diags
@@ -567,7 +537,7 @@ func buildMaintainersFromPlan[T any, PT maintainerItemPtr[T]](ctx context.Contex
 		case utils.MaintainerTypeGroup:
 			if err := pt.MergeGroupMaintainerSchema(client.GroupMaintainerSchema{
 				Type:  client.EnumMaintainerTypeGroupGroup,
-				Group: client.GroupEntitySchema{Id: entityID},
+				Group: client.GroupEntitySchema{Id: maintainer.ID.ValueString()},
 			}); err != nil {
 				diags.AddError("Client Error", "Failed to merge group maintainer")
 				return nil, diags
@@ -618,24 +588,35 @@ type prereqPermItemPtr[T any] interface {
 // BuildCreatePrerequisitePermissionsFromPlan and BuildUpdatePrerequisitePermissionsFromPlan.
 // T is the value type; PT is its pointer (*T), which carries the Merge method.
 func buildPrerequisitePermissionsFromPlan[T any, PT prereqPermItemPtr[T]](
-	plan []utils.PrerequisitePermissionModel,
+	ctx context.Context,
+	plan types.Set,
 ) (*[][]T, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if len(plan) == 0 {
+	if plan.IsNull() || plan.IsUnknown() {
 		return nil, diags
 	}
 
-	ppData := make([][]T, 0, len(plan))
-	for _, pp := range plan {
-		if pp.Role.ID.IsNull() || pp.Role.ID.IsUnknown() {
+	var planModels []utils.ResourcePrerequisitePermissionModel
+	if elemDiags := plan.ElementsAs(ctx, &planModels, false); elemDiags.HasError() {
+		diags.Append(elemDiags...)
+		return nil, diags
+	}
+
+	if len(planModels) == 0 {
+		return nil, diags
+	}
+
+	ppData := make([][]T, 0, len(planModels))
+	for _, pp := range planModels {
+		if pp.RoleID.IsNull() || pp.RoleID.IsUnknown() {
 			continue
 		}
 
 		var item T
 		if err := PT(&item).MergePrerequisitePermissionCreateBodySchema(client.PrerequisitePermissionCreateBodySchema{
 			Default: pp.Default.ValueBool(),
-			Role:    map[string]interface{}{"id": pp.Role.ID.ValueString()},
+			Role:    map[string]interface{}{"id": pp.RoleID.ValueString()},
 		}); err != nil {
 			diags.AddError("Client Error", fmt.Sprintf("Failed to merge prerequisite permission data, error: %v", err))
 			return nil, diags
@@ -648,37 +629,90 @@ func buildPrerequisitePermissionsFromPlan[T any, PT prereqPermItemPtr[T]](
 }
 
 // BuildCreatePrerequisitePermissionsFromPlan converts plan prerequisite permissions into API create body items.
-// Returns nil if the plan slice is empty.
+// Returns nil if the plan set is null, unknown, or empty.
 func BuildCreatePrerequisitePermissionsFromPlan(
-	plan []utils.PrerequisitePermissionModel,
+	ctx context.Context,
+	plan types.Set,
 ) (*[][]client.IntegrationCreateBodySchema_PrerequisitePermissions_Item, diag.Diagnostics) {
 	return buildPrerequisitePermissionsFromPlan[
 		client.IntegrationCreateBodySchema_PrerequisitePermissions_Item,
 		*client.IntegrationCreateBodySchema_PrerequisitePermissions_Item,
-	](plan)
+	](ctx, plan)
 }
 
 // BuildUpdatePrerequisitePermissionsFromPlan converts plan prerequisite permissions into API update body items.
-// Returns nil if the plan slice is empty.
+// Returns nil if the plan set is null, unknown, or empty.
 func BuildUpdatePrerequisitePermissionsFromPlan(
-	plan []utils.PrerequisitePermissionModel,
+	ctx context.Context,
+	plan types.Set,
 ) (*[][]client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item, diag.Diagnostics) {
 	return buildPrerequisitePermissionsFromPlan[
 		client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item,
 		*client.IntegrationsUpdateBodySchema_PrerequisitePermissions_Item,
-	](plan)
+	](ctx, plan)
 }
 
-// extractMaintainerEntityID pulls the "id" string out of a MaintainerModel's entity object.
-// It adds an error to diags and returns false if the extraction fails.
-func extractMaintainerEntityID(maintainer *utils.MaintainerModel, diags *diag.Diagnostics) (string, bool) {
-	idAttr := maintainer.Entity.Attributes()["id"]
-	strVal, ok := idAttr.(basetypes.StringValue)
-	if !ok {
-		diags.AddError("Client Error", "Missing data for entity maintainer id")
-		return "", false
+// getIntegrationMaintainers converts the API's maintainer union list into the flattened
+// IntegrationMaintainerModel used by BaseIntegrationResourceModel ({type, id} per entry),
+// instead of the shared utils.MaintainerModel type+entity shape used elsewhere.
+func getIntegrationMaintainers[T utils.MaintainerInterface](
+	maintainers []T,
+) ([]IntegrationMaintainerModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	result := make([]IntegrationMaintainerModel, 0, len(maintainers))
+
+	for _, item := range maintainers {
+		data, err := item.MarshalJSON()
+		if err != nil {
+			diags.AddError("Failed to marshal maintainer data", err.Error())
+			return nil, diags
+		}
+
+		var body utils.MaintainerCommonResponseSchema
+		if err := json.Unmarshal(data, &body); err != nil {
+			diags.AddError(
+				fmt.Sprintf("Failed to unmarshal the maintainer data (%s)", data),
+				err.Error(),
+			)
+			return nil, diags
+		}
+
+		switch strings.ToLower(body.Type) {
+		case utils.MaintainerTypeUser:
+			responseSchema, err := item.AsMaintainerUserResponseSchema()
+			if err != nil {
+				diags.AddError(
+					"No data",
+					fmt.Sprintf("failed to convert response schema to user response schema, error: %v", err),
+				)
+				return nil, diags
+			}
+
+			result = append(result, IntegrationMaintainerModel{
+				Type: utils.TrimmedStringValue(body.Type),
+				ID:   utils.TrimmedStringValue(responseSchema.User.Id.String()),
+			})
+		case utils.MaintainerTypeGroup:
+			responseSchema, err := item.AsMaintainerGroupResponseSchema()
+			if err != nil {
+				diags.AddError(
+					"No data",
+					fmt.Sprintf("failed to convert response schema to group response schema, error: %v", err),
+				)
+				return nil, diags
+			}
+
+			result = append(result, IntegrationMaintainerModel{
+				Type: utils.TrimmedStringValue(body.Type),
+				ID:   utils.TrimmedStringValue(responseSchema.Group.Id.String()),
+			})
+		default:
+			diags.AddError("failed invalid type for maintainer", body.Type)
+			return nil, diags
+		}
 	}
-	return strVal.ValueString(), true
+
+	return result, diags
 }
 
 // ParseConnectionJson validates and parses a connection_json string into the typed map form
