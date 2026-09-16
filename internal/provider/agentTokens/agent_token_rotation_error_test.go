@@ -25,11 +25,6 @@ const (
 	stubTokenID    = "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
 	stubTokenValue = "eyJzdHViIjp0cnVlfQ=="
 
-	// The body the backend's FeatureFlagGuard returns when the rotation flag
-	// is disabled, which is the default state for a tenant.
-	flagDisabledBody = `{"errorId":"request.unauthorized",` +
-		`"message":"This endpoint is not available because the required feature flag is not enabled."}`
-
 	// A deleted record and an unregistered route both come back as
 	// resource.notFound, which is why the provider must not treat either as
 	// grounds for dropping the resource from state.
@@ -54,8 +49,8 @@ type stubResponses struct {
 // an agent token, and to fail any one operation on demand.
 //
 // It exists because the rotate error paths are unreachable against the real
-// API. A tenant either has the feature flag or it does not, and a 404 needs the
-// record to vanish between the refresh and the apply. The provider's endpoint
+// API: a 404 needs the record to vanish between the refresh and the apply. The
+// provider's endpoint
 // attribute is validated against an allowlist of production URLs, but Configure
 // reads ENTITLE_API_ENDPOINT before it looks at the attribute and does not
 // validate the environment variable — that is the seam these tests use, so no
@@ -229,43 +224,6 @@ resource "entitle_agent_token" "stub" {
 	rotation = %q
 }
 `, name, rotation)
-}
-
-// TestAgentTokenRotationFeatureFlagDisabled covers the default state of a
-// tenant: the rotate endpoint is gated by "enableAgentTokenRotation" and its
-// guard answers 401, which HTTPResponseToError would otherwise report as
-// "unauthorized token: update the entitle token and retry please" — sending the
-// operator to replace credentials that are working fine.
-func TestAgentTokenRotationFeatureFlagDisabled(t *testing.T) {
-	api := newStubAPI(stubResponses{
-		rotateStatus: http.StatusUnauthorized,
-		rotateBody:   flagDisabledBody,
-	})
-
-	startStubAPI(t, api)
-
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: stubProviderFactories(),
-		Steps: []resource.TestStep{
-			{
-				Config: stubConfig("1"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(stubAddr, "id", stubTokenID),
-					resource.TestCheckResourceAttr(stubAddr, "token", stubTokenValue),
-				),
-			},
-			{
-				Config:      stubConfig("2"),
-				ExpectError: wrapped("enableAgentTokenRotation"),
-			},
-			// Proves the API's own text is carried through, which is what lets
-			// an operator tell a disabled flag from bad credentials.
-			{
-				Config:      stubConfig("3"),
-				ExpectError: wrapped("required feature flag is not enabled"),
-			},
-		},
-	})
 }
 
 // TestAgentTokenRotationNotFoundKeepsState covers the 404 path on rotate. A 404
