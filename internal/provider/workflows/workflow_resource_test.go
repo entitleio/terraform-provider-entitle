@@ -111,7 +111,7 @@ resource "entitle_workflow" "my_workflow" {
 						]
 					},
 					{
-						sort_order = 1
+						sort_order = 2
 						approval_entities = [
 							{
 								type = "User"
