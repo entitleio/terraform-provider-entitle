@@ -31,6 +31,7 @@ data "entitle_roles" "my_list" {
 					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.name"),
 					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.external_id"),
 					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.requestable"),
+					resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.resource_id"),
 				),
 			},
 			{

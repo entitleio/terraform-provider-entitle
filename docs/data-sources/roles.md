@@ -242,6 +242,7 @@ Read-Only:
 - `id` (String)
 - `name` (String)
 - `requestable` (Boolean)
+- `resource_id` (String) The unique identifier of the resource the role belongs to.
 - `workflow` (Attributes) (see [below for nested schema](#nestedatt--roles--workflow))
 
 <a id="nestedatt--roles--workflow"></a>

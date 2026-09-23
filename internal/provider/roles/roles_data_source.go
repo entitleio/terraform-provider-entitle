@@ -46,6 +46,7 @@ type RoleListItem struct {
 	ExternalID  types.String       `tfsdk:"external_id"`
 	Name        types.String       `tfsdk:"name"`
 	Requestable types.Bool         `tfsdk:"requestable"`
+	ResourceID  types.String       `tfsdk:"resource_id"`
 	Workflow    *utils.IdNameModel `tfsdk:"workflow"`
 }
 
@@ -113,6 +114,11 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 						"name":        schema.StringAttribute{Computed: true},
 						"external_id": schema.StringAttribute{Computed: true},
 						"requestable": schema.BoolAttribute{Computed: true},
+						"resource_id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The unique identifier of the resource the role belongs to.",
+							MarkdownDescription: "The unique identifier of the resource the role belongs to.",
+						},
 						"workflow": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
@@ -217,6 +223,7 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			Name:        types.StringValue(r.Name),
 			ExternalID:  types.StringValue(r.GetExternalID()),
 			Requestable: types.BoolPointerValue(r.Requestable),
+			ResourceID:  types.StringValue(r.Resource.Id.String()),
 		}
 
 		if r.Workflow != nil {
