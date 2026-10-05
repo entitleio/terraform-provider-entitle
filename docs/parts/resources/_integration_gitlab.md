@@ -49,13 +49,9 @@ resource "entitle_integration_gitlab" "gitlab_saas" {
     private_token = var.gitlab_token
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations = [3600, 21600, 86400]
   requestable             = true
@@ -75,18 +71,11 @@ resource "entitle_integration_gitlab" "gitlab_selfhosted" {
     ssl_ca_cert   = "/etc/ssl/certs/gitlab_ca.pem"
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
-  agent_token = {
-    name = entitle_agent_token.internal_agent.name
-  }
-
+  agent_token = entitle_agent_token.internal_agent.name
 
   allowed_durations       = [3600, 21600]
   requestable             = true
@@ -105,14 +94,9 @@ resource "entitle_integration_gitlab" "gitlab_no_ssl" {
     ssl_verify    = false
   }
 
-  owner = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  }
+  owner_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
 
-  workflow = {
-    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
-  }
-
+  workflow_id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
 
   allowed_durations       = [-1]
   requestable             = true

@@ -40,6 +40,15 @@ func TrimmedStringValue(s string) types.String {
 	return types.StringValue(TrimPrefixSuffix(s))
 }
 
+// TrimmedStringNullValue is a function that trims double quotes and escape characters
+// from the beginning and end of a string. It returns the trimmed hashicorp wrapped string.
+func TrimmedStringNullValue(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(TrimPrefixSuffix(s))
+}
+
 // StringSlicesEqualUnordered reports whether two string slices contain the same values (order-independent).
 func StringSlicesEqualUnordered(a, b []string) bool {
 	if len(a) != len(b) {
