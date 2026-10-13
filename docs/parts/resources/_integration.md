@@ -52,6 +52,44 @@ resource "entitle_integration" "slack_workspace" {
 }
 ```
 
+### Credentials Kept Out of State (Write-Only, Terraform 1.11+)
+
+Read the credentials from an ephemeral source such as HashiCorp Vault and pass them through `connection_json_wo`. The value is never stored in the Terraform state or plan. It is sent to Entitle on create and whenever `connection_json_wo_version` changes, so bump the version when you rotate the secret:
+
+```terraform
+ephemeral "vault_kv_secret_v2" "slack" {
+  mount = "secret"
+  name  = "entitle/slack"
+}
+
+resource "entitle_integration" "slack_workspace" {
+  name = "Slack - Engineering Workspace"
+
+  connection_json_wo = jsonencode({
+    token = ephemeral.vault_kv_secret_v2.slack.data["token"]
+    options = {
+      plan = "pro"
+    }
+  })
+  connection_json_wo_version = "1" # bump to send a rotated secret
+
+  application = {
+    name = "slack"
+  }
+
+  owner = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
+
+  workflow = {
+    id = "7d080bfa-9143-11ee-b9d1-0242ac120002"
+  }
+
+  allowed_durations       = [3600, 28800, 86400]
+  allow_creating_accounts = true
+}
+```
+
 ### AWS Integration with Restricted Settings
 
 Connect an AWS account with account creation disabled and readonly mode for manual review:
@@ -276,6 +314,13 @@ output "integration_id" {
 - Mark the `connection_json` variable as `sensitive = true` in your variable definitions
 - Use a secrets manager (AWS Secrets Manager, HashiCorp Vault) to inject credentials at apply time rather than hardcoding them
 - Use `jsonencode()` to construct the JSON safely from variables
+- On Terraform 1.11+, prefer `connection_json_wo` with an ephemeral source: `connection_json` is marked sensitive but is still stored in state
+
+### Migrating from connection_json to connection_json_wo
+
+1. Replace `connection_json` with `connection_json_wo` and set `connection_json_wo_version` (for example `"1"`).
+2. Run `terraform apply`. This is an in-place update: the credentials are sent to Entitle, and `connection_json` is removed from state.
+3. Rotate the credential in the source system, update it in your secret store and bump `connection_json_wo_version`. Older state snapshots, such as backend versions and backups, still contain the old `connection_json` value.
 
 ### Workflow Hierarchy
 
