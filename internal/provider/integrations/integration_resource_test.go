@@ -485,6 +485,11 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
 
+					// The secret must never reach state.
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json_wo"),
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "connection_json_wo_version", "1"),
+
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
 
@@ -557,6 +562,11 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
 
+					// The secret must never reach state.
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json_wo"),
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "connection_json_wo_version", "1"),
+
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
 
@@ -628,6 +638,11 @@ resource "entitle_integration" "my_gitlab" {
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "workflow.id", os.Getenv("ENTITLE_WORKFLOW_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.role.id", os.Getenv("ENTITLE_ROLE_ID")),
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "prerequisite_permissions.0.default", "true"),
+
+					// The secret must never reach state.
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json_wo"),
+					resource.TestCheckNoResourceAttr("entitle_integration.my_gitlab", "connection_json"),
+					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "connection_json_wo_version", "2"),
 
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_integration.my_gitlab", "id"),
