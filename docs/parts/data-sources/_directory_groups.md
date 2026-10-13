@@ -81,7 +81,7 @@ resource "entitle_workflow" "security_approval" {
 
   rules = [{
     sort_order     = 1
-    under_duration = 28800
+    under_duration = 21600
     any_schedule   = true
 
     approval_flow = {

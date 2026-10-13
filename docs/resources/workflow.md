@@ -26,7 +26,7 @@ description: |-
   | `SlackChannel` | `channel = { id = "<channel>" }` |
   | `TeamsChannel` | `channel = { id = "<channel>" }` |
   | `OnCallIntegrationSchedule` | `schedule = { id = "<uuid>" }` |
-  
+
   # Correct
   approval_entities = [{
     type = "DirectoryGroup"
@@ -34,35 +34,35 @@ description: |-
       id = data.entitle_directory_groups.security.directory_groups[0].id
     }
   }]
-  
+
   # Incorrect — `id` is not an attribute of an approval entity
   approval_entities = [{
     type = "DirectoryGroup"
     id   = data.entitle_directory_groups.security.directory_groups[0].id
   }]
-  
+
   The same rule applies to in_groups and in_schedules on a rule — both are lists of objects, not lists of ID strings:
-  
+
   in_groups    = [{ id = data.entitle_directory_groups.developers.directory_groups[0].id }]
   in_schedules = [{ id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890" }]
-  
+
   Example Usage
   Basic Auto-Approval Workflow
   Simple workflow that automatically approves all requests:
-  
+
   resource "entitle_workflow" "auto_approve" {
     name = "Auto-Approve Development"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 10800 # 3 hours
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "Automatic"
           }]
@@ -70,23 +70,23 @@ description: |-
       }
     }]
   }
-  
+
   Manager Approval Workflow
   Requires the requester's direct manager to approve:
-  
+
   resource "entitle_workflow" "manager_approval" {
     name = "Manager Approval Required"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 21600 # 6 hours
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "DirectManager"
           }]
@@ -94,31 +94,31 @@ description: |-
       }
     }]
   }
-  
+
   Multi-Step Approval Workflow (Sequential)
   Requires sequential approvals from manager, then security team:
-  
+
   data "entitle_directory_groups" "security_team" {
     filter {
       search = "Security Team"
     }
   }
-  
+
   resource "entitle_workflow" "production_access" {
     name = "Production Access - Multi-Step"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [
           {
             # First approval: Manager
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectManager"
             }]
@@ -127,7 +127,7 @@ description: |-
             # Second approval: Security team
             sort_order = 2
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectoryGroup"
               group = {
@@ -139,35 +139,35 @@ description: |-
       }
     }]
   }
-  
+
   Multiple Approval Options (OR Logic)
   Any member of security team OR any DevOps engineer can approve:
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security"
     }
   }
-  
+
   data "entitle_directory_groups" "devops" {
     filter {
       search = "DevOps"
     }
   }
-  
+
   resource "entitle_workflow" "flexible_approval" {
     name = "Security or DevOps Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or" # Any ONE of these approvers is sufficient
-  
+
           approval_entities = [
             {
               type = "DirectoryGroup"
@@ -186,36 +186,36 @@ description: |-
       }
     }]
   }
-  
+
   Multiple Required Approvals Using AND Operator (Parallel)
   Both security team AND compliance team must approve (parallel approvals):
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security"
     }
   }
-  
+
   data "entitle_directory_groups" "compliance" {
     filter {
       search = "Compliance"
     }
   }
-  
+
   # Both teams must approve, but can happen in any order
   resource "entitle_workflow" "dual_approval_parallel" {
     name = "Security AND Compliance Approval (Parallel)"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "and" # ALL entities in this step must approve
-  
+
           approval_entities = [
             {
               type = "DirectoryGroup"
@@ -234,37 +234,37 @@ description: |-
       }
     }]
   }
-  
+
   Multiple Required Approvals Using Sequential Steps
   Both security team AND compliance team must approve (sequential approvals):
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security"
     }
   }
-  
+
   data "entitle_directory_groups" "compliance" {
     filter {
       search = "Compliance"
     }
   }
-  
+
   # Security must approve first, then compliance
   resource "entitle_workflow" "dual_approval_sequential" {
     name = "Security THEN Compliance Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [
           {
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectoryGroup"
               group = {
@@ -275,7 +275,7 @@ description: |-
           {
             sort_order = 2
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectoryGroup"
               group = {
@@ -287,38 +287,38 @@ description: |-
       }
     }]
   }
-  
+
   Complex Approval: Multiple Steps with AND/OR Logic
   Manager approval, then (Security AND Compliance in parallel):
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security"
     }
   }
-  
+
   data "entitle_directory_groups" "compliance" {
     filter {
       search = "Compliance"
     }
   }
-  
+
   # Sequential manager approval followed by parallel dual approval
   resource "entitle_workflow" "complex_approval" {
     name = "Manager, then Security AND Compliance"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [
           {
             # Step 1: Manager must approve first
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectManager"
             }]
@@ -327,7 +327,7 @@ description: |-
             # Step 2: Both Security AND Compliance must approve (parallel)
             sort_order = 2
             operator   = "and"
-  
+
             approval_entities = [
               {
                 type = "DirectoryGroup"
@@ -347,32 +347,32 @@ description: |-
       }
     }]
   }
-  
+
   Duration-Based Rules
   Different approval requirements based on requested access duration:
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security Team"
     }
   }
-  
+
   # Short access auto-approved, long access requires security
   resource "entitle_workflow" "duration_based" {
     name = "Duration-Based Approval"
-  
+
     rules = [
       {
         # Rule 1: Short duration (up to 1 hour) - auto approve
         sort_order     = 1
         under_duration = 3600 # 1 hour
         any_schedule   = false
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "Automatic"
             }]
@@ -384,12 +384,12 @@ description: |-
         sort_order     = 2
         under_duration = 21600 # 6 hours
         any_schedule   = false
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectManager"
             }]
@@ -401,12 +401,12 @@ description: |-
         sort_order     = 3
         under_duration = -1 # catches everything above 6 hours
         any_schedule   = false
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectoryGroup"
               group = {
@@ -418,41 +418,41 @@ description: |-
       }
     ]
   }
-  
+
   Schedule-Based Rules
   Different approval requirements for business hours vs after-hours:
-  
+
   # Note: Schedule IDs are obtained from the Entitle UI — navigate to
   # Settings → Schedules and copy the UUID from the schedule's URL.
   locals {
     business_hours_schedule_id = "YOUR-SCHEDULE-UUID-HERE"
   }
-  
+
   data "entitle_directory_groups" "security" {
     filter {
       search = "Security"
     }
   }
-  
+
   resource "entitle_workflow" "schedule_based" {
     name = "Business Hours vs After Hours"
-  
+
     rules = [
       {
         # Rule 1: During business hours - auto approve short access
         sort_order     = 1
         under_duration = 3600 # 1 hour
         any_schedule   = false
-  
+
         in_schedules = [{
           id = local.business_hours_schedule_id
         }]
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "Automatic"
             }]
@@ -464,12 +464,12 @@ description: |-
         sort_order     = 2
         under_duration = 3600 # 1 hour
         any_schedule   = false
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectoryGroup"
               group = {
@@ -481,41 +481,41 @@ description: |-
       }
     ]
   }
-  
+
   Group-Based Rules
   Different approval requirements for different teams:
-  
+
   data "entitle_directory_groups" "developers" {
     filter {
       search = "Developers"
     }
   }
-  
+
   data "entitle_directory_groups" "contractors" {
     filter {
       search = "Contractors"
     }
   }
-  
+
   resource "entitle_workflow" "group_based" {
     name = "Different Rules per Group"
-  
+
     rules = [
       {
         # Rule 1: Developers get auto-approval
         sort_order     = 1
         under_duration = 10800 # 3 hours
         any_schedule   = false
-  
+
         in_groups = [{
           id = data.entitle_directory_groups.developers.directory_groups[0].id
         }]
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "Automatic"
             }]
@@ -527,16 +527,16 @@ description: |-
         sort_order     = 2
         under_duration = 3600 # 1 hour
         any_schedule   = false
-  
+
         in_groups = [{
           id = data.entitle_directory_groups.contractors.directory_groups[0].id
         }]
-  
+
         approval_flow = {
           steps = [{
             sort_order = 1
             operator   = "or"
-  
+
             approval_entities = [{
               type = "DirectManager"
             }]
@@ -545,23 +545,23 @@ description: |-
       }
     ]
   }
-  
+
   Resource Owner Approval
   Requires the owner of the resource being accessed to approve:
-  
+
   resource "entitle_workflow" "resource_owner" {
     name = "Resource Owner Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 10800 # 3 hours
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "ResourceOwner"
           }]
@@ -569,27 +569,27 @@ description: |-
       }
     }]
   }
-  
+
   Specific User Approval
   Requires a specific named user to approve:
-  
+
   data "entitle_user" "security_lead" {
     email = "[email protected]"
   }
-  
+
   resource "entitle_workflow" "specific_user" {
     name = "Security Lead Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600 # 1 hour
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "User"
             user = {
@@ -600,37 +600,37 @@ description: |-
       }
     }]
   }
-  
+
   Workflow with Notifications
   Notify additional people when requests are made (without requiring their approval):
-  
+
   data "entitle_user" "ciso" {
     email = "[email protected]"
   }
-  
+
   data "entitle_directory_groups" "security_team" {
     filter {
       search = "Security Team"
     }
   }
-  
+
   resource "entitle_workflow" "with_notifications" {
     name = "Manager Approval with CISO Notification"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "DirectManager"
           }]
-  
+
           # These people will be notified but don't need to approve
           notified_entities = [
             {
@@ -650,23 +650,23 @@ description: |-
       }
     }]
   }
-  
+
   Slack or Teams Channel Approval
   Route approval to a chat channel. Read more about Entitle for Slack https://docs.beyondtrust.com/entitle/docs/entitle-for-slack-admins.
-  
+
   resource "entitle_workflow" "channel_approval" {
     name = "Slack Channel Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "SlackChannel"
             channel = {
@@ -677,24 +677,24 @@ description: |-
       }
     }]
   }
-  
+
   Use type = "TeamsChannel" with the same channel = { id = ... } structure for Microsoft Teams.
   Webhook Approval
   Delegate the approval decision to an external system via a webhook:
-  
+
   resource "entitle_workflow" "webhook_approval" {
     name = "External System Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 3600
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [{
             type = "Webhook"
             webhook = {
@@ -705,30 +705,30 @@ description: |-
       }
     }]
   }
-  
+
   Combining Manager with Fallback Approvers
   Provides alternative approval paths if requester has no manager:
-  
+
   data "entitle_directory_groups" "team_leads" {
     filter {
       search = "Team Leads"
     }
   }
-  
+
   # Manager approves, or Team Lead if no manager assigned
   resource "entitle_workflow" "manager_with_fallback" {
     name = "Manager or Team Lead Approval"
-  
+
     rules = [{
       sort_order     = 1
       under_duration = 10800
       any_schedule   = false
-  
+
       approval_flow = {
         steps = [{
           sort_order = 1
           operator   = "or"
-  
+
           approval_entities = [
             {
               type = "DirectManager"
@@ -744,7 +744,7 @@ description: |-
       }
     }]
   }
-  
+
   Rules
   Each rule in the rules list represents a conditional approval requirement. Rules are evaluated in order (by sort_order), and the first matching rule is applied to the access request.
   Rule Matching Logic
@@ -754,16 +754,16 @@ description: |-
   There are two ways to require multiple approvals:
   1. Sequential Approvals (Multiple Steps)
   Use when approvals must happen in a specific order:
-  
+
   steps = [
     { sort_order = 1, /* Manager approves first */ },
     { sort_order = 2, /* Then Security approves */ }
   ]
-  
+
   Step 2 only begins after Step 1 is completeCreates a waterfall approval process
   2. Parallel Approvals (operator = "and")
   Use when multiple approvers must approve, but order doesn't matter:
-  
+
   steps = [{
     operator = "and"
     approval_entities = [
@@ -771,11 +771,11 @@ description: |-
       { type = "DirectoryGroup", group = { id = local.compliance_id } }
     ]
   }]
-  
+
   Both Security and Compliance must approveThey can approve in any orderFaster than sequential steps
   3. Combining Both
   Complex workflows can use both techniques:
-  
+
   steps = [
     {
       # Step 1: Manager must approve first
@@ -793,7 +793,7 @@ description: |-
       ]
     }
   ]
-  
+
   Approval Entity Behavior
   DirectManager Type:
   Requires the requester to have a manager assigned in EntitleIf the requester has no manager assigned, the access request will failBest Practice: Ensure all users who will request access have managers assignedCan be combined with other entity types in the same step using operator = "or" to provide fallback options
@@ -817,12 +817,12 @@ description: |-
   No human approval requiredAccess is granted immediately upon requestUse only for low-risk scenariosStill creates audit trail
   Combining Entity Types
   You can combine different entity types in the same step:
-  
+
   # Example: Manager OR Security Team member OR CISO can approve
   {
     sort_order = 1
     operator   = "or"
-  
+
     approval_entities = [
       {
         type = "DirectManager"
@@ -841,23 +841,23 @@ description: |-
       }
     ]
   }
-  
+
   This provides flexibility and ensures requests can be approved even if:
   The requester has no manager (Security or CISO can still approve)The manager is unavailable (Security or CISO can approve)Multiple approval paths exist for faster processing
   Import
   Workflows can be imported using their UUID:
-  
+
   terraform import entitle_workflow.example a1b2c3d4-e5f6-7890-abcd-ef1234567890
-  
+
   Finding the Workflow ID
   To find the UUID of an existing workflow:
   Log in to the Entitle UINavigate to the Workflows sectionClick on the workflow you want to importThe workflow ID (UUID) will be visible in the browser URL
   Example: https://app.entitle.io/workflows/a1b2c3d4-e5f6-7890-abcd-ef1234567890Copy the UUID from the URL
   Example URL:
-  
+
   https://app.entitle.io/workflows/a1b2c3d4-e5f6-7890-abcd-ef1234567890
                                    └─────────────── This is the workflow ID ──────────────┘
-  
+
   Import Limitations
   There are no special limitations when importing workflows. All workflow configurations can be imported and managed via Terraform.
   After Import
@@ -866,7 +866,7 @@ description: |-
   Rule Evaluation Order
   Rules are evaluated in sort_order (lowest first)The first matching rule is appliedSubsequent rules are not evaluatedAlways order rules from most specific to least specific
   Example:
-  
+
   rules = [
     {
       sort_order     = 1
@@ -884,9 +884,9 @@ description: |-
       # ... long duration approval ...
     }
   ]
-  
+
   Duration Best Practices
-  
+
   under_duration is expressed in seconds and defaults to 3600:
   30 minutes = 18001 hour = 36003 hours = 108004 hours = 144006 hours = 216008 hours = 2880012 hours = 4320016 hours = 576001 day = 864003 days = 2592007 days = 604800~30.4 days (1 month) = 2628000~91.25 days (1 quarter) = 7884000~182.5 days (6 months) = 15768000365 days = 31536000730 days = 63072000any duration = -1
   Create a final catch-all rule with under_duration = -1 to handle any duration
@@ -906,19 +906,19 @@ description: |-
   operator defaults to "and", so set it explicitly to "or" whenever a single approver from the list should suffice.
   Best Practice:
   Combine techniques for complex requirements:
-  
+
   # Step 1: Manager (gates the request)
   # Step 2: Security AND Compliance (parallel final approval)
   steps = [
     { sort_order = 1, operator = "or", /* Manager */ },
     { sort_order = 2, operator = "and", /* Security + Compliance */ }
   ]
-  
+
   Group Approval Behavior
   When using type = "DirectoryGroup":
   With operator = "or": Any ONE member of any listed group can approveWith operator = "and": Any ONE member of each listed group must approve
   Example:
-  
+
   {
     operator = "and"
     approval_entities = [
@@ -926,19 +926,19 @@ description: |-
       { type = "DirectoryGroup", group = { id = local.compliance_group } }  # AND any compliance member
     ]
   }
-  
+
   This requires one security member AND one compliance member (not all members of both groups).
   Multi-Step Approvals
   To require approvals in a defined order, use multiple steps rather than multiple entities with the "and" operatorEach step must complete before the next step beginsUse sort_order to define the sequence
   Example: Manager then Security Team
-  
+
   approval_flow = {
     steps = [
       { sort_order = 1, /* Manager approval */ },
       { sort_order = 2, /* Security approval */ }
     ]
   }
-  
+
   Automatic Approval
   Use sparingly and only for low-risk scenariosGood for:
   Development environmentsShort-duration accessRead-only accessNon-production resources
@@ -948,7 +948,7 @@ description: |-
   These snippets assume local.security_id, local.compliance_id, and similar are group UUIDs resolved via data "entitle_directory_groups".
   Pattern 1: Progressive Approval by Duration
   Longer access requests require stricter approval:
-  
+
   rules = [
     {
       sort_order     = 1
@@ -975,10 +975,10 @@ description: |-
       }
     }
   ]
-  
+
   Pattern 2: Dual Approval (Parallel)
   Two teams must both approve, but can happen in any order:
-  
+
   approval_flow = {
     steps = [{
       operator = "and"
@@ -988,10 +988,10 @@ description: |-
       ]
     }]
   }
-  
+
   Pattern 3: Tiered Sequential Approval
   Each level must approve in order:
-  
+
   approval_flow = {
     steps = [
       { sort_order = 1, operator = "or", approval_entities = [{ type = "DirectManager" }] },
@@ -999,10 +999,10 @@ description: |-
       { sort_order = 3, operator = "or", approval_entities = [{ type = "DirectoryGroup", group = { id = local.director_id } }] }
     ]
   }
-  
+
   Pattern 4: Flexible Approval with Escalation
   Normal approval OR automatic escalation to security:
-  
+
   # Short duration: Manager OR any Security member
   steps = [{
     operator = "or"
@@ -1011,16 +1011,16 @@ description: |-
       { type = "DirectoryGroup", group = { id = local.security_id } }
     ]
   }]
-  
+
   # Longer duration: Manager THEN Security
   steps = [
     { sort_order = 1, operator = "or", approval_entities = [{ type = "DirectManager" }] },
     { sort_order = 2, operator = "or", approval_entities = [{ type = "DirectoryGroup", group = { id = local.security_id } }] }
   ]
-  
+
   Pattern 5: Business Hours Flexibility
   Relaxed approval during business hours, stricter at all other times:
-  
+
   rules = [
     {
       # Business hours only: Auto-approve
@@ -1040,10 +1040,10 @@ description: |-
       }
     }
   ]
-  
+
   Pattern 6: Role-Based Workflows
   Different approval chains for different teams:
-  
+
   rules = [
     {
       # Developers: Auto-approve
@@ -1073,10 +1073,10 @@ description: |-
       }
     }
   ]
-  
+
   Pattern 7: Break-Glass Access
   Emergency access with automatic approval but full audit:
-  
+
   approval_flow = {
     steps = [{
       operator          = "or"
@@ -1088,44 +1088,44 @@ description: |-
       ]
     }]
   }
-  
+
   Manager Assignment Best Practices
   Since workflows using type = "DirectManager" require users to have managers assigned:
   Prevention
-  
+
   Validate Manager Assignments
   Ensure all users have managers assigned before deploying Manager-based workflowsRegular audits of user manager assignments
   Use Conditional Workflows
   Create different workflows for users with and without managers:
-  
+
   data "entitle_directory_groups" "users_with_managers" {
     filter {
       search = "Users With Managers"
     }
   }
-  
+
   data "entitle_directory_groups" "contractors" {
     filter {
       search = "Contractors" # Example: contractors might not have managers
     }
   }
-  
+
   data "entitle_directory_groups" "team_leads" {
     filter {
       search = "Team Leads"
     }
   }
-  
+
   resource "entitle_workflow" "standard" {
     name = "Standard Manager Approval"
-  
+
     rules = [{
       sort_order = 1
-  
+
       in_groups = [{
         id = data.entitle_directory_groups.users_with_managers.directory_groups[0].id
       }]
-  
+
       approval_flow = {
         steps = [{
           operator          = "or"
@@ -1134,21 +1134,21 @@ description: |-
       }
     }]
   }
-  
+
   resource "entitle_workflow" "no_manager" {
     name = "Team Lead Approval"
-  
+
     rules = [{
       sort_order = 1
-  
+
       in_groups = [{
         id = data.entitle_directory_groups.contractors.directory_groups[0].id
       }]
-  
+
       approval_flow = {
         steps = [{
           operator = "or"
-  
+
           approval_entities = [{
             type = "DirectoryGroup"
             group = {
@@ -1159,10 +1159,10 @@ description: |-
       }
     }]
   }
-  
+
   Provide Fallback Approvers
   Use operator = "or" to provide alternative approval paths:
-  
+
   approval_entities = [
     { type = "DirectManager" },
     { type = "DirectoryGroup", group = { id = local.default_approvers_id } }
@@ -2219,9 +2219,7 @@ rules = [
     - 30 minutes = `1800`
     - 1 hour = `3600`
     - 3 hours = `10800`
-    - 4 hours = `14400`
     - 6 hours = `21600`
-    - 8 hours = `28800`
     - 12 hours = `43200`
     - 16 hours = `57600`
     - 1 day = `86400`
