@@ -82,7 +82,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 
 ## Requirements
 
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.11
 - [Go](https://golang.org/doc/install) >= 1.24.3
 
 ## Building The Provider
