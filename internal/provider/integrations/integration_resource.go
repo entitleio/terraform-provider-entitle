@@ -9,7 +9,6 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
-	"github.com/hashicorp/terraform-plugin-framework-validators/numbervalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -39,7 +38,7 @@ type IntegrationResourceModel struct {
 	BaseIntegrationResourceModel
 	ConnectionJson          types.String     `tfsdk:"connection_json"`
 	ConnectionJsonWO        types.String     `tfsdk:"connection_json_wo"`
-	ConnectionJsonWOVersion types.Number     `tfsdk:"connection_json_wo_version"`
+	ConnectionJsonWOVersion types.String     `tfsdk:"connection_json_wo_version"`
 	Application             *utils.NameModel `tfsdk:"application"`
 }
 
@@ -76,12 +75,12 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			}
 
-			m["connection_json_wo_version"] = schema.NumberAttribute{
+			m["connection_json_wo_version"] = schema.StringAttribute{
 				Optional:            true,
-				Description:         "Increment this field to update connection_json_wo.",
-				MarkdownDescription: "Increment this field to update connection_json_wo.",
-				Validators: []validator.Number{
-					numbervalidator.AlsoRequires(
+				Description:         "Bump this field to update connection_json_wo.",
+				MarkdownDescription: "Bump this field to update connection_json_wo.",
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(
 						path.MatchRoot("connection_json_wo"),
 					),
 				},

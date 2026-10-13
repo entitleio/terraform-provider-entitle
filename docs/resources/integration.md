@@ -577,7 +577,7 @@ Allowed values:
 - `auto_assign_recommended_owners` (Boolean) When enabled, Entitle automatically assigns suggested owners to the integration based on ownership signals, such as group ownership or historical access. (default: true)
 - `connection_json` (String, Sensitive) You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).
 - `connection_json_wo` (String, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create). Write only field.
-- `connection_json_wo_version` (Number) Increment this field to update connection_json_wo.
+- `connection_json_wo_version` (String) Bump this field to update connection_json_wo.
 - `maintainers` (Attributes Set) Maintainer of the resource, second tier owner of that resource you can have multiple resource Maintainer also can be IDP group. In the case of the bundle the Maintainer of each Resource. (see [below for nested schema](#nestedatt--maintainers))
 - `notify_about_external_permission_changes` (Boolean) When enabled, Entitle will notify owners if permissions are changed directly in the connected application, bypassing Entitle. (default: true)
 - `prerequisite_permissions` (Attributes List) Users granted any role from this integration through a request will automatically receive the permissions to the roles selected below. (see [below for nested schema](#nestedatt--prerequisite_permissions))
