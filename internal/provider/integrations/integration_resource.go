@@ -61,8 +61,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			m["connection_json_wo"] = schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
-				Description:         "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create). Write only field.",
-				MarkdownDescription: "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create). Write only field.",
+				Description:         "Write-only (Terraform 1.11+): accepts ephemeral values and is never stored in state or plan. Sent on create and whenever `connection_json_wo_version` changes. Exactly one of `connection_json` or `connection_json_wo` is required. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "Write-only (Terraform 1.11+): accepts ephemeral values and is never stored in state or plan. Sent on create and whenever `connection_json_wo_version` changes. Exactly one of `connection_json` or `connection_json_wo` is required. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
 				WriteOnly:           true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
