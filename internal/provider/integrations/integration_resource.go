@@ -10,7 +10,6 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -136,7 +135,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	cjv := config.ConnectionJson.ValueString()
-	if cjv == "" {
+	if config.ConnectionJson.IsNull() {
 		cjv = config.ConnectionJsonWO.ValueString()
 	}
 
@@ -196,7 +195,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 // And sends a request to the Entitle API to update the resource using API requests.
 // If the update is successful, it saves the updated resource data into Terraform state.
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data, config IntegrationResourceModel
+	var data, config, state IntegrationResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -208,20 +207,20 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	cjv := config.ConnectionJson.ValueString()
-	if cjv == "" {
+	if config.ConnectionJson.IsNull() && !data.ConnectionJsonWOVersion.Equal(state.ConnectionJsonWOVersion) {
 		cjv = config.ConnectionJsonWO.ValueString()
 	}
 
-	var parsedConnectionJson map[string]interface{}
-
-	if cjv != "" {
-		var diags diag.Diagnostics
-		parsedConnectionJson, diags = ParseConnectionJson(cjv)
-		if diags.HasError() {
-			resp.Diagnostics.Append(diags...)
-			return
-		}
+	parsedConnectionJson, diags := ParseConnectionJson(cjv)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	newBase := UpdateIntegration(ctx, r.client, data.BaseIntegrationResourceModel, applicationName(data.Application.Name.ValueString()), parsedConnectionJson, resp)

@@ -24,11 +24,11 @@ func CreateIntegration(
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
 	appName applicationName,
-	parsedConnectionJson map[string]interface{},
+	parsedConnectionJson *map[string]interface{},
 ) (BaseIntegrationResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	body, diags := BuildCreateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
+	body, diags := BuildCreateBodyFromPlan(ctx, base, appName, parsedConnectionJson)
 	if diags.HasError() {
 		return BaseIntegrationResourceModel{}, diags
 	}
@@ -75,7 +75,7 @@ func UpdateIntegration(
 	cli *client.ClientWithResponses,
 	base BaseIntegrationResourceModel,
 	appName applicationName,
-	parsedConnectionJson map[string]interface{},
+	parsedConnectionJson *map[string]interface{},
 	resp *resource.UpdateResponse,
 ) *BaseIntegrationResourceModel {
 	uid, err := uuid.Parse(base.ID.String())
@@ -87,7 +87,7 @@ func UpdateIntegration(
 		return nil
 	}
 
-	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, &parsedConnectionJson)
+	body, bDiags := BuildUpdateBodyFromPlan(ctx, base, appName, parsedConnectionJson)
 	resp.Diagnostics.Append(bDiags...)
 	if resp.Diagnostics.HasError() {
 		return nil
@@ -682,8 +682,8 @@ func extractMaintainerEntityID(maintainer *utils.MaintainerModel, diags *diag.Di
 }
 
 // ParseConnectionJson validates and parses a connection_json string into the typed map form
-// expected by the API. Returns nil and error diagnostics if the value is absent or not valid JSON.
-func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
+// expected by the API. Returns nil and error diagnostics if the value is not valid JSON.
+func ParseConnectionJson(v string) (*map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if v == "" {
@@ -699,7 +699,7 @@ func ParseConnectionJson(v string) (map[string]interface{}, diag.Diagnostics) {
 		return nil, diags
 	}
 
-	return data, diags
+	return &data, diags
 }
 
 // configureIntegrationResource is the shared Configure implementation for all integration

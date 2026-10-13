@@ -181,7 +181,7 @@ func (r *IntegrationGitlabResource) Update(ctx context.Context, req resource.Upd
 	})...)
 }
 
-func parseGitlabConnectionJson(m *GitlabConnectionModel) map[string]interface{} {
+func parseGitlabConnectionJson(m *GitlabConnectionModel) *map[string]interface{} {
 	var connectionModel GitlabConnectionModel
 	if m != nil {
 		connectionModel = *m
@@ -204,7 +204,7 @@ func parseGitlabConnectionJson(m *GitlabConnectionModel) map[string]interface{} 
 		},
 	}
 
-	return jsonSchema
+	return &jsonSchema
 }
 
 // Delete this function is responsible for deleting an existing resource of type Entitle GitLab Integration.
