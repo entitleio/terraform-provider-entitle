@@ -76,8 +76,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			m["connection_json_wo_version"] = schema.StringAttribute{
 				Optional:            true,
-				Description:         "Bump this field to update connection_json_wo.",
-				MarkdownDescription: "Bump this field to update connection_json_wo.",
+				Description:         "Change this value (e.g. \"1\" → \"2\") to re-send `connection_json_wo`, for example after a credential rotation.",
+				MarkdownDescription: "Change this value (e.g. \"1\" → \"2\") to re-send `connection_json_wo`, for example after a credential rotation.",
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(
 						path.MatchRoot("connection_json_wo"),
