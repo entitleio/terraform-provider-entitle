@@ -35,8 +35,10 @@ type IntegrationResource struct {
 // IntegrationResourceModel describes the resource data model.
 type IntegrationResourceModel struct {
 	BaseIntegrationResourceModel
-	ConnectionJson types.String     `tfsdk:"connection_json"`
-	Application    *utils.NameModel `tfsdk:"application"`
+	ConnectionJson          types.String     `tfsdk:"connection_json"`
+	ConnectionJsonWO        types.String     `tfsdk:"connection_json_wo"`
+	ConnectionJsonWOVersion types.String     `tfsdk:"connection_json_wo_version"`
+	Application             *utils.NameModel `tfsdk:"application"`
 }
 
 func (r *IntegrationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -50,9 +52,37 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			m := maps.Clone(BaseIntegrationResourceAttributes)
 
 			m["connection_json"] = schema.StringAttribute{
-				Required:            true,
-				Description:         "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
-				MarkdownDescription: "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				Optional:            true,
+				Sensitive:           true,
+				Description:         "Exactly one of `connection_json` or `connection_json_wo` is required. Stored in Terraform state; prefer `connection_json_wo` for credentials. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "Exactly one of `connection_json` or `connection_json_wo` is required. Stored in Terraform state; prefer `connection_json_wo` for credentials. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+			}
+
+			m["connection_json_wo"] = schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				Description:         "Write-only (Terraform 1.11+): accepts ephemeral values and is never stored in state or plan. Sent on create and whenever `connection_json_wo_version` changes. Exactly one of `connection_json` or `connection_json_wo` is required. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "Write-only (Terraform 1.11+): accepts ephemeral values and is never stored in state or plan. Sent on create and whenever `connection_json_wo_version` changes. Exactly one of `connection_json` or `connection_json_wo` is required. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				WriteOnly:           true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRoot("connection_json"),
+					),
+					stringvalidator.AlsoRequires(
+						path.MatchRoot("connection_json_wo_version"),
+					),
+				},
+			}
+
+			m["connection_json_wo_version"] = schema.StringAttribute{
+				Optional:            true,
+				Description:         "Change this value (e.g. \"1\" → \"2\") to re-send `connection_json_wo`, for example after a credential rotation.",
+				MarkdownDescription: "Change this value (e.g. \"1\" → \"2\") to re-send `connection_json_wo`, for example after a credential rotation.",
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(
+						path.MatchRoot("connection_json_wo"),
+					),
+				},
 			}
 
 			m["application"] = schema.SingleNestedAttribute{
@@ -92,14 +122,24 @@ func (r *IntegrationResource) Configure(_ context.Context, req resource.Configur
 // And sends a request to the Entitle API to create the resource using API requests.
 // If the creation is successful, it saves the resource's data into Terraform state.
 func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan IntegrationResourceModel
+	var plan, config IntegrationResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	parsedConnectionJson, diags := ParseConnectionJson(plan.ConnectionJson.ValueString())
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cjv := config.ConnectionJson.ValueString()
+	if config.ConnectionJson.IsNull() {
+		cjv = config.ConnectionJsonWO.ValueString()
+	}
+
+	parsedConnectionJson, diags := ParseConnectionJson(cjv)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -114,6 +154,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationResourceModel{
 		BaseIntegrationResourceModel: newBase,
 		ConnectionJson:               plan.ConnectionJson,
+		ConnectionJsonWOVersion:      plan.ConnectionJsonWOVersion,
 		Application: &utils.NameModel{
 			Name: utils.TrimmedStringValue(strings.ToLower(plan.Application.Name.ValueString())),
 		},
@@ -141,6 +182,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationResourceModel{
 		BaseIntegrationResourceModel: newBase,
 		ConnectionJson:               data.ConnectionJson,
+		ConnectionJsonWOVersion:      data.ConnectionJsonWOVersion,
 		Application: &utils.NameModel{
 			Name: utils.TrimmedStringValue(strings.ToLower(appName)),
 		},
@@ -153,14 +195,29 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 // And sends a request to the Entitle API to update the resource using API requests.
 // If the update is successful, it saves the updated resource data into Terraform state.
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data IntegrationResourceModel
+	var data, config, state IntegrationResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	parsedConnectionJson, diags := ParseConnectionJson(data.ConnectionJson.ValueString())
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cjv := config.ConnectionJson.ValueString()
+	if config.ConnectionJson.IsNull() && !data.ConnectionJsonWOVersion.Equal(state.ConnectionJsonWOVersion) {
+		cjv = config.ConnectionJsonWO.ValueString()
+	}
+
+	parsedConnectionJson, diags := ParseConnectionJson(cjv)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -174,6 +231,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, IntegrationResourceModel{
 		BaseIntegrationResourceModel: *newBase,
 		ConnectionJson:               data.ConnectionJson,
+		ConnectionJsonWOVersion:      data.ConnectionJsonWOVersion,
 		Application: &utils.NameModel{
 			Name: utils.TrimmedStringValue(strings.ToLower(data.Application.Name.ValueString())),
 		},
