@@ -54,8 +54,8 @@ func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaReq
 			m["connection_json"] = schema.StringAttribute{
 				Optional:            true,
 				Sensitive:           true,
-				Description:         "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
-				MarkdownDescription: "You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				Description:         "Exactly one of `connection_json` or `connection_json_wo` is required. Stored in Terraform state; prefer `connection_json_wo` for credentials. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
+				MarkdownDescription: "Exactly one of `connection_json` or `connection_json_wo` is required. Stored in Terraform state; prefer `connection_json_wo` for credentials. You can get it on [this page](https://docs.beyondtrust.com/entitle/docs/integrations) or using [web ui create form](https://app.entitle.io/integrations/create).",
 			}
 
 			m["connection_json_wo"] = schema.StringAttribute{
