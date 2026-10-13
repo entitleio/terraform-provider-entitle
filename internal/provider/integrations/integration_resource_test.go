@@ -418,56 +418,71 @@ resource "entitle_integration" "my_gitlab" {
 	})
 }
 
+// woConfig renders the GitLab integration used by TestIntegrationResourceWO.
+// connection is the HCL for the connection attributes (see woConnection), so
+// steps differ only in what they change.
+func woConfig(name, connection string) string {
+	return testhelpers.ProviderConfig + fmt.Sprintf(`
+resource "entitle_integration" "my_gitlab" {
+  name                                     = %q
+  requestable                              = true
+  requestable_by_default                   = true
+  application = {
+    name = "gitlab"
+  }
+  allowed_durations                        = [-1]
+  auto_assign_recommended_maintainers      = false
+  auto_assign_recommended_owners           = false
+  allow_creating_accounts                  = false
+  notify_about_external_permission_changes = true
+  readonly                                 = false
+%s
+  owner = {
+    id = %q
+  }
+  workflow = {
+    id = %q
+  }
+  maintainers = [
+    {
+      type = "user"
+      entity = {
+        id = %q
+      }
+    }
+  ]
+  prerequisite_permissions = [
+    {
+      default = true
+      role = {
+        id = %q
+      }
+    }
+  ]
+}
+`, name, connection, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID"))
+}
+
+// woConnection renders connection_json_wo for the given GitLab domain, plus
+// connection_json_wo_version.
+func woConnection(domain string, version int) string {
+	return fmt.Sprintf(`
+  connection_json_wo = jsonencode({
+    domain                  = %q
+    private_token           = %q
+    configurationSchemaName = "Configuration "
+  })
+  connection_json_wo_version = %d
+`, domain, os.Getenv("GITLAB_ACCESS_TOKEN"), version)
+}
+
 func TestIntegrationResourceWO(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-resource "entitle_integration" "my_gitlab" {
-  	name                               = "My Gitlab Integration WO"
-    requestable                     = true
-    requestable_by_default                     = true
-    application = {
-   	  name = "gitlab"
-    }
-	allowed_durations = [-1]
-    auto_assign_recommended_maintainers      = false
-    auto_assign_recommended_owners           = false
-    allow_creating_accounts           = false
-    connection_json_wo                          = jsonencode({
-		domain                   = "https://gitlab.com"
-		private_token            = "%s"
-		configurationSchemaName = "Configuration "
-	  })
-	connection_json_wo_version = 1
-    notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
-    readonly = false
-    workflow = {
-      id   = "%s"
-    }
-	maintainers = [
-		{
-			type = "user"
-			entity = {
-				id = "%s"
-			}
-		}
-	]
-	prerequisite_permissions = [
-		{
-			default = true
-			role = {
-				id = "%s"
-			}
-		}
-	]
-}
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+				Config: woConfig("My Gitlab Integration WO", woConnection("https://gitlab.com", 1)),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration WO"),
@@ -501,50 +516,7 @@ resource "entitle_integration" "my_gitlab" {
 			},
 			// no change in connection json
 			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-resource "entitle_integration" "my_gitlab" {
-  	name                               = "My Gitlab Integration WO - Edited"
-    requestable                     = true
-    requestable_by_default                     = true
-    application = {
-   	  name = "gitlab"
-    }
-	allowed_durations = [-1]
-    auto_assign_recommended_maintainers      = false
-    auto_assign_recommended_owners           = false
-    allow_creating_accounts           = false
-    connection_json_wo                          = jsonencode({
-		domain                   = "https://gitlab.com"
-		private_token            = "%s"
-		configurationSchemaName = "Configuration "
-	  })
-	connection_json_wo_version = 1
-    notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
-    readonly = false
-    workflow = {
-      id   = "%s"
-    }
-	maintainers = [
-		{
-			type = "user"
-			entity = {
-				id = "%s"
-			}
-		}
-	]
-	prerequisite_permissions = [
-		{
-			default = true
-			role = {
-				id = "%s"
-			}
-		}
-	]
-}
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+				Config: woConfig("My Gitlab Integration WO - Edited", woConnection("https://gitlab.com", 1)),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration WO - Edited"),
@@ -578,50 +550,7 @@ resource "entitle_integration" "my_gitlab" {
 			},
 			// change in connection json
 			{
-				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-resource "entitle_integration" "my_gitlab" {
-  	name                               = "My Gitlab Integration WO - Edited"
-    requestable                     = true
-    requestable_by_default                     = true
-    application = {
-   	  name = "gitlab"
-    }
-	allowed_durations = [-1]
-    auto_assign_recommended_maintainers      = false
-    auto_assign_recommended_owners           = false
-    allow_creating_accounts           = false
-    connection_json_wo                          = jsonencode({
-		domain                   = "http://gitlab.com"
-		private_token            = "%s"
-		configurationSchemaName = "Configuration "
-	  })
-	connection_json_wo_version = 2
-    notify_about_external_permission_changes = true
-    owner = {
-      id    = "%s"
-    }
-    readonly = false
-    workflow = {
-      id   = "%s"
-    }
-	maintainers = [
-		{
-			type = "user"
-			entity = {
-				id = "%s"
-			}
-		}
-	]
-	prerequisite_permissions = [
-		{
-			default = true
-			role = {
-				id = "%s"
-			}
-		}
-	]
-}
-`, os.Getenv("GITLAB_ACCESS_TOKEN"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
+				Config: woConfig("My Gitlab Integration WO - Edited", woConnection("http://gitlab.com", 2)),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_integration.my_gitlab", "name", "My Gitlab Integration WO - Edited"),
