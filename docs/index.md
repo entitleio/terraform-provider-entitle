@@ -39,6 +39,8 @@ description: |-
   |---------------------|-------------|
   | `ENTITLE_API_KEY` | API key for authentication |
   | `ENTITLE_API_ENDPOINT` | API endpoint URL |
+  | `ENTITLE_BULK_CHUNK_SIZE` | Maximum number of items per bulk API request (default `1000`) |
+  | `ENTITLE_BULK_PARALLELISM` | Maximum number of concurrent bulk API requests (default `4`) |
 ---
 
 # entitle Provider
@@ -108,6 +110,8 @@ The following environment variables can be used as an alternative to provider co
 |---------------------|-------------|
 | `ENTITLE_API_KEY` | API key for authentication |
 | `ENTITLE_API_ENDPOINT` | API endpoint URL |
+| `ENTITLE_BULK_CHUNK_SIZE` | Maximum number of items per bulk API request (default `1000`) |
+| `ENTITLE_BULK_PARALLELISM` | Maximum number of concurrent bulk API requests (default `4`) |
 
 ## Example Usage
 
@@ -123,6 +127,12 @@ terraform {
 provider "entitle" {
   endpoint = "https://api.entitle.io"
   api_key  = "PUT_YOUR_TOKEN"
+
+  # Optional: limits for bulk operations
+  bulk {
+    chunk_size  = 1000
+    parallelism = 4
+  }
 }
 ```
 
@@ -132,8 +142,17 @@ provider "entitle" {
 ### Optional
 
 - `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
+- `bulk` (Block, Optional) Provider-wide limits applied to bulk operations. (see [below for nested schema](#nestedblock--bulk))
 - `endpoint` (String) Entitle API server address. Allowed values:
 
   - https://api.entitle.io (default, Europe)
   - https://api.ca.entitle.io (Canada)
   - https://api.us.entitle.io (United States)
+
+<a id="nestedblock--bulk"></a>
+### Nested Schema for `bulk`
+
+Optional:
+
+- `chunk_size` (Number) Maximum number of items sent in a single bulk API request. Defaults to `1000`. Can also be set via the `ENTITLE_BULK_CHUNK_SIZE` environment variable.
+- `parallelism` (Number) Maximum number of bulk API requests executed concurrently. Defaults to `4`. Can also be set via the `ENTITLE_BULK_PARALLELISM` environment variable.

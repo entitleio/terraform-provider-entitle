@@ -116,7 +116,7 @@ func (d *ResourcesDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",

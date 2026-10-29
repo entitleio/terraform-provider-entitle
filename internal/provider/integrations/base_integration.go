@@ -703,7 +703,7 @@ func ParseConnectionJson(v string) (*map[string]interface{}, diag.Diagnostics) {
 }
 
 // configureIntegrationResource is the shared Configure implementation for all integration
-// resource types. It asserts that ProviderData is a *client.ClientWithResponses and assigns
+// resource types. It extracts the *client.ClientWithResponses from the provider data and assigns
 // it to the given pointer, or adds an error diagnostic if the type is unexpected.
 func configureIntegrationResource(
 	providerData any,
@@ -714,11 +714,11 @@ func configureIntegrationResource(
 		return
 	}
 
-	c, ok := providerData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(providerData)
 	if !ok {
 		diagsOut.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.ClientWithResponses, got: %T. Please report this issue to the provider developers.", providerData),
+			fmt.Sprintf("Expected *utils.ProviderData, got: %T. Please report this issue to the provider developers.", providerData),
 		)
 		return
 	}

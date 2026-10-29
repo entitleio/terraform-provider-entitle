@@ -9,4 +9,10 @@ terraform {
 provider "entitle" {
   endpoint = "https://api.entitle.io"
   api_key  = "PUT_YOUR_TOKEN"
+
+  # Optional: limits for bulk operations
+  bulk {
+    chunk_size  = 1000
+    parallelism = 4
+  }
 }

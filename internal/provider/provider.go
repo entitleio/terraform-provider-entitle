@@ -2,11 +2,15 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -30,11 +34,15 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/resources"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/roles"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/users"
+	"github.com/entitleio/terraform-provider-entitle/internal/provider/utils"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/workflows"
 )
 
 const (
 	defaultAPIServer = "https://api.entitle.io"
+
+	envBulkChunkSize   = "ENTITLE_BULK_CHUNK_SIZE"
+	envBulkParallelism = "ENTITLE_BULK_PARALLELISM"
 )
 
 // Ensure EntitleProvider satisfies various provider interfaces.
@@ -50,8 +58,15 @@ type EntitleProvider struct {
 
 // EntitleProviderModel describes the provider data model.
 type EntitleProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
-	APIKey   types.String `tfsdk:"api_key"`
+	Endpoint types.String       `tfsdk:"endpoint"`
+	APIKey   types.String       `tfsdk:"api_key"`
+	Bulk     *BulkProviderModel `tfsdk:"bulk"`
+}
+
+// BulkProviderModel describes the provider-wide limits for bulk operations.
+type BulkProviderModel struct {
+	ChunkSize   types.Int64 `tfsdk:"chunk_size"`
+	Parallelism types.Int64 `tfsdk:"parallelism"`
 }
 
 // Metadata sets the provider metadata.
@@ -95,7 +110,76 @@ func (p *EntitleProvider) Schema(
 				Optional:            true,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"bulk": schema.SingleNestedBlock{
+				MarkdownDescription: "Provider-wide limits applied to bulk operations.",
+				Description:         "Provider-wide limits applied to bulk operations.",
+				Attributes: map[string]schema.Attribute{
+					"chunk_size": schema.Int64Attribute{
+						MarkdownDescription: fmt.Sprintf("Maximum number of items sent in a single bulk API request. "+
+							"Defaults to `%d`. Can also be set via the `%s` environment variable.", utils.DefaultBulkChunkSize, envBulkChunkSize),
+						Description: fmt.Sprintf("Maximum number of items sent in a single bulk API request. "+
+							"Defaults to %d. Can also be set via the %s environment variable.", utils.DefaultBulkChunkSize, envBulkChunkSize),
+						Optional:   true,
+						Validators: []validator.Int64{int64validator.AtLeast(1)},
+					},
+					"parallelism": schema.Int64Attribute{
+						MarkdownDescription: fmt.Sprintf("Maximum number of bulk API requests executed concurrently. "+
+							"Defaults to `%d`. Can also be set via the `%s` environment variable.", utils.DefaultBulkParallelism, envBulkParallelism),
+						Description: fmt.Sprintf("Maximum number of bulk API requests executed concurrently. "+
+							"Defaults to %d. Can also be set via the %s environment variable.", utils.DefaultBulkParallelism, envBulkParallelism),
+						Optional:   true,
+						Validators: []validator.Int64{int64validator.AtLeast(1)},
+					},
+				},
+			},
+		},
 	}
+}
+
+// resolveBulkConfig builds the effective bulk configuration. Precedence: provider
+// configuration, then environment variables, then defaults.
+func resolveBulkConfig(model *BulkProviderModel, getenv func(string) string) (utils.BulkConfig, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	cfg := utils.DefaultBulkConfig()
+
+	resolve := func(attr string, envName string, value types.Int64, target *int64) {
+		if !value.IsNull() && !value.IsUnknown() {
+			*target = value.ValueInt64()
+			return
+		}
+
+		raw := getenv(envName)
+		if raw == "" {
+			return
+		}
+
+		v, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || v < 1 {
+			diags.AddAttributeError(
+				path.Root("bulk").AtName(attr),
+				"Invalid Bulk Configuration",
+				fmt.Sprintf("The %s environment variable must be a positive integer, got: %q.", envName, raw),
+			)
+			return
+		}
+
+		*target = v
+	}
+
+	var chunkSize, parallelism types.Int64
+	if model != nil {
+		chunkSize = model.ChunkSize
+		parallelism = model.Parallelism
+	} else {
+		chunkSize = types.Int64Null()
+		parallelism = types.Int64Null()
+	}
+
+	resolve("chunk_size", envBulkChunkSize, chunkSize, &cfg.ChunkSize)
+	resolve("parallelism", envBulkParallelism, parallelism, &cfg.Parallelism)
+
+	return cfg, diags
 }
 
 // Configure configures the provider based on the provided configuration.
@@ -129,6 +213,9 @@ func (p *EntitleProvider) Configure(
 				"If either is already set, ensure the value is not empty.",
 		)
 	}
+
+	bulkConfig, bulkDiags := resolveBulkConfig(config.Bulk, os.Getenv)
+	resp.Diagnostics.Append(bulkDiags...)
 
 	// Check for errors before proceeding.
 	if resp.Diagnostics.HasError() {
@@ -179,10 +266,18 @@ func (p *EntitleProvider) Configure(
 	}
 
 	// Set client configuration for data sources and resources.
-	resp.DataSourceData = c
-	resp.ResourceData = c
+	providerData := &utils.ProviderData{
+		Client: c,
+		Bulk:   bulkConfig,
+	}
+	resp.DataSourceData = providerData
+	resp.ResourceData = providerData
 
-	tflog.Info(ctx, "Configured Entitle client", map[string]any{"success": true})
+	tflog.Info(ctx, "Configured Entitle client", map[string]any{
+		"success":          true,
+		"bulk_chunk_size":  bulkConfig.ChunkSize,
+		"bulk_parallelism": bulkConfig.Parallelism,
+	})
 }
 
 // Resources returns the list of provider resources.

@@ -104,7 +104,7 @@ func (r *PermissionResource) Configure(ctx context.Context, req resource.Configu
 	if req.ProviderData == nil {
 		return
 	}
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 	if !ok {
 		resp.Diagnostics.AddError("Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *client.ClientWithResponses, got: %T", req.ProviderData))

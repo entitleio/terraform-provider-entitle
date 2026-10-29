@@ -336,7 +336,7 @@ func (r *ResourceResource) Configure(ctx context.Context, req resource.Configure
 		return
 	}
 
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 
 	if !ok {
 		resp.Diagnostics.AddError(

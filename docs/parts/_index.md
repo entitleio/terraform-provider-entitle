@@ -63,3 +63,5 @@ The following environment variables can be used as an alternative to provider co
 |---------------------|-------------|
 | `ENTITLE_API_KEY` | API key for authentication |
 | `ENTITLE_API_ENDPOINT` | API endpoint URL |
+| `ENTITLE_BULK_CHUNK_SIZE` | Maximum number of items per bulk API request (default `1000`) |
+| `ENTITLE_BULK_PARALLELISM` | Maximum number of concurrent bulk API requests (default `4`) |
