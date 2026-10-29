@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -320,7 +321,9 @@ func (r *ResourceTagsResource) operations(name string, groups []bulk.ChangeGroup
 func (r *ResourceTagsResource) inspect(ctx context.Context, id string, tags []string) (bulk.Presence, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
-		return bulk.Presence{}, nil
+		// Unreachable for configured IDs (validated as UUIDs by the schema);
+		// fail loudly rather than treating a corrupt ID as a deleted resource.
+		return bulk.Presence{}, fmt.Errorf("invalid resource id %q: %w", id, err)
 	}
 
 	resp, err := r.client.ResourcesShowWithResponse(ctx, uid)
