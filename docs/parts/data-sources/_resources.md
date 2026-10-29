@@ -6,7 +6,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 
 - **integration_id**: The mandatory filter — resources are always scoped to a specific integration
 - **search**: Optional text filter to narrow results by resource name
-- **Pagination**: Use `page` and `per_page` to navigate large result sets
+- **Pagination**: Use `page` and `per_page` to navigate large result sets (at most 100 results per page)
 - **Difference from entitle_resource**: Use `entitle_resources` (plural) to search and list; use `entitle_resource` (singular) to retrieve full details for a specific resource
 
 ## When to Use This Data Source
@@ -15,6 +15,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 - Searching for a specific resource by name within a known integration
 - Dynamically finding resource IDs to pass to `entitle_role` or `entitle_roles`
 - Auditing what resources exist under an integration
+- Selecting a group of resources to tag in bulk with `entitle_resource_tags`
 
 ## Example Usage
 
@@ -70,6 +71,22 @@ resource "entitle_role" "backend_read" {
   }
 
   allowed_durations = [28800, 86400]
+}
+```
+
+### Tag Every Matching Resource
+
+```terraform
+data "entitle_resources" "prod" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    search = "production"
+  }
+}
+
+resource "entitle_resource_tags" "prod" {
+  resource_ids = data.entitle_resources.prod.resources[*].id
+  tags         = ["production"]
 }
 ```
 
@@ -135,3 +152,4 @@ data "entitle_resources" "page_one" {
 - Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `name`, and `integration` per resource
 - `integration_id` is mandatory — you cannot query resources across all integrations at once
 - If `search` matches many results, use pagination to retrieve all matches
+- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`) and `flatten` their `resources[*].id`

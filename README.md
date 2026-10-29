@@ -24,6 +24,7 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 * **Integration** (`entitle_integration`) — A configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub org, or Slack workspace), including credentials and access settings.
 * **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group). Use this for manual/virtual integrations where Entitle manages the resource lifecycle.
 * **Resource Synced** (`entitle_resource_synced`) — Adopts an existing resource that is automatically synchronized from an external integration (GCP, AWS, GitHub, Okta, etc.). Terraform manages its Entitle settings (owner, workflow, durations) without creating or deleting the underlying resource.
+* **Resource Tags** (`entitle_resource_tags`) — Adds tags to many resources at once using the asynchronous bulk API. Removes only the tags it added; tags a resource already had are kept.
 * **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions. Use this for manual/virtual integrations where Entitle manages the role lifecycle.
 * **Role Synced** (`entitle_role_synced`) — Adopts an existing role that is automatically synchronized from an external integration. Terraform manages its Entitle settings without creating or deleting the underlying role.
 * **Bundle** (`entitle_bundle`) — A cross-application package of roles that can be requested or revoked as a single action — effectively a "super role" spanning multiple integrations.
@@ -65,6 +66,7 @@ Configure the Entitle Terraform Provider with your API key and endpoint:
 
 * `api_key` (Required): The API key for authenticating with the Entitle API.
 * `endpoint` (Optional): The URL endpoint for the Entitle API. default: https://api.entitle.io.
+* `bulk` (Optional block): Limits for bulk resources — `chunk_size` (items per bulk request, default `1000`) and `parallelism` (concurrent requests, default `4`).
 
 To use the Entitle Terraform Provider, you must configure it with the necessary authentication details.
 

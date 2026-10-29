@@ -6,9 +6,9 @@ description: |-
   Retrieve a list of Entitle Resources within a specific integration. Use this data source to discover available resources, search by name, or dynamically look up resource IDs for use when creating roles, building bundles, or constructing policies.
   Resources are the middle tier of the Entitle access model (Integration → Resource → Role) — they represent specific assets or systems within an application, such as individual AWS accounts, GitHub repositories, or database schemas. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  integration_id: The mandatory filter — resources are always scoped to a specific integrationsearch: Optional text filter to narrow results by resource namePagination: Use page and per_page to navigate large result setsDifference from entitle_resource: Use entitle_resources (plural) to search and list; use entitle_resource (singular) to retrieve full details for a specific resource
+  integration_id: The mandatory filter — resources are always scoped to a specific integrationsearch: Optional text filter to narrow results by resource namePagination: Use page and per_page to navigate large result sets (at most 100 results per page)Difference from entitle_resource: Use entitle_resources (plural) to search and list; use entitle_resource (singular) to retrieve full details for a specific resource
   When to Use This Data Source
-  Discovering all resources available within an integrationSearching for a specific resource by name within a known integrationDynamically finding resource IDs to pass to entitle_role or entitle_rolesAuditing what resources exist under an integration
+  Discovering all resources available within an integrationSearching for a specific resource by name within a known integrationDynamically finding resource IDs to pass to entitle_role or entitle_rolesAuditing what resources exist under an integrationSelecting a group of resources to tag in bulk with entitle_resource_tags
   Example Usage
   List All Resources for an Integration
   
@@ -59,6 +59,20 @@ description: |-
     allowed_durations = [28800, 86400]
   }
   
+  Tag Every Matching Resource
+  
+  data "entitle_resources" "prod" {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      search = "production"
+    }
+  }
+  
+  resource "entitle_resource_tags" "prod" {
+    resource_ids = data.entitle_resources.prod.resources[*].id
+    tags         = ["production"]
+  }
+  
   List All Resources and Find Roles for Each
   Discover resources and then list roles within each:
   
@@ -100,7 +114,7 @@ description: |-
   id (String) The resource's unique identifier.name (String) The resource's display name.integration (Attributes) The parent integration:
   id (String) The integration's unique identifier.name (String) The integration's display name.
   Notes
-  Use entitle_resource (singular) to retrieve full details for a specific resource — entitle_resources (plural) returns only id, name, and integration per resourceintegration_id is mandatory — you cannot query resources across all integrations at onceIf search matches many results, use pagination to retrieve all matches
+  Use entitle_resource (singular) to retrieve full details for a specific resource — entitle_resources (plural) returns only id, name, and integration per resourceintegration_id is mandatory — you cannot query resources across all integrations at onceIf search matches many results, use pagination to retrieve all matchesresources contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with count) and flatten their resources[*].id
 ---
 
 # entitle_resources (Data Source)
@@ -113,7 +127,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 
 - **integration_id**: The mandatory filter — resources are always scoped to a specific integration
 - **search**: Optional text filter to narrow results by resource name
-- **Pagination**: Use `page` and `per_page` to navigate large result sets
+- **Pagination**: Use `page` and `per_page` to navigate large result sets (at most 100 results per page)
 - **Difference from entitle_resource**: Use `entitle_resources` (plural) to search and list; use `entitle_resource` (singular) to retrieve full details for a specific resource
 
 ## When to Use This Data Source
@@ -122,6 +136,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 - Searching for a specific resource by name within a known integration
 - Dynamically finding resource IDs to pass to `entitle_role` or `entitle_roles`
 - Auditing what resources exist under an integration
+- Selecting a group of resources to tag in bulk with `entitle_resource_tags`
 
 ## Example Usage
 
@@ -177,6 +192,22 @@ resource "entitle_role" "backend_read" {
   }
 
   allowed_durations = [28800, 86400]
+}
+```
+
+### Tag Every Matching Resource
+
+```terraform
+data "entitle_resources" "prod" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    search = "production"
+  }
+}
+
+resource "entitle_resource_tags" "prod" {
+  resource_ids = data.entitle_resources.prod.resources[*].id
+  tags         = ["production"]
 }
 ```
 
@@ -242,6 +273,7 @@ data "entitle_resources" "page_one" {
 - Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `name`, and `integration` per resource
 - `integration_id` is mandatory — you cannot query resources across all integrations at once
 - If `search` matches many results, use pagination to retrieve all matches
+- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`) and `flatten` their `resources[*].id`
 
 
 
