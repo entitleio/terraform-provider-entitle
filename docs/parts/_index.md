@@ -68,7 +68,7 @@ The following environment variables can be used as an alternative to provider co
 
 ### Bulk Operations
 
-Bulk resources such as `entitle_resource_tags` change many entities with asynchronous bulk API jobs. The optional `bulk` block sets limits for all of them:
+Bulk resources such as `entitle_resource_tags` and `entitle_resource_settings` change many entities with asynchronous bulk API jobs. The optional `bulk` block sets limits for all of them:
 
 ```terraform
 provider "entitle" {
@@ -80,6 +80,6 @@ provider "entitle" {
 ```
 
 - `chunk_size` splits large ID lists into several bulk requests.
-- `parallelism` limits concurrent API requests, including the per-entity reads bulk resources perform on refresh.
+- `parallelism` limits concurrent API requests, including the batched reads (100 IDs per request) bulk resources perform on refresh.
 - Entitle runs one bulk operation per tenant at a time. The provider waits and retries while another one is running, so bulk jobs themselves run one after another.
 - Values set in the block take precedence over the environment variables; both default to the values shown above.

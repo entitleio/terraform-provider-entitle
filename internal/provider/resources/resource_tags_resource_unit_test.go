@@ -1,25 +1,18 @@
 package resources_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
-	"sync"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
-	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider"
 )
 
@@ -32,206 +25,6 @@ const (
 	tagsR2 = "22222222-2222-2222-2222-222222222222"
 	tagsR3 = "33333333-3333-3333-3333-333333333333"
 )
-
-// fakeEntitle is an in-memory stand-in for the resources and bulk endpoints.
-type fakeEntitle struct {
-	t  *testing.T
-	mu sync.Mutex
-
-	tags          map[string][]string // resource id -> userDefinedTags
-	conflictsLeft int                 // 409 responses to return before accepting bulk requests
-	bulkNotFound  map[string]bool     // readable resources the bulk endpoint rejects with 404 (e.g. internal integrations)
-	failNextJob   bool                // next accepted job applies its changes but reports "failed"
-	failedJobs    map[string]bool
-	calls         []client.BulkUpdateResourcesRequest
-}
-
-func newFakeEntitle(t *testing.T, tags map[string][]string) *fakeEntitle {
-	return &fakeEntitle{t: t, tags: tags, bulkNotFound: map[string]bool{}, failedJobs: map[string]bool{}}
-}
-
-func (f *fakeEntitle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch {
-	case r.Method == http.MethodPatch && r.URL.Path == "/public/v1/resources/bulk":
-		f.bulkUpdate(w, r)
-
-	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/public/v1/bulkOperations/"):
-		jobID := strings.TrimPrefix(r.URL.Path, "/public/v1/bulkOperations/")
-		result := map[string]any{"status": "completed", "processed": 1, "total": 1}
-		if f.failedJobs[jobID] {
-			result["status"] = "failed"
-			result["error"] = "simulated failure"
-		}
-		writeJSON(w, http.StatusOK, map[string]any{"result": result})
-
-	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/public/v1/resources/"):
-		id := strings.TrimPrefix(r.URL.Path, "/public/v1/resources/")
-		tags, ok := f.tags[id]
-		if !ok {
-			writeJSON(w, http.StatusNotFound, map[string]any{"errorId": "resource.notFound", "message": "resource not found"})
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"result": map[string]any{
-				"id":               id,
-				"name":             "resource " + id,
-				"requestable":      true,
-				"allowedDurations": []any{},
-				"maintainers":      []any{},
-				"tags":             []string{},
-				"userDefinedTags":  tags,
-			},
-		})
-
-	default:
-		f.t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request) {
-	var req client.BulkUpdateResourcesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		f.t.Errorf("decoding bulk request: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if f.conflictsLeft > 0 {
-		f.conflictsLeft--
-		writeJSON(w, http.StatusConflict, map[string]any{"errorId": "bulkOperation.inProgress", "message": "another bulk operation is running"})
-		return
-	}
-
-	// All-or-nothing validation, like the real API.
-	var missing []string
-	for _, id := range req.Ids {
-		if _, ok := f.tags[id]; !ok || f.bulkNotFound[id] {
-			missing = append(missing, id)
-		}
-	}
-	if len(missing) > 0 {
-		writeJSON(w, http.StatusNotFound, map[string]any{
-			"errorId": "resource.notFound",
-			"message": "some resources were not found",
-			"params":  map[string]any{"ids": missing},
-		})
-		return
-	}
-
-	for _, id := range req.Ids {
-		current := f.tags[id]
-		if req.Update.Tags != nil && req.Update.Tags.Remove != nil {
-			current = slices.DeleteFunc(current, func(tag string) bool {
-				return slices.Contains(*req.Update.Tags.Remove, tag)
-			})
-		}
-		if req.Update.Tags != nil && req.Update.Tags.Add != nil {
-			for _, tag := range *req.Update.Tags.Add {
-				if !slices.Contains(current, tag) {
-					current = append(current, tag)
-				}
-			}
-		}
-		f.tags[id] = current
-	}
-
-	jobID := uuid.NewString()
-	if f.failNextJob {
-		f.failNextJob = false
-		f.failedJobs[jobID] = true
-	}
-
-	f.calls = append(f.calls, req)
-	writeJSON(w, http.StatusAccepted, map[string]any{
-		"result": map[string]any{"jobId": jobID, "count": len(req.Ids)},
-	})
-}
-
-func (f *fakeEntitle) setTags(id string, tags ...string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.tags[id] = tags
-}
-
-func (f *fakeEntitle) deleteResource(id string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	delete(f.tags, id)
-}
-
-// hideFromBulk makes the bulk endpoint reject id with 404 while it stays readable.
-func (f *fakeEntitle) hideFromBulk(id string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.bulkNotFound[id] = true
-}
-
-// failNext makes the next accepted bulk job apply its changes and then report "failed".
-func (f *fakeEntitle) failNext() {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.failNextJob = true
-}
-
-func (f *fakeEntitle) conflicts() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.conflictsLeft
-}
-
-func (f *fakeEntitle) callCount() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return len(f.calls)
-}
-
-func (f *fakeEntitle) callsSince(n int) []client.BulkUpdateResourcesRequest {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return slices.Clone(f.calls[n:])
-}
-
-// checkTags verifies the exact (unordered) set of tags on a resource in the fake API.
-func (f *fakeEntitle) checkTags(id string, want ...string) resource.TestCheckFunc {
-	return func(*terraform.State) error {
-		f.mu.Lock()
-		defer f.mu.Unlock()
-
-		got := slices.Clone(f.tags[id])
-		sort.Strings(got)
-		want = slices.Clone(want)
-		sort.Strings(want)
-		if !slices.Equal(got, want) {
-			return fmt.Errorf("resource %s: tags = %v, want %v", id, got, want)
-		}
-		return nil
-	}
-}
-
-func writeJSON(w http.ResponseWriter, status int, body any) {
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(body)
-}
-
-func setupFakeEntitle(t *testing.T, tags map[string][]string) *fakeEntitle {
-	t.Helper()
-
-	fake := newFakeEntitle(t, tags)
-	srv := httptest.NewServer(fake)
-	t.Cleanup(srv.Close)
-
-	// The endpoint attribute only accepts real Entitle URLs; the env var is not validated.
-	t.Setenv("ENTITLE_API_ENDPOINT", srv.URL)
-	t.Setenv("ENTITLE_API_KEY", "test-token")
-
-	return fake
-}
 
 var unitTestProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"entitle": providerserver.NewProtocol6WithError(provider.New("test")()),
@@ -449,4 +242,77 @@ resource "entitle_resource_tags" "test" {
 			})
 		})
 	}
+}
+
+// Reads go through the list endpoint, 100 IDs per request, never one GET per resource.
+func TestUnitResourceTagsResource_ReadsInBatches(t *testing.T) {
+	ids := make([]string, 150)
+	initial := map[string][]string{}
+	for i := range ids {
+		ids[i] = fmt.Sprintf("%08x-0000-4000-8000-000000000000", i+1)
+		initial[ids[i]] = nil
+	}
+	fake := setupFakeEntitle(t, initial)
+
+	config := `
+provider "entitle" {
+  bulk {
+    chunk_size  = 1000
+    parallelism = 2
+  }
+}
+` + fmt.Sprintf(`
+resource "entitle_resource_tags" "test" {
+  resource_ids = %s
+  tags         = ["pci"]
+}
+`, hclList(ids))
+
+	expectBatchedReads := func(*terraform.State) error {
+		lists, singles := fake.requests()
+		if singles != 0 {
+			return fmt.Errorf("expected no single-resource GETs, got %d", singles)
+		}
+		if len(lists) < 2 {
+			return fmt.Errorf("expected at least 2 list requests for 150 resources, got %d", len(lists))
+		}
+		for _, q := range lists {
+			if n := len(strings.Split(q.Get("ids"), ",")); n > 100 {
+				return fmt.Errorf("list request with %d ids (max 100)", n)
+			}
+			if q.Has("integrationId") {
+				return fmt.Errorf("integrationId must not be sent with ids: %v", q)
+			}
+		}
+		return nil
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: unitTestProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_resource_tags.test", "resource_ids.#", "150"),
+					fake.checkTags(ids[0], "pci"),
+					fake.checkTags(ids[149], "pci"),
+					expectBatchedReads,
+				),
+			},
+			// Drift on one resource among 150 is still detected from the batched reads.
+			{
+				PreConfig: func() { fake.setTags(ids[120]) },
+				Config:    config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("entitle_resource_tags.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					fake.checkTags(ids[120], "pci"),
+					expectBatchedReads,
+				),
+			},
+		},
+	})
 }

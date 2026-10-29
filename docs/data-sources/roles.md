@@ -6,7 +6,9 @@ description: |-
   Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
   Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   When to Use This Data Source
-  Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resource
+  Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resourceLooking up specific roles by ID (up to 100 per data source), across resources and integrations
+  Key Concepts
+  Scope: Set one of resource_id (roles of one resource), integration_id (every role of an integration) or filter.idsids: filter.ids returns specific roles by ID, up to 100; with ids_operator = "isNot" it returns every role except themafter_id: A cursor for reading a long list page by page without skipping or repeating items while it changes. Cannot be combined with a page other than 1 or with searchsearch and ids: search cannot be combined with filter.ids unless external_id is also setPagination: At most 100 results per page
   Example Usage
   List All Roles for a Resource
   
@@ -83,6 +85,28 @@ description: |-
     }
   }
   
+  Look Up Specific Roles by ID
+  
+  data "entitle_roles" "selected" {
+    filter {
+      ids = [
+        "7d080bfa-9143-11ee-b9d1-0242ac120003",
+        "7d080bfa-9143-11ee-b9d1-0242ac120004",
+      ]
+    }
+  }
+  
+  Read an Integration's Roles with a Cursor
+  Pass the ID of the last role of the previous page as after_id:
+  
+  data "entitle_roles" "next_page" {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      after_id = "7d080bfa-9143-11ee-b9d1-0242ac120099"
+      per_page = 100
+    }
+  }
+  
   Output All Role Details
   
   data "entitle_roles" "all_roles" {
@@ -106,6 +130,15 @@ Roles are the most granular access unit in Entitle — they map to real permissi
 - Searching for a role by name within a known resource (e.g., finding the "admin" role)
 - Dynamically referencing roles in bundles, policies, or prerequisite permissions
 - Auditing which roles exist on a resource
+- Looking up specific roles by ID (up to 100 per data source), across resources and integrations
+
+## Key Concepts
+
+- **Scope**: Set one of `resource_id` (roles of one resource), `integration_id` (every role of an integration) or `filter.ids`
+- **ids**: `filter.ids` returns specific roles by ID, up to 100; with `ids_operator = "isNot"` it returns every role except them
+- **after_id**: A cursor for reading a long list page by page without skipping or repeating items while it changes. Cannot be combined with a `page` other than 1 or with `search`
+- **search and ids**: `search` cannot be combined with `filter.ids` unless `external_id` is also set
+- **Pagination**: At most 100 results per page
 
 ## Example Usage
 
@@ -195,6 +228,33 @@ data "entitle_roles" "page_one" {
 }
 ```
 
+### Look Up Specific Roles by ID
+
+```terraform
+data "entitle_roles" "selected" {
+  filter {
+    ids = [
+      "7d080bfa-9143-11ee-b9d1-0242ac120003",
+      "7d080bfa-9143-11ee-b9d1-0242ac120004",
+    ]
+  }
+}
+```
+
+### Read an Integration's Roles with a Cursor
+
+Pass the ID of the last role of the previous page as `after_id`:
+
+```terraform
+data "entitle_roles" "next_page" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    after_id = "7d080bfa-9143-11ee-b9d1-0242ac120099"
+    per_page = 100
+  }
+}
+```
+
 ### Output All Role Details
 
 ```terraform
@@ -215,8 +275,8 @@ output "roles" {
 ### Optional
 
 - `filter` (Block, Optional) Pagination and filter roles by optional search term. (see [below for nested schema](#nestedblock--filter))
-- `integration_id` (String) Filter roles assigned to a specific integration ID.
-- `resource_id` (String) Filter roles assigned to a specific resource ID.
+- `integration_id` (String) Filter roles assigned to a specific integration ID. One of `resource_id`, `integration_id` or `filter.ids` is required.
+- `resource_id` (String) Filter roles assigned to a specific resource ID. One of `resource_id`, `integration_id` or `filter.ids` is required.
 
 ### Read-Only
 
@@ -227,10 +287,13 @@ output "roles" {
 
 Optional:
 
+- `after_id` (String) Cursor for reading the whole list without skipping or repeating items while it changes. Results are sorted by ID; pass the ID of the last item of the previous page to get the items after it. Cannot be combined with a `page` other than 1 or with `search`.
 - `external_id` (String) External ID to filter roles.
+- `ids` (List of String) Return only the roles with these IDs (UUID), up to 100. With `ids_operator = "isNot"`, return every role except them.
+- `ids_operator` (String) How `ids` is matched: `is` (default) returns the given roles, `isNot` returns every role except them. Requires `ids`.
 - `page` (Number) Page number of results to return (starting from 1). Used together with `per_page` for pagination.
-- `per_page` (Number) Number of results to return per page. Defaults to the API's configured page size if not specified.
-- `search` (String) Search string to filter roles.
+- `per_page` (Number) Number of results to return per page (at most 100). Defaults to the API's configured page size if not specified.
+- `search` (String) Search string to filter roles. Cannot be combined with `ids` unless `external_id` is also set.
 
 
 <a id="nestedatt--roles"></a>

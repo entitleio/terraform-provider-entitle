@@ -90,6 +90,9 @@ type Presence struct {
 	Exists bool
 	// Values lists which of the requested values the entity currently has.
 	Values []string
+	// Mismatch reports drift in anything other than the additive values
+	// (e.g. a setting that differs from configuration).
+	Mismatch bool
 }
 
 // Inspect runs fn for every id with bounded parallelism and collects the results.
@@ -112,8 +115,9 @@ func Inspect(ctx context.Context, parallelism int, ids []string, fn func(ctx con
 }
 
 // Reconcile classifies the managed entities after Read. It returns the IDs that
-// carry every value (for state) and the updated ownership: entities that no
-// longer exist are forgotten, entities missing a value become drifted, and a
+// carry every value and have no other mismatch (for state) and the updated
+// ownership: entities that no longer exist are forgotten, entities missing a
+// value or reporting a mismatch become drifted, and a
 // pre-existing value that disappeared is no longer considered pre-existing (if
 // re-added, the resource now owns it).
 func (o Ownership) Reconcile(managed []string, observed map[string]Presence, values []string) ([]string, Ownership) {
@@ -130,7 +134,7 @@ func (o Ownership) Reconcile(managed []string, observed map[string]Presence, val
 			next.Preexisting[id] = pre
 		}
 
-		if ContainsAll(p.Values, values) {
+		if !p.Mismatch && ContainsAll(p.Values, values) {
 			inSync = append(inSync, id)
 		} else {
 			next.Drifted = append(next.Drifted, id)
@@ -200,6 +204,13 @@ type Additive struct {
 func (a Additive) ids() SetDiff    { return Diff(a.Prior.Managed(a.OldIDs), a.NewIDs) }
 func (a Additive) values() SetDiff { return Diff(a.OldValues, a.NewValues) }
 
+// IDs returns how the managed entities change: drifted entities count as
+// previously managed, so a drifted entity still in the plan is Kept.
+func (a Additive) IDs() SetDiff { return a.ids() }
+
+// IsDrifted reports whether id was recorded as drifted by the last Read.
+func (a Additive) IsDrifted(id string) bool { return slices.Contains(a.Prior.Drifted, id) }
+
 // ToInspect returns, per entity, the values whose current presence must be
 // read before writing, so values that already exist are recorded as
 // pre-existing instead of owned.
@@ -207,6 +218,9 @@ func (a Additive) ToInspect() map[string][]string {
 	ids, values := a.ids(), a.values()
 	out := map[string][]string{}
 
+	if len(a.NewValues) == 0 {
+		return out // nothing to check (e.g. a settings resource without additive values)
+	}
 	for _, id := range ids.Added {
 		out[id] = a.NewValues
 	}
@@ -224,6 +238,10 @@ type AdditivePlan struct {
 	Removals []ChangeGroup
 	// Changes apply to entities that stay or become managed.
 	Changes []ChangeGroup
+	// RemovalsByID and ChangesByID hold the same changes per entity, for
+	// resources that merge them with other updates before grouping.
+	RemovalsByID map[string]Change
+	ChangesByID  map[string]Change
 	// Next is the ownership to store when every operation succeeds.
 	Next Ownership
 	// OnError is a conservative ownership to store if applying fails part-way:
@@ -282,10 +300,12 @@ func (a Additive) Plan(present map[string][]string) AdditivePlan {
 	}
 
 	return AdditivePlan{
-		Removals: GroupChanges(removals),
-		Changes:  GroupChanges(changes),
-		Next:     next,
-		OnError:  onError,
+		Removals:     GroupChanges(removals),
+		Changes:      GroupChanges(changes),
+		RemovalsByID: removals,
+		ChangesByID:  changes,
+		Next:         next,
+		OnError:      onError,
 	}
 }
 

@@ -6,9 +6,9 @@ description: |-
   Retrieve a list of Entitle Resources within a specific integration. Use this data source to discover available resources, search by name, or dynamically look up resource IDs for use when creating roles, building bundles, or constructing policies.
   Resources are the middle tier of the Entitle access model (Integration → Resource → Role) — they represent specific assets or systems within an application, such as individual AWS accounts, GitHub repositories, or database schemas. Read more about resources https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  integration_id: The mandatory filter — resources are always scoped to a specific integrationsearch: Optional text filter to narrow results by resource namePagination: Use page and per_page to navigate large result sets (at most 100 results per page)Difference from entitle_resource: Use entitle_resources (plural) to search and list; use entitle_resource (singular) to retrieve full details for a specific resource
+  integration_id: Lists the resources of one integration. Required unless filter.ids is setids: filter.ids returns specific resources by ID (up to 100), across integrations; with ids_operator = "isNot" it returns every resource except themafter_id: A cursor for reading a long list page by page without skipping or repeating items while it changessearch: Optional text filter to narrow results by resource namePagination: Use page and per_page to navigate large result sets (at most 100 results per page)Difference from entitle_resource: Use entitle_resources (plural) to search and list; use entitle_resource (singular) to retrieve full details for a specific resource
   When to Use This Data Source
-  Discovering all resources available within an integrationSearching for a specific resource by name within a known integrationDynamically finding resource IDs to pass to entitle_role or entitle_rolesAuditing what resources exist under an integrationSelecting a group of resources to tag in bulk with entitle_resource_tags
+  Discovering all resources available within an integrationSearching for a specific resource by name within a known integrationDynamically finding resource IDs to pass to entitle_role or entitle_rolesAuditing what resources exist under an integrationSelecting a group of resources to tag or configure in bulk with entitle_resource_tags or entitle_resource_settings
   Example Usage
   List All Resources for an Integration
   
@@ -73,6 +73,18 @@ description: |-
     tags         = ["production"]
   }
   
+  Look Up Specific Resources by ID
+  filter.ids returns up to 100 resources by ID, from any integration:
+  
+  data "entitle_resources" "selected" {
+    filter {
+      ids = [
+        "7d080bfa-9143-11ee-b9d1-0242ac120001",
+        "7d080bfa-9143-11ee-b9d1-0242ac120002",
+      ]
+    }
+  }
+  
   List All Resources and Find Roles for Each
   Discover resources and then list roles within each:
   
@@ -104,17 +116,15 @@ description: |-
   }
   
   Query Parameters
-  Required
-  integration_id (String) The unique identifier of the integration to list resources for (UUID format). This filter is mandatory — resources are always scoped to a specific integration.
   Optional
-  filter (Block) Optional filters:
-  search (String) Text search to filter resources by name.page (Number) Page number to return, starting from 1.per_page (Number) Number of results per page.
+  integration_id (String) The unique identifier of the integration to list resources for (UUID format). Required unless filter.ids is set.filter (Block) Optional filters:
+  ids (List of String) Resource IDs to return, up to 100. Does not need integration_id.ids_operator (String) is (default) returns the given resources; isNot returns every resource except them. Requires ids.after_id (String) Cursor: return the resources after this ID (results are sorted by ID). Cannot be combined with a page other than 1 or with search.search (String) Text search to filter resources by name. Cannot be combined with ids unless external_id is set.external_id (String) Filter by the resource's external ID.page (Number) Page number to return, starting from 1.per_page (Number) Number of results per page (at most 100).
   Returned Attributes
   resources (Attributes List) The list of resources matching the query:
   id (String) The resource's unique identifier.name (String) The resource's display name.integration (Attributes) The parent integration:
   id (String) The integration's unique identifier.name (String) The integration's display name.
   Notes
-  Use entitle_resource (singular) to retrieve full details for a specific resource — entitle_resources (plural) returns only id, name, and integration per resourceintegration_id is mandatory — you cannot query resources across all integrations at onceIf search matches many results, use pagination to retrieve all matchesresources contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with count) and flatten their resources[*].id
+  Use entitle_resource (singular) to retrieve full details for a specific resource — entitle_resources (plural) returns only id, name, and integration per resourceWithout filter.ids, integration_id is required — resources cannot be listed across all integrations at onceIf search matches many results, use pagination to retrieve all matchesresources contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with count, or by passing the last ID as after_id) and flatten their resources[*].id
 ---
 
 # entitle_resources (Data Source)
@@ -125,7 +135,9 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 
 ## Key Concepts
 
-- **integration_id**: The mandatory filter — resources are always scoped to a specific integration
+- **integration_id**: Lists the resources of one integration. Required unless `filter.ids` is set
+- **ids**: `filter.ids` returns specific resources by ID (up to 100), across integrations; with `ids_operator = "isNot"` it returns every resource except them
+- **after_id**: A cursor for reading a long list page by page without skipping or repeating items while it changes
 - **search**: Optional text filter to narrow results by resource name
 - **Pagination**: Use `page` and `per_page` to navigate large result sets (at most 100 results per page)
 - **Difference from entitle_resource**: Use `entitle_resources` (plural) to search and list; use `entitle_resource` (singular) to retrieve full details for a specific resource
@@ -136,7 +148,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 - Searching for a specific resource by name within a known integration
 - Dynamically finding resource IDs to pass to `entitle_role` or `entitle_roles`
 - Auditing what resources exist under an integration
-- Selecting a group of resources to tag in bulk with `entitle_resource_tags`
+- Selecting a group of resources to tag or configure in bulk with `entitle_resource_tags` or `entitle_resource_settings`
 
 ## Example Usage
 
@@ -211,6 +223,21 @@ resource "entitle_resource_tags" "prod" {
 }
 ```
 
+### Look Up Specific Resources by ID
+
+`filter.ids` returns up to 100 resources by ID, from any integration:
+
+```terraform
+data "entitle_resources" "selected" {
+  filter {
+    ids = [
+      "7d080bfa-9143-11ee-b9d1-0242ac120001",
+      "7d080bfa-9143-11ee-b9d1-0242ac120002",
+    ]
+  }
+}
+```
+
 ### List All Resources and Find Roles for Each
 
 Discover resources and then list roles within each:
@@ -248,16 +275,17 @@ data "entitle_resources" "page_one" {
 
 ## Query Parameters
 
-### Required
-
-- `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). **This filter is mandatory** — resources are always scoped to a specific integration.
-
 ### Optional
 
+- `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). Required unless `filter.ids` is set.
 - `filter` (Block) Optional filters:
-    - `search` (String) Text search to filter resources by name.
+    - `ids` (List of String) Resource IDs to return, up to 100. Does not need `integration_id`.
+    - `ids_operator` (String) `is` (default) returns the given resources; `isNot` returns every resource except them. Requires `ids`.
+    - `after_id` (String) Cursor: return the resources after this ID (results are sorted by ID). Cannot be combined with a `page` other than 1 or with `search`.
+    - `search` (String) Text search to filter resources by name. Cannot be combined with `ids` unless `external_id` is set.
+    - `external_id` (String) Filter by the resource's external ID.
     - `page` (Number) Page number to return, starting from 1.
-    - `per_page` (Number) Number of results per page.
+    - `per_page` (Number) Number of results per page (at most 100).
 
 ## Returned Attributes
 
@@ -271,22 +299,19 @@ data "entitle_resources" "page_one" {
 ## Notes
 
 - Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `name`, and `integration` per resource
-- `integration_id` is mandatory — you cannot query resources across all integrations at once
+- Without `filter.ids`, `integration_id` is required — resources cannot be listed across all integrations at once
 - If `search` matches many results, use pagination to retrieve all matches
-- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`) and `flatten` their `resources[*].id`
+- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`, or by passing the last ID as `after_id`) and `flatten` their `resources[*].id`
 
 
 
 <!-- schema generated by tfplugindocs -->
 ## Schema
 
-### Required
-
-- `integration_id` (String) Filter resources assigned to a specific integration ID (UUID).
-
 ### Optional
 
 - `filter` (Block, Optional) Optional filter for resources. (see [below for nested schema](#nestedblock--filter))
+- `integration_id` (String) Filter resources assigned to a specific integration ID (UUID). Required unless `filter.ids` is set.
 
 ### Read-Only
 
@@ -297,10 +322,13 @@ data "entitle_resources" "page_one" {
 
 Optional:
 
+- `after_id` (String) Cursor for reading the whole list without skipping or repeating items while it changes. Results are sorted by ID; pass the ID of the last item of the previous page to get the items after it. Cannot be combined with a `page` other than 1 or with `search`.
 - `external_id` (String) External ID to filter resources.
+- `ids` (List of String) Return only the resources with these IDs (UUID), up to 100. With `ids_operator = "isNot"`, return every resource except them.
+- `ids_operator` (String) How `ids` is matched: `is` (default) returns the given resources, `isNot` returns every resource except them. Requires `ids`.
 - `page` (Number) Page number of results to return (starting from 1). Used together with `per_page` for pagination.
-- `per_page` (Number) Number of results to return per page. Defaults to the API's configured page size if not specified.
-- `search` (String) Search string to filter resources.
+- `per_page` (Number) Number of results to return per page (at most 100). Defaults to the API's configured page size if not specified.
+- `search` (String) Search string to filter resources. Cannot be combined with `ids` unless `external_id` is also set.
 
 
 <a id="nestedatt--resources"></a>

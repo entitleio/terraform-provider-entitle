@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -18,6 +19,7 @@ import (
 
 // Ensure the data source satisfies the framework interface.
 var _ datasource.DataSource = &ResourcesDataSource{}
+var _ datasource.DataSourceWithValidateConfig = &ResourcesDataSource{}
 
 // ResourcesDataSource defines the list data source implementation.
 type ResourcesDataSource struct {
@@ -31,9 +33,9 @@ func NewResourcesDataSource() datasource.DataSource {
 
 // ResourcesDataSourceModel describes the data source model.
 type ResourcesDataSourceModel struct {
-	IntegrationID types.String                                  `tfsdk:"integration_id"`
-	Filter        *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
-	Resources     []ResourceListItemModel                       `tfsdk:"resources"`
+	IntegrationID types.String            `tfsdk:"integration_id"`
+	Filter        *utils.ListFilterModel  `tfsdk:"filter"`
+	Resources     []ResourceListItemModel `tfsdk:"resources"`
 }
 
 // ResourceListItemModel represents a single resource in the list.
@@ -56,30 +58,13 @@ func (d *ResourcesDataSource) Schema(ctx context.Context, req datasource.SchemaR
 		Blocks: map[string]schema.Block{
 			"filter": schema.SingleNestedBlock{
 				MarkdownDescription: "Optional filter for resources.",
-				Attributes: map[string]schema.Attribute{
-					"search": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "Search string to filter resources.",
-					},
-					"external_id": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "External ID to filter resources.",
-					},
-					"page": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
-					},
-					"per_page": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
-					},
-				},
+				Attributes:          utils.ListFilterAttributes("resources", true),
 			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"integration_id": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Filter resources assigned to a specific integration ID (UUID).",
+				Optional:            true,
+				MarkdownDescription: "Filter resources assigned to a specific integration ID (UUID). Required unless `filter.ids` is set.",
 				Validators: []validator.String{
 					validators.UUID{},
 				},
@@ -128,6 +113,20 @@ func (d *ResourcesDataSource) Configure(ctx context.Context, req datasource.Conf
 	d.client = c
 }
 
+// ValidateConfig requires integration_id unless filter.ids is set.
+func (d *ResourcesDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	var data ResourcesDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.IntegrationID.IsNull() && !data.Filter.HasIDs() {
+		resp.Diagnostics.AddAttributeError(path.Root("integration_id"), "Missing Filter",
+			"Either integration_id or filter.ids must be set.")
+	}
+}
+
 // Read retrieves resources from the Entitle API using filters.
 func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data ResourcesDataSourceModel
@@ -136,20 +135,14 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	if data.IntegrationID.IsNull() || data.IntegrationID.ValueString() == "" {
-		resp.Diagnostics.AddError("Invalid Configuration", "integration_id is mandatory")
+	query, diags := data.Filter.Query(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
+	query.IntegrationID = data.IntegrationID.ValueString()
 
-	params := client.ResourcesIndexParams{
-		IntegrationId: data.IntegrationID.ValueString(),
-	}
-
-	if data.Filter != nil {
-		params.Search, params.Page, params.PerPage, params.ExternalId = data.Filter.GetValues()
-	}
-
-	apiResp, err := d.client.ResourcesIndexWithResponse(ctx, &params)
+	apiResp, err := d.client.ResourcesListWithResponse(ctx, query)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
@@ -157,7 +150,7 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
+	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body); err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Failed to list resources: %s", err))
@@ -165,8 +158,8 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 
 	// Map API results
-	resources := make([]ResourceListItemModel, len(apiResp.JSON200.Result))
-	for i, r := range apiResp.JSON200.Result {
+	resources := make([]ResourceListItemModel, len(apiResp.Result))
+	for i, r := range apiResp.Result {
 		var integration *utils.IdNameModel
 		if r.Integration.Id.String() != "" {
 			integration = &utils.IdNameModel{
@@ -192,10 +185,7 @@ func (d *ResourcesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	tflog.Trace(ctx, "Successfully read resources data source", map[string]interface{}{
 		"integration_id": data.IntegrationID.ValueString(),
 		"resource_count": len(resources),
-		"search":         params.Search,
-		"page":           params.Page,
-		"per_page":       params.PerPage,
-		"external_id":    params.ExternalId,
+		"query":          query.Values().Encode(),
 	})
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

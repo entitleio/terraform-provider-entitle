@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
-	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -21,6 +19,7 @@ import (
 
 // Ensure the data source satisfies the framework interface.
 var _ datasource.DataSource = &RolesDataSource{}
+var _ datasource.DataSourceWithValidateConfig = &RolesDataSource{}
 
 // RolesDataSource defines the implementation of the list data source.
 type RolesDataSource struct {
@@ -34,10 +33,10 @@ func NewRolesDataSource() datasource.DataSource {
 
 // RolesDataSourceModel describes the data source model.
 type RolesDataSourceModel struct {
-	ResourceID    types.String                                  `tfsdk:"resource_id"`
-	IntegrationID types.String                                  `tfsdk:"integration_id"`
-	Filter        *utils.PaginationWithSearchAndExternalIdModel `tfsdk:"filter"`
-	Roles         []RoleListItem                                `tfsdk:"roles"`
+	ResourceID    types.String           `tfsdk:"resource_id"`
+	IntegrationID types.String           `tfsdk:"integration_id"`
+	Filter        *utils.ListFilterModel `tfsdk:"filter"`
+	Roles         []RoleListItem         `tfsdk:"roles"`
 }
 
 // RoleListItem represents a single role in the list.
@@ -62,47 +61,22 @@ func (d *RolesDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		Blocks: map[string]schema.Block{
 			"filter": schema.SingleNestedBlock{
 				MarkdownDescription: "Pagination and filter roles by optional search term.",
-				Attributes: map[string]schema.Attribute{
-					"search": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "Search string to filter roles.",
-					},
-					"external_id": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "External ID to filter roles.",
-					},
-					"page": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "Page number of results to return (starting from 1). Used together with `per_page` for pagination.",
-					},
-					"per_page": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "Number of results to return per page. Defaults to the API's configured page size if not specified.",
-					},
-				},
+				Attributes:          utils.ListFilterAttributes("roles", true),
 			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"resource_id": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Filter roles assigned to a specific resource ID.",
+				MarkdownDescription: "Filter roles assigned to a specific resource ID. One of `resource_id`, `integration_id` or `filter.ids` is required.",
 				Validators: []validator.String{
 					validators.UUID{},
-					stringvalidator.AtLeastOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("integration_id"),
-					),
 				},
 			},
 			"integration_id": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Filter roles assigned to a specific integration ID.",
+				MarkdownDescription: "Filter roles assigned to a specific integration ID. One of `resource_id`, `integration_id` or `filter.ids` is required.",
 				Validators: []validator.String{
 					validators.UUID{},
-					stringvalidator.AtLeastOneOf(
-						path.MatchRoot("resource_id"),
-						path.MatchRoot("integration_id"),
-					),
 				},
 			},
 			"roles": schema.ListNestedAttribute{
@@ -159,6 +133,20 @@ func (d *RolesDataSource) Configure(ctx context.Context, req datasource.Configur
 	d.client = c
 }
 
+// ValidateConfig requires resource_id, integration_id or filter.ids.
+func (d *RolesDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	var data RolesDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.ResourceID.IsNull() && data.IntegrationID.IsNull() && !data.Filter.HasIDs() {
+		resp.Diagnostics.AddAttributeError(path.Root("resource_id"), "Missing Filter",
+			"One of resource_id, integration_id or filter.ids must be set.")
+	}
+}
+
 // Read retrieves roles from the Entitle API using filters.
 func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data RolesDataSourceModel
@@ -167,41 +155,15 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	var params client.RolesIndexParams
-
-	resourceID := data.ResourceID.ValueString()
-	if resourceID != "" {
-		uid, err := uuid.Parse(resourceID)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Invalid Resource ID",
-				fmt.Sprintf("Failed to parse resource_id (%s) as UUID: %s", resourceID, err),
-			)
-			return
-		}
-
-		params.ResourceId = &uid
+	query, diags := data.Filter.Query(ctx)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	query.ResourceID = data.ResourceID.ValueString()
+	query.IntegrationID = data.IntegrationID.ValueString()
 
-	integrationID := data.IntegrationID.ValueString()
-	if integrationID != "" {
-		uid, err := uuid.Parse(integrationID)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Invalid Integration ID",
-				fmt.Sprintf("Failed to parse integration_id (%s) as UUID: %s", integrationID, err),
-			)
-			return
-		}
-
-		params.IntegrationId = &uid
-	}
-
-	if data.Filter != nil {
-		params.Search, params.Page, params.PerPage, params.ExternalId = data.Filter.GetValues()
-	}
-
-	apiResp, err := d.client.RolesIndexWithResponse(ctx, &params)
+	apiResp, err := d.client.RolesListWithResponse(ctx, query)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiConnection.Error(),
@@ -209,15 +171,15 @@ func (d *RolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	if err := utils.HTTPResponseToError(apiResp.HTTPResponse.StatusCode, apiResp.Body); err != nil {
+	if err := utils.HTTPResponseToError(apiResp.StatusCode(), apiResp.Body); err != nil {
 		resp.Diagnostics.AddError(
 			utils.ErrApiResponse.Error(),
 			fmt.Sprintf("Failed to list roles: %s", err))
 		return
 	}
 
-	roles := make([]RoleListItem, len(apiResp.JSON200.Result))
-	for i, r := range apiResp.JSON200.Result {
+	roles := make([]RoleListItem, len(apiResp.Result))
+	for i, r := range apiResp.Result {
 		roles[i] = RoleListItem{
 			ID:          types.StringValue(r.Id.String()),
 			Name:        types.StringValue(r.Name),

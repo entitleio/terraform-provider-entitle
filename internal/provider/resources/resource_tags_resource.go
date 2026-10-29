@@ -2,13 +2,9 @@ package resources
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"net/http"
 	"slices"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -108,7 +104,7 @@ func (r *ResourceTagsResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	planned, err := r.plan(ctx, bulk.Additive{NewIDs: ids, NewValues: tags})
+	planned, err := bulk.PlanAdditive(ctx, bulk.Additive{NewIDs: ids, NewValues: tags}, r.inspect)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to Read Resources Before Adding Tags", err.Error())
 		return
@@ -145,20 +141,15 @@ func (r *ResourceTagsResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	managed := ownership.Managed(ids)
-	observed, err := bulk.Inspect(ctx, r.parallelism(), managed, func(ctx context.Context, id string) (bulk.Presence, error) {
-		return r.inspect(ctx, id, tags)
-	})
+	inSync, next, err := bulk.Refresh(ctx, ids, ownership, tags, r.inspect)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to Read Resource Tags", err.Error())
 		return
 	}
-
-	inSync, next := ownership.Reconcile(managed, observed, tags)
 	if len(next.Drifted) > 0 || len(inSync) != len(ids) {
 		tflog.Info(ctx, "Resources drifted from entitle_resource_tags", map[string]any{
 			"drifted": next.Drifted,
-			"missing": bulk.Difference(managed, append(slices.Clone(inSync), next.Drifted...)),
+			"in_sync": len(inSync),
 		})
 	}
 
@@ -191,13 +182,13 @@ func (r *ResourceTagsResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	planned, err := r.plan(ctx, bulk.Additive{
+	planned, err := bulk.PlanAdditive(ctx, bulk.Additive{
 		OldIDs:    oldIDs,
 		NewIDs:    newIDs,
 		OldValues: oldTags,
 		NewValues: newTags,
 		Prior:     ownership,
-	})
+	}, r.inspect)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to Read Resources Before Updating Tags", err.Error())
 		return
@@ -244,29 +235,6 @@ func (r *ResourceTagsResource) Delete(ctx context.Context, req resource.DeleteRe
 	if _, err := r.executor.RunAll(ctx, ops...); err != nil {
 		resp.Diagnostics.AddError("Failed to Remove Resource Tags", err.Error())
 	}
-}
-
-// plan reads the resources that need it and computes the bulk operations.
-func (r *ResourceTagsResource) plan(ctx context.Context, a bulk.Additive) (bulk.AdditivePlan, error) {
-	toInspect := a.ToInspect()
-	ids := make([]string, 0, len(toInspect))
-	for id := range toInspect {
-		ids = append(ids, id)
-	}
-
-	observed, err := bulk.Inspect(ctx, r.parallelism(), ids, func(ctx context.Context, id string) (bulk.Presence, error) {
-		return r.inspect(ctx, id, toInspect[id])
-	})
-	if err != nil {
-		return bulk.AdditivePlan{}, err
-	}
-
-	present := make(map[string][]string, len(observed))
-	for id, p := range observed {
-		present[id] = p.Values
-	}
-
-	return a.Plan(present), nil
 }
 
 // apply runs removals first (skipping resources that no longer exist), then the remaining changes.
@@ -316,34 +284,13 @@ func (r *ResourceTagsResource) operations(name string, groups []bulk.ChangeGroup
 	return ops
 }
 
-// inspect reads a resource and reports which of the given tags it has
-// (case-insensitive, returned in the given spelling).
-func (r *ResourceTagsResource) inspect(ctx context.Context, id string, tags []string) (bulk.Presence, error) {
-	uid, err := uuid.Parse(id)
-	if err != nil {
-		// Unreachable for configured IDs (validated as UUIDs by the schema);
-		// fail loudly rather than treating a corrupt ID as a deleted resource.
-		return bulk.Presence{}, fmt.Errorf("invalid resource id %q: %w", id, err)
-	}
+// inspect reads the resources (100 per list request) and reports which of the
+// wanted tags each has (case-insensitive, returned in the given spelling).
+func (r *ResourceTagsResource) inspect(ctx context.Context, want map[string][]string) (map[string]bulk.Presence, error) {
+	return inspectResources(ctx, r.client, r.parallelism(), want, resourceTagsPresence)
+}
 
-	resp, err := r.client.ResourcesShowWithResponse(ctx, uid)
-	if err != nil {
-		return bulk.Presence{}, err
-	}
-	if resp.HTTPResponse.StatusCode == http.StatusNotFound {
-		return bulk.Presence{}, nil
-	}
-	if err := utils.HTTPResponseToError(resp.HTTPResponse.StatusCode, resp.Body); err != nil {
-		if errors.Is(err, utils.ErrNotFound) {
-			return bulk.Presence{}, nil
-		}
-		return bulk.Presence{}, err
-	}
-	if resp.JSON200 == nil {
-		return bulk.Presence{}, errors.New("empty response when reading resource " + id)
-	}
-
-	result := resp.JSON200.Result
+func resourceTagsPresence(result *client.IntegrationResourceResultSchema, tags []string) (bulk.Presence, error) {
 	current := map[string]struct{}{}
 	for _, t := range append(utils.StringSliceValue(result.UserDefinedTags), utils.StringSliceValue(result.Tags)...) {
 		current[normalizeTag(t)] = struct{}{}

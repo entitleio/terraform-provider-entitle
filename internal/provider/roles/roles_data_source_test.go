@@ -69,8 +69,31 @@ data "entitle_roles" "my_list" {
     # resource_id and integration_id missing
 }
 `,
-				ExpectError: regexp.MustCompile("At least one attribute out of"),
+				ExpectError: regexp.MustCompile(`One\s+of\s+resource_id,\s+integration_id\s+or\s+filter.ids\s+must\s+be\s+set`),
 				PlanOnly:    true,
+			},
+		},
+	})
+}
+
+func TestRolesDataSource_IDsFilter(t *testing.T) {
+	roleID := os.Getenv("ENTITLE_ROLE_ID")
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_roles" "by_id" {
+  filter {
+    ids = ["%s"]
+  }
+}
+`, roleID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.entitle_roles.by_id", "roles.#", "1"),
+					resource.TestCheckResourceAttr("data.entitle_roles.by_id", "roles.0.id", roleID),
+				),
 			},
 		},
 	})

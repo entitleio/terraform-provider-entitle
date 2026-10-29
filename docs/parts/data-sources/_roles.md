@@ -8,6 +8,15 @@ Roles are the most granular access unit in Entitle — they map to real permissi
 - Searching for a role by name within a known resource (e.g., finding the "admin" role)
 - Dynamically referencing roles in bundles, policies, or prerequisite permissions
 - Auditing which roles exist on a resource
+- Looking up specific roles by ID (up to 100 per data source), across resources and integrations
+
+## Key Concepts
+
+- **Scope**: Set one of `resource_id` (roles of one resource), `integration_id` (every role of an integration) or `filter.ids`
+- **ids**: `filter.ids` returns specific roles by ID, up to 100; with `ids_operator = "isNot"` it returns every role except them
+- **after_id**: A cursor for reading a long list page by page without skipping or repeating items while it changes. Cannot be combined with a `page` other than 1 or with `search`
+- **search and ids**: `search` cannot be combined with `filter.ids` unless `external_id` is also set
+- **Pagination**: At most 100 results per page
 
 ## Example Usage
 
@@ -93,6 +102,33 @@ data "entitle_roles" "page_one" {
   filter {
     page     = 1
     per_page = 50
+  }
+}
+```
+
+### Look Up Specific Roles by ID
+
+```terraform
+data "entitle_roles" "selected" {
+  filter {
+    ids = [
+      "7d080bfa-9143-11ee-b9d1-0242ac120003",
+      "7d080bfa-9143-11ee-b9d1-0242ac120004",
+    ]
+  }
+}
+```
+
+### Read an Integration's Roles with a Cursor
+
+Pass the ID of the last role of the previous page as `after_id`:
+
+```terraform
+data "entitle_roles" "next_page" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    after_id = "7d080bfa-9143-11ee-b9d1-0242ac120099"
+    per_page = 100
   }
 }
 ```
