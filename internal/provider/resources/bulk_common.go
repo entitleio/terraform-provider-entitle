@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
 	"github.com/entitleio/terraform-provider-entitle/internal/provider/bulk"
@@ -15,39 +14,27 @@ import (
 // up to client.MaxListIDs per request and parallelism requests at a time.
 // The result is keyed by lower-cased ID; resources that do not exist are absent.
 func fetchResourcesForBulk(ctx context.Context, c *client.ClientWithResponses, parallelism int, ids []string) (map[string]*client.IntegrationResourceResultSchema, error) {
-	var (
-		mu  sync.Mutex
-		out = make(map[string]*client.IntegrationResourceResultSchema, len(ids))
+	found, err := bulk.FetchByIDs(ctx, parallelism, ids,
+		func(ctx context.Context, chunk []string) ([]client.IntegrationResourceResultSchema, error) {
+			resp, err := c.ResourcesListWithResponse(ctx, client.ListQuery{IDs: chunk, PerPage: client.MaxListPerPage})
+			if err != nil {
+				return nil, fmt.Errorf("listing resources: %w", err)
+			}
+			if err := utils.HTTPResponseToError(resp.StatusCode(), resp.Body); err != nil {
+				return nil, fmt.Errorf("listing resources: %w", err)
+			}
+			return resp.Result, nil
+		},
+		func(r client.IntegrationResourceResultSchema) string { return r.Id.String() },
 	)
-
-	err := bulk.ForEach(ctx, parallelism, bulk.Chunk(bulk.Unique(ids), client.MaxListIDs), func(ctx context.Context, chunk []string) error {
-		resp, err := c.ResourcesListWithResponse(ctx, client.ListQuery{
-			IDs:     chunk,
-			PerPage: client.MaxListPerPage,
-		})
-		if err != nil {
-			return fmt.Errorf("listing resources: %w", err)
-		}
-		if err := utils.HTTPResponseToError(resp.StatusCode(), resp.Body); err != nil {
-			return fmt.Errorf("listing resources: %w", err)
-		}
-		if len(resp.Result) > len(chunk) {
-			// Defensive: the ids filter must not return unrelated resources.
-			return fmt.Errorf("listing resources: got %d results for %d ids", len(resp.Result), len(chunk))
-		}
-
-		mu.Lock()
-		defer mu.Unlock()
-		for i := range resp.Result {
-			res := resp.Result[i]
-			out[strings.ToLower(res.Id.String())] = &res
-		}
-		return nil
-	})
 	if err != nil {
 		return nil, err
 	}
 
+	out := make(map[string]*client.IntegrationResourceResultSchema, len(found))
+	for id, res := range found {
+		out[id] = &res
+	}
 	return out, nil
 }
 

@@ -83,7 +83,7 @@ description: |-
   }
   
   Notes
-  allowed_durations is not supported yet, because the bulk API does not accept itresource_ids must contain at least one UUID; additional_maintainers, when set, at least one maintainerImport is not supported — declare the resource and applyChanging any attribute never replaces the resource; changes are applied in place
+  allowed_durations is not supported yet, because the bulk API does not accept itresource_ids must contain at least one UUID; additional_maintainers, when set, at least one maintainerImport is not supported — declare the resource and applyChanging any attribute never replaces the resource; changes are applied in placeTo apply settings to integrations instead, use entitle_integration_settings integration_settings.md
 ---
 
 # entitle_resource_settings (Resource)
@@ -214,6 +214,7 @@ resource "entitle_resource_settings" "aws" {
 - `resource_ids` must contain at least one UUID; `additional_maintainers`, when set, at least one maintainer
 - Import is not supported — declare the resource and apply
 - Changing any attribute never replaces the resource; changes are applied in place
+- To apply settings to integrations instead, use [`entitle_integration_settings`](integration_settings.md)
 
 
 

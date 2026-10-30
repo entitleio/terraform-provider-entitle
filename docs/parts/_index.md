@@ -68,7 +68,7 @@ The following environment variables can be used as an alternative to provider co
 
 ### Bulk Operations
 
-Bulk resources such as `entitle_resource_tags` and `entitle_resource_settings` change many entities with asynchronous bulk API jobs. The optional `bulk` block sets limits for all of them:
+Bulk resources such as `entitle_resource_tags`, `entitle_resource_settings` and `entitle_integration_settings` change many entities with asynchronous bulk API jobs. The optional `bulk` block sets limits for all of them:
 
 ```terraform
 provider "entitle" {

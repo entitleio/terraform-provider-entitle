@@ -124,3 +124,4 @@ resource "entitle_resource_settings" "aws" {
 - `resource_ids` must contain at least one UUID; `additional_maintainers`, when set, at least one maintainer
 - Import is not supported — declare the resource and apply
 - Changing any attribute never replaces the resource; changes are applied in place
+- To apply settings to integrations instead, use [`entitle_integration_settings`](integration_settings.md)

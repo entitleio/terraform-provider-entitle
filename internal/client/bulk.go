@@ -67,6 +67,31 @@ type BulkResourceUpdate struct {
 	Tags        *BulkTagsUpdate        `json:"tags,omitempty"`
 }
 
+// BulkSettingsUpdate is the update body shared by the settings bulk endpoints
+// (resources, integrations). Nil fields are left untouched.
+type BulkSettingsUpdate struct {
+	Requestable *bool                  `json:"requestable,omitempty"`
+	Workflow    *BulkEntityRef         `json:"workflow,omitempty"`
+	Owner       *BulkEntityRef         `json:"owner,omitempty"`
+	Maintainers *BulkMaintainersUpdate `json:"maintainers,omitempty"`
+}
+
+// IsEmpty reports whether the update changes nothing.
+func (u BulkSettingsUpdate) IsEmpty() bool {
+	return u.Requestable == nil && u.Workflow == nil && u.Owner == nil && u.Maintainers == nil
+}
+
+// AsResourceUpdate converts the settings update into a resources bulk update.
+func (u BulkSettingsUpdate) AsResourceUpdate() BulkResourceUpdate {
+	return BulkResourceUpdate{Requestable: u.Requestable, Workflow: u.Workflow, Owner: u.Owner, Maintainers: u.Maintainers}
+}
+
+// BulkUpdateIntegrationsRequest is the body of PATCH /public/v1/integrations/bulk.
+type BulkUpdateIntegrationsRequest struct {
+	Ids    []string           `json:"ids"`
+	Update BulkSettingsUpdate `json:"update"`
+}
+
 // BulkUpdateResourcesRequest is the body of PATCH /public/v1/resources/bulk.
 type BulkUpdateResourcesRequest struct {
 	Ids    []string           `json:"ids"`
@@ -130,6 +155,11 @@ func (r BulkOperationShowResponse) StatusCode() int {
 // ResourcesBulkUpdateWithResponse calls PATCH /public/v1/resources/bulk.
 func (c *ClientWithResponses) ResourcesBulkUpdateWithResponse(ctx context.Context, body BulkUpdateResourcesRequest) (*BulkSubmitResponse, error) {
 	return c.SubmitBulkWithResponse(ctx, http.MethodPatch, "/public/v1/resources/bulk", body)
+}
+
+// IntegrationsBulkUpdateWithResponse calls PATCH /public/v1/integrations/bulk.
+func (c *ClientWithResponses) IntegrationsBulkUpdateWithResponse(ctx context.Context, body BulkUpdateIntegrationsRequest) (*BulkSubmitResponse, error) {
+	return c.SubmitBulkWithResponse(ctx, http.MethodPatch, "/public/v1/integrations/bulk", body)
 }
 
 // SubmitBulkWithResponse sends a bulk request to the given path and parses the

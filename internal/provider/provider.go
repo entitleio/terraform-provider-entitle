@@ -289,6 +289,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		bundles.NewBundleResource,
 		integrations.NewIntegrationResource,
 		integrations.NewIntegrationGitlabResource,
+		integrations.NewIntegrationSettingsResource,
 		permissions.NewPermissionResource,
 		policies.NewPolicyResource,
 		resources.NewResourceResource,

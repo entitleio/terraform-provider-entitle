@@ -61,6 +61,8 @@ var (
 	IntegrationResourceMarkdownDescription string
 	//go:embed parts/resources/_integration_gitlab.md
 	IntegrationGitlabResourceMarkdownDescription string
+	//go:embed parts/resources/_integration_settings.md
+	IntegrationSettingsResourceMarkdownDescription string
 	//go:embed parts/resources/_permission.md
 	PermissionResourceMarkdownDescription string
 	//go:embed parts/resources/_policy.md
