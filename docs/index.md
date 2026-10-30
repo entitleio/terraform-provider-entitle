@@ -39,6 +39,19 @@ description: |-
   |---------------------|-------------|
   | `ENTITLE_API_KEY` | API key for authentication |
   | `ENTITLE_API_ENDPOINT` | API endpoint URL |
+  | `ENTITLE_BULK_CHUNK_SIZE` | Maximum number of items per bulk API request (default `1000`) |
+  | `ENTITLE_BULK_PARALLELISM` | Maximum number of concurrent bulk API requests (default `4`) |
+  Bulk Operations
+  Bulk resources such as entitle_resource_tags, entitle_resource_settings and entitle_integration_settings change many entities with asynchronous bulk API jobs. The optional bulk block sets limits for all of them:
+  
+  provider "entitle" {
+    bulk {
+      chunk_size  = 1000 # items per bulk request
+      parallelism = 4    # concurrent requests
+    }
+  }
+  
+  chunk_size splits large ID lists into several bulk requests.parallelism limits concurrent API requests, including the batched reads (100 IDs per request) bulk resources perform on refresh.Entitle runs one bulk operation per tenant at a time. The provider waits and retries while another one is running, so bulk jobs themselves run one after another.Values set in the block take precedence over the environment variables; both default to the values shown above.
 ---
 
 # entitle Provider
@@ -108,6 +121,26 @@ The following environment variables can be used as an alternative to provider co
 |---------------------|-------------|
 | `ENTITLE_API_KEY` | API key for authentication |
 | `ENTITLE_API_ENDPOINT` | API endpoint URL |
+| `ENTITLE_BULK_CHUNK_SIZE` | Maximum number of items per bulk API request (default `1000`) |
+| `ENTITLE_BULK_PARALLELISM` | Maximum number of concurrent bulk API requests (default `4`) |
+
+### Bulk Operations
+
+Bulk resources such as `entitle_resource_tags`, `entitle_resource_settings` and `entitle_integration_settings` change many entities with asynchronous bulk API jobs. The optional `bulk` block sets limits for all of them:
+
+```terraform
+provider "entitle" {
+  bulk {
+    chunk_size  = 1000 # items per bulk request
+    parallelism = 4    # concurrent requests
+  }
+}
+```
+
+- `chunk_size` splits large ID lists into several bulk requests.
+- `parallelism` limits concurrent API requests, including the batched reads (100 IDs per request) bulk resources perform on refresh.
+- Entitle runs one bulk operation per tenant at a time. The provider waits and retries while another one is running, so bulk jobs themselves run one after another.
+- Values set in the block take precedence over the environment variables; both default to the values shown above.
 
 ## Example Usage
 
@@ -123,6 +156,12 @@ terraform {
 provider "entitle" {
   endpoint = "https://api.entitle.io"
   api_key  = "PUT_YOUR_TOKEN"
+
+  # Optional: limits for bulk operations
+  bulk {
+    chunk_size  = 1000
+    parallelism = 4
+  }
 }
 ```
 
@@ -132,8 +171,17 @@ provider "entitle" {
 ### Optional
 
 - `api_key` (String, Sensitive) API key for authentication with the Entitle API. Can also be set via the `ENTITLE_API_KEY` environment variable.
+- `bulk` (Block, Optional) Provider-wide limits applied to bulk operations. (see [below for nested schema](#nestedblock--bulk))
 - `endpoint` (String) Entitle API server address. Allowed values:
 
   - https://api.entitle.io (default, Europe)
   - https://api.ca.entitle.io (Canada)
   - https://api.us.entitle.io (United States)
+
+<a id="nestedblock--bulk"></a>
+### Nested Schema for `bulk`
+
+Optional:
+
+- `chunk_size` (Number) Maximum number of items sent in a single bulk API request. Defaults to `1000`. Can also be set via the `ENTITLE_BULK_CHUNK_SIZE` environment variable.
+- `parallelism` (Number) Maximum number of bulk API requests executed concurrently. Defaults to `4`. Can also be set via the `ENTITLE_BULK_PARALLELISM` environment variable.

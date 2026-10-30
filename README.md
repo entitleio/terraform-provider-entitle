@@ -24,6 +24,9 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 * **Integration** (`entitle_integration`) — A configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub org, or Slack workspace), including credentials and access settings.
 * **Resource** (`entitle_resource`) — An entity within an integration that users can gain access to via a role (e.g. a database, repository, or user group). Use this for manual/virtual integrations where Entitle manages the resource lifecycle.
 * **Resource Synced** (`entitle_resource_synced`) — Adopts an existing resource that is automatically synchronized from an external integration (GCP, AWS, GitHub, Okta, etc.). Terraform manages its Entitle settings (owner, workflow, durations) without creating or deleting the underlying resource.
+* **Resource Settings** (`entitle_resource_settings`) — Applies the same workflow, owner, maintainers or requestability to many resources at once using the asynchronous bulk API. Only configured attributes are sent; destroy leaves the settings in place.
+* **Integration Settings** (`entitle_integration_settings`) — Applies the same workflow, owner, maintainers or requestability to many integrations at once using the asynchronous bulk API. Only configured attributes are sent; destroy leaves the settings in place.
+* **Resource Tags** (`entitle_resource_tags`) — Adds tags to many resources at once using the asynchronous bulk API. Removes only the tags it added; tags a resource already had are kept.
 * **Role** (`entitle_role`) — The atomic permission unit within a resource (e.g. `readonly`, `admin`). Roles can carry their own workflow, allowed durations, and prerequisite permissions. Use this for manual/virtual integrations where Entitle manages the role lifecycle.
 * **Role Synced** (`entitle_role_synced`) — Adopts an existing role that is automatically synchronized from an external integration. Terraform manages its Entitle settings without creating or deleting the underlying role.
 * **Bundle** (`entitle_bundle`) — A cross-application package of roles that can be requested or revoked as a single action — effectively a "super role" spanning multiple integrations.
@@ -35,7 +38,7 @@ The Terraform Provider for Entitle allows you to manage resources and data sourc
 
 ### Supported Data Sources
 
-The provider also exposes 17 data sources for looking up existing Entitle objects (use these instead of hardcoding UUIDs in your configuration):
+The provider also exposes 18 data sources for looking up existing Entitle objects (use these instead of hardcoding UUIDs in your configuration):
 
 | Singular (lookup one)              | Plural (list / filter)      |
 |------------------------------------|-----------------------------|
@@ -45,7 +48,7 @@ The provider also exposes 17 data sources for looking up existing Entitle object
 | `entitle_workflow`                 | —                           |
 | `entitle_bundle`                   | —                           |
 | `entitle_policy`                   | —                           |
-| `entitle_integration`              | —                           |
+| `entitle_integration`              | `entitle_integrations`      |
 | `entitle_agent_token`              | —                           |
 | `entitle_access_request_forward`   | —                           |
 | `entitle_access_review_forward`    | —                           |
@@ -53,6 +56,8 @@ The provider also exposes 17 data sources for looking up existing Entitle object
 | —                                  | `entitle_applications`      |
 | —                                  | `entitle_directory_groups`  |
 | —                                  | `entitle_permissions`       |
+
+The `entitle_resources`, `entitle_roles` and `entitle_integrations` filters accept `ids` (up to 100 IDs, optionally inverted with `ids_operator = "isNot"`) and an `after_id` cursor for paging through long lists.
 
 See the [Terraform Registry documentation](https://registry.terraform.io/providers/entitleio/entitle/latest/docs) for full schemas.
 
@@ -65,6 +70,7 @@ Configure the Entitle Terraform Provider with your API key and endpoint:
 
 * `api_key` (Required): The API key for authenticating with the Entitle API.
 * `endpoint` (Optional): The URL endpoint for the Entitle API. default: https://api.entitle.io.
+* `bulk` (Optional block): Limits for bulk resources (`entitle_resource_tags`, `entitle_resource_settings`, `entitle_integration_settings`) — `chunk_size` (items per bulk request, default `1000`) and `parallelism` (concurrent requests, default `4`).
 
 To use the Entitle Terraform Provider, you must configure it with the necessary authentication details.
 

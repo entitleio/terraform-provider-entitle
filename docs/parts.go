@@ -25,6 +25,8 @@ var (
 	DirectoryGroupsDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_integration.md
 	IntegrationDataSourceMarkdownDescription string
+	//go:embed parts/data-sources/_integrations.md
+	IntegrationsDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_permissions.md
 	PermissionsDataSourceMarkdownDescription string
 	//go:embed parts/data-sources/_policy.md
@@ -59,6 +61,8 @@ var (
 	IntegrationResourceMarkdownDescription string
 	//go:embed parts/resources/_integration_gitlab.md
 	IntegrationGitlabResourceMarkdownDescription string
+	//go:embed parts/resources/_integration_settings.md
+	IntegrationSettingsResourceMarkdownDescription string
 	//go:embed parts/resources/_permission.md
 	PermissionResourceMarkdownDescription string
 	//go:embed parts/resources/_policy.md
@@ -67,6 +71,10 @@ var (
 	ResourceResourceMarkdownDescription string
 	//go:embed parts/resources/_resource_synced.md
 	ResourceSyncedResourceMarkdownDescription string
+	//go:embed parts/resources/_resource_settings.md
+	ResourceSettingsResourceMarkdownDescription string
+	//go:embed parts/resources/_resource_tags.md
+	ResourceTagsResourceMarkdownDescription string
 	//go:embed parts/resources/_role.md
 	RoleResourceMarkdownDescription string
 	//go:embed parts/resources/_role_synced.md
