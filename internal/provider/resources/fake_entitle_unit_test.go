@@ -58,10 +58,9 @@ type fakeEntitle struct {
 	mu sync.Mutex
 
 	resources     map[string]*fakeResource
-	integrations  map[string]*fakeResource // same settings fields; tags are not used
-	conflictsLeft int                      // 409 responses to return before accepting bulk requests
-	bulkNotFound  map[string]bool          // readable resources the bulk endpoint rejects with 404 (e.g. internal integrations)
-	failNextJob   bool                     // next accepted job applies its changes but reports "failed"
+	conflictsLeft int             // 409 responses to return before accepting bulk requests
+	bulkNotFound  map[string]bool // readable resources the bulk endpoint rejects with 404 (e.g. internal integrations)
+	failNextJob   bool            // next accepted job applies its changes but reports "failed"
 	failedJobs    map[string]bool
 	calls         []client.BulkUpdateResourcesRequest
 	listCalls     []url.Values // queries of GET /public/v1/resources
@@ -69,7 +68,7 @@ type fakeEntitle struct {
 }
 
 func newFakeEntitle(t *testing.T, tags map[string][]string) *fakeEntitle {
-	f := &fakeEntitle{t: t, resources: map[string]*fakeResource{}, integrations: map[string]*fakeResource{}, bulkNotFound: map[string]bool{}, failedJobs: map[string]bool{}}
+	f := &fakeEntitle{t: t, resources: map[string]*fakeResource{}, bulkNotFound: map[string]bool{}, failedJobs: map[string]bool{}}
 	for id, tt := range tags {
 		f.resources[id] = &fakeResource{Tags: tt, Requestable: true}
 	}
@@ -84,13 +83,7 @@ func (f *fakeEntitle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == http.MethodPatch && r.URL.Path == "/public/v1/resources/bulk":
-		f.bulkUpdate(w, r, f.resources, false)
-
-	case r.Method == http.MethodPatch && r.URL.Path == "/public/v1/integrations/bulk":
-		f.bulkUpdate(w, r, f.integrations, true)
-
-	case r.Method == http.MethodGet && r.URL.Path == "/public/v1/integrations":
-		f.listEntities(w, r, f.integrations, false, integrationJSON)
+		f.bulkUpdate(w, r)
 
 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/public/v1/bulkOperations/"):
 		jobID := strings.TrimPrefix(r.URL.Path, "/public/v1/bulkOperations/")
@@ -102,7 +95,7 @@ func (f *fakeEntitle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"result": result})
 
 	case r.Method == http.MethodGet && r.URL.Path == "/public/v1/resources":
-		f.listEntities(w, r, f.resources, true, (*fakeResource).toJSON)
+		f.listResources(w, r)
 
 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/public/v1/resources/"):
 		f.singleGets++
@@ -154,10 +147,10 @@ func (res *fakeResource) toJSON(id string) map[string]any {
 	return out
 }
 
-// listEntities emulates GET /public/v1/resources and /public/v1/integrations with the ids filter: up to
+// listResources emulates GET /public/v1/resources with the ids filter: up to
 // 100 ids (comma-separated or repeated), idsOperator is/isNot, full items
 // sorted by id. integrationId is not required when ids is given.
-func (f *fakeEntitle) listEntities(w http.ResponseWriter, r *http.Request, store map[string]*fakeResource, needsIntegrationID bool, toJSON func(*fakeResource, string) map[string]any) {
+func (f *fakeEntitle) listResources(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	f.listCalls = append(f.listCalls, q)
 
@@ -173,7 +166,7 @@ func (f *fakeEntitle) listEntities(w http.ResponseWriter, r *http.Request, store
 		writeJSON(w, http.StatusBadRequest, map[string]any{"errorId": "validation", "message": "ids: at most 100 ids"})
 		return
 	}
-	if needsIntegrationID && len(ids) == 0 && q.Get("integrationId") == "" {
+	if len(ids) == 0 && q.Get("integrationId") == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"errorId": "validation", "message": "integrationId is required"})
 		return
 	}
@@ -184,8 +177,8 @@ func (f *fakeEntitle) listEntities(w http.ResponseWriter, r *http.Request, store
 	}
 	isNot := q.Get("idsOperator") == "isNot"
 
-	keys := make([]string, 0, len(store))
-	for id := range store {
+	keys := make([]string, 0, len(f.resources))
+	for id := range f.resources {
 		keys = append(keys, id)
 	}
 	sort.Strings(keys)
@@ -195,7 +188,7 @@ func (f *fakeEntitle) listEntities(w http.ResponseWriter, r *http.Request, store
 		if len(ids) > 0 && selected[strings.ToLower(id)] == isNot {
 			continue
 		}
-		result = append(result, toJSON(store[id], id))
+		result = append(result, f.resources[id].toJSON(id))
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -209,17 +202,6 @@ func (f *fakeEntitle) requests() (lists []url.Values, singles int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.listCalls), f.singleGets
-}
-
-// integrationJSON renders an integration list item with the settings fields.
-func integrationJSON(res *fakeResource, id string) map[string]any {
-	out := res.toJSON(id)
-	delete(out, "tags")
-	delete(out, "userDefinedTags")
-	delete(out, "allowedDurations")
-	out["name"] = "integration " + id
-	out["application"] = map[string]any{"name": "Manual"}
-	return out
 }
 
 func toFakeMaintainers(in []client.BulkMaintainer) []fakeMaintainer {
@@ -237,7 +219,7 @@ func toFakeMaintainers(in []client.BulkMaintainer) []fakeMaintainer {
 	return out
 }
 
-func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request, store map[string]*fakeResource, integrations bool) {
+func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request) {
 	raw, err := io.ReadAll(r.Body)
 	if err != nil {
 		f.t.Errorf("reading bulk request: %v", err)
@@ -250,9 +232,6 @@ func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request, store m
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if integrations && req.Update.Tags != nil {
-		f.t.Errorf("the integrations bulk endpoint has no tags: %s", raw)
-	}
 
 	if f.conflictsLeft > 0 {
 		f.conflictsLeft--
@@ -263,7 +242,7 @@ func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request, store m
 	// All-or-nothing validation, like the real API.
 	var missing []string
 	for _, id := range req.Ids {
-		if _, ok := store[id]; !ok || f.bulkNotFound[id] {
+		if _, ok := f.resources[id]; !ok || f.bulkNotFound[id] {
 			missing = append(missing, id)
 		}
 	}
@@ -282,7 +261,7 @@ func (f *fakeEntitle) bulkUpdate(w http.ResponseWriter, r *http.Request, store m
 	}
 
 	for _, id := range req.Ids {
-		res := store[id]
+		res := f.resources[id]
 
 		if u.Tags != nil && u.Tags.Remove != nil {
 			res.Tags = slices.DeleteFunc(res.Tags, func(tag string) bool { return slices.Contains(*u.Tags.Remove, tag) })
@@ -353,24 +332,7 @@ func (f *fakeEntitle) setTags(id string, tags ...string) {
 func (f *fakeEntitle) update(id string, fn func(r *fakeResource)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	fn(f.lookup(id))
-}
-
-// lookup returns the resource or integration with the given ID (nil if none).
-func (f *fakeEntitle) lookup(id string) *fakeResource {
-	if res, ok := f.resources[id]; ok {
-		return res
-	}
-	return f.integrations[id]
-}
-
-// addIntegrations creates integrations (requestable, no owner, workflow or maintainers).
-func (f *fakeEntitle) addIntegrations(ids ...string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	for _, id := range ids {
-		f.integrations[id] = &fakeResource{Requestable: true}
-	}
+	fn(f.resources[id])
 }
 
 func (f *fakeEntitle) deleteResource(id string) {
@@ -439,8 +401,8 @@ func (f *fakeEntitle) checkResource(id string, fn func(r fakeResource) error) re
 		f.mu.Lock()
 		defer f.mu.Unlock()
 
-		res := f.lookup(id)
-		if res == nil {
+		res, ok := f.resources[id]
+		if !ok {
 			return fmt.Errorf("resource %s not found in fake API", id)
 		}
 		if err := fn(*res); err != nil {

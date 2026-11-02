@@ -153,7 +153,7 @@ func (f *fakeAPI) list(w http.ResponseWriter, r *http.Request) {
 		in := f.integrations[id]
 		maintainers := []any{}
 		for _, m := range in.Maintainers {
-			maintainers = append(maintainers, map[string]any{"type": m.Type, m.Type: m.identity.json()})
+			maintainers = append(maintainers, map[string]any{"type": m.Type, m.Type: m.json()})
 		}
 		item := map[string]any{
 			"id":          id,

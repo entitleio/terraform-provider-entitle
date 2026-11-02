@@ -186,27 +186,27 @@ func TestUnitIntegrationSettingsResource_UpdateSendsOnlyChanges(t *testing.T) {
 			{
 				Config: settingsConfig([]string{intg1, intg2}, fmt.Sprintf(`
   requestable = false
-  owner       = %q
-`, alice)),
+  workflow_id = %q
+`, wf1)),
 			},
 			{
 				PreConfig: func() { mark = fake.callCount() },
 				Config: settingsConfig([]string{intg1, intg2, intg3}, fmt.Sprintf(`
   requestable = false
-  owner       = %q
-`, bob)),
+  workflow_id = %q
+`, wf2)),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("entitle_integration_settings.test", plancheck.ResourceActionUpdate),
 					},
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					fake.check(intg1, all(requestable(false), owner(bob))),
-					fake.check(intg3, all(requestable(false), owner(bob))),
+					fake.check(intg1, all(requestable(false), workflow(wf2))),
+					fake.check(intg3, all(requestable(false), workflow(wf2))),
 					fake.expectUpdates(&mark, map[string]func(client.BulkSettingsUpdate) error{
-						intg1: sent{owner: bob}.check,
-						intg2: sent{owner: bob}.check,
-						intg3: sent{requestable: boolp(false), owner: bob}.check,
+						intg1: sent{workflow: wf2}.check,
+						intg2: sent{workflow: wf2}.check,
+						intg3: sent{requestable: boolp(false), workflow: wf2}.check,
 					}),
 					fake.checkRequests(),
 				),
@@ -241,6 +241,8 @@ func TestUnitIntegrationSettingsResource_RemovedAttributeBecomesUnmanaged(t *tes
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
+				// The value changed outside Terraform is left as it is.
+				Check: fake.check(intg1, requestable(true)),
 			},
 		},
 	})

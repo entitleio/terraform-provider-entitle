@@ -131,6 +131,8 @@ func TestUnitRoleSettingsResource_RemovedAttributeBecomesUnmanaged(t *testing.T)
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
+				// The value changed outside Terraform is left as it is.
+				Check: fake.check(roleA, true, roleWF1),
 			},
 		},
 	})

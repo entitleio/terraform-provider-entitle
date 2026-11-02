@@ -262,6 +262,8 @@ func TestUnitResourceSettingsResource_RemovedAttributeBecomesUnmanaged(t *testin
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
+				// The value changed outside Terraform is left as it is.
+				Check: fake.checkResource(tagsR1, expectRequestable(true)),
 			},
 		},
 	})
