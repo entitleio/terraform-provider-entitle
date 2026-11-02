@@ -22,6 +22,8 @@ func NewResourceSettingsResource() resource.Resource {
 		Entities:            "resources",
 		MarkdownDescription: docs.ResourceSettingsResourceMarkdownDescription,
 		Fetch:               fetchResourceSettings,
+		WithOwner:           true,
+		WithMaintainers:     true,
 		Submit: func(c *client.ClientWithResponses, u client.BulkSettingsUpdate) bulk.SubmitFunc {
 			return bulk.ResourcesUpdate(c, u.AsResourceUpdate())
 		},

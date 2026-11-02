@@ -29,6 +29,8 @@ func integrationSettingsKind() bulksettings.Kind {
 		Entities:            "integrations",
 		MarkdownDescription: docs.IntegrationSettingsResourceMarkdownDescription,
 		Fetch:               fetchIntegrationSettings,
+		WithOwner:           true,
+		WithMaintainers:     true,
 		Submit: func(c *client.ClientWithResponses, u client.BulkSettingsUpdate) bulk.SubmitFunc {
 			return func(ctx context.Context, ids []string) (*client.BulkSubmitResponse, error) {
 				return c.IntegrationsBulkUpdateWithResponse(ctx, client.BulkUpdateIntegrationsRequest{Ids: ids, Update: u})

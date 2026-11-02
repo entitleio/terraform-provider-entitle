@@ -298,6 +298,7 @@ func (p *EntitleProvider) Resources(ctx context.Context) []func() resource.Resou
 		resources.NewResourceTagsResource,
 		roles.NewRoleResource,
 		roles.NewRoleSyncedResource,
+		roles.NewRoleSettingsResource,
 		workflows.NewWorkflowResource,
 	}
 }

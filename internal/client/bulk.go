@@ -86,6 +86,25 @@ func (u BulkSettingsUpdate) AsResourceUpdate() BulkResourceUpdate {
 	return BulkResourceUpdate{Requestable: u.Requestable, Workflow: u.Workflow, Owner: u.Owner, Maintainers: u.Maintainers}
 }
 
+// BulkRoleUpdate is the update body of PATCH /public/v1/roles/bulk. Roles have
+// no owner or maintainers. Nil fields are left untouched.
+type BulkRoleUpdate struct {
+	Requestable *bool          `json:"requestable,omitempty"`
+	Workflow    *BulkEntityRef `json:"workflow,omitempty"`
+}
+
+// AsRoleUpdate converts the settings update into a roles bulk update; owner
+// and maintainers do not exist on roles and are dropped.
+func (u BulkSettingsUpdate) AsRoleUpdate() BulkRoleUpdate {
+	return BulkRoleUpdate{Requestable: u.Requestable, Workflow: u.Workflow}
+}
+
+// BulkUpdateRolesRequest is the body of PATCH /public/v1/roles/bulk.
+type BulkUpdateRolesRequest struct {
+	Ids    []string       `json:"ids"`
+	Update BulkRoleUpdate `json:"update"`
+}
+
 // BulkUpdateIntegrationsRequest is the body of PATCH /public/v1/integrations/bulk.
 type BulkUpdateIntegrationsRequest struct {
 	Ids    []string           `json:"ids"`
@@ -160,6 +179,11 @@ func (c *ClientWithResponses) ResourcesBulkUpdateWithResponse(ctx context.Contex
 // IntegrationsBulkUpdateWithResponse calls PATCH /public/v1/integrations/bulk.
 func (c *ClientWithResponses) IntegrationsBulkUpdateWithResponse(ctx context.Context, body BulkUpdateIntegrationsRequest) (*BulkSubmitResponse, error) {
 	return c.SubmitBulkWithResponse(ctx, http.MethodPatch, "/public/v1/integrations/bulk", body)
+}
+
+// RolesBulkUpdateWithResponse calls PATCH /public/v1/roles/bulk.
+func (c *ClientWithResponses) RolesBulkUpdateWithResponse(ctx context.Context, body BulkUpdateRolesRequest) (*BulkSubmitResponse, error) {
+	return c.SubmitBulkWithResponse(ctx, http.MethodPatch, "/public/v1/roles/bulk", body)
 }
 
 // SubmitBulkWithResponse sends a bulk request to the given path and parses the

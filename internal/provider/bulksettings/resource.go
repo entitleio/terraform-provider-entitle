@@ -55,6 +55,10 @@ type Kind struct {
 	Fetch func(ctx context.Context, c *client.ClientWithResponses, parallelism int, ids []string) (map[string]*Entity, error)
 	// Submit returns the bulk submit function for one update.
 	Submit func(c *client.ClientWithResponses, u client.BulkSettingsUpdate) bulk.SubmitFunc
+	// WithOwner enables the owner attribute; WithMaintainers enables
+	// maintainers and additional_maintainers. requestable and workflow_id are
+	// always available.
+	WithOwner, WithMaintainers bool
 }
 
 // New creates a settings resource for the given kind.
@@ -150,33 +154,50 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Description:         fmt.Sprintf("ID (UUID) of the default approval workflow for the %s.", k.Entities),
 				Validators:          []validator.String{validators.UUID{}},
 			},
-			attrOwner: schema.StringAttribute{
-				Optional:            true,
-				MarkdownDescription: fmt.Sprintf("Owner of the %s, as a user UUID or email address.", k.Entities),
-				Description:         fmt.Sprintf("Owner of the %s, as a user UUID or email address.", k.Entities),
-				Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
-			},
-			attrMaintainers: maintainers,
-			attrAdditional:  additional,
 		},
 	}
+
+	if k.WithOwner {
+		resp.Schema.Attributes[attrOwner] = schema.StringAttribute{
+			Optional:            true,
+			MarkdownDescription: fmt.Sprintf("Owner of the %s, as a user UUID or email address.", k.Entities),
+			Description:         fmt.Sprintf("Owner of the %s, as a user UUID or email address.", k.Entities),
+			Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
+		}
+	}
+	if k.WithMaintainers {
+		resp.Schema.Attributes[attrMaintainers] = maintainers
+		resp.Schema.Attributes[attrAdditional] = additional
+	}
+}
+
+// settingAttributes lists the setting attributes this kind supports.
+func (k Kind) settingAttributes() []string {
+	attrs := []string{attrRequestable, attrWorkflowID}
+	if k.WithOwner {
+		attrs = append(attrs, attrOwner)
+	}
+	if k.WithMaintainers {
+		attrs = append(attrs, attrMaintainers, attrAdditional)
+	}
+	return attrs
 }
 
 // ConfigValidators requires at least one setting and forbids both maintainer modes at once.
 func (r *Resource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
-	return []resource.ConfigValidator{
-		resourcevalidator.Conflicting(
-			path.MatchRoot(attrMaintainers),
-			path.MatchRoot(attrAdditional),
-		),
-		resourcevalidator.AtLeastOneOf(
-			path.MatchRoot(attrRequestable),
-			path.MatchRoot(attrWorkflowID),
-			path.MatchRoot(attrOwner),
-			path.MatchRoot(attrMaintainers),
-			path.MatchRoot(attrAdditional),
-		),
+	var settings []path.Expression
+	for _, a := range r.kind.settingAttributes() {
+		settings = append(settings, path.MatchRoot(a))
 	}
+
+	out := []resource.ConfigValidator{resourcevalidator.AtLeastOneOf(settings...)}
+	if r.kind.WithMaintainers {
+		out = append(out, resourcevalidator.Conflicting(
+			path.MatchRoot(attrMaintainers),
+			path.MatchRoot(attrAdditional),
+		))
+	}
+	return out
 }
 
 // Configure wires the API client and the bulk executor.
@@ -448,9 +469,18 @@ func (r *Resource) decode(ctx context.Context, g attributeGetter, diags *diag.Di
 	diags.Append(g.GetAttribute(ctx, path.Root(r.kind.IDsAttribute), &ids)...)
 	diags.Append(g.GetAttribute(ctx, path.Root(attrRequestable), &requestable)...)
 	diags.Append(g.GetAttribute(ctx, path.Root(attrWorkflowID), &workflowID)...)
-	diags.Append(g.GetAttribute(ctx, path.Root(attrOwner), &owner)...)
-	diags.Append(g.GetAttribute(ctx, path.Root(attrMaintainers), &maint)...)
-	diags.Append(g.GetAttribute(ctx, path.Root(attrAdditional), &additional)...)
+	if r.kind.WithOwner {
+		diags.Append(g.GetAttribute(ctx, path.Root(attrOwner), &owner)...)
+	} else {
+		owner = types.StringNull()
+	}
+	if r.kind.WithMaintainers {
+		diags.Append(g.GetAttribute(ctx, path.Root(attrMaintainers), &maint)...)
+		diags.Append(g.GetAttribute(ctx, path.Root(attrAdditional), &additional)...)
+	} else {
+		maint = types.SetNull(types.ObjectType{AttrTypes: maintainerAttrTypes})
+		additional = types.SetNull(types.ObjectType{AttrTypes: maintainerAttrTypes})
+	}
 	if diags.HasError() {
 		return out
 	}
