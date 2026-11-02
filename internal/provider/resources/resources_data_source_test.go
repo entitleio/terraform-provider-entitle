@@ -55,8 +55,32 @@ data "entitle_resources" "my_list" {
     # integration_id missing
 }
 `,
-				ExpectError: regexp.MustCompile(`The argument "integration_id" is required`),
+				ExpectError: regexp.MustCompile(`Either\s+integration_id\s+or\s+filter.ids\s+must\s+be\s+set`),
 				PlanOnly:    true,
+			},
+		},
+	})
+}
+
+func TestResourcesDataSource_IDsFilter(t *testing.T) {
+	resourceID := os.Getenv("ENTITLE_RESOURCE_ID")
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// integration_id is not needed when ids is set.
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_resources" "by_id" {
+  filter {
+    ids = ["%s"]
+  }
+}
+`, resourceID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.entitle_resources.by_id", "resources.#", "1"),
+					resource.TestCheckResourceAttr("data.entitle_resources.by_id", "resources.0.id", resourceID),
+				),
 			},
 		},
 	})

@@ -99,7 +99,7 @@ func (d *DirectoryGroupsDataSource) Configure(ctx context.Context, req datasourc
 		return
 	}
 
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",

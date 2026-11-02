@@ -4,9 +4,11 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 
 ## Key Concepts
 
-- **integration_id**: The mandatory filter — resources are always scoped to a specific integration
+- **integration_id**: Lists the resources of one integration. Required unless `filter.ids` is set
+- **ids**: `filter.ids` returns specific resources by ID (up to 100), across integrations; with `ids_operator = "isNot"` it returns every resource except them
+- **after_id**: A cursor for reading a long list page by page without skipping or repeating items while it changes
 - **search**: Optional text filter to narrow results by resource name
-- **Pagination**: Use `page` and `per_page` to navigate large result sets
+- **Pagination**: Use `page` and `per_page` to navigate large result sets (at most 100 results per page)
 - **Difference from entitle_resource**: Use `entitle_resources` (plural) to search and list; use `entitle_resource` (singular) to retrieve full details for a specific resource
 
 ## When to Use This Data Source
@@ -15,6 +17,7 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 - Searching for a specific resource by name within a known integration
 - Dynamically finding resource IDs to pass to `entitle_role` or `entitle_roles`
 - Auditing what resources exist under an integration
+- Selecting a group of resources to tag or configure in bulk with `entitle_resource_tags` or `entitle_resource_settings`
 
 ## Example Usage
 
@@ -73,6 +76,37 @@ resource "entitle_role" "backend_read" {
 }
 ```
 
+### Tag Every Matching Resource
+
+```terraform
+data "entitle_resources" "prod" {
+  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    search = "production"
+  }
+}
+
+resource "entitle_resource_tags" "prod" {
+  resource_ids = data.entitle_resources.prod.resources[*].id
+  tags         = ["production"]
+}
+```
+
+### Look Up Specific Resources by ID
+
+`filter.ids` returns up to 100 resources by ID, from any integration:
+
+```terraform
+data "entitle_resources" "selected" {
+  filter {
+    ids = [
+      "7d080bfa-9143-11ee-b9d1-0242ac120001",
+      "7d080bfa-9143-11ee-b9d1-0242ac120002",
+    ]
+  }
+}
+```
+
 ### List All Resources and Find Roles for Each
 
 Discover resources and then list roles within each:
@@ -110,16 +144,17 @@ data "entitle_resources" "page_one" {
 
 ## Query Parameters
 
-### Required
-
-- `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). **This filter is mandatory** — resources are always scoped to a specific integration.
-
 ### Optional
 
+- `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). Required unless `filter.ids` is set.
 - `filter` (Block) Optional filters:
-    - `search` (String) Text search to filter resources by name.
+    - `ids` (List of String) Resource IDs to return, up to 100. Does not need `integration_id`.
+    - `ids_operator` (String) `is` (default) returns the given resources; `isNot` returns every resource except them. Requires `ids`.
+    - `after_id` (String) Cursor: return the resources after this ID (results are sorted by ID). Cannot be combined with a `page` other than 1 or with `search`.
+    - `search` (String) Text search to filter resources by name. Cannot be combined with `ids` unless `external_id` is set.
+    - `external_id` (String) Filter by the resource's external ID.
     - `page` (Number) Page number to return, starting from 1.
-    - `per_page` (Number) Number of results per page.
+    - `per_page` (Number) Number of results per page (at most 100).
 
 ## Returned Attributes
 
@@ -133,5 +168,6 @@ data "entitle_resources" "page_one" {
 ## Notes
 
 - Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `name`, and `integration` per resource
-- `integration_id` is mandatory — you cannot query resources across all integrations at once
+- Without `filter.ids`, `integration_id` is required — resources cannot be listed across all integrations at once
 - If `search` matches many results, use pagination to retrieve all matches
+- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`, or by passing the last ID as `after_id`) and `flatten` their `resources[*].id`
