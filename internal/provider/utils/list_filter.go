@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,13 +21,27 @@ import (
 	"github.com/entitleio/terraform-provider-entitle/internal/validators"
 )
 
+// Values accepted by the operator and relation attributes of list filters.
+var (
+	// Operators match a value list: is (one of them) or isNot (none of them).
+	Operators = []string{"is", "isNot"}
+	// TextOperators also match by substring: contains or notContains.
+	TextOperators = []string{"is", "isNot", "contains", "notContains"}
+	// Relations combine several values: and (all of them) or or (any of them).
+	Relations = []string{"and", "or"}
+)
+
+// PaginationDeprecation is the deprecation message of the page and per_page
+// filter attributes of list data sources that read every page themselves.
+const PaginationDeprecation = "Ignored. This data source reads every page and returns all matching items; remove this attribute."
+
 // ListFilterModel is the filter block of entitle_resources and entitle_roles.
 type ListFilterModel struct {
 	Search      types.String `tfsdk:"search"`
 	ExternalID  types.String `tfsdk:"external_id"`
 	Page        types.Int64  `tfsdk:"page"`
 	PerPage     types.Int64  `tfsdk:"per_page"`
-	IDs         types.List   `tfsdk:"ids"`
+	IDs         types.Set    `tfsdk:"ids"`
 	IDsOperator types.String `tfsdk:"ids_operator"`
 	AfterID     types.String `tfsdk:"after_id"`
 }
@@ -36,7 +50,7 @@ type ListFilterModel struct {
 type IDsFilterModel struct {
 	Page        types.Int64  `tfsdk:"page"`
 	PerPage     types.Int64  `tfsdk:"per_page"`
-	IDs         types.List   `tfsdk:"ids"`
+	IDs         types.Set    `tfsdk:"ids"`
 	IDsOperator types.String `tfsdk:"ids_operator"`
 	AfterID     types.String `tfsdk:"after_id"`
 }
@@ -60,22 +74,21 @@ func ListFilterAttributes(noun string, withSearch bool) map[string]schema.Attrib
 			MarkdownDescription: "Number of results to return per page (at most 100). Defaults to the API's configured page size if not specified.",
 			Validators:          []validator.Int64{int64validator.Between(1, client.MaxListPerPage)},
 		},
-		"ids": schema.ListAttribute{
+		"ids": schema.SetAttribute{
 			ElementType: types.StringType,
 			Optional:    true,
 			MarkdownDescription: fmt.Sprintf("Return only the %s with these IDs (UUID), up to %d. "+
 				"With `ids_operator = \"isNot\"`, return every %s except them.", noun, client.MaxListIDs, singular(noun)),
-			Validators: []validator.List{
-				listvalidator.SizeBetween(1, client.MaxListIDs),
-				listvalidator.ValueStringsAre(validators.UUID{}),
+			Validators: []validator.Set{
+				setvalidator.SizeBetween(1, client.MaxListIDs),
+				setvalidator.ValueStringsAre(validators.UUID{}),
 			},
 		},
 		"ids_operator": schema.StringAttribute{
 			Optional:            true,
-			MarkdownDescription: "How `ids` is matched: `is` (default) returns the given " + noun + ", `isNot` returns every " + singular(noun) + " except them. Requires `ids`.",
+			MarkdownDescription: "How `ids` is matched: `is` returns the given " + noun + ", `isNot` returns every " + singular(noun) + " except them. Defaults to `is`.",
 			Validators: []validator.String{
-				stringvalidator.OneOf(string(client.IDsOperatorIs), string(client.IDsOperatorIsNot)),
-				stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("ids")),
+				stringvalidator.OneOf(Operators...),
 			},
 		},
 		"after_id": schema.StringAttribute{
@@ -113,7 +126,7 @@ func (m *ListFilterModel) HasIDs() bool { return m != nil && hasElements(m.IDs) 
 // HasIDs reports whether a known, non-empty ids list is configured.
 func (m *IDsFilterModel) HasIDs() bool { return m != nil && hasElements(m.IDs) }
 
-func hasElements(l types.List) bool {
+func hasElements(l types.Set) bool {
 	return !l.IsNull() && (l.IsUnknown() || len(l.Elements()) > 0)
 }
 
@@ -140,7 +153,7 @@ func (m *IDsFilterModel) Query(ctx context.Context) (client.ListQuery, diag.Diag
 	return q, diags
 }
 
-func idsQuery(ctx context.Context, ids types.List, op, afterID types.String, page, perPage types.Int64) (client.ListQuery, diag.Diagnostics) {
+func idsQuery(ctx context.Context, ids types.Set, op, afterID types.String, page, perPage types.Int64) (client.ListQuery, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var q client.ListQuery
 

@@ -149,7 +149,7 @@ data "entitle_resources" "page_one" {
 - `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). Required unless `filter.ids` is set.
 - `filter` (Block) Optional filters:
     - `ids` (List of String) Resource IDs to return, up to 100. Does not need `integration_id`.
-    - `ids_operator` (String) `is` (default) returns the given resources; `isNot` returns every resource except them. Requires `ids`.
+    - `ids_operator` (String) `is` returns the given resources; `isNot` returns every resource except them. Defaults to `is`.
     - `after_id` (String) Cursor: return the resources after this ID (results are sorted by ID). Cannot be combined with a `page` other than 1 or with `search`.
     - `search` (String) Text search to filter resources by name. Cannot be combined with `ids` unless `external_id` is set.
     - `external_id` (String) Filter by the resource's external ID.

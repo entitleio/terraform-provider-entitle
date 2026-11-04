@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -23,6 +24,226 @@ func TestListQueryValues(t *testing.T) {
 
 	if enc := (ListQuery{}).Values().Encode(); enc != "" {
 		t.Fatalf("empty query should encode to nothing, got %q", enc)
+	}
+}
+
+func TestListQueryValuesRoleFilters(t *testing.T) {
+	requestable := false
+	q := ListQuery{
+		IntegrationID:        "i",
+		Requestable:          &requestable,
+		WorkflowIDs:          []string{"w1", "w2"},
+		WorkflowIDOperator:   "isNot",
+		ResourceTypes:        []string{"a,b", "c"},
+		ResourceTypeOperator: "contains",
+		ResourceTags:         []string{"env: prod"},
+		ResourceTagsOperator: "is",
+		ResourceTagsRelation: "and",
+	}
+	want := url.Values{
+		"integrationId":        {"i"},
+		"requestable":          {"false"},
+		"workflowId":           {"w1", "w2"},
+		"workflowIdOperator":   {"isNot"},
+		"resourceType":         {"a,b", "c"},
+		"resourceTypeOperator": {"contains"},
+		"resourceTags":         {"env: prod"},
+		"resourceTagsOperator": {"is"},
+		"resourceTagsRelation": {"and"},
+	}
+	if got := q.Values(); got.Encode() != want.Encode() {
+		t.Fatalf("got %s, want %s", got.Encode(), want.Encode())
+	}
+}
+
+// Operators are sent even without their values.
+func TestListQueryValuesOperatorsWithoutValues(t *testing.T) {
+	q := ListQuery{
+		IntegrationID:        "i",
+		IDsOperator:          IDsOperatorIsNot,
+		WorkflowIDOperator:   "isNot",
+		ResourceTypeOperator: "contains",
+		ResourceTagsOperator: "isNot",
+		ResourceTagsRelation: "and",
+	}
+	want := url.Values{
+		"integrationId":        {"i"},
+		"idsOperator":          {"isNot"},
+		"workflowIdOperator":   {"isNot"},
+		"resourceTypeOperator": {"contains"},
+		"resourceTagsOperator": {"isNot"},
+		"resourceTagsRelation": {"and"},
+	}.Encode()
+	if got := q.Values().Encode(); got != want {
+		t.Fatalf("got %s, want %s", got, want)
+	}
+}
+
+type listItem struct{ ID string }
+
+// fakePages serves items (sorted by ID) like the API with the afterId cursor.
+func fakePages(items []string, calls *[]ListQuery) ListFunc[listItem] {
+	return func(_ context.Context, q ListQuery) (*ListResponse[listItem], error) {
+		*calls = append(*calls, q)
+
+		start := 0
+		for q.AfterID != "" && start < len(items) && items[start] <= q.AfterID {
+			start++
+		}
+		end := min(start+q.PerPage, len(items))
+
+		res := make([]listItem, 0, end-start)
+		for _, id := range items[start:end] {
+			res = append(res, listItem{ID: id})
+		}
+		return &ListResponse[listItem]{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			Result:       res,
+		}, nil
+	}
+}
+
+func ids(n int) []string {
+	out := make([]string, n)
+	for i := range out {
+		out[i] = fmt.Sprintf("%08d", i)
+	}
+	return out
+}
+
+func TestListAll(t *testing.T) {
+	idOf := func(it listItem) string { return it.ID }
+
+	for _, tc := range []struct {
+		name      string
+		total     int
+		wantCalls int
+	}{
+		{"empty", 0, 1},
+		{"one partial page", 42, 1},
+		{"exact page", 100, 2},
+		{"several pages", 250, 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls []ListQuery
+			all, resp, err := ListAll(context.Background(),
+				ListQuery{Page: 7, PerPage: 3, AfterID: "ignored"},
+				fakePages(ids(tc.total), &calls), idOf)
+			if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
+				t.Fatalf("err %v, resp %+v", err, resp)
+			}
+			if len(all) != tc.total {
+				t.Fatalf("got %d items, want %d", len(all), tc.total)
+			}
+			if len(calls) != tc.wantCalls {
+				t.Fatalf("got %d calls, want %d", len(calls), tc.wantCalls)
+			}
+			for i, c := range calls {
+				if c.PerPage != MaxListPerPage || c.Page != 0 {
+					t.Fatalf("call %d: %+v", i, c)
+				}
+			}
+			if calls[0].AfterID != "" {
+				t.Fatalf("first call sent afterId %q", calls[0].AfterID)
+			}
+		})
+	}
+}
+
+func TestListAllRejectsSearch(t *testing.T) {
+	var calls []ListQuery
+	_, _, err := ListAll(context.Background(), ListQuery{Search: "x"}, fakePages(nil, &calls), func(it listItem) string { return it.ID })
+	if err == nil || len(calls) != 0 {
+		t.Fatalf("err %v, calls %d", err, len(calls))
+	}
+}
+
+func TestListAllErrorStatus(t *testing.T) {
+	n := 0
+	call := func(_ context.Context, q ListQuery) (*ListResponse[listItem], error) {
+		n++
+		if n == 1 {
+			res := make([]listItem, MaxListPerPage)
+			for i := range res {
+				res[i] = listItem{ID: fmt.Sprintf("%08d", i)}
+			}
+			return &ListResponse[listItem]{HTTPResponse: &http.Response{StatusCode: http.StatusOK}, Result: res}, nil
+		}
+		return &ListResponse[listItem]{HTTPResponse: &http.Response{StatusCode: http.StatusNotFound}, Body: []byte(`{}`)}, nil
+	}
+
+	all, resp, err := ListAll(context.Background(), ListQuery{}, call, func(it listItem) string { return it.ID })
+	if err != nil || all != nil || resp.StatusCode() != http.StatusNotFound {
+		t.Fatalf("all %d, resp %+v, err %v", len(all), resp, err)
+	}
+}
+
+func TestListAllStuckCursor(t *testing.T) {
+	call := func(_ context.Context, q ListQuery) (*ListResponse[listItem], error) {
+		res := make([]listItem, MaxListPerPage)
+		for i := range res {
+			res[i] = listItem{ID: "same"}
+		}
+		return &ListResponse[listItem]{HTTPResponse: &http.Response{StatusCode: http.StatusOK}, Result: res}, nil
+	}
+	if _, _, err := ListAll(context.Background(), ListQuery{}, call, func(it listItem) string { return it.ID }); err == nil {
+		t.Fatal("expected an error when the cursor does not advance")
+	}
+}
+
+// queryOf serves an empty list and records the query of the last request.
+func queryOf(t *testing.T, got *url.Values) *ClientWithResponses {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		*got = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"pagination": {}, "result": []}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	c, err := NewClientWithResponses(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+// Unset operators are sent with the defaults; role operators only to /roles.
+func TestListDefaultOperators(t *testing.T) {
+	var got url.Values
+	c := queryOf(t, &got)
+
+	if _, err := c.RolesListWithResponse(context.Background(), ListQuery{IntegrationID: "i"}); err != nil {
+		t.Fatal(err)
+	}
+	want := url.Values{
+		"integrationId":        {"i"},
+		"idsOperator":          {"is"},
+		"workflowIdOperator":   {"is"},
+		"resourceTypeOperator": {"is"},
+		"resourceTagsOperator": {"is"},
+		"resourceTagsRelation": {"or"},
+	}
+	if got.Encode() != want.Encode() {
+		t.Fatalf("roles: got %s, want %s", got.Encode(), want.Encode())
+	}
+
+	if _, err := c.RolesListWithResponse(context.Background(), ListQuery{
+		IDsOperator: IDsOperatorIsNot, WorkflowIDOperator: "isNot", ResourceTypeOperator: "contains",
+		ResourceTagsOperator: "isNot", ResourceTagsRelation: "and",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got.Get("idsOperator") != "isNot" || got.Get("workflowIdOperator") != "isNot" || got.Get("resourceTypeOperator") != "contains" ||
+		got.Get("resourceTagsOperator") != "isNot" || got.Get("resourceTagsRelation") != "and" {
+		t.Fatalf("roles: configured operators not kept: %s", got.Encode())
+	}
+
+	if _, err := c.ResourcesListWithResponse(context.Background(), ListQuery{IntegrationID: "i"}); err != nil {
+		t.Fatal(err)
+	}
+	if want := (url.Values{"integrationId": {"i"}, "idsOperator": {"is"}}); got.Encode() != want.Encode() {
+		t.Fatalf("resources: got %s, want %s", got.Encode(), want.Encode())
 	}
 }
 

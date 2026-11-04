@@ -22,7 +22,9 @@ func TestRolesDataSource(t *testing.T) {
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_roles" "my_list" {
-	resource_id = "%s"
+	filter {
+		resource_id = "%s"
+	}
 }
 `, os.Getenv("ENTITLE_RESOURCE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -37,9 +39,9 @@ data "entitle_roles" "my_list" {
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_roles" "my_list" {
-	resource_id = "%s"
 	filter {
-		search = "valuethathcouldnotbefound"		
+		resource_id = "%s"
+		search      = "valuethathcouldnotbefound"
 	}
 }
 `, os.Getenv("ENTITLE_RESOURCE_ID")),
@@ -47,10 +49,21 @@ data "entitle_roles" "my_list" {
 					resource.TestCheckResourceAttr("data.entitle_roles.my_list", "roles.#", "0"),
 				),
 			},
+			// Deprecated top-level resource_id still works.
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_roles" "my_list" {
 	resource_id = "%s"
+}
+`, os.Getenv("ENTITLE_RESOURCE_ID")),
+				Check: resource.TestCheckResourceAttrSet("data.entitle_roles.my_list", "roles.0.id"),
+			},
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_roles" "my_list" {
+	filter {
+		resource_id = "%s"
+	}
 }
 `, "00000000-0000-0000-0000-000000000000"),
 				ExpectError: regexp.MustCompile(utils.ErrNotFound.Error()),
@@ -69,7 +82,38 @@ data "entitle_roles" "my_list" {
     # resource_id and integration_id missing
 }
 `,
-				ExpectError: regexp.MustCompile(`One\s+of\s+resource_id,\s+integration_id\s+or\s+filter.ids\s+must\s+be\s+set`),
+				ExpectError: regexp.MustCompile(`At\s+least\s+one\s+attribute\s+out\s+of`),
+				PlanOnly:    true,
+			},
+			{
+				Config: testhelpers.ProviderConfig + `
+data "entitle_roles" "my_list" {
+  filter {
+    search = "admin" # no scope
+  }
+}
+`,
+				ExpectError: regexp.MustCompile(`At\s+least\s+one\s+attribute\s+out\s+of`),
+				PlanOnly:    true,
+			},
+		},
+	})
+}
+
+func TestRolesDataSource_DeprecatedScopeConflicts(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testhelpers.ProviderConfig + `
+data "entitle_roles" "my_list" {
+  resource_id = "00000000-0000-0000-0000-000000000001"
+  filter {
+    resource_id = "00000000-0000-0000-0000-000000000002"
+  }
+}
+`,
+				ExpectError: regexp.MustCompile(`cannot\s+be\s+specified\s+when`),
 				PlanOnly:    true,
 			},
 		},
