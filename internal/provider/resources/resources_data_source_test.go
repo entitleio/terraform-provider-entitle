@@ -22,7 +22,9 @@ func TestResourcesDataSource(t *testing.T) {
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_resources" "my_resource" {
-	integration_id = "%s"
+	filter {
+		integration_id = "%s"
+	}
 }
 `, os.Getenv("ENTITLE_INTEGRATION_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -36,7 +38,29 @@ data "entitle_resources" "my_resource" {
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_resources" "my_resource" {
+	filter {
+		integration_id = "%s"
+		search         = "valuethathcouldnotbefound"
+	}
+}
+`, os.Getenv("ENTITLE_INTEGRATION_ID")),
+				Check: resource.TestCheckResourceAttr("data.entitle_resources.my_resource", "resources.#", "0"),
+			},
+			// Deprecated top-level integration_id still works.
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_resources" "my_resource" {
 	integration_id = "%s"
+}
+`, os.Getenv("ENTITLE_INTEGRATION_ID")),
+				Check: resource.TestCheckResourceAttrSet("data.entitle_resources.my_resource", "resources.0.id"),
+			},
+			{
+				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
+data "entitle_resources" "my_resource" {
+	filter {
+		integration_id = "%s"
+	}
 }
 `, "00000000-0000-0000-0000-000000000000"),
 				ExpectError: regexp.MustCompile(utils.ErrNotFound.Error()),
@@ -45,17 +69,20 @@ data "entitle_resources" "my_resource" {
 	})
 }
 
-func TestResourcesDataSource_MissingIntegrationID(t *testing.T) {
+func TestResourcesDataSource_DeprecatedIntegrationIDConflicts(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testhelpers.ProviderConfig + `
 data "entitle_resources" "my_list" {
-    # integration_id missing
+  integration_id = "00000000-0000-0000-0000-000000000001"
+  filter {
+    integration_id = "00000000-0000-0000-0000-000000000002"
+  }
 }
 `,
-				ExpectError: regexp.MustCompile(`Either\s+integration_id\s+or\s+filter.ids\s+must\s+be\s+set`),
+				ExpectError: regexp.MustCompile(`cannot\s+be\s+specified\s+when`),
 				PlanOnly:    true,
 			},
 		},
@@ -69,7 +96,7 @@ func TestResourcesDataSource_IDsFilter(t *testing.T) {
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				// integration_id is not needed when ids is set.
+				// ids alone, across integrations.
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
 data "entitle_resources" "by_id" {
   filter {

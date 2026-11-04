@@ -1,8 +1,8 @@
 package utils
 
-// Shared filter for the list data sources (entitle_resources, entitle_roles,
-// entitle_integrations): pagination, search/external ID, and the ids,
-// ids_operator and after_id parameters of the list endpoints.
+// Shared filter parts of the list data sources (entitle_resources,
+// entitle_roles, entitle_integrations): the ids, ids_operator, search and
+// external_id attributes, operator values, and the entitle_integrations filter.
 
 import (
 	"context"
@@ -29,22 +29,14 @@ var (
 	TextOperators = []string{"is", "isNot", "contains", "notContains"}
 	// Relations combine several values: and (all of them) or or (any of them).
 	Relations = []string{"and", "or"}
+	// ContainsOperators match a list attribute (e.g. maintainers): contains (any
+	// of the values) or notContains (none of them).
+	ContainsOperators = []string{"contains", "notContains"}
 )
 
 // PaginationDeprecation is the deprecation message of the page and per_page
 // filter attributes of list data sources that read every page themselves.
 const PaginationDeprecation = "Ignored. This data source reads every page and returns all matching items; remove this attribute."
-
-// ListFilterModel is the filter block of entitle_resources and entitle_roles.
-type ListFilterModel struct {
-	Search      types.String `tfsdk:"search"`
-	ExternalID  types.String `tfsdk:"external_id"`
-	Page        types.Int64  `tfsdk:"page"`
-	PerPage     types.Int64  `tfsdk:"per_page"`
-	IDs         types.Set    `tfsdk:"ids"`
-	IDsOperator types.String `tfsdk:"ids_operator"`
-	AfterID     types.String `tfsdk:"after_id"`
-}
 
 // IDsFilterModel is the filter block of entitle_integrations (no search / external ID).
 type IDsFilterModel struct {
@@ -121,26 +113,10 @@ func singular(noun string) string {
 }
 
 // HasIDs reports whether a known, non-empty ids list is configured.
-func (m *ListFilterModel) HasIDs() bool { return m != nil && hasElements(m.IDs) }
-
-// HasIDs reports whether a known, non-empty ids list is configured.
 func (m *IDsFilterModel) HasIDs() bool { return m != nil && hasElements(m.IDs) }
 
 func hasElements(l types.Set) bool {
 	return !l.IsNull() && (l.IsUnknown() || len(l.Elements()) > 0)
-}
-
-// Query converts the filter into list query parameters and validates the
-// combinations the API rejects. A nil filter yields an empty query.
-func (m *ListFilterModel) Query(ctx context.Context) (client.ListQuery, diag.Diagnostics) {
-	if m == nil {
-		return client.ListQuery{}, nil
-	}
-	q, diags := idsQuery(ctx, m.IDs, m.IDsOperator, m.AfterID, m.Page, m.PerPage)
-	q.Search = m.Search.ValueString()
-	q.ExternalID = m.ExternalID.ValueString()
-	diags.Append(validateListQuery(q)...)
-	return q, diags
 }
 
 // Query converts the filter into list query parameters. A nil filter yields an empty query.
@@ -165,6 +141,17 @@ func idsQuery(ctx context.Context, ids types.Set, op, afterID types.String, page
 	q.Page = int(page.ValueInt64())
 	q.PerPage = int(perPage.ValueInt64())
 	return q, diags
+}
+
+// SetStrings returns the elements of a known set; a null or unknown set yields nil.
+func SetStrings(ctx context.Context, set types.Set, diags *diag.Diagnostics) []string {
+	if set.IsNull() || set.IsUnknown() {
+		return nil
+	}
+
+	var out []string
+	diags.Append(set.ElementsAs(ctx, &out, false)...)
+	return out
 }
 
 // validateListQuery reports parameter combinations the list endpoints reject.

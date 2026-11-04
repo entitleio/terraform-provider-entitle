@@ -31,11 +31,12 @@ const (
 	IDsOperatorIsNot IDsOperator = "isNot"
 )
 
-// Defaults sent for unset role filter operators (idsOperator defaults to
+// Defaults sent for unset filter operators (idsOperator defaults to
 // IDsOperatorIs), so results do not depend on the API's own defaults.
 const (
-	DefaultOperator     = "is"
-	DefaultTagsRelation = "or"
+	DefaultOperator           = "is"
+	DefaultMaintainerOperator = "contains"
+	DefaultTagsRelation       = "or"
 )
 
 // ListQuery holds the query parameters shared by the list endpoints. Zero
@@ -52,10 +53,23 @@ type ListQuery struct {
 	IntegrationID string // resources, roles
 	ResourceID    string // roles
 
+	// Role and resource filters.
+	Requestable        *bool
+	WorkflowIDs        []string
+	WorkflowIDOperator string // is, isNot
+
+	// Resource filters (GET /public/v1/resources).
+	OwnerIDs             []string
+	OwnerIDOperator      string // is, isNot
+	MaintainerIDs        []string
+	MaintainerIDOperator string // contains, notContains
+	Types                []string
+	TypeOperator         string // is, isNot, contains, notContains
+	Tags                 []string
+	TagsOperator         string // is, isNot
+	TagsRelation         string // and, or
+
 	// Role filters (GET /public/v1/roles).
-	Requestable          *bool
-	WorkflowIDs          []string
-	WorkflowIDOperator   string // is, isNot
 	ResourceTypes        []string
 	ResourceTypeOperator string // is, isNot, contains, notContains
 	ResourceTags         []string
@@ -103,6 +117,15 @@ func (q ListQuery) Values() url.Values {
 	setList(v, "resourceTags", q.ResourceTags)
 	setNonEmpty(v, "resourceTagsOperator", q.ResourceTagsOperator)
 	setNonEmpty(v, "resourceTagsRelation", q.ResourceTagsRelation)
+	setList(v, "ownerId", q.OwnerIDs)
+	setNonEmpty(v, "ownerIdOperator", q.OwnerIDOperator)
+	setList(v, "maintainerId", q.MaintainerIDs)
+	setNonEmpty(v, "maintainerIdOperator", q.MaintainerIDOperator)
+	setList(v, "type", q.Types)
+	setNonEmpty(v, "typeOperator", q.TypeOperator)
+	setList(v, "tags", q.Tags)
+	setNonEmpty(v, "tagsOperator", q.TagsOperator)
+	setNonEmpty(v, "tagsRelation", q.TagsRelation)
 	return v
 }
 
@@ -210,9 +233,27 @@ func list[T any](ctx context.Context, c *ClientWithResponses, path string, q Lis
 }
 
 // ResourcesListWithResponse calls GET /public/v1/resources. Items carry every
-// field of GET /public/v1/resources/{id}. integrationId is not needed when ids is set.
+// field of GET /public/v1/resources/{id}. Without integrationId it lists the
+// resources of every integration.
 func (c *ClientWithResponses) ResourcesListWithResponse(ctx context.Context, q ListQuery) (*ListResponse[IntegrationResourceResultSchema], error) {
-	return list[IntegrationResourceResultSchema](ctx, c, "/public/v1/resources", q)
+	return list[IntegrationResourceResultSchema](ctx, c, "/public/v1/resources", q.withResourceDefaults())
+}
+
+// withResourceDefaults fills the unset resource filter operators with
+// DefaultOperator, DefaultMaintainerOperator and DefaultTagsRelation.
+func (q ListQuery) withResourceDefaults() ListQuery {
+	for _, op := range []*string{&q.WorkflowIDOperator, &q.OwnerIDOperator, &q.TypeOperator, &q.TagsOperator} {
+		if *op == "" {
+			*op = DefaultOperator
+		}
+	}
+	if q.MaintainerIDOperator == "" {
+		q.MaintainerIDOperator = DefaultMaintainerOperator
+	}
+	if q.TagsRelation == "" {
+		q.TagsRelation = DefaultTagsRelation
+	}
+	return q
 }
 
 // RolesListWithResponse calls GET /public/v1/roles.

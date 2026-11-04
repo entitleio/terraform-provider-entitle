@@ -1,22 +1,22 @@
-Retrieve a list of Entitle Resources within a specific integration. Use this data source to discover available resources, search by name, or dynamically look up resource IDs for use when creating roles, building bundles, or constructing policies.
+Retrieve every Entitle Resource matching a filter, within one integration or across all of them. Use this data source to discover available resources, search by name, or dynamically look up resource IDs for use when creating roles, building bundles, or constructing policies.
 
 Resources are the middle tier of the Entitle access model (Integration → Resource → Role) — they represent specific assets or systems within an application, such as individual AWS accounts, GitHub repositories, or database schemas. [Read more about resources](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 ## Key Concepts
 
-- **integration_id**: Lists the resources of one integration. Required unless `filter.ids` is set
-- **ids**: `filter.ids` returns specific resources by ID (up to 100), across integrations; with `ids_operator = "isNot"` it returns every resource except them
-- **after_id**: A cursor for reading a long list page by page without skipping or repeating items while it changes
-- **search**: Optional text filter to narrow results by resource name
-- **Pagination**: Use `page` and `per_page` to navigate large result sets (at most 100 results per page)
+- **Scope**: `filter.integration_id` lists the resources of one integration; without it, resources of every integration are returned. The top-level `integration_id` is deprecated; move it into `filter`
+- **All results**: The data source always returns every matching resource. The provider pages through the API with a cursor, so no resource is skipped or repeated while the list changes. `filter.page` and `filter.per_page` are deprecated and ignored
+- **ids**: `filter.ids` returns specific resources by ID (up to 100); with `ids_operator = "isNot"` it returns every resource except them
+- **Filters**: `requestable`, `workflow_ids`, `owner_ids`, `maintainer_ids`, `types` and `tags` narrow the results; all filters are combined with AND
+- **search**: Matches resource names case-insensitively and partially, and can be combined with every other filter. Results are ranked: exact matches first, then case-insensitive matches, then partial matches
 - **Difference from entitle_resource**: Use `entitle_resources` (plural) to search and list; use `entitle_resource` (singular) to retrieve full details for a specific resource
 
 ## When to Use This Data Source
 
 - Discovering all resources available within an integration
 - Searching for a specific resource by name within a known integration
+- Finding resources by owner, maintainer, workflow, type or tag
 - Dynamically finding resource IDs to pass to `entitle_role` or `entitle_roles`
-- Auditing what resources exist under an integration
 - Selecting a group of resources to tag or configure in bulk with `entitle_resource_tags` or `entitle_resource_settings`
 
 ## Example Usage
@@ -25,7 +25,9 @@ Resources are the middle tier of the Entitle access model (Integration → Resou
 
 ```terraform
 data "entitle_resources" "all" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
 }
 
 output "resource_names" {
@@ -37,14 +39,40 @@ output "resource_names" {
 
 ```terraform
 data "entitle_resources" "prod_resources" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   filter {
-    search = "production"
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search         = "production"
   }
 }
 
 output "prod_resource_id" {
   value = data.entitle_resources.prod_resources.resources[0].id
+}
+```
+
+### Filter by Owner, Type and Tags
+
+```terraform
+data "entitle_resources" "owned_prod_policies" {
+  filter {
+    owner_ids      = ["7d080bfa-9143-11ee-b9d1-0242ac120005"]
+    types          = ["Policy"]
+    types_operator = "contains"
+    tags           = ["env: prod", "pci"]
+    tags_relation  = "and"
+  }
+}
+```
+
+### Resources Not Maintained by a Group
+
+```terraform
+data "entitle_resources" "not_platform" {
+  filter {
+    integration_id          = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    maintainer_ids          = ["7d080bfa-9143-11ee-b9d1-0242ac120006"]
+    maintainer_ids_operator = "notContains"
+  }
 }
 ```
 
@@ -56,8 +84,10 @@ data "entitle_integration" "github" {
 }
 
 data "entitle_resources" "repos" {
-  integration_id = data.entitle_integration.github.id
-  filter { search = "backend-api" }
+  filter {
+    integration_id = data.entitle_integration.github.id
+    search         = "backend-api"
+  }
 }
 
 resource "entitle_role" "backend_read" {
@@ -80,9 +110,9 @@ resource "entitle_role" "backend_read" {
 
 ```terraform
 data "entitle_resources" "prod" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   filter {
-    search = "production"
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search         = "production"
   }
 }
 
@@ -109,20 +139,22 @@ data "entitle_resources" "selected" {
 
 ### List All Resources and Find Roles for Each
 
-Discover resources and then list roles within each:
-
 ```terraform
 data "entitle_integration" "aws" {
   name = "AWS Production"
 }
 
 data "entitle_resources" "aws_resources" {
-  integration_id = data.entitle_integration.aws.id
+  filter {
+    integration_id = data.entitle_integration.aws.id
+  }
 }
 
 # Reference the first resource to list its roles
 data "entitle_roles" "first_resource_roles" {
-  resource_id = data.entitle_resources.aws_resources.resources[0].id
+  filter {
+    resource_id = data.entitle_resources.aws_resources.resources[0].id
+  }
 }
 
 output "roles_in_first_resource" {
@@ -130,44 +162,8 @@ output "roles_in_first_resource" {
 }
 ```
 
-### Paginate Through Large Resource Lists
-
-```terraform
-data "entitle_resources" "page_one" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter {
-    page     = 1
-    per_page = 50
-  }
-}
-```
-
-## Query Parameters
-
-### Optional
-
-- `integration_id` (String) The unique identifier of the integration to list resources for (UUID format). Required unless `filter.ids` is set.
-- `filter` (Block) Optional filters:
-    - `ids` (List of String) Resource IDs to return, up to 100. Does not need `integration_id`.
-    - `ids_operator` (String) `is` returns the given resources; `isNot` returns every resource except them. Defaults to `is`.
-    - `after_id` (String) Cursor: return the resources after this ID (results are sorted by ID). Cannot be combined with a `page` other than 1 or with `search`.
-    - `search` (String) Text search to filter resources by name. Cannot be combined with `ids` unless `external_id` is set.
-    - `external_id` (String) Filter by the resource's external ID.
-    - `page` (Number) Page number to return, starting from 1.
-    - `per_page` (Number) Number of results per page (at most 100).
-
-## Returned Attributes
-
-- `resources` (Attributes List) The list of resources matching the query:
-    - `id` (String) The resource's unique identifier.
-    - `name` (String) The resource's display name.
-    - `integration` (Attributes) The parent integration:
-        - `id` (String) The integration's unique identifier.
-        - `name` (String) The integration's display name.
-
 ## Notes
 
-- Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `name`, and `integration` per resource
-- Without `filter.ids`, `integration_id` is required — resources cannot be listed across all integrations at once
-- If `search` matches many results, use pagination to retrieve all matches
-- `resources` contains only the requested page (at most 100 results); to collect more, read several pages (e.g. with `count`, or by passing the last ID as `after_id`) and `flatten` their `resources[*].id`
+- Use `entitle_resource` (singular) to retrieve full details for a specific resource — `entitle_resources` (plural) returns only `id`, `external_id`, `name`, and `integration` per resource
+- Without `filter.integration_id` (and without other filters), every resource you can read is fetched, which can take a while on large tenants
+- `filter.search` is applied by the provider after the other filters, so it never limits which filters can be combined

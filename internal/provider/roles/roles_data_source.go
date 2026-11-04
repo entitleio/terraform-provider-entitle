@@ -286,28 +286,17 @@ func (f *RolesFilterModel) query(ctx context.Context) (client.ListQuery, diag.Di
 	q.ResourceID = f.ResourceID.ValueString()
 	q.IntegrationID = f.IntegrationID.ValueString()
 	q.ExternalID = f.ExternalID.ValueString()
-	q.IDs = setStrings(ctx, f.IDs, &diags)
+	q.IDs = utils.SetStrings(ctx, f.IDs, &diags)
 	q.IDsOperator = client.IDsOperator(f.IDsOperator.ValueString())
 	q.Requestable = f.Requestable.ValueBoolPointer()
-	q.WorkflowIDs = setStrings(ctx, f.WorkflowIDs, &diags)
+	q.WorkflowIDs = utils.SetStrings(ctx, f.WorkflowIDs, &diags)
 	q.WorkflowIDOperator = f.WorkflowIDsOperator.ValueString()
-	q.ResourceTypes = setStrings(ctx, f.ResourceTypes, &diags)
+	q.ResourceTypes = utils.SetStrings(ctx, f.ResourceTypes, &diags)
 	q.ResourceTypeOperator = f.ResourceTypesOperator.ValueString()
-	q.ResourceTags = setStrings(ctx, f.ResourceTags, &diags)
+	q.ResourceTags = utils.SetStrings(ctx, f.ResourceTags, &diags)
 	q.ResourceTagsOperator = f.ResourceTagsOperator.ValueString()
 	q.ResourceTagsRelation = f.ResourceTagsRelation.ValueString()
 	return q, diags
-}
-
-// setStrings returns the elements of a known set; a null or unknown set yields nil.
-func setStrings(ctx context.Context, set types.Set, diags *diag.Diagnostics) []string {
-	if set.IsNull() || set.IsUnknown() {
-		return nil
-	}
-
-	var out []string
-	diags.Append(set.ElementsAs(ctx, &out, false)...)
-	return out
 }
 
 // Read retrieves every matching role from the Entitle API, following the

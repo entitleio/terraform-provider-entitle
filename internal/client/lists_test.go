@@ -27,6 +27,34 @@ func TestListQueryValues(t *testing.T) {
 	}
 }
 
+func TestListQueryValuesResourceFilters(t *testing.T) {
+	q := ListQuery{
+		OwnerIDs:             []string{"o1", "o2"},
+		OwnerIDOperator:      "isNot",
+		MaintainerIDs:        []string{"m"},
+		MaintainerIDOperator: "notContains",
+		Types:                []string{"a,b"},
+		TypeOperator:         "contains",
+		Tags:                 []string{"env: prod"},
+		TagsOperator:         "isNot",
+		TagsRelation:         "and",
+	}
+	want := url.Values{
+		"ownerId":              {"o1", "o2"},
+		"ownerIdOperator":      {"isNot"},
+		"maintainerId":         {"m"},
+		"maintainerIdOperator": {"notContains"},
+		"type":                 {"a,b"},
+		"typeOperator":         {"contains"},
+		"tags":                 {"env: prod"},
+		"tagsOperator":         {"isNot"},
+		"tagsRelation":         {"and"},
+	}
+	if got := q.Values(); got.Encode() != want.Encode() {
+		t.Fatalf("got %s, want %s", got.Encode(), want.Encode())
+	}
+}
+
 func TestListQueryValuesRoleFilters(t *testing.T) {
 	requestable := false
 	q := ListQuery{
@@ -208,7 +236,7 @@ func queryOf(t *testing.T, got *url.Values) *ClientWithResponses {
 	return c
 }
 
-// Unset operators are sent with the defaults; role operators only to /roles.
+// Unset operators are sent with the defaults, each endpoint only its own.
 func TestListDefaultOperators(t *testing.T) {
 	var got url.Values
 	c := queryOf(t, &got)
@@ -242,7 +270,17 @@ func TestListDefaultOperators(t *testing.T) {
 	if _, err := c.ResourcesListWithResponse(context.Background(), ListQuery{IntegrationID: "i"}); err != nil {
 		t.Fatal(err)
 	}
-	if want := (url.Values{"integrationId": {"i"}, "idsOperator": {"is"}}); got.Encode() != want.Encode() {
+	want = url.Values{
+		"integrationId":        {"i"},
+		"idsOperator":          {"is"},
+		"workflowIdOperator":   {"is"},
+		"ownerIdOperator":      {"is"},
+		"maintainerIdOperator": {"contains"},
+		"typeOperator":         {"is"},
+		"tagsOperator":         {"is"},
+		"tagsRelation":         {"or"},
+	}
+	if got.Encode() != want.Encode() {
 		t.Fatalf("resources: got %s, want %s", got.Encode(), want.Encode())
 	}
 }
