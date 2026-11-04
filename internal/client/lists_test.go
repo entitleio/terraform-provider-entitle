@@ -104,25 +104,25 @@ func TestListQueryValuesRoleFilters(t *testing.T) {
 	}
 }
 
-// Operators are sent even without their values.
+// An operator without its values is not sent: the API rejects it.
 func TestListQueryValuesOperatorsWithoutValues(t *testing.T) {
 	q := ListQuery{
-		IntegrationID:        "i",
-		IDsOperator:          IDsOperatorIsNot,
-		WorkflowIDOperator:   "isNot",
-		ResourceTypeOperator: "contains",
-		ResourceTagsOperator: "isNot",
-		ResourceTagsRelation: "and",
+		IntegrationID:         "i",
+		IDsOperator:           IDsOperatorIsNot,
+		WorkflowIDOperator:    "isNot",
+		ResourceTypeOperator:  "contains",
+		ResourceTagsOperator:  "isNot",
+		ResourceTagsRelation:  "and",
+		OwnerIDOperator:       "isNot",
+		MaintainerIDOperator:  "notContains",
+		TypeOperator:          "contains",
+		TagsOperator:          "isNot",
+		TagsRelation:          "and",
+		NameOperator:          "notContains",
+		NameRelation:          "and",
+		ApplicationIDOperator: "isNot",
 	}
-	want := url.Values{
-		"integrationId":        {"i"},
-		"idsOperator":          {"isNot"},
-		"workflowIdOperator":   {"isNot"},
-		"resourceTypeOperator": {"contains"},
-		"resourceTagsOperator": {"isNot"},
-		"resourceTagsRelation": {"and"},
-	}.Encode()
-	if got := q.Values().Encode(); got != want {
+	if got, want := q.Values().Encode(), "integrationId=i"; got != want {
 		t.Fatalf("got %s, want %s", got, want)
 	}
 }
@@ -260,65 +260,84 @@ func queryOf(t *testing.T, got *url.Values) *ClientWithResponses {
 func TestListDefaultOperators(t *testing.T) {
 	var got url.Values
 	c := queryOf(t, &got)
+	ctx := context.Background()
+	v := []string{"x"}
 
-	if _, err := c.RolesListWithResponse(context.Background(), ListQuery{IntegrationID: "i"}); err != nil {
+	check := func(name string, want url.Values) {
+		t.Helper()
+		if got.Encode() != want.Encode() {
+			t.Fatalf("%s: got %s, want %s", name, got.Encode(), want.Encode())
+		}
+	}
+
+	// Without values, no operator is sent (not even a default).
+	if _, err := c.RolesListWithResponse(ctx, ListQuery{IntegrationID: "i"}); err != nil {
 		t.Fatal(err)
 	}
-	want := url.Values{
-		"integrationId":        {"i"},
-		"idsOperator":          {"is"},
-		"workflowIdOperator":   {"is"},
-		"resourceTypeOperator": {"is"},
-		"resourceTagsOperator": {"is"},
-		"resourceTagsRelation": {"or"},
-	}
-	if got.Encode() != want.Encode() {
-		t.Fatalf("roles: got %s, want %s", got.Encode(), want.Encode())
-	}
+	check("roles without values", url.Values{"integrationId": {"i"}})
 
-	if _, err := c.RolesListWithResponse(context.Background(), ListQuery{
-		IDsOperator: IDsOperatorIsNot, WorkflowIDOperator: "isNot", ResourceTypeOperator: "contains",
-		ResourceTagsOperator: "isNot", ResourceTagsRelation: "and",
+	if _, err := c.RolesListWithResponse(ctx, ListQuery{IDs: v, WorkflowIDs: v, ResourceTypes: v, ResourceTags: v}); err != nil {
+		t.Fatal(err)
+	}
+	check("roles defaults", url.Values{
+		"ids": v, "idsOperator": {"is"},
+		"workflowId": v, "workflowIdOperator": {"is"},
+		"resourceType": v, "resourceTypeOperator": {"is"},
+		"resourceTags": v, "resourceTagsOperator": {"is"}, "resourceTagsRelation": {"or"},
+	})
+
+	if _, err := c.RolesListWithResponse(ctx, ListQuery{
+		IDs: v, IDsOperator: IDsOperatorIsNot,
+		WorkflowIDs: v, WorkflowIDOperator: "isNot",
+		ResourceTypes: v, ResourceTypeOperator: "contains",
+		ResourceTags: v, ResourceTagsOperator: "isNot", ResourceTagsRelation: "and",
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if got.Get("idsOperator") != "isNot" || got.Get("workflowIdOperator") != "isNot" || got.Get("resourceTypeOperator") != "contains" ||
-		got.Get("resourceTagsOperator") != "isNot" || got.Get("resourceTagsRelation") != "and" {
-		t.Fatalf("roles: configured operators not kept: %s", got.Encode())
-	}
+	check("roles configured", url.Values{
+		"ids": v, "idsOperator": {"isNot"},
+		"workflowId": v, "workflowIdOperator": {"isNot"},
+		"resourceType": v, "resourceTypeOperator": {"contains"},
+		"resourceTags": v, "resourceTagsOperator": {"isNot"}, "resourceTagsRelation": {"and"},
+	})
 
-	if _, err := c.ResourcesListWithResponse(context.Background(), ListQuery{IntegrationID: "i"}); err != nil {
+	if _, err := c.ResourcesListWithResponse(ctx, ListQuery{IntegrationID: "i"}); err != nil {
 		t.Fatal(err)
 	}
-	want = url.Values{
-		"integrationId":        {"i"},
-		"idsOperator":          {"is"},
-		"workflowIdOperator":   {"is"},
-		"ownerIdOperator":      {"is"},
-		"maintainerIdOperator": {"contains"},
-		"typeOperator":         {"is"},
-		"tagsOperator":         {"is"},
-		"tagsRelation":         {"or"},
-	}
-	if got.Encode() != want.Encode() {
-		t.Fatalf("resources: got %s, want %s", got.Encode(), want.Encode())
-	}
+	check("resources without values", url.Values{"integrationId": {"i"}})
 
-	if _, err := c.IntegrationsListWithResponse(context.Background(), ListQuery{}); err != nil {
+	if _, err := c.ResourcesListWithResponse(ctx, ListQuery{
+		IDs: v, WorkflowIDs: v, OwnerIDs: v, MaintainerIDs: v, Types: v, Tags: v,
+	}); err != nil {
 		t.Fatal(err)
 	}
-	want = url.Values{
-		"idsOperator":           {"is"},
-		"workflowIdOperator":    {"is"},
-		"ownerIdOperator":       {"is"},
-		"maintainerIdOperator":  {"contains"},
-		"nameOperator":          {"contains"},
-		"nameRelation":          {"or"},
-		"applicationIdOperator": {"is"},
+	check("resources defaults", url.Values{
+		"ids": v, "idsOperator": {"is"},
+		"workflowId": v, "workflowIdOperator": {"is"},
+		"ownerId": v, "ownerIdOperator": {"is"},
+		"maintainerId": v, "maintainerIdOperator": {"contains"},
+		"type": v, "typeOperator": {"is"},
+		"tags": v, "tagsOperator": {"is"}, "tagsRelation": {"or"},
+	})
+
+	if _, err := c.IntegrationsListWithResponse(ctx, ListQuery{}); err != nil {
+		t.Fatal(err)
 	}
-	if got.Encode() != want.Encode() {
-		t.Fatalf("integrations: got %s, want %s", got.Encode(), want.Encode())
+	check("integrations without values", url.Values{})
+
+	if _, err := c.IntegrationsListWithResponse(ctx, ListQuery{
+		IDs: v, Names: v, WorkflowIDs: v, OwnerIDs: v, MaintainerIDs: v, ApplicationIDs: v,
+	}); err != nil {
+		t.Fatal(err)
 	}
+	check("integrations defaults", url.Values{
+		"ids": v, "idsOperator": {"is"},
+		"name": v, "nameOperator": {"contains"}, "nameRelation": {"or"},
+		"workflowId": v, "workflowIdOperator": {"is"},
+		"ownerId": v, "ownerIdOperator": {"is"},
+		"maintainerId": v, "maintainerIdOperator": {"contains"},
+		"applicationId": v, "applicationIdOperator": {"is"},
+	})
 }
 
 func TestResourcesListWithResponse(t *testing.T) {

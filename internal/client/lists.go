@@ -94,9 +94,7 @@ func (q ListQuery) Values() url.Values {
 	if len(q.IDs) > 0 {
 		v.Set("ids", strings.Join(q.IDs, ","))
 	}
-	if q.IDsOperator != "" {
-		v.Set("idsOperator", string(q.IDsOperator))
-	}
+	setOperator(v, "idsOperator", string(q.IDsOperator), q.IDs)
 	if q.AfterID != "" {
 		v.Set("afterId", q.AfterID)
 	}
@@ -122,26 +120,26 @@ func (q ListQuery) Values() url.Values {
 		v.Set("requestable", strconv.FormatBool(*q.Requestable))
 	}
 	setList(v, "workflowId", q.WorkflowIDs)
-	setNonEmpty(v, "workflowIdOperator", q.WorkflowIDOperator)
+	setOperator(v, "workflowIdOperator", q.WorkflowIDOperator, q.WorkflowIDs)
 	setList(v, "resourceType", q.ResourceTypes)
-	setNonEmpty(v, "resourceTypeOperator", q.ResourceTypeOperator)
+	setOperator(v, "resourceTypeOperator", q.ResourceTypeOperator, q.ResourceTypes)
 	setList(v, "resourceTags", q.ResourceTags)
-	setNonEmpty(v, "resourceTagsOperator", q.ResourceTagsOperator)
-	setNonEmpty(v, "resourceTagsRelation", q.ResourceTagsRelation)
+	setOperator(v, "resourceTagsOperator", q.ResourceTagsOperator, q.ResourceTags)
+	setOperator(v, "resourceTagsRelation", q.ResourceTagsRelation, q.ResourceTags)
 	setList(v, "ownerId", q.OwnerIDs)
-	setNonEmpty(v, "ownerIdOperator", q.OwnerIDOperator)
+	setOperator(v, "ownerIdOperator", q.OwnerIDOperator, q.OwnerIDs)
 	setList(v, "maintainerId", q.MaintainerIDs)
-	setNonEmpty(v, "maintainerIdOperator", q.MaintainerIDOperator)
+	setOperator(v, "maintainerIdOperator", q.MaintainerIDOperator, q.MaintainerIDs)
 	setList(v, "type", q.Types)
-	setNonEmpty(v, "typeOperator", q.TypeOperator)
+	setOperator(v, "typeOperator", q.TypeOperator, q.Types)
 	setList(v, "tags", q.Tags)
-	setNonEmpty(v, "tagsOperator", q.TagsOperator)
-	setNonEmpty(v, "tagsRelation", q.TagsRelation)
+	setOperator(v, "tagsOperator", q.TagsOperator, q.Tags)
+	setOperator(v, "tagsRelation", q.TagsRelation, q.Tags)
 	setList(v, "name", q.Names)
-	setNonEmpty(v, "nameOperator", q.NameOperator)
-	setNonEmpty(v, "nameRelation", q.NameRelation)
+	setOperator(v, "nameOperator", q.NameOperator, q.Names)
+	setOperator(v, "nameRelation", q.NameRelation, q.Names)
 	setList(v, "applicationId", q.ApplicationIDs)
-	setNonEmpty(v, "applicationIdOperator", q.ApplicationIDOperator)
+	setOperator(v, "applicationIdOperator", q.ApplicationIDOperator, q.ApplicationIDs)
 	return v
 }
 
@@ -153,9 +151,11 @@ func setList(v url.Values, key string, values []string) {
 	}
 }
 
-func setNonEmpty(v url.Values, key, value string) {
-	if value != "" {
-		v.Set(key, value)
+// setOperator sets an operator or relation only together with the values it
+// applies to: the API rejects an operator without them.
+func setOperator(v url.Values, key, op string, values []string) {
+	if op != "" && len(values) > 0 {
+		v.Set(key, op)
 	}
 }
 
