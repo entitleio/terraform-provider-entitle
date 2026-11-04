@@ -36,7 +36,9 @@ const (
 const (
 	DefaultOperator           = "is"
 	DefaultMaintainerOperator = "contains"
+	DefaultNameOperator       = "contains"
 	DefaultTagsRelation       = "or"
+	DefaultNameRelation       = "or"
 )
 
 // ListQuery holds the query parameters shared by the list endpoints. Zero
@@ -53,21 +55,30 @@ type ListQuery struct {
 	IntegrationID string // resources, roles
 	ResourceID    string // roles
 
-	// Role and resource filters.
+	// Role, resource and integration filters.
 	Requestable        *bool
 	WorkflowIDs        []string
 	WorkflowIDOperator string // is, isNot
 
-	// Resource filters (GET /public/v1/resources).
+	// Resource and integration filters.
 	OwnerIDs             []string
 	OwnerIDOperator      string // is, isNot
 	MaintainerIDs        []string
 	MaintainerIDOperator string // contains, notContains
-	Types                []string
-	TypeOperator         string // is, isNot, contains, notContains
-	Tags                 []string
-	TagsOperator         string // is, isNot
-	TagsRelation         string // and, or
+
+	// Integration filters (GET /public/v1/integrations).
+	Names                 []string // must not contain commas
+	NameOperator          string   // contains, notContains
+	NameRelation          string   // and, or
+	ApplicationIDs        []string
+	ApplicationIDOperator string // is, isNot
+
+	// Resource filters (GET /public/v1/resources).
+	Types        []string
+	TypeOperator string // is, isNot, contains, notContains
+	Tags         []string
+	TagsOperator string // is, isNot
+	TagsRelation string // and, or
 
 	// Role filters (GET /public/v1/roles).
 	ResourceTypes        []string
@@ -126,6 +137,11 @@ func (q ListQuery) Values() url.Values {
 	setList(v, "tags", q.Tags)
 	setNonEmpty(v, "tagsOperator", q.TagsOperator)
 	setNonEmpty(v, "tagsRelation", q.TagsRelation)
+	setList(v, "name", q.Names)
+	setNonEmpty(v, "nameOperator", q.NameOperator)
+	setNonEmpty(v, "nameRelation", q.NameRelation)
+	setList(v, "applicationId", q.ApplicationIDs)
+	setNonEmpty(v, "applicationIdOperator", q.ApplicationIDOperator)
 	return v
 }
 
@@ -290,10 +306,30 @@ type BulkIntegrationItem struct {
 // IntegrationsBulkListWithResponse calls GET /public/v1/integrations and decodes
 // the full items the bulk settings resource needs.
 func (c *ClientWithResponses) IntegrationsBulkListWithResponse(ctx context.Context, q ListQuery) (*ListResponse[BulkIntegrationItem], error) {
-	return list[BulkIntegrationItem](ctx, c, "/public/v1/integrations", q)
+	return list[BulkIntegrationItem](ctx, c, "/public/v1/integrations", q.withIntegrationDefaults())
 }
 
 // IntegrationsListWithResponse calls GET /public/v1/integrations.
 func (c *ClientWithResponses) IntegrationsListWithResponse(ctx context.Context, q ListQuery) (*ListResponse[IntegrationBaseResponseSchema], error) {
-	return list[IntegrationBaseResponseSchema](ctx, c, "/public/v1/integrations", q)
+	return list[IntegrationBaseResponseSchema](ctx, c, "/public/v1/integrations", q.withIntegrationDefaults())
+}
+
+// withIntegrationDefaults fills the unset integration filter operators with
+// DefaultOperator, DefaultMaintainerOperator, DefaultNameOperator and DefaultNameRelation.
+func (q ListQuery) withIntegrationDefaults() ListQuery {
+	for _, op := range []*string{&q.WorkflowIDOperator, &q.OwnerIDOperator, &q.ApplicationIDOperator} {
+		if *op == "" {
+			*op = DefaultOperator
+		}
+	}
+	if q.MaintainerIDOperator == "" {
+		q.MaintainerIDOperator = DefaultMaintainerOperator
+	}
+	if q.NameOperator == "" {
+		q.NameOperator = DefaultNameOperator
+	}
+	if q.NameRelation == "" {
+		q.NameRelation = DefaultNameRelation
+	}
+	return q
 }

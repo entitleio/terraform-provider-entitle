@@ -58,7 +58,7 @@ The provider also exposes 18 data sources for looking up existing Entitle object
 | —                                  | `entitle_directory_groups`  |
 | —                                  | `entitle_permissions`       |
 
-The `entitle_resources`, `entitle_roles` and `entitle_integrations` filters accept `ids` (up to 100 IDs, optionally inverted with `ids_operator = "isNot"`) and an `after_id` cursor for paging through long lists.
+The `entitle_resources`, `entitle_roles` and `entitle_integrations` data sources return every matching item (the provider pages through the API itself). Their filters accept `ids` (up to 100 IDs, optionally inverted with `ids_operator = "isNot"`) and per-entity filters such as owner, maintainer, workflow, type or tags.
 
 See the [Terraform Registry documentation](https://registry.terraform.io/providers/entitleio/entitle/latest/docs) for full schemas.
 

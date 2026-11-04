@@ -81,7 +81,8 @@ func (d *RolesDataSource) Metadata(ctx context.Context, req datasource.MetadataR
 }
 
 func rolesFilterAttributes() map[string]schema.Attribute {
-	shared := utils.ListFilterAttributes("roles", true)
+	ids := utils.IDsAttributes("roles")
+	pagination := utils.DeprecatedPaginationAttributes()
 
 	return map[string]schema.Attribute{
 		"resource_id": schema.StringAttribute{
@@ -102,9 +103,9 @@ func rolesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRoot("integration_id")),
 			},
 		},
-		"ids":          shared["ids"],
-		"ids_operator": shared["ids_operator"],
-		"external_id":  shared["external_id"],
+		"ids":          ids["ids"],
+		"ids_operator": ids["ids_operator"],
+		"external_id":  utils.ExternalIDAttribute("roles"),
 		"search": schema.StringAttribute{
 			Optional: true,
 			MarkdownDescription: "Return only roles whose name contains this term (case-insensitive). Exact matches are ranked first, " +
@@ -114,15 +115,7 @@ func rolesFilterAttributes() map[string]schema.Attribute {
 			Optional:            true,
 			MarkdownDescription: "Return only roles that are (`true`) or are not (`false`) requestable.",
 		},
-		"workflow_ids": schema.SetAttribute{
-			ElementType:         types.StringType,
-			Optional:            true,
-			MarkdownDescription: "Return only roles with one of these workflow IDs (UUID) (see `workflow_ids_operator`).",
-			Validators: []validator.Set{
-				setvalidator.SizeAtLeast(1),
-				setvalidator.ValueStringsAre(validators.UUID{}),
-			},
-		},
+		"workflow_ids": utils.UUIDSetAttribute("Return only roles with one of these workflow IDs (UUID) (see `workflow_ids_operator`)."),
 		"workflow_ids_operator": schema.StringAttribute{
 			Optional:            true,
 			MarkdownDescription: "How `workflow_ids` is matched: `is` returns roles with one of the given workflows, `isNot` returns roles with none of them. Defaults to `is`.",
@@ -167,16 +160,8 @@ func rolesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.OneOf(utils.Relations...),
 			},
 		},
-		"page": schema.Int64Attribute{
-			Optional:            true,
-			MarkdownDescription: "**Deprecated.** Ignored; all pages are read.",
-			DeprecationMessage:  utils.PaginationDeprecation,
-		},
-		"per_page": schema.Int64Attribute{
-			Optional:            true,
-			MarkdownDescription: "**Deprecated.** Ignored; all pages are read.",
-			DeprecationMessage:  utils.PaginationDeprecation,
-		},
+		"page":     pagination["page"],
+		"per_page": pagination["per_page"],
 	}
 }
 

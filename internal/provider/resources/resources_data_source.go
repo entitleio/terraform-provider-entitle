@@ -81,19 +81,8 @@ func (d *ResourcesDataSource) Metadata(ctx context.Context, req datasource.Metad
 }
 
 func resourcesFilterAttributes() map[string]schema.Attribute {
-	shared := utils.ListFilterAttributes("resources", true)
-
-	uuidSet := func(description string) schema.SetAttribute {
-		return schema.SetAttribute{
-			ElementType:         types.StringType,
-			Optional:            true,
-			MarkdownDescription: description,
-			Validators: []validator.Set{
-				setvalidator.SizeAtLeast(1),
-				setvalidator.ValueStringsAre(validators.UUID{}),
-			},
-		}
-	}
+	ids := utils.IDsAttributes("resources")
+	pagination := utils.DeprecatedPaginationAttributes()
 
 	return map[string]schema.Attribute{
 		"integration_id": schema.StringAttribute{
@@ -104,9 +93,9 @@ func resourcesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRoot("integration_id")),
 			},
 		},
-		"ids":          shared["ids"],
-		"ids_operator": shared["ids_operator"],
-		"external_id":  shared["external_id"],
+		"ids":          ids["ids"],
+		"ids_operator": ids["ids_operator"],
+		"external_id":  utils.ExternalIDAttribute("resources"),
 		"search": schema.StringAttribute{
 			Optional: true,
 			MarkdownDescription: "Return only resources whose name contains this term (case-insensitive). Exact matches are ranked first, " +
@@ -116,7 +105,7 @@ func resourcesFilterAttributes() map[string]schema.Attribute {
 			Optional:            true,
 			MarkdownDescription: "Return only resources that are (`true`) or are not (`false`) requestable.",
 		},
-		"workflow_ids": uuidSet("Return only resources with one of these workflow IDs (UUID) (see `workflow_ids_operator`)."),
+		"workflow_ids": utils.UUIDSetAttribute("Return only resources with one of these workflow IDs (UUID) (see `workflow_ids_operator`)."),
 		"workflow_ids_operator": schema.StringAttribute{
 			Optional: true,
 			MarkdownDescription: "How `workflow_ids` is matched: `is` returns resources with one of the given workflows, " +
@@ -125,7 +114,7 @@ func resourcesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.OneOf(utils.Operators...),
 			},
 		},
-		"owner_ids": uuidSet("Return only resources owned by one of these users (UUID) (see `owner_ids_operator`)."),
+		"owner_ids": utils.UUIDSetAttribute("Return only resources owned by one of these users (UUID) (see `owner_ids_operator`)."),
 		"owner_ids_operator": schema.StringAttribute{
 			Optional: true,
 			MarkdownDescription: "How `owner_ids` is matched: `is` returns resources owned by one of the given users, " +
@@ -134,7 +123,7 @@ func resourcesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.OneOf(utils.Operators...),
 			},
 		},
-		"maintainer_ids": uuidSet("Return only resources maintained by one of these users or groups (UUID) (see `maintainer_ids_operator`)."),
+		"maintainer_ids": utils.UUIDSetAttribute("Return only resources maintained by one of these users or groups (UUID) (see `maintainer_ids_operator`)."),
 		"maintainer_ids_operator": schema.StringAttribute{
 			Optional: true,
 			MarkdownDescription: "How `maintainer_ids` is matched: `contains` returns resources that have at least one of the given maintainers, " +
@@ -181,16 +170,8 @@ func resourcesFilterAttributes() map[string]schema.Attribute {
 				stringvalidator.OneOf(utils.Relations...),
 			},
 		},
-		"page": schema.Int64Attribute{
-			Optional:            true,
-			MarkdownDescription: "**Deprecated.** Ignored; all pages are read.",
-			DeprecationMessage:  utils.PaginationDeprecation,
-		},
-		"per_page": schema.Int64Attribute{
-			Optional:            true,
-			MarkdownDescription: "**Deprecated.** Ignored; all pages are read.",
-			DeprecationMessage:  utils.PaginationDeprecation,
-		},
+		"page":     pagination["page"],
+		"per_page": pagination["per_page"],
 	}
 }
 

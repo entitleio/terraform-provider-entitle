@@ -55,6 +55,26 @@ func TestListQueryValuesResourceFilters(t *testing.T) {
 	}
 }
 
+func TestListQueryValuesIntegrationFilters(t *testing.T) {
+	q := ListQuery{
+		Names:                 []string{"prod", "aws"},
+		NameOperator:          "notContains",
+		NameRelation:          "and",
+		ApplicationIDs:        []string{"a"},
+		ApplicationIDOperator: "isNot",
+	}
+	want := url.Values{
+		"name":                  {"prod", "aws"},
+		"nameOperator":          {"notContains"},
+		"nameRelation":          {"and"},
+		"applicationId":         {"a"},
+		"applicationIdOperator": {"isNot"},
+	}
+	if got := q.Values(); got.Encode() != want.Encode() {
+		t.Fatalf("got %s, want %s", got.Encode(), want.Encode())
+	}
+}
+
 func TestListQueryValuesRoleFilters(t *testing.T) {
 	requestable := false
 	q := ListQuery{
@@ -282,6 +302,22 @@ func TestListDefaultOperators(t *testing.T) {
 	}
 	if got.Encode() != want.Encode() {
 		t.Fatalf("resources: got %s, want %s", got.Encode(), want.Encode())
+	}
+
+	if _, err := c.IntegrationsListWithResponse(context.Background(), ListQuery{}); err != nil {
+		t.Fatal(err)
+	}
+	want = url.Values{
+		"idsOperator":           {"is"},
+		"workflowIdOperator":    {"is"},
+		"ownerIdOperator":       {"is"},
+		"maintainerIdOperator":  {"contains"},
+		"nameOperator":          {"contains"},
+		"nameRelation":          {"or"},
+		"applicationIdOperator": {"is"},
+	}
+	if got.Encode() != want.Encode() {
+		t.Fatalf("integrations: got %s, want %s", got.Encode(), want.Encode())
 	}
 }
 

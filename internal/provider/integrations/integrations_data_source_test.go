@@ -5,6 +5,7 @@ package integrations_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,14 +19,10 @@ func TestIntegrationsDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// First page of all integrations.
+			// Every integration.
 			{
 				Config: testhelpers.ProviderConfig + `
-data "entitle_integrations" "all" {
-  filter {
-    per_page = 10
-  }
-}
+data "entitle_integrations" "all" {}
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.entitle_integrations.all", "integrations.0.id"),
@@ -46,6 +43,36 @@ data "entitle_integrations" "by_id" {
 					resource.TestCheckResourceAttr("data.entitle_integrations.by_id", "integrations.#", "1"),
 					resource.TestCheckResourceAttr("data.entitle_integrations.by_id", "integrations.0.id", integrationID),
 				),
+			},
+			// A name that matches nothing.
+			{
+				Config: testhelpers.ProviderConfig + `
+data "entitle_integrations" "none" {
+  filter {
+    names = ["valuethathcouldnotbefound"]
+  }
+}
+`,
+				Check: resource.TestCheckResourceAttr("data.entitle_integrations.none", "integrations.#", "0"),
+			},
+		},
+	})
+}
+
+func TestIntegrationsDataSource_NameWithComma(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testhelpers.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testhelpers.ProviderConfig + `
+data "entitle_integrations" "x" {
+  filter {
+    names = ["a,b"]
+  }
+}
+`,
+				ExpectError: regexp.MustCompile(`must\s+not\s+contain\s+a\s+comma`),
+				PlanOnly:    true,
 			},
 		},
 	})

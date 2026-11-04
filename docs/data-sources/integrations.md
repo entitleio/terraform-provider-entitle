@@ -3,10 +3,10 @@
 page_title: "entitle_integrations Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle Integrations. Use this data source to discover the integrations in your organization, look up specific integrations by ID, or page through all of them — for example to feed their IDs into entitle_resources or entitle_roles.
+  Retrieve every Entitle Integration matching a filter. Use this data source to discover the integrations in your organization, look them up by ID, name, owner, maintainer, workflow or application — for example to feed their IDs into entitle_resources or entitle_roles.
   An integration is a configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub organization or Okta tenant). Use entitle_integration (singular) to read the full configuration of one integration. Read more about integrations https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   Key Concepts
-  No filter: Without a filter, the first page of integrations is returnedids: filter.ids returns specific integrations by ID, up to 100; with ids_operator = "isNot" it returns every integration except themafter_id: A cursor for reading the whole list page by page without skipping or repeating items while it changes. Cannot be combined with a page other than 1Pagination: Use page and per_page (at most 100 results per page)Difference from entitle_integration: entitle_integrations (plural) returns only id, name and application per integration; use entitle_integration (singular) for full details
+  All results: The data source always returns every matching integration. The provider pages through the API with a cursor, so no integration is skipped or repeated while the list changes. Without a filter, every integration is returnedids: filter.ids returns specific integrations by ID, up to 100; with ids_operator = "isNot" it returns every integration except themnames: Matches integration names case-insensitively by substring; names_operator and names_relation control how several values are matched. Values cannot contain a commaFilters: requestable, workflow_ids, owner_ids, maintainer_ids and application_ids narrow the results; all filters are combined with ANDDifference from entitle_integration: entitle_integrations (plural) returns only id, name and application per integration; use entitle_integration (singular) for full details
   Example Usage
   List Integrations
   
@@ -14,6 +14,25 @@ description: |-
   
   output "integration_names" {
     value = data.entitle_integrations.all.integrations[*].name
+  }
+  
+  Find Integrations by Name
+  
+  data "entitle_integrations" "aws_prod" {
+    filter {
+      names          = ["aws", "prod"]
+      names_relation = "and" # names containing both
+    }
+  }
+  
+  Integrations of an Application Owned by a User
+  
+  data "entitle_integrations" "owned_okta" {
+    filter {
+      application_ids = ["7d080bfa-9143-11ee-b9d1-0242ac120010"]
+      owner_ids       = ["7d080bfa-9143-11ee-b9d1-0242ac120011"]
+      requestable     = true
+    }
   }
   
   Look Up Specific Integrations by ID
@@ -36,32 +55,22 @@ description: |-
     }
   }
   
-  Paginate with a Cursor
-  Pass the ID of the last integration of the previous page as after_id:
-  
-  data "entitle_integrations" "next_page" {
-    filter {
-      after_id = "7d080bfa-9143-11ee-b9d1-0242ac120099"
-      per_page = 100
-    }
-  }
-  
   Notes
-  integrations contains only the requested page (at most 100 results)With after_id, results are sorted by ID; stop when a page returns fewer than per_page integrations
+  Results are sorted by ID
 ---
 
 # entitle_integrations (Data Source)
 
-Retrieve a list of Entitle Integrations. Use this data source to discover the integrations in your organization, look up specific integrations by ID, or page through all of them — for example to feed their IDs into `entitle_resources` or `entitle_roles`.
+Retrieve every Entitle Integration matching a filter. Use this data source to discover the integrations in your organization, look them up by ID, name, owner, maintainer, workflow or application — for example to feed their IDs into `entitle_resources` or `entitle_roles`.
 
 An integration is a configured connection to a specific instance of an application (e.g. a particular AWS account, GitHub organization or Okta tenant). Use `entitle_integration` (singular) to read the full configuration of one integration. [Read more about integrations](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
 ## Key Concepts
 
-- **No filter**: Without a filter, the first page of integrations is returned
+- **All results**: The data source always returns every matching integration. The provider pages through the API with a cursor, so no integration is skipped or repeated while the list changes. Without a filter, every integration is returned
 - **ids**: `filter.ids` returns specific integrations by ID, up to 100; with `ids_operator = "isNot"` it returns every integration except them
-- **after_id**: A cursor for reading the whole list page by page without skipping or repeating items while it changes. Cannot be combined with a `page` other than 1
-- **Pagination**: Use `page` and `per_page` (at most 100 results per page)
+- **names**: Matches integration names case-insensitively by substring; `names_operator` and `names_relation` control how several values are matched. Values cannot contain a comma
+- **Filters**: `requestable`, `workflow_ids`, `owner_ids`, `maintainer_ids` and `application_ids` narrow the results; all filters are combined with AND
 - **Difference from entitle_integration**: `entitle_integrations` (plural) returns only `id`, `name` and `application` per integration; use `entitle_integration` (singular) for full details
 
 ## Example Usage
@@ -73,6 +82,29 @@ data "entitle_integrations" "all" {}
 
 output "integration_names" {
   value = data.entitle_integrations.all.integrations[*].name
+}
+```
+
+### Find Integrations by Name
+
+```terraform
+data "entitle_integrations" "aws_prod" {
+  filter {
+    names          = ["aws", "prod"]
+    names_relation = "and" # names containing both
+  }
+}
+```
+
+### Integrations of an Application Owned by a User
+
+```terraform
+data "entitle_integrations" "owned_okta" {
+  filter {
+    application_ids = ["7d080bfa-9143-11ee-b9d1-0242ac120010"]
+    owner_ids       = ["7d080bfa-9143-11ee-b9d1-0242ac120011"]
+    requestable     = true
+  }
 }
 ```
 
@@ -100,23 +132,9 @@ data "entitle_integrations" "others" {
 }
 ```
 
-### Paginate with a Cursor
-
-Pass the ID of the last integration of the previous page as `after_id`:
-
-```terraform
-data "entitle_integrations" "next_page" {
-  filter {
-    after_id = "7d080bfa-9143-11ee-b9d1-0242ac120099"
-    per_page = 100
-  }
-}
-```
-
 ## Notes
 
-- `integrations` contains only the requested page (at most 100 results)
-- With `after_id`, results are sorted by ID; stop when a page returns fewer than `per_page` integrations
+- Results are sorted by ID
 
 
 
@@ -125,22 +143,31 @@ data "entitle_integrations" "next_page" {
 
 ### Optional
 
-- `filter` (Block, Optional) Optional filter and pagination for integrations. (see [below for nested schema](#nestedblock--filter))
+- `filter` (Block, Optional) Optional filters for the integrations. All filters are combined with AND. Every matching integration is returned; pagination is handled by the provider. (see [below for nested schema](#nestedblock--filter))
 
 ### Read-Only
 
-- `integrations` (Attributes List) List of integrations matching the filter. (see [below for nested schema](#nestedatt--integrations))
+- `integrations` (Attributes List) All integrations matching the filter, sorted by ID. (see [below for nested schema](#nestedatt--integrations))
 
 <a id="nestedblock--filter"></a>
 ### Nested Schema for `filter`
 
 Optional:
 
-- `after_id` (String) Cursor for reading the whole list without skipping or repeating items while it changes. Results are sorted by ID; pass the ID of the last item of the previous page to get the items after it. Cannot be combined with a `page` other than 1.
-- `ids` (List of String) Return only the integrations with these IDs (UUID), up to 100. With `ids_operator = "isNot"`, return every integration except them.
-- `ids_operator` (String) How `ids` is matched: `is` (default) returns the given integrations, `isNot` returns every integration except them. Requires `ids`.
-- `page` (Number) Page number of results to return (starting from 1). Used together with `per_page` for pagination.
-- `per_page` (Number) Number of results to return per page (at most 100). Defaults to the API's configured page size if not specified.
+- `application_ids` (Set of String) Return only integrations of one of these applications (UUID) (see `application_ids_operator`).
+- `application_ids_operator` (String) How `application_ids` is matched: `is` returns integrations of one of the given applications, `isNot` returns integrations of none of them. Defaults to `is`.
+- `ids` (Set of String) Return only the integrations with these IDs (UUID), up to 100. With `ids_operator = "isNot"`, return every integration except them.
+- `ids_operator` (String) How `ids` is matched: `is` returns the given integrations, `isNot` returns every integration except them. Defaults to `is`.
+- `maintainer_ids` (Set of String) Return only integrations maintained by one of these users or groups (UUID) (see `maintainer_ids_operator`).
+- `maintainer_ids_operator` (String) How `maintainer_ids` is matched: `contains` returns integrations that have at least one of the given maintainers, `notContains` returns integrations that have none of them. Defaults to `contains`.
+- `names` (Set of String) Return only integrations whose name contains these values (case-insensitive, see `names_operator` and `names_relation`). Values cannot contain a comma.
+- `names_operator` (String) How `names` is matched: `contains` returns integrations whose name contains the values, `notContains` returns integrations whose name does not contain them. Defaults to `contains`.
+- `names_relation` (String) How multiple `names` are combined. With `contains`: `or` matches names that contain any of the values, `and` matches names that contain all of them. With `notContains`: `or` matches names that contain none of the values, `and` matches names that are missing at least one of them. Defaults to `or`.
+- `owner_ids` (Set of String) Return only integrations owned by one of these users (UUID) (see `owner_ids_operator`).
+- `owner_ids_operator` (String) How `owner_ids` is matched: `is` returns integrations owned by one of the given users, `isNot` returns integrations owned by none of them. Defaults to `is`.
+- `requestable` (Boolean) Return only integrations that are (`true`) or are not (`false`) requestable.
+- `workflow_ids` (Set of String) Return only integrations with one of these workflow IDs (UUID) (see `workflow_ids_operator`).
+- `workflow_ids_operator` (String) How `workflow_ids` is matched: `is` returns integrations with one of the given workflows, `isNot` returns integrations with none of them. Defaults to `is`.
 
 
 <a id="nestedatt--integrations"></a>
