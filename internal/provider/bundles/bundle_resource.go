@@ -249,7 +249,7 @@ func (r *BundleResource) Configure(
 		return
 	}
 
-	cli, ok := req.ProviderData.(*client.ClientWithResponses)
+	cli, ok := utils.ClientFromProviderData(req.ProviderData)
 
 	if !ok {
 		resp.Diagnostics.AddError(

@@ -3,15 +3,19 @@
 page_title: "entitle_roles Data Source - terraform-provider-entitle"
 subcategory: ""
 description: |-
-  Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+  Retrieve every Entitle Role of a resource or integration. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
   Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. Read more about roles https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles.
   When to Use This Data Source
-  Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resource
+  Discovering all roles available within a resource before referencing themSearching for a role by name within a known resource (e.g., finding the "admin" role)Dynamically referencing roles in bundles, policies, or prerequisite permissionsAuditing which roles exist on a resourceLooking up specific roles by ID (up to 100 per data source), across resources and integrations
+  Key Concepts
+  Scope: Set one of filter.resource_id (roles of one resource), filter.integration_id (every role of an integration, in one data source instead of one per resource) or filter.ids. If both resource_id and integration_id are set, resource_id takes precedence. The top-level resource_id and integration_id are deprecated; move them into filterAll results: The data source always returns every matching role. The provider pages through the API with a cursor, so no role is skipped or repeated while the list changes. filter.page and filter.per_page are deprecated and ignoredids: filter.ids returns specific roles by ID, up to 100; with ids_operator = "isNot" it returns every role except themFilters: requestable, workflow_ids, resource_types and resource_tags narrow the results; all filters are combined with ANDsearch: Matches role names case-insensitively and partially, and can be combined with every other filter. Results are ranked: exact matches first, then case-insensitive matches, then partial matches
   Example Usage
   List All Roles for a Resource
   
   data "entitle_roles" "all" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    }
   }
   
   output "all_role_ids" {
@@ -21,9 +25,9 @@ description: |-
   Search for a Specific Role by Name
   
   data "entitle_roles" "admin_role" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
     filter {
-      search = "admin"
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      search      = "admin"
     }
   }
   
@@ -44,8 +48,10 @@ description: |-
   }
   
   data "entitle_roles" "read_roles" {
-    resource_id = data.entitle_resources.backend_repo.resources[0].id
-    filter { search = "read" }
+    filter {
+      resource_id = data.entitle_resources.backend_repo.resources[0].id
+      search      = "read"
+    }
   }
   
   resource "entitle_bundle" "github_read_bundle" {
@@ -63,30 +69,53 @@ description: |-
     allowed_durations = [28800, 86400]
   }
   
-  Paginate Through Large Resource Role Lists
+  List Every Role of an Integration
   
-  data "entitle_roles" "page_one" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  data "entitle_roles" "aws" {
     filter {
-      page     = 1
-      per_page = 50
+      integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
     }
   }
   
-  Paginate Through Large Integration Role Lists
+  Filter by Requestability, Workflow and Resource Tags
   
-  data "entitle_roles" "page_one" {
-    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  data "entitle_roles" "prod_not_on_workflow" {
     filter {
-      page     = 1
-      per_page = 50
+      integration_id        = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      requestable           = true
+      workflow_ids          = ["7d080bfa-9143-11ee-b9d1-0242ac120002"]
+      workflow_ids_operator = "isNot"
+      resource_tags         = ["env: prod"]
+    }
+  }
+  
+  Filter by Resource Type
+  
+  data "entitle_roles" "policies" {
+    filter {
+      integration_id          = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      resource_types          = ["Policy"]
+      resource_types_operator = "contains"
+    }
+  }
+  
+  Look Up Specific Roles by ID
+  
+  data "entitle_roles" "selected" {
+    filter {
+      ids = [
+        "7d080bfa-9143-11ee-b9d1-0242ac120003",
+        "7d080bfa-9143-11ee-b9d1-0242ac120004",
+      ]
     }
   }
   
   Output All Role Details
   
   data "entitle_roles" "all_roles" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    }
   }
   
   output "roles" {
@@ -96,7 +125,7 @@ description: |-
 
 # entitle_roles (Data Source)
 
-Retrieve a list of Entitle Roles within a specific resource. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
+Retrieve every Entitle Role of a resource or integration. Use this data source when you need to discover available roles for a given resource or integration, search for roles by name, or dynamically reference role IDs in bundles, policies, or other resources.
 
 Roles are the most granular access unit in Entitle — they map to real permission levels within integrated applications (e.g., "read-only", "contributor", "admin"). Each role belongs to exactly one resource. [Read more about roles](https://docs.beyondtrust.com/entitle/docs/integrations-resources-roles).
 
@@ -106,6 +135,15 @@ Roles are the most granular access unit in Entitle — they map to real permissi
 - Searching for a role by name within a known resource (e.g., finding the "admin" role)
 - Dynamically referencing roles in bundles, policies, or prerequisite permissions
 - Auditing which roles exist on a resource
+- Looking up specific roles by ID (up to 100 per data source), across resources and integrations
+
+## Key Concepts
+
+- **Scope**: Set one of `filter.resource_id` (roles of one resource), `filter.integration_id` (every role of an integration, in one data source instead of one per resource) or `filter.ids`. If both `resource_id` and `integration_id` are set, `resource_id` takes precedence. The top-level `resource_id` and `integration_id` are deprecated; move them into `filter`
+- **All results**: The data source always returns every matching role. The provider pages through the API with a cursor, so no role is skipped or repeated while the list changes. `filter.page` and `filter.per_page` are deprecated and ignored
+- **ids**: `filter.ids` returns specific roles by ID, up to 100; with `ids_operator = "isNot"` it returns every role except them
+- **Filters**: `requestable`, `workflow_ids`, `resource_types` and `resource_tags` narrow the results; all filters are combined with AND
+- **search**: Matches role names case-insensitively and partially, and can be combined with every other filter. Results are ranked: exact matches first, then case-insensitive matches, then partial matches
 
 ## Example Usage
 
@@ -113,7 +151,9 @@ Roles are the most granular access unit in Entitle — they map to real permissi
 
 ```terraform
 data "entitle_roles" "all" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
 }
 
 output "all_role_ids" {
@@ -125,9 +165,9 @@ output "all_role_ids" {
 
 ```terraform
 data "entitle_roles" "admin_role" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   filter {
-    search = "admin"
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search      = "admin"
   }
 }
 
@@ -151,8 +191,10 @@ data "entitle_resources" "backend_repo" {
 }
 
 data "entitle_roles" "read_roles" {
-  resource_id = data.entitle_resources.backend_repo.resources[0].id
-  filter { search = "read" }
+  filter {
+    resource_id = data.entitle_resources.backend_repo.resources[0].id
+    search      = "read"
+  }
 }
 
 resource "entitle_bundle" "github_read_bundle" {
@@ -171,26 +213,51 @@ resource "entitle_bundle" "github_read_bundle" {
 }
 ```
 
-### Paginate Through Large Resource Role Lists
+### List Every Role of an Integration
 
 ```terraform
-data "entitle_roles" "page_one" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+data "entitle_roles" "aws" {
   filter {
-    page     = 1
-    per_page = 50
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
   }
 }
 ```
 
-### Paginate Through Large Integration Role Lists
+### Filter by Requestability, Workflow and Resource Tags
 
 ```terraform
-data "entitle_roles" "page_one" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+data "entitle_roles" "prod_not_on_workflow" {
   filter {
-    page     = 1
-    per_page = 50
+    integration_id        = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    requestable           = true
+    workflow_ids          = ["7d080bfa-9143-11ee-b9d1-0242ac120002"]
+    workflow_ids_operator = "isNot"
+    resource_tags         = ["env: prod"]
+  }
+}
+```
+
+### Filter by Resource Type
+
+```terraform
+data "entitle_roles" "policies" {
+  filter {
+    integration_id          = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    resource_types          = ["Policy"]
+    resource_types_operator = "contains"
+  }
+}
+```
+
+### Look Up Specific Roles by ID
+
+```terraform
+data "entitle_roles" "selected" {
+  filter {
+    ids = [
+      "7d080bfa-9143-11ee-b9d1-0242ac120003",
+      "7d080bfa-9143-11ee-b9d1-0242ac120004",
+    ]
   }
 }
 ```
@@ -199,7 +266,9 @@ data "entitle_roles" "page_one" {
 
 ```terraform
 data "entitle_roles" "all_roles" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
 }
 
 output "roles" {
@@ -214,23 +283,35 @@ output "roles" {
 
 ### Optional
 
-- `filter` (Block, Optional) Pagination and filter roles by optional search term. (see [below for nested schema](#nestedblock--filter))
-- `integration_id` (String) Filter roles assigned to a specific integration ID.
-- `resource_id` (String) Filter roles assigned to a specific resource ID.
+- `filter` (Block, Optional) Filters for the roles. One of `resource_id`, `integration_id` or `ids` is required. All filters are combined with AND. Every matching role is returned; pagination is handled by the provider. (see [below for nested schema](#nestedblock--filter))
+- `integration_id` (String, Deprecated) **Deprecated.** Use `filter.integration_id`.
+- `resource_id` (String, Deprecated) **Deprecated.** Use `filter.resource_id`.
 
 ### Read-Only
 
-- `roles` (Attributes List) List of roles matching the filter. (see [below for nested schema](#nestedatt--roles))
+- `roles` (Attributes List) All roles matching the filter, sorted by ID, or by match rank and then ID when `filter.search` is set. (see [below for nested schema](#nestedatt--roles))
 
 <a id="nestedblock--filter"></a>
 ### Nested Schema for `filter`
 
 Optional:
 
-- `external_id` (String) External ID to filter roles.
-- `page` (Number) Page number of results to return (starting from 1). Used together with `per_page` for pagination.
-- `per_page` (Number) Number of results to return per page. Defaults to the API's configured page size if not specified.
-- `search` (String) Search string to filter roles.
+- `external_id` (String) Return only the roles with this external ID (the ID given by the third-party app).
+- `ids` (Set of String) Return only the roles with these IDs (UUID), up to 100. With `ids_operator = "isNot"`, return every role except them.
+- `ids_operator` (String) How `ids` is matched: `is` returns the given roles, `isNot` returns every role except them. Defaults to `is`.
+- `integration_id` (String) Return every role across all resources of this integration. One of `resource_id`, `integration_id` or `ids` is required.
+- `page` (Number, Deprecated) **Deprecated.** Ignored; all pages are read.
+- `per_page` (Number, Deprecated) **Deprecated.** Ignored; all pages are read.
+- `requestable` (Boolean) Return only roles that are (`true`) or are not (`false`) requestable.
+- `resource_id` (String) Return the roles of this resource. One of `resource_id`, `integration_id` or `ids` is required; `resource_id` takes precedence over `integration_id`.
+- `resource_tags` (Set of String) Return only roles whose resource has these tags (see `resource_tags_operator` and `resource_tags_relation`).
+- `resource_tags_operator` (String) How `resource_tags` is matched: `is` returns roles whose resource has the tags, `isNot` returns roles whose resource does not have them, including resources with no tags. Defaults to `is`.
+- `resource_tags_relation` (String) How multiple `resource_tags` are combined. With `is`: `or` matches resources that have any of the tags, `and` matches resources that have all of them. With `isNot`: `or` matches resources that have none of the tags, `and` matches resources that are missing at least one of them. Defaults to `or`.
+- `resource_types` (Set of String) Return only roles whose resource type matches these values (see `resource_types_operator`).
+- `resource_types_operator` (String) How `resource_types` is matched: `is` — the resource type is one of the values, `isNot` — it is none of them, `contains` — it contains any of the values, `notContains` — it contains none of them. Defaults to `is`.
+- `search` (String) Return only roles whose name contains this term (case-insensitive). Exact matches are ranked first, followed by case-insensitive matches and then partial matches. Can be combined with every other filter.
+- `workflow_ids` (Set of String) Return only roles with one of these workflow IDs (UUID) (see `workflow_ids_operator`).
+- `workflow_ids_operator` (String) How `workflow_ids` is matched: `is` returns roles with one of the given workflows, `isNot` returns roles with none of them. Defaults to `is`.
 
 
 <a id="nestedatt--roles"></a>

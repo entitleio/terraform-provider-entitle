@@ -123,7 +123,7 @@ func (d *AccountsDataSource) Configure(ctx context.Context, req datasource.Confi
 		return
 	}
 
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
