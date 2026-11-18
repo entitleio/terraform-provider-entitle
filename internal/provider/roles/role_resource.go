@@ -244,7 +244,7 @@ func (r *RoleResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	c, ok := req.ProviderData.(*client.ClientWithResponses)
+	c, ok := utils.ClientFromProviderData(req.ProviderData)
 
 	if !ok {
 		resp.Diagnostics.AddError(
