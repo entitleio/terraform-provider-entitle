@@ -19,7 +19,6 @@ func TestResourceResource(t *testing.T) {
 			// Create and Read testing - null set
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description"
@@ -71,7 +70,6 @@ func TestResourceResource(t *testing.T) {
 			},
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description"
@@ -124,7 +122,6 @@ func TestResourceResource(t *testing.T) {
 			// Update testing - not empty set
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description UPDATED"
@@ -151,8 +148,16 @@ func TestResourceResource(t *testing.T) {
 					"test1",
 					"test2"
 				]
+				prerequisite_permissions = [
+					{
+						default = true
+						role = {
+							id = "%s"
+						}
+					}
+				]
 			}
-			`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID"), os.Getenv("ENTITLE_OWNER_ID")),
+			`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_ROLE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_resource.my_resource", "name", "My Resource"),
@@ -166,10 +171,10 @@ func TestResourceResource(t *testing.T) {
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "id"),
 
-					//resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.name"),
-					//resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.name"),
-					//resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.name"),
-					//resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.application.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.name"),
+					resource.TestCheckResourceAttrSet("entitle_resource.my_resource", "prerequisite_permissions.0.role.resource.integration.application.name"),
 				),
 			},
 		},
@@ -186,7 +191,6 @@ func TestResourceResourceMultipleMaintainers(t *testing.T) {
 			// Create and Read testing - null set
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description"
@@ -244,7 +248,6 @@ func TestResourceResourceMultipleMaintainers(t *testing.T) {
 			},
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description"
@@ -303,7 +306,6 @@ func TestResourceResourceMultipleMaintainers(t *testing.T) {
 			// Update testing - not empty set
 			{
 				Config: testhelpers.ProviderConfig + fmt.Sprintf(`
-			
 			resource "entitle_resource" "my_resource" {
 			 	name                               = "My Resource"
 				user_defined_description = "test description UPDATED"
@@ -336,8 +338,16 @@ func TestResourceResourceMultipleMaintainers(t *testing.T) {
 					"test1",
 					"test2"
 				]
+				prerequisite_permissions = [
+					{
+						default = true
+						role = {
+							id = "%s"
+						}
+					}
+				]
 			}
-			`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_DIRECTORY_GROUP_ID")),
+			`, os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_WORKFLOW_ID"), os.Getenv("ENTITLE_MANUAL_INTEGRATION_ID"), os.Getenv("ENTITLE_OWNER_ID"), os.Getenv("ENTITLE_DIRECTORY_GROUP_ID"), os.Getenv("ENTITLE_ROLE_ID")),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify
 					resource.TestCheckResourceAttr("entitle_resource.my_resource", "name", "My Resource"),
