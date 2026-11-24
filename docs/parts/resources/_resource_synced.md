@@ -122,7 +122,9 @@ Manage all synced resources for an integration consistently:
 
 ```terraform
 data "entitle_resources" "gcp_all" {
-  integration_id = data.entitle_integration.gcp.id
+  filter {
+    integration_id = data.entitle_integration.gcp.id
+  }
 }
 
 resource "entitle_resource_synced" "gcp" {
@@ -173,3 +175,7 @@ Fields not specified in your configuration (`workflow`, `allowed_durations`, `re
 ### Name Must Be Unique Within an Integration
 
 The lookup is performed by exact `name` or `external_id` match within the given `integration.id`. If multiple resources share the same name under one integration, the provider returns the first match. Ensure resource names are unique within an integration or use external id.
+
+### Managing Many Resources at Once
+
+To give many resources the same tags, or the same workflow, owner, maintainers or requestability, use [`entitle_resource_tags`](resource_tags.md) or [`entitle_resource_settings`](resource_settings.md) instead of one block per resource. They use the bulk API and are configured with the provider's `bulk` block. Do not manage the same attribute of a resource from both — they will overwrite each other.

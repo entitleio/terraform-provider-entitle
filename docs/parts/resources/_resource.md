@@ -299,8 +299,10 @@ Use the `entitle_resources` data source to find a resource ID by integration:
 
 ```terraform
 data "entitle_resources" "my_resources" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "production" }
+  filter {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search         = "production"
+  }
 }
 
 output "resource_ids" {
@@ -370,7 +372,9 @@ When an integration has many synced resources, use the `entitle_resources` data 
 
 ```terraform
 data "entitle_resources" "gcp_all" {
-  integration_id = data.entitle_integration.gcp.id
+  filter {
+    integration_id = data.entitle_integration.gcp.id
+  }
 }
 
 import {
@@ -437,3 +441,7 @@ terraform state rm entitle_resource.gcp_data_platform
 
 - Creating a resource automatically creates a non-requestable role named `default` — this is an API limitation and is expected behavior
 - Do not delete this role; it is managed by the Entitle API
+
+### Managing Many Resources at Once
+
+To give many resources the same tags, or the same workflow, owner, maintainers or requestability, use [`entitle_resource_tags`](resource_tags.md) or [`entitle_resource_settings`](resource_settings.md) instead of one block per resource. They use the bulk API and are configured with the provider's `bulk` block. Do not manage the same attribute of a resource from both — they will overwrite each other.

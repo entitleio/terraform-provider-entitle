@@ -45,8 +45,10 @@ description: |-
   For finding roles by name within a resource, use the entitle_roles data source instead:
   
   data "entitle_roles" "search" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    filter { search = "admin" }
+    filter {
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      search      = "admin"
+    }
   }
   
   data "entitle_role" "admin_role" {
@@ -66,8 +68,10 @@ description: |-
   Use the entitle_roles data source to search for roles within a resource:
   
   data "entitle_roles" "search" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    filter { search = "read" }
+    filter {
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      search      = "read"
+    }
   }
   
   output "found_role_ids" {
@@ -141,8 +145,10 @@ For finding roles by name within a resource, use the `entitle_roles` data source
 
 ```terraform
 data "entitle_roles" "search" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "admin" }
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search      = "admin"
+  }
 }
 
 data "entitle_role" "admin_role" {
@@ -181,8 +187,10 @@ Use the `entitle_roles` data source to search for roles within a resource:
 
 ```terraform
 data "entitle_roles" "search" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "read" }
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search      = "read"
+  }
 }
 
 output "found_role_ids" {
