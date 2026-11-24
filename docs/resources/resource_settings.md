@@ -16,14 +16,23 @@ description: |-
   Drift Detection
   Every refresh reads every resource in batches: Resources are read with the list endpoint, 100 IDs per request, with up to bulk.parallelism requests at a time — about 10 requests for 1,000 resources.Changed settings are re-applied: A resource whose configured settings differ — or that is missing one of the additional_maintainers — is shown as a change in the next plan, and apply sends every configured setting to that resource only.Matching: The owner and maintainers match by UUID or email, ignoring case. With maintainers, any extra maintainer is drift; with additional_maintainers, extra maintainers are ignored.Unmanaged attributes are ignored: Changes to attributes not set in the configuration are not drift.Deleted resources: A resource that no longer exists is dropped from state. If its ID is still in resource_ids, the next apply fails with a 404 listing that ID; remove it from the configuration.
   Error Handling
-  Failed create: Nothing is saved to state, so the next apply creates the resource again. Additional maintainers added before the failure are removed first. Settings that were already applied are simply applied again. If that clean-up fails, a warning is shown and those maintainers are treated as pre-existing on the next apply.Failed update: State keeps every resource and additional maintainer the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+  Failed create: Nothing is saved to state, so the next apply creates the resource again. Additional maintainers added before the failure are removed first. Settings that were already applied are simply applied again. If that clean-up fails, a warning is shown and those maintainers are treated as pre-existing on the next apply.Failed update: State keeps every resource and additional maintainer the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.Resources deleted before apply: If one of the resources no longer exists (for example, a sync deleted it between terraform plan and terraform apply), the apply fails and names it. Set skip_missing_ids = true to skip such resources with a warning and apply the change to all others; they drop out of state on the next refresh.
+  
+  resource "entitle_resource_settings" "example" {
+    resource_ids     = data.entitle_resources.example.resources[*].id
+    requestable      = false
+    skip_missing_ids = true
+  }
+  
   ~> Note: Do not manage the same setting on the same resource from both entitle_resource_settings and entitle_resource / entitle_resource_synced, or from two entitle_resource_settings resources — they will overwrite each other.
   -> Note: If a resource drifts and is removed from resource_ids in the same change, Terraform plans no change for it. Additional maintainers added to it are removed by the next apply that changes this resource.
   Example Usage
   Set Workflow and Owner for All Resources of an Integration
   
   data "entitle_resources" "aws" {
-    integration_id = data.entitle_integration.aws.id
+    filter {
+      integration_id = data.entitle_integration.aws.id
+    }
   }
   
   resource "entitle_resource_settings" "aws" {
@@ -64,21 +73,17 @@ description: |-
     requestable = false
   }
   
-  Apply Settings to More Than One Page of Resources
-  entitle_resources returns a single page of results (at most 100). Read several pages and flatten their IDs:
+  Apply Settings to Every Resource of an Integration
+  entitle_resources returns every matching resource (the provider reads all pages), so its IDs can be passed directly, however many there are:
   
   data "entitle_resources" "aws" {
-    count          = 5 # covers up to 500 resources
-    integration_id = data.entitle_integration.aws.id
-  
     filter {
-      page     = count.index + 1
-      per_page = 100
+      integration_id = data.entitle_integration.aws.id
     }
   }
   
   resource "entitle_resource_settings" "aws" {
-    resource_ids = flatten([for page in data.entitle_resources.aws : page.resources[*].id])
+    resource_ids = data.entitle_resources.aws.resources[*].id
     workflow_id  = data.entitle_workflow.manager_approval.id
   }
   
@@ -128,6 +133,15 @@ Switching from `additional_maintainers` to `maintainers` replaces the whole list
 - **Failed create**: Nothing is saved to state, so the next apply creates the resource again. Additional maintainers added before the failure are removed first. Settings that were already applied are simply applied again. If that clean-up fails, a warning is shown and those maintainers are treated as pre-existing on the next apply.
 - **Failed update**: State keeps every resource and additional maintainer the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.
 - **Timeout**: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+- **Resources deleted before apply**: If one of the resources no longer exists (for example, a sync deleted it between `terraform plan` and `terraform apply`), the apply fails and names it. Set `skip_missing_ids = true` to skip such resources with a warning and apply the change to all others; they drop out of state on the next refresh.
+
+```terraform
+resource "entitle_resource_settings" "example" {
+  resource_ids     = data.entitle_resources.example.resources[*].id
+  requestable      = false
+  skip_missing_ids = true
+}
+```
 
 ~> **Note:** Do not manage the same setting on the same resource from both `entitle_resource_settings` and `entitle_resource` / `entitle_resource_synced`, or from two `entitle_resource_settings` resources — they will overwrite each other.
 
@@ -139,7 +153,9 @@ Switching from `additional_maintainers` to `maintainers` replaces the whole list
 
 ```terraform
 data "entitle_resources" "aws" {
-  integration_id = data.entitle_integration.aws.id
+  filter {
+    integration_id = data.entitle_integration.aws.id
+  }
 }
 
 resource "entitle_resource_settings" "aws" {
@@ -187,23 +203,19 @@ resource "entitle_resource_settings" "frozen" {
 }
 ```
 
-### Apply Settings to More Than One Page of Resources
+### Apply Settings to Every Resource of an Integration
 
-`entitle_resources` returns a single page of results (at most 100). Read several pages and flatten their IDs:
+`entitle_resources` returns every matching resource (the provider reads all pages), so its IDs can be passed directly, however many there are:
 
 ```terraform
 data "entitle_resources" "aws" {
-  count          = 5 # covers up to 500 resources
-  integration_id = data.entitle_integration.aws.id
-
   filter {
-    page     = count.index + 1
-    per_page = 100
+    integration_id = data.entitle_integration.aws.id
   }
 }
 
 resource "entitle_resource_settings" "aws" {
-  resource_ids = flatten([for page in data.entitle_resources.aws : page.resources[*].id])
+  resource_ids = data.entitle_resources.aws.resources[*].id
   workflow_id  = data.entitle_workflow.manager_approval.id
 }
 ```
@@ -231,6 +243,7 @@ resource "entitle_resource_settings" "aws" {
 - `maintainers` (Attributes Set) The exact list of maintainers for every resource in `resource_ids`; replaces existing maintainers. An empty list removes all maintainers. Conflicts with `additional_maintainers`. (see [below for nested schema](#nestedatt--maintainers))
 - `owner` (String) Owner of the resources, as a user UUID or email address.
 - `requestable` (Boolean) Whether users can request access to the resources.
+- `skip_missing_ids` (Boolean) When `true`, resources that no longer exist in Entitle (for example, deleted by a sync between plan and apply) are skipped with a warning, and the change is applied to all other resources. When `false` (default), the apply fails and names them. Removing what this resource added always skips resources that no longer exist.
 - `workflow_id` (String) ID (UUID) of the default approval workflow for the resources.
 
 <a id="nestedatt--additional_maintainers"></a>

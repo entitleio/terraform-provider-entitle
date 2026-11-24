@@ -105,8 +105,9 @@ type settingsSpec struct {
 }
 
 type decodedSettings struct {
-	ids      []string
-	settings settingsSpec
+	ids         []string
+	settings    settingsSpec
+	skipMissing bool
 }
 
 func (d decodedSettings) additionalKeys() []string {

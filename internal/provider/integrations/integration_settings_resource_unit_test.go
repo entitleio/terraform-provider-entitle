@@ -428,9 +428,8 @@ func TestUnitIntegrationSettingsResource_RemoveAndDestroyLeaveSettings(t *testin
 	})
 }
 
-// An integration in configuration that does not exist is skipped (with a
-// warning) and the others are updated. It stays in configuration, so the plan
-// after apply is not empty; dropping it from configuration converges.
+// A deleted integration still in configuration fails with an error naming it
+// (skip_missing_ids is off by default); dropping it from configuration converges.
 func TestUnitIntegrationSettingsResource_MissingIntegration(t *testing.T) {
 	fake := setupFake(t, intg1)
 
@@ -438,9 +437,8 @@ func TestUnitIntegrationSettingsResource_MissingIntegration(t *testing.T) {
 		ProtoV6ProviderFactories: unitTestProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             settingsConfig([]string{intg1, intg2}, "  requestable = false\n"),
-				Check:              fake.check(intg1, requestable(false)),
-				ExpectNonEmptyPlan: true,
+				Config:      settingsConfig([]string{intg1, intg2}, "  requestable = false\n"),
+				ExpectError: regexp.MustCompile(intg2),
 			},
 			{
 				Config: settingsConfig([]string{intg1}, "  requestable = false\n"),

@@ -154,6 +154,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Description:         fmt.Sprintf("ID (UUID) of the default approval workflow for the %s.", k.Entities),
 				Validators:          []validator.String{validators.UUID{}},
 			},
+			bulk.AttrSkipMissingIDs: bulk.SkipMissingIDsAttribute(k.Entities),
 		},
 	}
 
@@ -229,7 +230,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	skipped, err := r.apply(ctx, a, planned, settingsSpec{}, desired.settings)
+	skipped, err := r.apply(ctx, a, planned, settingsSpec{}, desired.settings, desired.skipMissing)
 	if err != nil {
 		// No state is saved, so the next apply creates the resource again. Roll
 		// back the additional maintainers added so far; otherwise that create
@@ -311,7 +312,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	resp.State.Raw = req.Plan.Raw.Copy()
 
-	skipped, err := r.apply(ctx, a, planned, prior.settings, desired.settings)
+	skipped, err := r.apply(ctx, a, planned, prior.settings, desired.settings, desired.skipMissing)
 	if err != nil {
 		// Keep every entity and additional maintainer that might have been
 		// touched, plus all ownership learned; the next Read detects what was
@@ -341,9 +342,10 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 }
 
 // apply sends removals of owned additional maintainers first, then one bulk
-// operation per distinct update. Entities that no longer exist are skipped in
-// both (a sync may delete one between plan and apply); their IDs are returned.
-func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePlan, prior, desired settingsSpec) ([]string, error) {
+// operation per distinct update. Removals always skip entities that no longer
+// exist; updates skip them only when skipMissing (skip_missing_ids) is set.
+// Skipped IDs are returned.
+func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePlan, prior, desired settingsSpec, skipMissing bool) ([]string, error) {
 	ids := a.IDs()
 	updates := map[string]client.BulkSettingsUpdate{}
 
@@ -377,7 +379,7 @@ func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePl
 
 	ops := append(
 		r.operations("remove additional maintainers", removals, true),
-		r.operations(fmt.Sprintf("update %s settings", r.kind.Entity), updates, true)...,
+		r.operations(fmt.Sprintf("update %s settings", r.kind.Entity), updates, skipMissing)...,
 	)
 	res, err := r.executor.RunAll(ctx, ops...)
 	return res.Skipped, err
@@ -467,11 +469,12 @@ func (r *Resource) decode(ctx context.Context, g attributeGetter, diags *diag.Di
 	var (
 		out                    decodedSettings
 		ids, maint, additional types.Set
-		requestable            types.Bool
+		requestable, skip      types.Bool
 		workflowID, owner      types.String
 	)
 
 	diags.Append(g.GetAttribute(ctx, path.Root(r.kind.IDsAttribute), &ids)...)
+	diags.Append(g.GetAttribute(ctx, path.Root(bulk.AttrSkipMissingIDs), &skip)...)
 	diags.Append(g.GetAttribute(ctx, path.Root(attrRequestable), &requestable)...)
 	diags.Append(g.GetAttribute(ctx, path.Root(attrWorkflowID), &workflowID)...)
 	if r.kind.WithOwner {
@@ -493,6 +496,7 @@ func (r *Resource) decode(ctx context.Context, g attributeGetter, diags *diag.Di
 	list, d := bulk.StringSet(ctx, ids)
 	diags.Append(d...)
 	out.ids = list
+	out.skipMissing = skip.ValueBool()
 
 	if !requestable.IsNull() && !requestable.IsUnknown() {
 		v := requestable.ValueBool()

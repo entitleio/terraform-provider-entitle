@@ -11,13 +11,22 @@ description: |-
   Drift Detection
   Every refresh reads every role in batches: Roles are read with the list endpoint, 100 IDs per request, with up to bulk.parallelism requests at a time.Changed settings are re-applied: A role whose configured settings differ is shown as a change in the next plan, and apply sends every configured setting to that role only.Unmanaged attributes are ignored: Changes to attributes not set in the configuration are not drift.Deleted roles: A role that no longer exists is dropped from state. If its ID is still in role_ids, the next apply fails with a 404 listing that ID; remove it from the configuration.
   Error Handling
-  Failed create: Nothing is saved to state, so the next apply creates the resource again. Settings that were already applied are simply applied again.Failed update: State keeps every role the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+  Failed create: Nothing is saved to state, so the next apply creates the resource again. Settings that were already applied are simply applied again.Failed update: State keeps every role the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.Roles deleted before apply: If one of the roles no longer exists (for example, a sync deleted it between terraform plan and terraform apply), the apply fails and names it. Set skip_missing_ids = true to skip such roles with a warning and apply the change to all others; they drop out of state on the next refresh.
+  
+  resource "entitle_role_settings" "example" {
+    role_ids         = data.entitle_roles.example.roles[*].id
+    requestable      = false
+    skip_missing_ids = true
+  }
+  
   ~> Note: Do not manage the same setting on the same role from both entitle_role_settings and entitle_role / entitle_role_synced, or from two entitle_role_settings resources — they will overwrite each other.
   Example Usage
   Make Every Role of a Resource Non-Requestable
   
   data "entitle_roles" "repo" {
-    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    filter {
+      resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    }
   }
   
   resource "entitle_role_settings" "frozen" {
@@ -28,9 +37,9 @@ description: |-
   Set the Workflow of an Integration's Admin Roles
   
   data "entitle_roles" "admins" {
-    integration_id = data.entitle_integration.aws.id
     filter {
-      search = "admin"
+      integration_id = data.entitle_integration.aws.id
+      search         = "admin"
     }
   }
   
@@ -51,7 +60,7 @@ description: |-
   }
   
   Notes
-  allowed_durations is not supported yet, because the bulk API does not accept itentitle_roles returns a single page of results (at most 100); for more roles, read several pages and flatten their IDsrole_ids must contain at least one UUIDImport is not supported — declare the resource and applyChanging any attribute never replaces the resource; changes are applied in place
+  allowed_durations is not supported yet, because the bulk API does not accept itentitle_roles returns every matching role (the provider reads all pages), so data.entitle_roles.<name>.roles[*].id can be passed to role_ids directlyrole_ids must contain at least one UUIDImport is not supported — declare the resource and applyChanging any attribute never replaces the resource; changes are applied in place
 ---
 
 # entitle_role_settings (Resource)
@@ -84,6 +93,15 @@ Applies the same settings to many Entitle roles at once using the asynchronous b
 - **Failed create**: Nothing is saved to state, so the next apply creates the resource again. Settings that were already applied are simply applied again.
 - **Failed update**: State keeps every role the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.
 - **Timeout**: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+- **Roles deleted before apply**: If one of the roles no longer exists (for example, a sync deleted it between `terraform plan` and `terraform apply`), the apply fails and names it. Set `skip_missing_ids = true` to skip such roles with a warning and apply the change to all others; they drop out of state on the next refresh.
+
+```terraform
+resource "entitle_role_settings" "example" {
+  role_ids         = data.entitle_roles.example.roles[*].id
+  requestable      = false
+  skip_missing_ids = true
+}
+```
 
 ~> **Note:** Do not manage the same setting on the same role from both `entitle_role_settings` and `entitle_role` / `entitle_role_synced`, or from two `entitle_role_settings` resources — they will overwrite each other.
 
@@ -93,7 +111,9 @@ Applies the same settings to many Entitle roles at once using the asynchronous b
 
 ```terraform
 data "entitle_roles" "repo" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+  }
 }
 
 resource "entitle_role_settings" "frozen" {
@@ -106,9 +126,9 @@ resource "entitle_role_settings" "frozen" {
 
 ```terraform
 data "entitle_roles" "admins" {
-  integration_id = data.entitle_integration.aws.id
   filter {
-    search = "admin"
+    integration_id = data.entitle_integration.aws.id
+    search         = "admin"
   }
 }
 
@@ -134,7 +154,7 @@ resource "entitle_role_settings" "selected" {
 ## Notes
 
 - `allowed_durations` is not supported yet, because the bulk API does not accept it
-- `entitle_roles` returns a single page of results (at most 100); for more roles, read several pages and `flatten` their IDs
+- `entitle_roles` returns every matching role (the provider reads all pages), so `data.entitle_roles.<name>.roles[*].id` can be passed to `role_ids` directly
 - `role_ids` must contain at least one UUID
 - Import is not supported — declare the resource and apply
 - Changing any attribute never replaces the resource; changes are applied in place
@@ -151,4 +171,5 @@ resource "entitle_role_settings" "selected" {
 ### Optional
 
 - `requestable` (Boolean) Whether users can request access to the roles.
+- `skip_missing_ids` (Boolean) When `true`, roles that no longer exist in Entitle (for example, deleted by a sync between plan and apply) are skipped with a warning, and the change is applied to all other roles. When `false` (default), the apply fails and names them. Removing what this resource added always skips roles that no longer exist.
 - `workflow_id` (String) ID (UUID) of the default approval workflow for the roles.

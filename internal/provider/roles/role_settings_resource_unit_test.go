@@ -203,9 +203,13 @@ func TestUnitRoleSettingsResource_RemoveAndDestroyLeaveSettings(t *testing.T) {
 	})
 }
 
-// A role in configuration that does not exist is skipped (with a warning) and
-// the other roles are updated. It stays in configuration, so the plan after
-// apply is not empty; dropping it from configuration converges.
+// roleSettingsSkipConfig is roleSettingsConfig with skip_missing_ids = true.
+func roleSettingsSkipConfig(ids []string, body string) string {
+	return roleSettingsConfig(ids, body+"  skip_missing_ids = true\n")
+}
+
+// By default (skip_missing_ids off) a deleted role still in configuration
+// fails with an error naming it; dropping it from configuration converges.
 func TestUnitRoleSettingsResource_MissingRole(t *testing.T) {
 	fake := setupFakeRoles(t, roleA)
 
@@ -213,9 +217,8 @@ func TestUnitRoleSettingsResource_MissingRole(t *testing.T) {
 		ProtoV6ProviderFactories: roleSettingsProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             roleSettingsConfig([]string{roleA, roleB}, "  requestable = false\n"),
-				Check:              fake.check(roleA, false, ""),
-				ExpectNonEmptyPlan: true,
+				Config:      roleSettingsConfig([]string{roleA, roleB}, "  requestable = false\n"),
+				ExpectError: regexp.MustCompile(roleB),
 			},
 			{
 				Config: roleSettingsConfig([]string{roleA}, "  requestable = false\n"),
@@ -225,24 +228,48 @@ func TestUnitRoleSettingsResource_MissingRole(t *testing.T) {
 	})
 }
 
-// A sync deletes a role between plan and apply: the deleted role is skipped
-// and every other role is still updated (other chunks are not cancelled).
-func TestUnitRoleSettingsResource_RoleDeletedBeforeApply(t *testing.T) {
-	fake := setupFakeRoles(t, roleA, roleB, roleC)
-	var mark int
+// With skip_missing_ids a role that does not exist is skipped (with a
+// warning) and the other roles are updated. It stays in configuration, so the
+// plan after apply is not empty; dropping it from configuration converges.
+func TestUnitRoleSettingsResource_MissingRoleSkipped(t *testing.T) {
+	fake := setupFakeRoles(t, roleA)
 
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: roleSettingsProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: roleSettingsConfig([]string{roleA, roleB, roleC}, "  requestable = false\n"),
+				Config:             roleSettingsSkipConfig([]string{roleA, roleB}, "  requestable = false\n"),
+				Check:              fake.check(roleA, false, ""),
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: roleSettingsSkipConfig([]string{roleA}, "  requestable = false\n"),
+				Check:  fake.check(roleA, false, ""),
+			},
+		},
+	})
+}
+
+// With skip_missing_ids, a sync deleting a role between plan and apply
+// does not block the others: the deleted role is skipped and every other role
+// is still updated (other chunks are not cancelled).
+func TestUnitRoleSettingsResource_RoleDeletedBeforeApply(t *testing.T) {
+	fake := setupFakeRoles(t, roleA, roleB, roleC)
+	var mark int
+	workflow := fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: roleSettingsProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: roleSettingsSkipConfig([]string{roleA, roleB, roleC}, "  requestable = false\n"),
 			},
 			{
 				PreConfig: func() {
 					mark = fake.callCount()
 					fake.deleteBeforeApply(roleB)
 				},
-				Config: roleSettingsConfig([]string{roleA, roleB, roleC}, fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)),
+				Config: roleSettingsSkipConfig([]string{roleA, roleB, roleC}, workflow),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					fake.check(roleA, false, roleWF1),
 					fake.check(roleC, false, roleWF1),
@@ -256,11 +283,30 @@ func TestUnitRoleSettingsResource_RoleDeletedBeforeApply(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config: roleSettingsConfig([]string{roleA, roleC}, fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)),
+				Config: roleSettingsSkipConfig([]string{roleA, roleC}, workflow),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("entitle_role_settings.test", "role_ids.#", "2"),
 					fake.check(roleA, false, roleWF1),
 				),
+			},
+		},
+	})
+}
+
+// Without skip_missing_ids, the same race fails the apply and names the role.
+func TestUnitRoleSettingsResource_RoleDeletedBeforeApplyFails(t *testing.T) {
+	fake := setupFakeRoles(t, roleA, roleB)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: roleSettingsProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: roleSettingsConfig([]string{roleA, roleB}, "  requestable = false\n"),
+			},
+			{
+				PreConfig:   func() { fake.deleteBeforeApply(roleB) },
+				Config:      roleSettingsConfig([]string{roleA, roleB}, fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)),
+				ExpectError: regexp.MustCompile(roleB),
 			},
 		},
 	})

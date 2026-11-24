@@ -38,6 +38,15 @@ Switching from `additional_maintainers` to `maintainers` replaces the whole list
 - **Failed create**: Nothing is saved to state, so the next apply creates the resource again. Additional maintainers added before the failure are removed first. Settings that were already applied are simply applied again. If that clean-up fails, a warning is shown and those maintainers are treated as pre-existing on the next apply.
 - **Failed update**: State keeps every integration and additional maintainer the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.
 - **Timeout**: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+- **Integrations deleted before apply**: If one of the integrations no longer exists (for example, a sync deleted it between `terraform plan` and `terraform apply`), the apply fails and names it. Set `skip_missing_ids = true` to skip such integrations with a warning and apply the change to all others; they drop out of state on the next refresh.
+
+```terraform
+resource "entitle_integration_settings" "example" {
+  integration_ids  = data.entitle_integrations.example.integrations[*].id
+  requestable      = false
+  skip_missing_ids = true
+}
+```
 
 ~> **Note:** Do not manage the same setting on the same integration from both `entitle_integration_settings` and `entitle_integration`, or from two `entitle_integration_settings` resources — they will overwrite each other.
 
@@ -103,7 +112,7 @@ resource "entitle_integration_settings" "frozen" {
 
 ## Notes
 
-- `entitle_integrations` returns a single page of results (at most 100); for more integrations, read several pages and `flatten` their IDs
+- `entitle_integrations` returns every matching integration (the provider reads all pages), so `data.entitle_integrations.<name>.integrations[*].id` can be passed to `integration_ids` directly
 - `integration_ids` must contain at least one UUID; `additional_maintainers`, when set, at least one maintainer
 - Import is not supported — declare the resource and apply
 - Changing any attribute never replaces the resource; changes are applied in place

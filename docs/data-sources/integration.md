@@ -62,7 +62,9 @@ description: |-
   }
   
   data "entitle_resources" "db_resources" {
-    integration_id = data.entitle_integration.postgres.id
+    filter {
+      integration_id = data.entitle_integration.postgres.id
+    }
   }
   
   output "available_databases" {
@@ -179,7 +181,9 @@ data "entitle_integration" "postgres" {
 }
 
 data "entitle_resources" "db_resources" {
-  integration_id = data.entitle_integration.postgres.id
+  filter {
+    integration_id = data.entitle_integration.postgres.id
+  }
 }
 
 output "available_databases" {

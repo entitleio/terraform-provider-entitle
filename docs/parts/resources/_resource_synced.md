@@ -122,7 +122,9 @@ Manage all synced resources for an integration consistently:
 
 ```terraform
 data "entitle_resources" "gcp_all" {
-  integration_id = data.entitle_integration.gcp.id
+  filter {
+    integration_id = data.entitle_integration.gcp.id
+  }
 }
 
 resource "entitle_resource_synced" "gcp" {

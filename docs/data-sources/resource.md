@@ -66,8 +66,10 @@ description: |-
   }
   
   data "entitle_resources" "search" {
-    integration_id = data.entitle_integration.aws.id
-    filter { search = "dev-account" }
+    filter {
+      integration_id = data.entitle_integration.aws.id
+      search         = "dev-account"
+    }
   }
   
   data "entitle_resource" "dev_account" {
@@ -173,8 +175,10 @@ data "entitle_integration" "aws" {
 }
 
 data "entitle_resources" "search" {
-  integration_id = data.entitle_integration.aws.id
-  filter { search = "dev-account" }
+  filter {
+    integration_id = data.entitle_integration.aws.id
+    search         = "dev-account"
+  }
 }
 
 data "entitle_resource" "dev_account" {

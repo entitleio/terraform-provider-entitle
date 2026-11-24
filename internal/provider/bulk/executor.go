@@ -44,6 +44,7 @@ type Operation struct {
 	// and resubmits the rest, so one entity deleted between plan and apply
 	// (e.g. by a sync) does not block the change for every other entity.
 	// A 404 about anything else (e.g. a missing workflow) still fails.
+	// Removals always set it; updates follow the resource's skip_missing_ids.
 	SkipMissingIDs bool
 }
 

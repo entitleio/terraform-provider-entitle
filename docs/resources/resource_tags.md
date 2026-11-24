@@ -12,14 +12,23 @@ description: |-
   Drift Detection
   Every refresh reads every resource in batches: Resources are read with the list endpoint, 100 IDs per request, with up to bulk.parallelism requests at a time — about 10 requests for 1,000 resources.Tag matching: A tag counts as present if it is among the resource's user-defined or integration tags. Matching ignores case and surrounding whitespace.Missing tags are re-added: A resource missing any of the tags is shown as a change in the next plan, and apply re-adds the tags to that resource only.Extra tags are ignored: Tags added outside Terraform do not cause drift.Deleted resources: A resource that no longer exists is dropped from state. If its ID is still in resource_ids, the next apply fails with a 404 listing that ID; remove it from the configuration.
   Error Handling
-  Failed create: The resource is marked as tainted. The next apply removes the tags it added and creates it again.Failed update: State keeps every resource and tag the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+  Failed create: The resource is marked as tainted. The next apply removes the tags it added and creates it again.Failed update: State keeps every resource and tag the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.Timeout: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.Resources deleted before apply: If one of the resources no longer exists (for example, a sync deleted it between terraform plan and terraform apply), the apply fails and names it. Set skip_missing_ids = true to skip such resources with a warning and apply the change to all others; they drop out of state on the next refresh.
+  
+  resource "entitle_resource_tags" "example" {
+    resource_ids     = data.entitle_resources.example.resources[*].id
+    tags             = ["pci"]
+    skip_missing_ids = true
+  }
+  
   ~> Note: Do not manage the same tag on the same resource from both entitle_resource_tags and the user_defined_tags attribute of entitle_resource / entitle_resource_synced — they will overwrite each other. Two entitle_resource_tags resources may share a tag: the one created later treats it as pre-existing. If the one that added it is removed, the tag is removed too, and the other one re-adds it on its next apply.
   -> Note: If a resource loses a tag outside Terraform and is removed from resource_ids in the same change, Terraform plans no change for it. Its tags are cleaned up by the next apply that changes this resource, or on destroy.
   Example Usage
   Tag All Resources of an Integration
   
   data "entitle_resources" "aws_policies" {
-    integration_id = data.entitle_integration.aws.id
+    filter {
+      integration_id = data.entitle_integration.aws.id
+    }
   }
   
   resource "entitle_resource_tags" "pci" {
@@ -27,21 +36,18 @@ description: |-
     tags         = ["pci", "sox"]
   }
   
-  Tag More Than One Page of Resources
-  entitle_resources returns a single page of results (at most 100). Read several pages and flatten their IDs:
+  Tag Every Policy of an Integration
+  entitle_resources returns every matching resource (the provider reads all pages), so its IDs can be passed directly, however many there are:
   
   data "entitle_resources" "aws_policies" {
-    count          = 5 # covers up to 500 resources
-    integration_id = data.entitle_integration.aws.id
-  
     filter {
-      page     = count.index + 1
-      per_page = 100
+      integration_id = data.entitle_integration.aws.id
+      types          = ["Policy"]
     }
   }
   
   resource "entitle_resource_tags" "pci" {
-    resource_ids = flatten([for page in data.entitle_resources.aws_policies : page.resources[*].id])
+    resource_ids = data.entitle_resources.aws_policies.resources[*].id
     tags         = ["pci", "sox"]
   }
   
@@ -58,13 +64,17 @@ description: |-
   Combine Several Sources
   
   data "entitle_resources" "prod" {
-    integration_id = data.entitle_integration.aws.id
-    filter { search = "prod" }
+    filter {
+      integration_id = data.entitle_integration.aws.id
+      search         = "prod"
+    }
   }
   
   data "entitle_resources" "billing" {
-    integration_id = data.entitle_integration.gcp.id
-    filter { search = "billing" }
+    filter {
+      integration_id = data.entitle_integration.gcp.id
+      search         = "billing"
+    }
   }
   
   resource "entitle_resource_tags" "critical" {
@@ -132,6 +142,15 @@ The provider only removes tags it added itself.
 - **Failed create**: The resource is marked as tainted. The next apply removes the tags it added and creates it again.
 - **Failed update**: State keeps every resource and tag the update may have touched, so the next refresh detects what was applied and the next apply finishes the change.
 - **Timeout**: Each bulk operation, including waiting for other bulk operations to finish, times out after 60 minutes.
+- **Resources deleted before apply**: If one of the resources no longer exists (for example, a sync deleted it between `terraform plan` and `terraform apply`), the apply fails and names it. Set `skip_missing_ids = true` to skip such resources with a warning and apply the change to all others; they drop out of state on the next refresh.
+
+```terraform
+resource "entitle_resource_tags" "example" {
+  resource_ids     = data.entitle_resources.example.resources[*].id
+  tags             = ["pci"]
+  skip_missing_ids = true
+}
+```
 
 ~> **Note:** Do not manage the same tag on the same resource from both `entitle_resource_tags` and the `user_defined_tags` attribute of `entitle_resource` / `entitle_resource_synced` — they will overwrite each other. Two `entitle_resource_tags` resources may share a tag: the one created later treats it as pre-existing. If the one that added it is removed, the tag is removed too, and the other one re-adds it on its next apply.
 
@@ -143,7 +162,9 @@ The provider only removes tags it added itself.
 
 ```terraform
 data "entitle_resources" "aws_policies" {
-  integration_id = data.entitle_integration.aws.id
+  filter {
+    integration_id = data.entitle_integration.aws.id
+  }
 }
 
 resource "entitle_resource_tags" "pci" {
@@ -152,23 +173,20 @@ resource "entitle_resource_tags" "pci" {
 }
 ```
 
-### Tag More Than One Page of Resources
+### Tag Every Policy of an Integration
 
-`entitle_resources` returns a single page of results (at most 100). Read several pages and flatten their IDs:
+`entitle_resources` returns every matching resource (the provider reads all pages), so its IDs can be passed directly, however many there are:
 
 ```terraform
 data "entitle_resources" "aws_policies" {
-  count          = 5 # covers up to 500 resources
-  integration_id = data.entitle_integration.aws.id
-
   filter {
-    page     = count.index + 1
-    per_page = 100
+    integration_id = data.entitle_integration.aws.id
+    types          = ["Policy"]
   }
 }
 
 resource "entitle_resource_tags" "pci" {
-  resource_ids = flatten([for page in data.entitle_resources.aws_policies : page.resources[*].id])
+  resource_ids = data.entitle_resources.aws_policies.resources[*].id
   tags         = ["pci", "sox"]
 }
 ```
@@ -189,13 +207,17 @@ resource "entitle_resource_tags" "payments" {
 
 ```terraform
 data "entitle_resources" "prod" {
-  integration_id = data.entitle_integration.aws.id
-  filter { search = "prod" }
+  filter {
+    integration_id = data.entitle_integration.aws.id
+    search         = "prod"
+  }
 }
 
 data "entitle_resources" "billing" {
-  integration_id = data.entitle_integration.gcp.id
-  filter { search = "billing" }
+  filter {
+    integration_id = data.entitle_integration.gcp.id
+    search         = "billing"
+  }
 }
 
 resource "entitle_resource_tags" "critical" {
@@ -244,3 +266,7 @@ provider "entitle" {
 
 - `resource_ids` (Set of String) IDs (UUID) of the Entitle resources the tags are added to.
 - `tags` (Set of String) Tags added to every resource in `resource_ids`.
+
+### Optional
+
+- `skip_missing_ids` (Boolean) When `true`, resources that no longer exist in Entitle (for example, deleted by a sync between plan and apply) are skipped with a warning, and the change is applied to all other resources. When `false` (default), the apply fails and names them. Removing what this resource added always skips resources that no longer exist.

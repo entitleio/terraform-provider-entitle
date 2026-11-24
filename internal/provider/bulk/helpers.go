@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/entitleio/terraform-provider-entitle/internal/client"
@@ -56,6 +57,23 @@ func ToStringSet(ctx context.Context, items []string) (types.Set, diag.Diagnosti
 		items = []string{}
 	}
 	return types.SetValueFrom(ctx, types.StringType, items)
+}
+
+// AttrSkipMissingIDs is the name of the skip_missing_ids attribute of bulk resources.
+const AttrSkipMissingIDs = "skip_missing_ids"
+
+// SkipMissingIDsAttribute is the skip_missing_ids attribute of bulk resources.
+// It only affects updates: removing what the resource added always skips
+// entities that no longer exist. Null means false.
+func SkipMissingIDsAttribute(entities string) schema.BoolAttribute {
+	description := fmt.Sprintf("When `true`, %[1]s that no longer exist in Entitle (for example, deleted by a sync between plan and apply) "+
+		"are skipped with a warning, and the change is applied to all other %[1]s. When `false` (default), the apply fails and names them. "+
+		"Removing what this resource added always skips %[1]s that no longer exist.", entities)
+	return schema.BoolAttribute{
+		Optional:            true,
+		MarkdownDescription: description,
+		Description:         strings.ReplaceAll(description, "`", ""),
+	}
 }
 
 // AddSkippedWarning warns about wanted IDs that were skipped because the API

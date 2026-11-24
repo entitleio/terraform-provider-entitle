@@ -143,25 +143,13 @@ func TestUnitResourceTagsResource_Lifecycle(t *testing.T) {
 					},
 				),
 			},
-			// A resource deleted outside Terraform but still in config: the API
-			// reports it missing, it is skipped (with a warning) and nothing else
-			// fails. It stays in config, so the plan after apply is not empty.
+			// A resource deleted outside Terraform but still in config: the API rejects
+			// the request and the error names the offending ID (skip_missing_ids
+			// is off by default).
 			{
-				PreConfig: func() {
-					fake.deleteResource(tagsR2)
-					mark = fake.callCount()
-				},
-				Config: tagsConfig([]string{tagsR2, tagsR3}, []string{"pci", "hipaa"}),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					fake.checkTags(tagsR3, "keep", "pci", "hipaa"),
-					func(*terraform.State) error {
-						if calls := fake.callsSince(mark); len(calls) != 0 {
-							return fmt.Errorf("expected no accepted requests, got %+v", calls)
-						}
-						return nil
-					},
-				),
-				ExpectNonEmptyPlan: true,
+				PreConfig:   func() { fake.deleteResource(tagsR2) },
+				Config:      tagsConfig([]string{tagsR2, tagsR3}, []string{"pci", "hipaa"}),
+				ExpectError: regexp.MustCompile(tagsR2),
 			},
 			// Dropping the deleted resource from config converges without changes to r3.
 			{
@@ -324,6 +312,57 @@ resource "entitle_resource_tags" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					fake.checkTags(ids[120], "pci"),
 					expectBatchedReads,
+				),
+			},
+		},
+	})
+}
+
+// With skip_missing_ids, a resource that no longer exists is skipped (with a
+// warning) and the tags are added to the others. It stays in configuration, so
+// the plan after apply is not empty; dropping it from configuration converges.
+func TestUnitResourceTagsResource_SkipMissingIDs(t *testing.T) {
+	fake := setupFakeEntitle(t, map[string][]string{
+		tagsR1: {"keep"},
+		tagsR2: {"keep"},
+	})
+	config := func(ids []string) string {
+		return tagsProviderConfig + fmt.Sprintf(`
+resource "entitle_resource_tags" "test" {
+  resource_ids     = %s
+  tags             = ["pci"]
+  skip_missing_ids = true
+}
+`, hclList(ids))
+	}
+	var mark int
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: unitTestProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					fake.deleteResource(tagsR2)
+					mark = fake.callCount()
+				},
+				Config: config([]string{tagsR1, tagsR2}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					fake.checkTags(tagsR1, "keep", "pci"),
+					func(*terraform.State) error {
+						calls := fake.callsSince(mark)
+						if len(calls) != 1 || !slices.Equal(calls[0].Ids, []string{tagsR1}) {
+							return fmt.Errorf("expected one accepted request for %s, got %+v", tagsR1, calls)
+						}
+						return nil
+					},
+				),
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: config([]string{tagsR1}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_resource_tags.test", "resource_ids.#", "1"),
+					fake.checkTags(tagsR1, "keep", "pci"),
 				),
 			},
 		},

@@ -37,8 +37,9 @@ type ResourceTagsResource struct {
 
 // ResourceTagsResourceModel describes the resource data model.
 type ResourceTagsResourceModel struct {
-	ResourceIDs types.Set `tfsdk:"resource_ids"`
-	Tags        types.Set `tfsdk:"tags"`
+	ResourceIDs    types.Set  `tfsdk:"resource_ids"`
+	Tags           types.Set  `tfsdk:"tags"`
+	SkipMissingIDs types.Bool `tfsdk:"skip_missing_ids"`
 }
 
 // Metadata sets the resource type name.
@@ -71,6 +72,7 @@ func (r *ResourceTagsResource) Schema(ctx context.Context, req resource.SchemaRe
 					setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
 				},
 			},
+			bulk.AttrSkipMissingIDs: bulk.SkipMissingIDsAttribute("resources"),
 		},
 	}
 }
@@ -110,7 +112,7 @@ func (r *ResourceTagsResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	skipped, err := r.apply(ctx, planned)
+	skipped, err := r.apply(ctx, planned, plan.SkipMissingIDs.ValueBool())
 	if err != nil {
 		// Persist state so Terraform marks the resource as tainted; the next
 		// apply removes the partially added (owned) tags and re-creates it.
@@ -196,7 +198,7 @@ func (r *ResourceTagsResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	skipped, err := r.apply(ctx, planned)
+	skipped, err := r.apply(ctx, planned, plan.SkipMissingIDs.ValueBool())
 	if err != nil {
 		// Keep every resource and tag that might have been touched, plus all
 		// ownership learned, so Read detects what was partially applied and
@@ -241,13 +243,13 @@ func (r *ResourceTagsResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
-// apply runs removals first, then the remaining changes. Resources that no
-// longer exist are skipped in both (a sync may delete one between plan and
-// apply); their IDs are returned.
-func (r *ResourceTagsResource) apply(ctx context.Context, p bulk.AdditivePlan) ([]string, error) {
+// apply runs removals first, then the remaining changes. Removals always skip
+// resources that no longer exist; changes skip them only when skipMissing
+// (skip_missing_ids) is set. Skipped IDs are returned.
+func (r *ResourceTagsResource) apply(ctx context.Context, p bulk.AdditivePlan, skipMissing bool) ([]string, error) {
 	ops := append(
 		r.operations("remove resource tags", p.Removals, true),
-		r.operations("update resource tags", p.Changes, true)...,
+		r.operations("update resource tags", p.Changes, skipMissing)...,
 	)
 	res, err := r.executor.RunAll(ctx, ops...)
 	return res.Skipped, err

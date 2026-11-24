@@ -133,13 +133,17 @@ description: |-
   }
   
   data "entitle_resources" "github_repos" {
-    integration_id = data.entitle_integration.github.id
-    filter { search = "backend" }
+    filter {
+      integration_id = data.entitle_integration.github.id
+      search         = "backend"
+    }
   }
   
   data "entitle_roles" "github_read" {
-    resource_id = data.entitle_resources.github_repos.resources[0].id
-    filter { search = "read" }
+    filter {
+      resource_id = data.entitle_resources.github_repos.resources[0].id
+      search      = "read"
+    }
   }
   
   data "entitle_workflow" "auto_approve" {
@@ -357,13 +361,17 @@ data "entitle_integration" "github" {
 }
 
 data "entitle_resources" "github_repos" {
-  integration_id = data.entitle_integration.github.id
-  filter { search = "backend" }
+  filter {
+    integration_id = data.entitle_integration.github.id
+    search         = "backend"
+  }
 }
 
 data "entitle_roles" "github_read" {
-  resource_id = data.entitle_resources.github_repos.resources[0].id
-  filter { search = "read" }
+  filter {
+    resource_id = data.entitle_resources.github_repos.resources[0].id
+    search      = "read"
+  }
 }
 
 data "entitle_workflow" "auto_approve" {

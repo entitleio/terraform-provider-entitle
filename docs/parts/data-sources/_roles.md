@@ -59,8 +59,10 @@ data "entitle_integration" "github" {
 }
 
 data "entitle_resources" "backend_repo" {
-  integration_id = data.entitle_integration.github.id
-  filter { search = "backend-api" }
+  filter {
+    integration_id = data.entitle_integration.github.id
+    search         = "backend-api"
+  }
 }
 
 data "entitle_roles" "read_roles" {

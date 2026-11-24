@@ -160,8 +160,10 @@ data "entitle_users" "alice" {
 }
 
 data "entitle_roles" "dev_read" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "dev-read" }
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search      = "dev-read"
+  }
 }
 
 resource "entitle_policy" "dynamic_policy" {

@@ -254,8 +254,10 @@ description: |-
   Use the entitle_resources data source to find a resource ID by integration:
   
   data "entitle_resources" "my_resources" {
-    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-    filter { search = "production" }
+    filter {
+      integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+      search         = "production"
+    }
   }
   
   output "resource_ids" {
@@ -308,7 +310,9 @@ description: |-
   When an integration has many synced resources, use the entitle_resources data source to discover their IDs, then generate import blocks programmatically using for_each:
   
   data "entitle_resources" "gcp_all" {
-    integration_id = data.entitle_integration.gcp.id
+    filter {
+      integration_id = data.entitle_integration.gcp.id
+    }
   }
   
   import {
@@ -664,8 +668,10 @@ Use the `entitle_resources` data source to find a resource ID by integration:
 
 ```terraform
 data "entitle_resources" "my_resources" {
-  integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "production" }
+  filter {
+    integration_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search         = "production"
+  }
 }
 
 output "resource_ids" {
@@ -735,7 +741,9 @@ When an integration has many synced resources, use the `entitle_resources` data 
 
 ```terraform
 data "entitle_resources" "gcp_all" {
-  integration_id = data.entitle_integration.gcp.id
+  filter {
+    integration_id = data.entitle_integration.gcp.id
+  }
 }
 
 import {

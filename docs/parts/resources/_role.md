@@ -266,8 +266,10 @@ Alternatively, use the `entitle_roles` data source to list roles for a resource 
 
 ```terraform
 data "entitle_roles" "my_roles" {
-  resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
-  filter { search = "admin" }
+  filter {
+    resource_id = "7d080bfa-9143-11ee-b9d1-0242ac120001"
+    search      = "admin"
+  }
 }
 
 output "role_ids" {
