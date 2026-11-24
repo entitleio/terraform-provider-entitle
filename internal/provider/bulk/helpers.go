@@ -3,6 +3,7 @@ package bulk
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -55,4 +56,22 @@ func ToStringSet(ctx context.Context, items []string) (types.Set, diag.Diagnosti
 		items = []string{}
 	}
 	return types.SetValueFrom(ctx, types.StringType, items)
+}
+
+// AddSkippedWarning warns about wanted IDs that were skipped because the API
+// reported them as not found (they were deleted before apply). IDs skipped
+// outside wanted (e.g. cleanup of entities removed from config) are expected
+// and not reported. The IDs stay in state, which must match the plan; the next
+// refresh forgets them.
+func AddSkippedWarning(diags *diag.Diagnostics, entities string, wanted, skipped []string) {
+	missing := Intersection(wanted, skipped)
+	if len(missing) == 0 {
+		return
+	}
+	diags.AddWarning(
+		fmt.Sprintf("Skipped %d %s that no longer exist", len(missing), entities),
+		fmt.Sprintf("These %s were not found in Entitle (they were probably deleted after the plan) and were skipped; "+
+			"every other change was applied. They are dropped from state on the next refresh; "+
+			"remove them from the configuration if they are listed there: %s", entities, strings.Join(missing, ", ")),
+	)
 }

@@ -40,13 +40,14 @@ type fakeRolesAPI struct {
 	t  *testing.T
 	mu sync.Mutex
 
-	roles       map[string]*fakeRole
-	failNextJob bool
-	failedJobs  map[string]bool
-	calls       []client.BulkUpdateRolesRequest
-	rawUpdates  []map[string]any
-	lists       []url.Values
-	other       []string // any request the resource must not make
+	roles        map[string]*fakeRole
+	deleteOnBulk []string // roles deleted when the next bulk request arrives
+	failNextJob  bool
+	failedJobs   map[string]bool
+	calls        []client.BulkUpdateRolesRequest
+	rawUpdates   []map[string]any
+	lists        []url.Values
+	other        []string // any request the resource must not make
 }
 
 func setupFakeRoles(t *testing.T, ids ...string) *fakeRolesAPI {
@@ -141,6 +142,12 @@ func (f *fakeRolesAPI) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *fakeRolesAPI) bulk(w http.ResponseWriter, r *http.Request) {
+	// A sync deleting roles after the plan was made.
+	for _, id := range f.deleteOnBulk {
+		delete(f.roles, id)
+	}
+	f.deleteOnBulk = nil
+
 	raw, _ := io.ReadAll(r.Body)
 	var body struct {
 		Update map[string]any `json:"update"`
@@ -199,6 +206,14 @@ func (f *fakeRolesAPI) failNext() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.failNextJob = true
+}
+
+// deleteBeforeApply deletes the roles when the next bulk request arrives, i.e.
+// after the plan and its reads, like a sync running between plan and apply.
+func (f *fakeRolesAPI) deleteBeforeApply(ids ...string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.deleteOnBulk = append(f.deleteOnBulk, ids...)
 }
 
 func (f *fakeRolesAPI) callCount() int {

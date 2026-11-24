@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -23,7 +25,7 @@ type fakeAPI struct {
 	mu sync.Mutex
 
 	conflictsLeft int             // number of 409 responses to return before accepting
-	missing       map[string]bool // IDs reported as not found
+	missing       map[string]bool // lower-case IDs reported as not found (lower case, like the API)
 	jobStatus     client.BulkOperationStatus
 	jobError      string
 	submitted     [][]string // IDs of accepted submissions
@@ -57,8 +59,8 @@ func (f *fakeAPI) handler(t *testing.T) http.Handler {
 
 			var missing []string
 			for _, id := range body.Ids {
-				if f.missing[id] {
-					missing = append(missing, id)
+				if f.missing[strings.ToLower(id)] {
+					missing = append(missing, strings.ToLower(id))
 				}
 			}
 			if len(missing) > 0 {
@@ -204,6 +206,70 @@ func TestExecutorSkipMissing(t *testing.T) {
 	}
 	if len(api.submitted) != 1 || strings.Join(api.submitted[0], ",") != "a,c" {
 		t.Fatalf("submitted = %v", api.submitted)
+	}
+}
+
+// Five IDs, one deleted: the chunk is resent with the other four. Configured
+// IDs may be upper case while the API reports missing ones in lower case.
+func TestExecutorSkipMissingFiveIDs(t *testing.T) {
+	ids := []string{
+		"AAAAAAAA-0000-4000-8000-000000000001",
+		"AAAAAAAA-0000-4000-8000-000000000002",
+		"AAAAAAAA-0000-4000-8000-000000000003",
+		"AAAAAAAA-0000-4000-8000-000000000004",
+		"AAAAAAAA-0000-4000-8000-000000000005",
+	}
+	api := &fakeAPI{missing: map[string]bool{strings.ToLower(ids[2]): true}}
+	e := newTestExecutor(t, api, utils.DefaultBulkConfig())
+
+	res, err := e.Run(context.Background(), tagsOp(e, ids, true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(res.Skipped, []string{ids[2]}) {
+		t.Fatalf("skipped = %v, want [%s]", res.Skipped, ids[2])
+	}
+	want := []string{ids[0], ids[1], ids[3], ids[4]}
+	if len(api.submitted) != 1 || !slices.Equal(api.submitted[0], want) {
+		t.Fatalf("submitted = %v, want one request with %v", api.submitted, want)
+	}
+	if res.Queued != 4 {
+		t.Fatalf("queued = %d, want 4", res.Queued)
+	}
+}
+
+// One missing ID among many chunks (a sync deleted it before apply): its chunk
+// is resent without it and every other chunk is applied, none cancelled.
+func TestExecutorSkipMissingAcrossChunks(t *testing.T) {
+	ids := make([]string, 1000)
+	for i := range ids {
+		ids[i] = fmt.Sprintf("role-%04d", i)
+	}
+	const deleted = "role-0420"
+
+	api := &fakeAPI{missing: map[string]bool{deleted: true}}
+	e := newTestExecutor(t, api, utils.BulkConfig{ChunkSize: 100, Parallelism: 4})
+
+	res, err := e.Run(context.Background(), tagsOp(e, ids, true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Skipped) != 1 || res.Skipped[0] != deleted {
+		t.Fatalf("skipped = %v", res.Skipped)
+	}
+	if res.Queued != len(ids)-1 {
+		t.Fatalf("queued = %d, want %d", res.Queued, len(ids)-1)
+	}
+	if len(api.submitted) != 10 {
+		t.Fatalf("accepted submissions = %d, want 10", len(api.submitted))
+	}
+
+	var all []string
+	for _, s := range api.submitted {
+		all = append(all, s...)
+	}
+	if len(all) != len(ids)-1 || slices.Contains(all, deleted) {
+		t.Fatalf("submitted %d ids (deleted included: %v), want %d without it", len(all), slices.Contains(all, deleted), len(ids)-1)
 	}
 }
 

@@ -41,8 +41,9 @@ type Operation struct {
 	// Submit sends the request for one chunk.
 	Submit SubmitFunc
 	// SkipMissingIDs drops IDs the API reports as not found (404, params.ids)
-	// and resubmits the rest. Use for removals/cleanup, where an entity that
-	// no longer exists needs no further change.
+	// and resubmits the rest, so one entity deleted between plan and apply
+	// (e.g. by a sync) does not block the change for every other entity.
+	// A 404 about anything else (e.g. a missing workflow) still fails.
 	SkipMissingIDs bool
 }
 
@@ -158,7 +159,9 @@ func (e *Executor) runChunk(ctx context.Context, op Operation, ids []string) (Re
 				return res, err
 			}
 
-			missing := Intersection(ids, apiErr.IDs)
+			// Compare case-insensitively: configured UUIDs may be upper case,
+			// the API reports them lower case.
+			missing := IntersectionFold(ids, apiErr.IDs)
 			if len(missing) == 0 {
 				// The 404 refers to something other than the target IDs (e.g. owner/workflow).
 				return res, err

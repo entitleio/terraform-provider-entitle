@@ -1,5 +1,7 @@
 package bulk
 
+import "strings"
+
 // Unique returns items with duplicates removed, preserving first-seen order.
 func Unique(items []string) []string {
 	seen := make(map[string]struct{}, len(items))
@@ -32,6 +34,22 @@ func Intersection(a, b []string) []string {
 	out := make([]string, 0, len(a))
 	for _, it := range a {
 		if _, ok := include[it]; ok {
+			out = append(out, it)
+		}
+	}
+	return out
+}
+
+// IntersectionFold is Intersection with case-insensitive matching (for UUIDs);
+// it returns the items of a as they are spelled in a.
+func IntersectionFold(a, b []string) []string {
+	include := make(map[string]struct{}, len(b))
+	for _, it := range b {
+		include[strings.ToLower(it)] = struct{}{}
+	}
+	out := make([]string, 0, len(a))
+	for _, it := range a {
+		if _, ok := include[strings.ToLower(it)]; ok {
 			out = append(out, it)
 		}
 	}

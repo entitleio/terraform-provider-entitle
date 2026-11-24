@@ -110,7 +110,8 @@ func (r *ResourceTagsResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	if err := r.apply(ctx, planned); err != nil {
+	skipped, err := r.apply(ctx, planned)
+	if err != nil {
 		// Persist state so Terraform marks the resource as tainted; the next
 		// apply removes the partially added (owned) tags and re-creates it.
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -121,6 +122,7 @@ func (r *ResourceTagsResource) Create(ctx context.Context, req resource.CreateRe
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	resp.Diagnostics.Append(planned.Next.Save(ctx, resp.Private)...)
+	bulk.AddSkippedWarning(&resp.Diagnostics, "resources", ids, skipped)
 }
 
 // Read verifies that every managed resource still exists and carries all tags.
@@ -194,7 +196,8 @@ func (r *ResourceTagsResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if err := r.apply(ctx, planned); err != nil {
+	skipped, err := r.apply(ctx, planned)
+	if err != nil {
 		// Keep every resource and tag that might have been touched, plus all
 		// ownership learned, so Read detects what was partially applied and
 		// the next apply finishes it without losing track of pre-existing tags.
@@ -213,6 +216,7 @@ func (r *ResourceTagsResource) Update(ctx context.Context, req resource.UpdateRe
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	resp.Diagnostics.Append(planned.Next.Save(ctx, resp.Private)...)
+	bulk.AddSkippedWarning(&resp.Diagnostics, "resources", newIDs, skipped)
 }
 
 // Delete removes the tags this resource added. Pre-existing tags stay, and
@@ -237,14 +241,16 @@ func (r *ResourceTagsResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
-// apply runs removals first (skipping resources that no longer exist), then the remaining changes.
-func (r *ResourceTagsResource) apply(ctx context.Context, p bulk.AdditivePlan) error {
+// apply runs removals first, then the remaining changes. Resources that no
+// longer exist are skipped in both (a sync may delete one between plan and
+// apply); their IDs are returned.
+func (r *ResourceTagsResource) apply(ctx context.Context, p bulk.AdditivePlan) ([]string, error) {
 	ops := append(
 		r.operations("remove resource tags", p.Removals, true),
-		r.operations("update resource tags", p.Changes, false)...,
+		r.operations("update resource tags", p.Changes, true)...,
 	)
-	_, err := r.executor.RunAll(ctx, ops...)
-	return err
+	res, err := r.executor.RunAll(ctx, ops...)
+	return res.Skipped, err
 }
 
 func (r *ResourceTagsResource) parallelism() int {

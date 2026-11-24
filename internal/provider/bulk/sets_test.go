@@ -2,6 +2,7 @@ package bulk
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -31,5 +32,12 @@ func TestContainsAll(t *testing.T) {
 	}
 	if ContainsAll([]string{"a"}, []string{"a", "b"}) {
 		t.Fatal("expected false")
+	}
+}
+
+func TestIntersectionFold(t *testing.T) {
+	got := IntersectionFold([]string{"AA", "bb", "Cc"}, []string{"aa", "CC", "dd"})
+	if strings.Join(got, ",") != "AA,Cc" {
+		t.Fatalf("got %v, want [AA Cc] (spelled as in the first list)", got)
 	}
 }

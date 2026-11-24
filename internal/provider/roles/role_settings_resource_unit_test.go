@@ -203,8 +203,9 @@ func TestUnitRoleSettingsResource_RemoveAndDestroyLeaveSettings(t *testing.T) {
 	})
 }
 
-// A deleted role still in configuration fails with an error naming it;
-// dropping it from configuration converges.
+// A role in configuration that does not exist is skipped (with a warning) and
+// the other roles are updated. It stays in configuration, so the plan after
+// apply is not empty; dropping it from configuration converges.
 func TestUnitRoleSettingsResource_MissingRole(t *testing.T) {
 	fake := setupFakeRoles(t, roleA)
 
@@ -212,12 +213,54 @@ func TestUnitRoleSettingsResource_MissingRole(t *testing.T) {
 		ProtoV6ProviderFactories: roleSettingsProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      roleSettingsConfig([]string{roleA, roleB}, "  requestable = false\n"),
-				ExpectError: regexp.MustCompile(roleB),
+				Config:             roleSettingsConfig([]string{roleA, roleB}, "  requestable = false\n"),
+				Check:              fake.check(roleA, false, ""),
+				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: roleSettingsConfig([]string{roleA}, "  requestable = false\n"),
 				Check:  fake.check(roleA, false, ""),
+			},
+		},
+	})
+}
+
+// A sync deletes a role between plan and apply: the deleted role is skipped
+// and every other role is still updated (other chunks are not cancelled).
+func TestUnitRoleSettingsResource_RoleDeletedBeforeApply(t *testing.T) {
+	fake := setupFakeRoles(t, roleA, roleB, roleC)
+	var mark int
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: roleSettingsProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: roleSettingsConfig([]string{roleA, roleB, roleC}, "  requestable = false\n"),
+			},
+			{
+				PreConfig: func() {
+					mark = fake.callCount()
+					fake.deleteBeforeApply(roleB)
+				},
+				Config: roleSettingsConfig([]string{roleA, roleB, roleC}, fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					fake.check(roleA, false, roleWF1),
+					fake.check(roleC, false, roleWF1),
+					fake.expectUpdates(&mark, map[string][]string{
+						roleA: {"workflow"},
+						roleC: {"workflow"},
+					}),
+					fake.checkRequests(),
+				),
+				// roleB is still configured but no longer exists.
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: roleSettingsConfig([]string{roleA, roleC}, fmt.Sprintf("  requestable = false\n  workflow_id = %q\n", roleWF1)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("entitle_role_settings.test", "role_ids.#", "2"),
+					fake.check(roleA, false, roleWF1),
+				),
 			},
 		},
 	})

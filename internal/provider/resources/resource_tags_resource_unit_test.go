@@ -143,12 +143,25 @@ func TestUnitResourceTagsResource_Lifecycle(t *testing.T) {
 					},
 				),
 			},
-			// A resource deleted outside Terraform but still in config: the API rejects
-			// the request and the error names the offending ID.
+			// A resource deleted outside Terraform but still in config: the API
+			// reports it missing, it is skipped (with a warning) and nothing else
+			// fails. It stays in config, so the plan after apply is not empty.
 			{
-				PreConfig:   func() { fake.deleteResource(tagsR2) },
-				Config:      tagsConfig([]string{tagsR2, tagsR3}, []string{"pci", "hipaa"}),
-				ExpectError: regexp.MustCompile(tagsR2),
+				PreConfig: func() {
+					fake.deleteResource(tagsR2)
+					mark = fake.callCount()
+				},
+				Config: tagsConfig([]string{tagsR2, tagsR3}, []string{"pci", "hipaa"}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					fake.checkTags(tagsR3, "keep", "pci", "hipaa"),
+					func(*terraform.State) error {
+						if calls := fake.callsSince(mark); len(calls) != 0 {
+							return fmt.Errorf("expected no accepted requests, got %+v", calls)
+						}
+						return nil
+					},
+				),
+				ExpectNonEmptyPlan: true,
 			},
 			// Dropping the deleted resource from config converges without changes to r3.
 			{

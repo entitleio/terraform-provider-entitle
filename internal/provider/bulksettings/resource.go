@@ -229,7 +229,8 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	if err := r.apply(ctx, a, planned, settingsSpec{}, desired.settings); err != nil {
+	skipped, err := r.apply(ctx, a, planned, settingsSpec{}, desired.settings)
+	if err != nil {
 		// No state is saved, so the next apply creates the resource again. Roll
 		// back the additional maintainers added so far; otherwise that create
 		// would see them as pre-existing and never remove them. Settings are not
@@ -245,6 +246,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	resp.State.Raw = req.Plan.Raw.Copy()
 	resp.Diagnostics.Append(planned.Next.Save(ctx, resp.Private)...)
+	bulk.AddSkippedWarning(&resp.Diagnostics, r.kind.Entities, desired.ids, skipped)
 }
 
 // Read verifies every managed entity: configured settings must match, and
@@ -309,7 +311,8 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	resp.State.Raw = req.Plan.Raw.Copy()
 
-	if err := r.apply(ctx, a, planned, prior.settings, desired.settings); err != nil {
+	skipped, err := r.apply(ctx, a, planned, prior.settings, desired.settings)
+	if err != nil {
 		// Keep every entity and additional maintainer that might have been
 		// touched, plus all ownership learned; the next Read detects what was
 		// applied and the next apply finishes the change.
@@ -328,6 +331,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 
 	resp.Diagnostics.Append(planned.Next.Save(ctx, resp.Private)...)
+	bulk.AddSkippedWarning(&resp.Diagnostics, r.kind.Entities, desired.ids, skipped)
 }
 
 // Delete only removes the resource from Terraform state. Settings and
@@ -336,9 +340,10 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	tflog.Info(ctx, fmt.Sprintf("Removing entitle%s from state; %s settings in Entitle are left unchanged", r.kind.TypeSuffix, r.kind.Entity))
 }
 
-// apply sends removals of owned additional maintainers first (skipping
-// entities that no longer exist), then one bulk operation per distinct update.
-func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePlan, prior, desired settingsSpec) error {
+// apply sends removals of owned additional maintainers first, then one bulk
+// operation per distinct update. Entities that no longer exist are skipped in
+// both (a sync may delete one between plan and apply); their IDs are returned.
+func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePlan, prior, desired settingsSpec) ([]string, error) {
 	ids := a.IDs()
 	updates := map[string]client.BulkSettingsUpdate{}
 
@@ -372,10 +377,10 @@ func (r *Resource) apply(ctx context.Context, a bulk.Additive, p bulk.AdditivePl
 
 	ops := append(
 		r.operations("remove additional maintainers", removals, true),
-		r.operations(fmt.Sprintf("update %s settings", r.kind.Entity), updates, false)...,
+		r.operations(fmt.Sprintf("update %s settings", r.kind.Entity), updates, true)...,
 	)
-	_, err := r.executor.RunAll(ctx, ops...)
-	return err
+	res, err := r.executor.RunAll(ctx, ops...)
+	return res.Skipped, err
 }
 
 // rollbackAdditional removes the additional maintainers this resource owns
